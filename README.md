@@ -23,9 +23,18 @@ son
 
 | | |
 |---|---|
-| Mərhələ | **0 — Spesifikasiya** (kod yazılmayıb) |
-| Versiya | 1.0 (layihə sənədi) |
+| Mərhələ | **1 — Lekser hazırdır** |
+| Spesifikasiya | 1.0 (layihə) |
+| Etalon implementasiya | Python 3.12 |
+| Sınaqlar | 135 keçir, 7 nümunə proqram leksə olunur |
 | Tarix | 5 oktyabr 2026 |
+
+```bash
+cd alqorc
+python sina.py --nümunələr
+python alqorc.py tokenlər ../numuneler/01-salam.alqor
+python alqorc.py hərf "ışıq İmran"
+```
 
 ---
 
@@ -157,16 +166,17 @@ son
 | Mərhələ | Nəticə | Vəziyyət |
 |---|---|---|
 | **0. Spesifikasiya** | Sintaksis sənədi, EBNF qrammatika, bələdçi | ✅ **Hazır** |
-| 1. Lekser + Parser | Kod → AST, Azərbaycanca xətalar | ⬜ |
-| 2. İnterpretator | `alqor işlət` işləyir — ilk canlı proqram | ⬜ |
-| 3. Standart kitabxana | mətn, siyahı, lüğət, riyaziyyat, fayl, vaxt, json | ⬜ |
-| 4. Tip yoxlayıcı | Tədrici tiplər | ⬜ |
-| 5. Veb backend | JS/WASM çıxışı + `veb` freymvorku | ⬜ |
-| 6. Native + paketləmə | ELF, `.deb`, `.AppImage` | ⬜ |
-| 7. Desktop UI | WebKitGTK pəncərələr | ⬜ |
-| 8. Alqor Studio | Canlı önizləməli IDE | ⬜ |
-| 9. alqorpm + alqorhub | Paket ekosistemi | ⬜ |
-| 10. Sənəd saytı | alqor.az | ⬜ |
+| **1. Lekser** | Token axını, az-AZ hərf qaydaları, Azərbaycanca xətalar | ✅ **Hazır** |
+| 2. Parser | Kod → AAC (abstrakt sintaksis ağacı) | ⬜ |
+| 3. İnterpretator | `alqor işlət` işləyir — ilk canlı proqram | ⬜ |
+| 4. Standart kitabxana | mətn, siyahı, lüğət, riyaziyyat, fayl, vaxt, json | ⬜ |
+| 5. Tip yoxlayıcı | Tədrici tiplər | ⬜ |
+| 6. Veb backend | JS/WASM çıxışı + `veb` freymvorku | ⬜ |
+| 7. Native + paketləmə | ELF, `.deb`, `.AppImage` | ⬜ |
+| 8. Desktop UI | WebKitGTK pəncərələr | ⬜ |
+| 9. Alqor Studio | Canlı önizləməli IDE | ⬜ |
+| 10. alqorpm + alqorhub | Paket ekosistemi | ⬜ |
+| 11. Sənəd saytı | alqor.az | ⬜ |
 
 ---
 
@@ -204,14 +214,29 @@ PROQRAMLASDIRMA DILI/
 
 ---
 
-## Növbəti addım
+## Növbəti addım — Mərhələ 2 (parser)
 
-Spesifikasiya hazırdır. İmplementasiyaya başlamaq üçün:
+Lekser bitdi. Növbəti: AAC (abstrakt sintaksis ağacı) və parser.
 
-1. **Rust alət zənciri** quraşdırılmalıdır (`rustup`)
-2. **WSL** (Windows-da işləyiriksə) — Linux hədəfini real test etmək üçün
-3. **Mərhələ 1** — lekser: Azərbaycan əlifba cədvəli, NFC normalizasiya,
-   `az-AZ` hərf çevrilməsi, homoqlif aşkarlanması, token axını
+| # | Fayl | Məzmun |
+|---|---|---|
+| 1 | `alqorc/alqor/aac.py` | Ağac qovşaqları |
+| 2 | `alqorc/alqor/parser.py` | Rekursiv enmə + Pratt (19 səviyyəli prioritet) |
+| 3 | `alqorc/alqor/parser_jsx.py` | Lekser rejimləri ilə JSX |
 
-Lekser və parser platformadan asılı deyil — WSL olmadan da Windows-da
-yazıla və test edilə bilər.
+Sonra: interpretator → standart kitabxana → tip yoxlayıcı → backend-lər.
+
+### Sonra lazım olacaq
+- **Rust alət zənciri** — istehsal kompilyatoru üçün (hazırda quraşdırılmayıb)
+- **WSL** — `.deb` / `.AppImage` / ELF hədəflərini real test etmək üçün
+
+Lekser, parser və interpretator platformadan asılı deyil — WSL olmadan da
+Windows-da yazıla və test edilə bilər.
+
+### Kodun açdığı spesifikasiya problemləri
+
+Lekseri yazarkən sənəddə 6 ziddiyyət tapıldı və düzəldildi — ən əsası:
+**`gətir riyaziyyatdan {kök}` işləmir**, çünki `-dan` şəkilçisi söz**ə
+yapışır** və lekser üçün `riyaziyyatdan` bir identifikatordur. Əvəzinə
+`gətir riyaziyyat.{kök}` qəbul edildi. Tam siyahı:
+[alqorc/VEZIYYET.md](alqorc/VEZIYYET.md)

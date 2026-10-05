@@ -118,7 +118,7 @@ qarşılıqlarını bir yerdə verir. Köçürmə bələdçisi kimi də istifad�
 | `gətir` | `getir` | `import` / `use` / `require` |
 | `ixrac et` | `ixrac et` | `export` / `pub` |
 | `kimi` | `kimi` | `as` |
-| `dan` / `dən` | `dan` | `from` |
+| `.{...}` (seçmə idxal) | — | `from X import {...}` |
 | `standart` | `standart` | `default` |
 | `başlanğıc` | `baslangic` | modul ilkinləşdirmə |
 | `bitiş` | `bitis` | modul təmizləmə |
@@ -131,7 +131,7 @@ qarşılıqlarını bir yerdə verir. Köçürmə bələdçisi kimi də istifad�
 | `və ya` | `ve ya` | `\|\|` | `or` |
 | `deyil` | `deyil` | `!` | `not` |
 | `içindədir` | `icindedir` | — | `in` / `contains` |
-| `içində deyil` | `icinde deyil` | — | `not in` |
+| `deyil (x içindədir s)` | — | — | `not in` |
 | `tipidir` | `tipidir` | — | `is` / `instanceof` |
 | `boşdur` | `bosdur` | — | `is null` |
 | `boş deyil` | `bos deyil` | — | `is not null` |

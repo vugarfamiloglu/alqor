@@ -310,7 +310,7 @@ məntiqƏt("doğru")       // doğru
     yaz(x.uzunluq())       // x burada `mətn` kimi tanınır
 son
 
-əgər x tipidir deyil tam onda
+əgər deyil (x tipidir tam) onda
     qaytar
 son
 // bu nöqtədən sonra x → tam

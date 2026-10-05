@@ -191,8 +191,8 @@ istifadə f = fayl.aç("a") ... son
 ```alqor
 gətir riyaziyyat
 gətir riyaziyyat kimi r
-gətir riyaziyyatdan {kök, Pİ}
-gətir riyaziyyatdan {kök kimi k}
+gətir riyaziyyat.{kök, Pİ}
+gətir riyaziyyat.{kök kimi k}
 gətir "./yerli.alqor" kimi y
 
 ixrac et funksiya f() ... son

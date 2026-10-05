@@ -293,21 +293,37 @@ def kontekstlidir(söz: str) -> bool:
 
 def kanonikləşdir(söz: str) -> tuple[str | None, bool]:
     """
-    Sözü kanonik açar söz formasına salır.
+    Bir sözü kanonik açar söz formasına salır — ASCII çevrilməsi ilə.
+
+    DİQQƏT: `QISA_ALIAS` BURADA tətbiq olunmur. Səbəb: `davam` sözü
+    dərhal `davam et`-ə çevrilsəydi, lekser çox sözlü birləşməni
+    (`davam` + `et`) artıq tapa bilməzdi — `COX_SOZLU_INDEKS` ilk SÖZƏ
+    görə indekslidir. Aliaslar birləşmə cəhdindən SONRA `tamamla()` ilə
+    tətbiq edilir.
 
     Qaytarır: (kanonik_forma | None, ascii_idi)
 
         kanonikləşdir("əgər")  → ("əgər", False)
         kanonikləşdir("eger")  → ("əgər", True)
-        kanonikləşdir("davam") → ("davam et", False)
-        kanonikləşdir("yaş")   → (None, False)      ← identifikator
+        kanonikləşdir("davam") → ("davam", False)    ← alias hələ yox
+        kanonikləşdir("yaş")   → (None, False)       ← identifikator
     """
     if söz in ACAR_SOZLER:
-        return QISA_ALIAS.get(söz, söz), False
+        return söz, False
     if söz in ASCII_ALIAS:
-        k = ASCII_ALIAS[söz]
-        return QISA_ALIAS.get(k, k), True
+        return ASCII_ALIAS[söz], True
     return None, False
+
+
+def tamamla(kanonik: str) -> str:
+    """
+    Qısa aliasları son formaya salır. Birləşmə cəhdindən SONRA çağırılır.
+
+        tamamla("davam")     → "davam et"
+        tamamla("əks halda") → "yoxsa"
+        tamamla("əgər")      → "əgər"
+    """
+    return QISA_ALIAS.get(kanonik, kanonik)
 
 
 # ── Yeni sətrin udulacağı tokenlər (Spesifikasiya § 1.11) ──────────────
@@ -321,11 +337,20 @@ DAVAM_ACAR_SOZLERI: frozenset[str] = frozenset([
 
 
 # ── Qorunmuş, lakin hələ istifadə olunmayan sözlər ─────────────────────
-#  İstifadəçi bunları identifikator kimi işlədə bilər, amma xəbərdarlıq alır.
+#  İstifadəçi bunları identifikator kimi işlədə bilər, amma xəbərdarlıq alır
+#  (ALQ-L016). Yalnız müstəqil ad mövqeyində — `veb.makro` kimi üzv
+#  adlarında xəbərdarlıq verilmir.
+#
+#  DİQQƏT: bu siyahıya yalnız HƏQİQƏTƏN açar söz ola biləcək sözlər
+#  düşməlidir. Standart kitabxanada işlənən adi sözlər (`şablon`, `qeyd`,
+#  `kanal`, `icazə` …) BURAYA SALINMAMALIDIR — onlar `veb.şablon()`,
+#  `Kanal[tam]` kimi mövcud API-lərdə var.
 
 EHTIYAT: frozenset[str] = frozenset([
-    "aktyor", "kanal", "sahib", "ömür", "makro", "şablon",
-    "sabitdir", "təsir", "bölgə", "nəzarət", "icazə", "qeyd",
+    "aktyor",      # aktyor modeli (gələcək paralellik modeli)
+    "ömür",        # ömür parametrləri (lifetime)
+    "makro",       # kompilyasiya vaxtı makrolar
+    "təsir",       # effekt sistemi
 ])
 
 

@@ -226,11 +226,11 @@ dəyişən mütləq = istifadəçi!.ad
 // Üzvlük
 əgər 3 içindədir [1,2,3] onda ... son
 əgər "a" içindədir "salam" onda ... son
-əgər "x" içində deyil lüğət onda ... son
+əgər deyil ("x" içindədir lüğət) onda ... son
 
 // Tip yoxlaması
 əgər x tipidir mətn onda ... son
-əgər x tipidir deyil tam onda ... son
+əgər deyil (x tipidir tam) onda ... son
 
 // Tip çevrilməsi
 dəyişən n = "42" kimi tam
