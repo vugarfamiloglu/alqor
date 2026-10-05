@@ -40,11 +40,11 @@ komponent Sayğac
         qaytar <div sinif="sayğac">
             <h1>{özü.say}</h1>
             <div sinif="düymələr">
-                <button klik={özü.azalt}>−</button>
+                <button klik={özü.azalt}>-</button>
                 <button klik={özü.artır}>+</button>
                 <button klik={özü.sıfırla}>Sıfırla</button>
             </div>
-            <p>Addım sayı: {uzunluq(özü.tarixçə)} · Cəmi: {özü.cəmi}</p>
+            <p>Addım sayı: {uzunluq(özü.tarixçə)} | Cəmi: {özü.cəmi}</p>
         </div>
     son
 son

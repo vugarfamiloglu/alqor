@@ -647,7 +647,7 @@ yaz(r.Pİ)
 
 Və ya:
 ```alqor
-gətir "./riyazi.alqor"dan {kvadrat, Pİ}
+gətir "./riyazi.alqor".{kvadrat, Pİ}
 
 yaz(kvadrat(5))
 ```
@@ -659,7 +659,7 @@ yaz(kvadrat(5))
 ### `sınaq/riyazi_sınaq.alqor`
 ```alqor
 gətir test
-gətir "../mənbə/riyazi.alqor"dan {kvadrat}
+gətir "../mənbə/riyazi.alqor".{kvadrat}
 
 @sınaq
 funksiya kvadratDüzgündür()

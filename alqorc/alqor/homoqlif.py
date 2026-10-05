@@ -80,27 +80,12 @@ EVEZLEMELER: dict[str, str] = {
     # ── "ı" hərfinə oxşayanlar ──────────────────────────────────
     "ɩ": "ı",   # ɩ  LATIN SMALL LETTER IOTA
     "ι": "ı",   # ι  GREEK SMALL LETTER IOTA
-    "ı": "ı",   # ı  (özü — dəyişiklik yoxdur, sənədləşmə üçün)
 
-    # ── Türk/digər latın variantları ────────────────────────────
-    "ș": "ş",   # ș? ehtiyat
-    "ţ": "ş",   # ţ  LATIN SMALL LETTER T WITH CEDILLA (səhv yazılış)
-    "ț": "ş",   # ț
-
-    # ── Dırnaq və tire işarələri (redaktorun avtomatik dəyişdirdiyi) ──
-    "‘": "'",   # ‘  LEFT SINGLE QUOTATION MARK
-    "’": "'",   # ’  RIGHT SINGLE QUOTATION MARK
-    "‚": "'",   # ‚
-    "“": '"',   # “  LEFT DOUBLE QUOTATION MARK
-    "”": '"',   # ”  RIGHT DOUBLE QUOTATION MARK
-    "„": '"',   # „
-    "«": '"',   # «
-    "»": '"',   # »
-    "–": "-",   # –  EN DASH
-    "—": "-",   # —  EM DASH
-    "−": "-",   # −  MINUS SIGN
-    "×": "*",   # ×  MULTIPLICATION SIGN
-    "÷": "/",   # ÷  DIVISION SIGN
+    # ── Rumın/türk latın variantları ────────────────────────────
+    "ș": "ş",   # ș  LATIN SMALL LETTER S WITH COMMA BELOW
+    "Ș": "Ş",   # Ș
+    "ţ": "t",   # ţ  LATIN SMALL LETTER T WITH CEDILLA
+    "ț": "t",   # ț  LATIN SMALL LETTER T WITH COMMA BELOW
 
     # ── Boşluq variantları ──────────────────────────────────────
     " ": " ",   # NO-BREAK SPACE
@@ -113,9 +98,23 @@ EVEZLEMELER: dict[str, str] = {
     " ": " ",   # OGHAM SPACE MARK
 }
 
-# Tam genişlikli latın hərfləri və rəqəmləri (ＡＢＣ → ABC)
-for _k in range(0xFF01, 0xFF5F):
-    EVEZLEMELER.setdefault(chr(_k), chr(_k - 0xFEE0))
+# Tam genişlikli latın HƏRFLƏRİ və RƏQƏMLƏRİ (ＡＢＣ → ABC, ０１２ → 012).
+# Durğu işarələri qəsdən daxil edilmir — onlar mətn literalında qanuni
+# məzmun ola bilər.
+for _aralıq in ((0xFF10, 0xFF19), (0xFF21, 0xFF3A), (0xFF41, 0xFF5A)):
+    for _k in range(_aralıq[0], _aralıq[1] + 1):
+        EVEZLEMELER.setdefault(chr(_k), chr(_k - 0xFEE0))
+
+# ── QƏSDƏN DAXİL EDİLMƏYƏNLƏR ──────────────────────────────────────────
+#  Bunlar homoqlif DEYİL, qanuni durğu işarələridir və şərhlərdə,
+#  mətn literallarında normal istifadə olunur:
+#
+#     – —  (en/em dash)     "// Nümunə 1 — Ən sadə proqram"  ← düzgündür
+#     " " ' '               mətn daxilində sitat
+#     × ÷                   riyazi mətn
+#
+#  Kod mövqeyində görünsələr, lekser onları ALQ-L002 kimi bildirir —
+#  bu, səssiz "düzəliş"dən daha dürüstdür.
 
 # ───────────────────────────────────────────────────────────────────────
 #  Silinəcək görünməz simvollar

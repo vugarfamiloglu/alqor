@@ -399,17 +399,42 @@ jobs:
 | Dəyişən | Təyinatı |
 |---|---|
 | `ALQOR_YOL` | Standart kitabxana yolu |
-| `ALQOR_PAKETLƏR` | Paket keşi qovluğu |
-| `ALQOR_HƏDƏF` | Standart kompilyasiya hədəfi |
+| `ALQOR_PAKETLER` | Paket keşi qovluğu |
+| `ALQOR_HEDEF` | Standart kompilyasiya hədəfi |
 | `ALQOR_JURNAL` | Jurnal səviyyəsi |
-| `ALQOR_RƏNG` | `həmişə` / `heçvaxt` / `avto` |
-| `ALQOR_DİL` | Mesaj dili (`az` standart, `en` ikinci) |
+| `ALQOR_RENG` | `həmişə` / `heçvaxt` / `avto` |
+| `ALQOR_DIL` | Mesaj dili (`az` standart, `en` ikinci) |
 | `ALQOR_SAP` | Kompilyator sap sayı |
 | `ALQORHUB_TOKEN` | Paket yayımlama tokeni |
 
+> **Niyə adlar ASCII-dir?**
+> `ALQOR_RƏNG` kimi ad shell-də təyin oluna bilmir — POSIX mühit dəyişəni
+> adları yalnız `[A-Za-z_][A-Za-z0-9_]*` ola bilər, Windows `set` əmri isə
+> UTF-8 adları ümumiyyətlə qəbul etmir. Dəyişən **adları** ASCII-dir,
+> **dəyərləri** isə Azərbaycan dilindədir (`ALQOR_RENG=həmişə`).
+
 ---
 
-## 13.14 Çıxış kodları
+## 13.15 Konsol kodlaşdırması (vacib)
+
+Alqor alətləri işə düşərkən standart çıxışı məcburi **UTF-8**-ə keçirir.
+
+Səbəb: Windows-da Python/`cmd.exe`/PowerShell standart çıxış kodlaşdırması
+sistemin kod səhifəsidir (məs. `cp1251`, `cp857`). Belə olanda alət öz
+Azərbaycan dilindəki xəta mesajını **çap edə bilmir** və `UnicodeEncodeError`
+ilə dayanır.
+
+| Platforma | Tədbir |
+|---|---|
+| Linux / macOS | `LANG`/`LC_ALL` UTF-8 deyilsə, `C.UTF-8` qəbul edilir |
+| Windows | `SetConsoleOutputCP(65001)` + axınlar UTF-8-ə keçirilir |
+| Python etalonu | `sys.stdout.reconfigure(encoding="utf-8")` |
+
+`ALQOR_KODLASMA=sistem` ilə bu davranış söndürülə bilər (tövsiyə olunmur).
+
+---
+
+## 13.16 Çıxış kodları
 
 | Kod | Mənası |
 |---|---|

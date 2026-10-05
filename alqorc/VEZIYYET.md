@@ -3,23 +3,51 @@
 > Etalon implementasiya, **Python 3.12**. Sonra Rust-a köçürüləcək.
 > Son yenilənmə: 5 oktyabr 2026
 
+**Mərhələ 1 (lekser) BİTDİ.** 135 sınaq, 7 nümunə proqram — hamısı keçir.
+
 ---
 
-## Hazır olan
+## Fayl quruluşu
 
-| Fayl | Nə edir | Vəziyyət |
-|---|---|---|
-| `alqor/__init__.py` | Paket | ✅ |
-| `alqor/elifba.py` | 32 hərf, **az-AZ böyük/kiçik qaydaları**, əlifba sırası (collation), ahəng qanunu köməkçiləri, latınlaşdırma | ✅ sınaqdan keçdi |
-| `alqor/homoqlif.py` | ~120 oxşar simvolun aşkarlanması və düzəldilməsi (kiril, yunan, `ä`→`ə`, görünməz simvollar, ağıllı dırnaqlar) | ✅ sınaqdan keçdi |
-| `alqor/acar_sozler.py` | **105 sərt açar söz**, 12 kontekstli söz, 10 çox sözlü birləşmə, 60 ASCII əvəzləyici (avtomatik yaradılır) | ✅ sınaqdan keçdi |
+```
+alqorc/
+├── alqorc.py            CLI
+├── sina.py              sınaq işlədicisi
+├── alqor/
+│   ├── elifba.py         az-AZ hərf qaydaları, əlifba sırası, ahəng qanunu
+│   ├── homoqlif.py       oxşar simvolların aşkarlanması
+│   ├── acar_sozler.py    açar söz cədvəli
+│   ├── token.py          Token, Yer, şablon mətn parçaları
+│   ├── xeta.py           Diaqnostika, XətaToplayıcı, çərçivəli hesabat
+│   ├── menbe.py          UTF-8, NFC, sətir/sütun xəritəsi
+│   └── lekser.py         lekser
+└── sinaq/
+    ├── test_elifba.py    (31 sınaq)
+    ├── test_menbe.py     (34 sınaq)
+    └── test_lekser.py    (70 sınaq)
+```
 
-### Təsdiqlənmiş nəticələr
+## İşə salmaq
+
+```bash
+cd alqorc
+
+python sina.py --nümunələr              # bütün sınaqlar + nümunələr
+python alqorc.py tokenlər ../numuneler/01-salam.alqor
+python alqorc.py yoxla ../numuneler
+python alqorc.py hərf "ışıq İmran"
+python alqorc.py sırala zəfər ağac çay ışıq ilk
+```
+
+---
+
+## Təsdiqlənmiş nəticələr
 
 ```
 böyüyə("ışıq") → "IŞIQ"      (Python standartı: "IŞIK"  ✖)
 böyüyə("i")    → "İ"         (Python standartı: "I"     ✖)
 kiçiyə("I")    → "ı"         (Python standartı: "i"     ✖)
+böyüyə("imran")→ "İMRAN"     (Python standartı: "IMRAN" ✖)
 
 Əlifba sırası:
   Alqor  : ağac, çay, ev, əlif, göl, ışıq, ilk, şam, zəfər   ✓
@@ -28,139 +56,169 @@ kiçiyə("I")    → "ı"         (Python standartı: "i"     ✖)
 kanonikləşdir("eger")        → ("əgər", ASCII idi)
 kanonikləşdir("ne qeder ki") → ("nə qədər ki", ASCII idi)
 kanonikləşdir("yas")         → None   ← identifikatorda çevrilmə YOXDUR ✓
+
+7 nümunə proqram: 1658 token, xəta yoxdur
 ```
 
 ---
 
-## Növbəti addımlar (sıra ilə)
-
-| # | Fayl | Məzmun |
-|---|---|---|
-| 1 | `alqor/menbe.py` | `Mənbə` sinfi: UTF-8 oxuma (ALQ-L001), BOM, **NFC normalizasiya**, CRLF→LF, homoqlif düzəlişi, sətir/sütun xəritəsi |
-| 2 | `alqor/xeta.py` | `Diaqnostika`, `XətaToplayıcı`, çərçivəli hesabat çapı (`┌─ │ ^^^ = kömək:`) |
-| 3 | `alqor/token.py` | `Növ` enum, `Token`, `Yer`, `MətnParçası` / `KodParçası` (şablon mətn) |
-| 4 | `alqor/lekser.py` | Əsas lekser |
-| 5 | `alqor.py` | CLI: `tokenler`, `yoxla`, `herf`, `versiya` |
-| 6 | `sinaq/` | `unittest` — xarici asılılıq yoxdur |
-
----
-
-## ⚠ MÜTLƏQ: stdout kodlaşdırması
-
-Bu maşında Python-un standart çıxışı **cp1251**-dir və Azərbaycan hərflərini
-çap edə bilmir (`UnicodeEncodeError`). Hər giriş nöqtəsinin **ilk sətri**:
-
-```python
-import sys
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-```
-
-Bu olmadan dil öz xəta mesajını çap edə bilmir. Rust versiyasında da
-Windows konsolu üçün eyni problem var (`SetConsoleOutputCP(65001)`).
-
----
-
-## Lekser üçün artıq verilmiş qərarlar
+## Lekserin verdiyi qərarlar (həyata keçirilib)
 
 ### Çox sözlü açar sözlər lekserdə birləşdirilir
-Maksimal-udma ilə bir `ACAR` tokenə çevrilir, kanonik forma boşluqla saxlanır:
-`nə qədər ki`, `digər hallarda`, `yoxsa əgər`, `əks halda`, `davam et`,
-`cəhd et`, `ixrac et`, `əvəz et`, `və ya`, `boş deyil`.
-Cədvəl: `acar_sozler.COX_SOZLU_INDEKS` (ilk sözə görə indeksli).
+Maksimal udma ilə bir `ACAR` tokenə çevrilir, kanonik forma boşluqla
+saxlanılır: `nə qədər ki`, `digər hallarda`, `yoxsa əgər`, `əks halda`
+(→ `yoxsa`), `davam et`, `cəhd et`, `ixrac et`, `əvəz et`, `və ya`,
+`boş deyil`.
 
-### Yeni sətir udulması (Spes. § 1.11)
-`SETIR_SONU` tokeni **yalnız** mötərizə dərinliyi 0 olanda emissiya olunur.
-Əlavə olaraq, son emissiya olunmuş token operatordursa (`)`, `]`, `}`,
-`!`, `++`, `--`, `?` istisna) və ya `acar_sozler.DAVAM_ACAR_SOZLERI`
-dəstindədirsə, sətir sonu udulur.
-Parser `SETIR_SONU` yığınlarını boş ifadə kimi atlayır.
+Birləşmə yalnız **eyni sətirdə** baş verir. Bu, bu konstruksiyanın
+düzgün oxunmasını təmin edir:
+```alqor
+yoxsa                    ← `yoxsa` (else)
+    əgər x onda ... son  ← ayrıca `əgər`
+```
+
+**Vacib sıra:** `QISA_ALIAS` (`davam` → `davam et`) birləşmə cəhdindən
+**SONRA** tətbiq olunur (`AS.tamamla()`). Əks halda `davam` dərhal
+`davam et`-ə çevrilir və lekser `davam` + `et` birləşməsini artıq tapa
+bilmir (indeks ilk SÖZƏ görədir).
+
+### Yeni sətir udulması
+`SETIR_SONU` emissiya olunmur, əgər:
+- mötərizə dərinliyi > 0, və ya
+- son token operatordur (`)`, `]`, `}`, `!`, `++`, `--`, `?` istisna), və ya
+- son token `DAVAM_ACAR_SOZLERI` dəstindədir (`və`, `və ya`, `kimi`,
+  `onda`, `üçün`, `içində`, `miras` …)
+
+Fayl sonunda SETIR_SONU **qəsdən** emissiya olunur — son ifadə də bitməlidir.
 
 ### Şablon mətnlər rekursiv leksə edilir
 `"Salam, {ad}!"` → bir `METN` tokeni, `parçalar` sahəsində
-`[MətnParçası("Salam, "), KodParçası(tokenlər=[AD "ad"], format=None),
-MətnParçası("!")]`. Lekser `{` görəndə özünü rekursiv çağırır və uyğun `}`-a
-qədər oxuyur. Format spesifikatoru (`{x:.2}`) `:`-dan sonra xam mətn kimi
-saxlanır.
+`[MətnParçası("Salam, "), KodParçası([AD ad]), MətnParçası("!")]`.
+İnterpolyasiya **yerində** leksə olunur, ona görə mövqelər düzgündür.
+Format spesifikatoru (`{q:.2}`) `:`-dan sonra xam mətn kimi saxlanılır.
 
-### `oxu` və `yaz` açar söz DEYİL
+### `oxu`, `yaz` və digərləri açar söz DEYİL
 `xassə sahə: onluq  oxu ... son` konstruksiyası onları tələb edir, amma
-`yaz("salam")` funksiya çağırışıdır. Həll: **kontekstli söz** — lekser `AD`
-buraxır, parser mövqeyə görə tanıyır. Eyni qayda: `vəziyyət`, `hesablanan`,
-`əməl`, `hadisə`, `göstər`, `sınaq`, `ölç`, `sil`, `panika`, `eynidir`.
+`yaz("salam")` funksiya çağırışıdır. Həll: **kontekstli söz** — lekser
+`AD` buraxır, parser mövqeyə görə tanıyır. Eyni qayda: `vəziyyət`,
+`hesablanan`, `əməl`, `hadisə`, `göstər`, `sınaq`, `ölç`, `sil`,
+`panika`, `eynidir`.
+
+### Ehtiyat sözlər yalnız müstəqil mövqedə xəbərdarlıq verir
+`veb.makro(5)` — xəbərdarlıq yoxdur (`.`-dan sonra ad obyektin üzvüdür,
+dilin açar sözü ola bilməz). `dəyişən makro = 5` — ALQ-L016.
+
+### Diapazon və onluq ədəd qarışmır
+`1..5` → `TAM(1) OP(..) TAM(5)`. Nöqtədən sonra **mütləq rəqəm** olmalıdır
+ki, kəsr hissəsi sayılsın. Bu sayədə `5.mətnƏt()` də işləyir.
 
 ---
 
-## 🔴 İmplementasiyanın açdığı SPESİFİKASİYA PROBLEMLƏRİ
+## 🔴 Kodun açdığı problemlər — HƏLL OLUNDU
 
-Bunlar sənədlərdə hələ düzəldilməyib — koda başlamazdan əvvəl qərar lazımdır.
+### 1. `gətir riyaziyyatdan {kök}` işləmirdi ✅
 
-### 1. `gətir ...dan` — şəkilçi token ola bilmir ❗ciddi
+`riyaziyyatdan` **bir identifikator tokenidir** — `-dan` şəkilçisini lekser
+ayıra bilməz (`meydan`, `qazan`, `vətən` adlı modullar sınardı).
 
-Spesifikasiya § 8.3 belə yazır:
+**Həll:** nöqtə-mötərizə sintaksisi
 ```alqor
-gətir riyaziyyatdan {Pİ, kök}
+gətir riyaziyyat                      // bütöv
+gətir riyaziyyat kimi r               // ləqəb
+gətir riyaziyyat.{Pİ, kök}            // seçmə
+gətir riyaziyyat.{kök kimi k}         // ləqəbli seçmə
+gətir riyaziyyat.*                    // hamısı
+gətir "./riyazi.alqor".{kvadrat}      // yerli fayl
 ```
-Amma `riyaziyyatdan` **bir identifikator tokenidir** — lekser `-dan`
-şəkilçisini ayıra bilməz. Ayırmağa çalışsa, `meydan` adlı modul sınar.
-EBNF qrammatikası isə ayrı `"dan"` tokeni gözləyir — ziddiyyət.
+Dəyişdirilib: `spesifikasiya/08`, `qrammatika.ebnf`, `beledci/01`,
+`beledci/05`, `beledci/06`, `acar-sozler.md`. `dan`/`dən` açar söz
+siyahısından silinib.
 
-**Təklif olunan həll** (nöqtə-mötərizə seçimi):
+### 2. `içində deyil` və `tipidir deyil` toqquşurdu ✅
+
+`içində` for-each bağlayıcısıdır. **Həll:** ikisi də silindi, əvəzinə
 ```alqor
-gətir riyaziyyat                      // bütöv modul
-gətir riyaziyyat kimi r               // ləqəblə
-gətir riyaziyyat.{Pİ, kök}            // seçmə        ← YENİ
-gətir riyaziyyat.{kök kimi k}         // ləqəbli seçmə ← YENİ
-gətir riyaziyyat.*                    // hamısı       ← YENİ
-gətir "./riyazi.alqor".{kvadrat}      // yerli fayldan ← YENİ
+əgər deyil (x içindədir siyahı) onda ... son
+əgər deyil (x tipidir mətn) onda ... son
 ```
-Qısa, qeyri-ikimənalı, klaviatura üçün rahat, şəkilçi yoxdur.
-Dəyişməli: `spesifikasiya/08-MODULLAR-VE-PAKETLER.md`, `qrammatika.ebnf`,
-`beledci/01-DIL-DERSLIYI.md` (Dərs 14), `acar_sozler.py`-dan `dan`/`dən` silinib.
+`boşdur` / `boş deyil` cütü saxlanıldı.
+Dəyişdirilib: `spesifikasiya/01` § 1.6, `02` § 2.9, `03` § 3.3.7,
+`acar-sozler.md`, `qrammatika.ebnf`.
 
-### 2. `içində deyil` və `tipidir deyil` toqquşur
+### 3. Mühit dəyişənlərində Azərbaycan hərfləri işləmir ✅
 
-`içində` for-each bağlayıcısıdır (`hər x üçün s içində`). `içində deyil`
-çox sözlü operator kimi birləşdirilsə, parser üçün ikimənalılıq yaranır.
+POSIX mühit dəyişəni adları yalnız `[A-Za-z_][A-Za-z0-9_]*` ola bilər.
+**Həll:** adlar ASCII (`ALQOR_RENG`, `ALQOR_HEDEF`, `ALQOR_DIL`, …),
+dəyərlər Azərbaycan dilində (`ALQOR_RENG=həmişə`).
+Dəyişdirilib: `spesifikasiya/13` § 13.13.
 
-**Həll (artıq tətbiq olunub):** ikisi də spesifikasiyadan çıxarılır, əvəzinə
+### 4. Konsol kodlaşdırması ✅
+
+Windows-da standart çıxış `cp1251`-dir və Azərbaycan hərflərini çap edə
+bilmir — alət öz xəta mesajını göstərə bilmirdi (`UnicodeEncodeError`).
+**Həll:** hər giriş nöqtəsi axınları UTF-8-ə keçirir.
+Spesifikasiyaya yeni bölmə əlavə olundu: `13` § 13.15.
+
+### 5. `şablon` ehtiyat sözü standart kitabxana ilə toqquşurdu ✅
+
+`veb.şablon()` spesifikasiyada var, amma `şablon` ehtiyat siyahısında idi.
+**Həll:** ehtiyat siyahısı 4 sözə qədər daraldıldı (`aktyor`, `ömür`,
+`makro`, `təsir`) + üzv mövqeyində xəbərdarlıq verilmir.
+
+### 6. Tire (`—`) səhvən homoqlif sayılırdı ✅
+
+`// Nümunə 1 — Ən sadə proqram` sətrində `—` avtomatik `-`-ə çevrilirdi.
+**Həll:** durğu işarələri (en/em dash, ağıllı dırnaqlar, `×`, `÷`)
+homoqlif cədvəlindən çıxarıldı. Onlar şərhlərdə və mətn literallarında
+qanunidir; kod mövqeyində görünsələr `ALQ-L002` verilir — bu, səssiz
+"düzəliş"dən daha dürüstdür. Tam genişlikli çevrilmə yalnız hərf və
+rəqəmlərə tətbiq olunur.
+
+---
+
+## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
+
+### 1. JSX mətn məzmunu kontekstsiz leksə oluna bilmir ❗
+
 ```alqor
-əgər deyil (x içindədir s) onda ... son
-əgər deyil (x tipidir Mətn) onda ... son
+<button klik={özü.azalt}>−</button>
 ```
-`boş deyil` saxlanılır — toqquşması yoxdur və təbii oxunur.
-Dəyişməli: `spesifikasiya/01` § 1.6, `spesifikasiya/02` § 2.9, `03` § 3.3.7.
+`−` (MINUS SIGN) JSX mətn uşağıdır — orada istənilən simvol qanunidir.
+Amma lekser kontekstsizdir və `ALQ-L002` verir.
 
-### 3. Mühit dəyişənlərində Azərbaycan hərfləri işləmir
+**Həll yolu (Mərhələ 2):** TypeScript skanerindəki kimi **lekser rejimləri**.
+Parser `<Ad ...>` açılışını gördükdən sonra lekseri `JSX_MƏTN` rejiminə
+keçirir; `<` və `{` görənə qədər hər şey xam mətndir. Bu, parser ilə
+sıx əlaqə tələb edir, ona görə parser yazılarkən həll olunacaq.
 
-`ALQOR_RƏNG`, `ALQOR_HƏDƏF` kimi adlar shell-də (xüsusən Windows-da) təyin
-oluna bilmir. **Həll:** hamısı ASCII olmalıdır —
-`ALQOR_RENG`, `ALQOR_HEDEF`, `ALQOR_YOL`, `ALQOR_PAKETLER`, `ALQOR_JURNAL`,
-`ALQOR_DIL`, `ALQOR_SAP`.
-Dəyişməli: `spesifikasiya/13-ALET-ZENCIRI.md` § 13.13.
+Müvəqqəti: `numuneler/06-desktop.alqor`-da `−` → `-`, `·` → `|` edildi.
 
-### 4. `hər x üçün siyahı içində` — söz sırası hələ açıqdır
+### 2. `hər x üçün siyahı içində` — söz sırası
 
-Qrammatik cəhətdən tam təbii deyil (təbii forma "siyahıdakı hər x üçün"-dür,
-amma `-dakı` şəkilçisi açar söz ola bilmir — bax problem №1).
+Qrammatik cəhətdən tam təbii deyil (təbii forma "siyahıdakı hər x üçün",
+amma `-dakı` şəkilçisi açar söz ola bilmir — problem №1 ilə eyni səbəb).
 Alternativ: `siyahı içində hər x üçün`.
-Parser yazılanda ikisi də sınanıb qərar verilməlidir.
+Lekser hər ikisini dəstəkləyir (ikisi də sadəcə token ardıcıllığıdır) —
+**qərar parser yazılarkən verilməlidir.**
 
-### 5. Kiçik dəqiqləşdirmələr
+### 3. `5.` yazılışı
 
-- `hal 1 → ...` oxu: lekser həm `→` (U+2192), həm `->` qəbul edir; parser
-  `hal` kontekstində ikisini də eyni sayır.
-- Tam ədəd diapazonu: 64 bit işarəli, aşılarsa `ALQ-L007`.
-- NFC normalizasiyası və homoqlif düzəlişi mövqeləri dəyişə bilər
-  (görünməz simvol silinəndə). Xəta hesabatı **düzəldilmiş** mətnə görə
-  verilir — ALQ-L014 xəbərdarlığı istifadəçini bundan xəbərdar edir.
+Spesifikasiya § 1.9.2 bunu `ALQ-L006` xətası adlandırır, lekser isə
+`TAM(5)` + `OP(.)` buraxır (çünki `5.mətnƏt()` və `nöqtə.0` işləməlidir).
+Parser `.`-dan sonra ad və ya rəqəm gözləyəcək və öz xətasını verəcək.
+Spesifikasiyanı buna uyğunlaşdırmaq lazımdır.
 
 ---
 
-## İşə salmaq
+## Növbəti addımlar — Mərhələ 2 (parser)
 
-```bash
-cd alqorc
-python -c "import sys; sys.stdout.reconfigure(encoding='utf-8'); \
-  from alqor import elifba as E; print(E.böyüyə('ışıq'), E.kiçiyə('İ'))"
-```
+| # | Fayl | Məzmun |
+|---|---|---|
+| 1 | `alqor/aac.py` | AAC (abstrakt sintaksis ağacı) qovşaqları |
+| 2 | `alqor/parser.py` | Rekursiv enmə + Pratt (ifadələr üçün) |
+| 3 | `alqor/parser_jsx.py` | Lekser rejimləri ilə JSX |
+| 4 | `sinaq/test_parser.py` | |
+| 5 | `alqorc.py` | `aac` əmri — ağacı göstərmək |
+
+Prioritet sıra: ifadələr → ifadə prioriteti (19 səviyyə, `spesifikasiya/03`
+§ 3.4) → cümlələr → elanlar → JSX.

@@ -171,7 +171,7 @@ et         keç
 
 ### Funksiya və axın
 ```
-qaytar     gətir      ixrac      kimi       dan
+qaytar     gətir      ixrac      kimi
 asinxron   gözlə      paralel    gecikdir   generator
 ver
 ```
@@ -212,20 +212,34 @@ sınaq      iddia      sil        ölç
 ```
 
 ### Çox sözlü açar söz birləşmələri
-Bunlar leksik səviyyədə iki token, parserdə bir konstruksiyadır:
 
-| Birləşmə | Mənası |
-|---|---|
-| `yoxsa əgər` | else if |
-| `əks halda` | else (uzun forma) |
-| `nə qədər ki` | while |
-| `davam et` | continue |
-| `cəhd et` | try |
-| `digər hallarda` | default case |
-| `əvəz et` | override |
-| `və ya` | logical or |
-| `içində deyil` | not in |
-| `boş deyil` | not null |
+Bunlar **lekser səviyyəsində bir tokenə birləşdirilir** (maksimal udma).
+Kanonik forma tək boşluqla saxlanılır. Birləşmə yalnız **eyni sətirdə**
+baş verir — yeni sətir onu kəsir (bu, `yoxsa` + yeni sətir + `əgər`
+konstruksiyasının `yoxsa əgər` kimi oxunmasının qarşısını alır).
+
+| Birləşmə | Mənası | Kanonik nəticə |
+|---|---|---|
+| `yoxsa əgər` | else if | `yoxsa əgər` |
+| `əks halda` | else (uzun forma) | `yoxsa` ← alias |
+| `nə qədər ki` | while | `nə qədər ki` |
+| `davam et` | continue | `davam et` |
+| `cəhd et` | try | `cəhd et` |
+| `digər hallarda` | default case | `digər hallarda` |
+| `ixrac et` | export | `ixrac et` |
+| `əvəz et` | override | `əvəz et` |
+| `və ya` | logical or | `və ya` |
+| `boş deyil` | is not null | `boş deyil` |
+
+> **`içində deyil` və `tipidir deyil` YOXDUR.**
+> `içində` for-each bağlayıcısıdır (`hər x üçün s içində`), ona görə
+> `içində deyil` birləşməsi parser üçün ikimənalılıq yaradırdı.
+> İnkar üçün mötərizə ilə `deyil` işlənir:
+> ```alqor
+> əgər deyil (x içindədir siyahı) onda ... son
+> əgər deyil (x tipidir mətn) onda ... son
+> ```
+> `boşdur` / `boş deyil` cütü saxlanılır — onların toqquşması yoxdur.
 
 ---
 

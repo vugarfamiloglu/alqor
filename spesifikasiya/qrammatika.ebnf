@@ -97,10 +97,13 @@ blokNövü        = "əgər" | "funksiya" | "sinif" | "metod" | "seç"
 (* -------------------  İdxal / İxrac  ---------------------------- *)
 
 idxalElanı      = "gətir" , idxalHədəfi ;
+(* Qeyd: Azərbaycan dilinin `-dan` şəkilçisi AYRI token ola bilməz —
+   `riyaziyyatdan` bir identifikatordur və lekser şəkilçini ayıra bilməz
+   (`meydan` adlı modul sınardı). Ona görə seçmə idxal nöqtə-mötərizə
+   sintaksisi ilə yazılır: `gətir riyaziyyat.{kök, Pİ}` *)
 idxalHədəfi     = modulYolu , [ "kimi" , identifikator ]
-                | modulYolu , "dan" , "{" , idxalSiyahısı , "}"
-                | modulYolu , "dan" , "*"
-                | "{" , idxalSiyahısı , "}" , modulYolu , "dan" ;
+                | modulYolu , "." , "{" , idxalSiyahısı , "}"
+                | modulYolu , "." , "*" ;
 idxalSiyahısı   = idxalElementi , { "," , idxalElementi } ;
 idxalElementi   = identifikator , [ "kimi" , identifikator ] ;
 modulYolu       = identifikator , { "." , identifikator }
@@ -392,8 +395,8 @@ məntiqiYa       = məntiqiVə , { ( "və" , "ya" | "||" ) , məntiqiVə } ;
 məntiqiVə       = bərabərlik , { ( "və" | "&&" ) , bərabərlik } ;
 bərabərlik      = müqayisə , { ( "==" | "!=" ) , müqayisə } ;
 müqayisə        = diapazon , { ( "<" | ">" | "<=" | ">=" | "<=>"
-                              | "içindədir" | "içində" , "deyil"
-                              | "tipidir" | "tipidir" , "deyil" ) , diapazon } ;
+                              | "içindədir" | "tipidir" ) , diapazon }
+                | diapazon , [ "boş" , "deyil" | "boşdur" ] ;
 diapazon        = bitYa , [ ( ".." | "..<" ) , bitYa , [ "addım" , bitYa ] ] ;
 bitYa           = bitXor , { "|" , bitXor } ;
 bitXor          = bitVə , { "^" , bitVə } ;

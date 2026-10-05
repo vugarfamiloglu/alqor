@@ -66,7 +66,7 @@ yaz(r.Pİ)
 
 ### Seçmə idxal
 ```alqor
-gətir riyaziyyatdan {Pİ, kök, qüvvət}
+gətir riyaziyyat.{Pİ, kök, qüvvət}
 
 yaz(Pİ)
 yaz(kök(16))
@@ -74,17 +74,28 @@ yaz(kök(16))
 
 ### Ləqəbli seçmə idxal
 ```alqor
-gətir riyaziyyatdan {kök kimi kvadratKök, Pİ kimi PI}
+gətir riyaziyyat.{kök kimi kvadratKök, Pİ kimi PI}
 ```
 
 ### Hamısını idxal (tövsiyə olunmur)
 ```alqor
-gətir riyaziyyatdan *
+gətir riyaziyyat.*
 ```
+
+> **Niyə `riyaziyyatdan` deyil?**
+> Azərbaycan dilinin təbii forması `riyaziyyatdan gətir {kök}` olardı.
+> Amma `-dan` şəkilçisi söz**ə yapışır** və lekser üçün `riyaziyyatdan`
+> **bir identifikator tokenidir** — şəkilçini ayırmaq mümkün deyil.
+> Ayırmağa çalışsaq, `meydan`, `qazan`, `vətən` kimi adlı modullar sınar.
+>
+> Ona görə seçmə idxal **nöqtə-mötərizə** sintaksisi ilə yazılır:
+> `gətir riyaziyyat.{kök}`. Qısa, qeyri-ikimənalı, şəkilçisiz.
+> Bu, dilin aqqlütinativ təbiətinin kompilyator dizaynına birbaşa
+> təsir etdiyi yerlərdən biridir.
 
 ### Standart idxal
 ```alqor
-gətir hesabla riyazidən          // `ixrac et standart` elementi
+gətir riyazi.standart kimi hesabla   // `ixrac et standart` elementi
 ```
 
 ### Yerli fayldan
@@ -345,12 +356,12 @@ Tapılmasa: `ALQ-M001`.
 ## 8.11 Ad münaqişələri
 
 ```alqor
-gətir riyaziyyatdan {kök}
-gətir həndəsədən {kök}              // ✖ ALQ-M006 ad münaqişəsi
+gətir riyaziyyat.{kök}
+gətir həndəsə.{kök}              // ✖ ALQ-M006 ad münaqişəsi
 
 // Həlli:
-gətir riyaziyyatdan {kök kimi riyaziKök}
-gətir həndəsədən {kök kimi həndəsiKök}
+gətir riyaziyyat.{kök kimi riyaziKök}
+gətir həndəsə.{kök kimi həndəsiKök}
 
 // Və ya:
 gətir riyaziyyat

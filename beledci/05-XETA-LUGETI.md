@@ -263,10 +263,10 @@ a.alqor → b.alqor → a.alqor
 
 ### ✖ ALQ-M006 — İdxalda ad münaqişəsi
 ```alqor
-gətir riyaziyyatdan {kök}
-gətir həndəsədən {kök}                   // ✖
+gətir riyaziyyat.{kök}
+gətir həndəsə.{kök}                   // ✖
 
-gətir həndəsədən {kök kimi həndəsiKök}   // ✓
+gətir həndəsə.{kök kimi həndəsiKök}   // ✓
 ```
 
 ---
