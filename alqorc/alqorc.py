@@ -234,6 +234,15 @@ def əmr_sırala(arqumentlər: list[str]) -> int:
     return 0
 
 
+def əmr_söhbət(arqumentlər: list[str]) -> int:
+    """İnteraktiv rejim (REPL)."""
+    from alqor.sohbet import söhbət_başlat
+    rəngli = None
+    if "--rəngsiz" in arqumentlər or "--rengsiz" in arqumentlər:
+        rəngli = False
+    return söhbət_başlat(rəngli)
+
+
 def əmr_versiya(_: list[str]) -> int:
     print(f"Alqor {VERSIYA}")
     print(f"Etalon implementasiya — Python {sys.version.split()[0]}")
@@ -253,13 +262,15 @@ def əmr_kömək(_: list[str]) -> int:
                          -- arq1 arq2    proqrama arqument ötürür
     tokenlər <fayl>      Faylı leksə edib tokenləri göstərir
                          --ətraflı / -e  əlavə məlumat
-    yoxla <fayl|qovluq>  Leksik xətaları yoxlayır
+    söhbət               İnteraktiv rejim (REPL)
+    yoxla <fayl|qovluq>  Leksik və sintaktik xətaları yoxlayır
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
     sırala <söz>...      Azərbaycan əlifba sırası ilə sıralayır
     versiya              Versiya məlumatı
     kömək                Bu mətn
 
 NÜMUNƏLƏR:
+    python alqorc.py söhbət
     python alqorc.py işlət ../numuneler/02-dovrler.alqor
     python alqorc.py tokenlər ../numuneler/01-salam.alqor
     python alqorc.py yoxla ../numuneler
@@ -283,6 +294,7 @@ VƏZİYYƏT:
     "işlət": əmr_işlət, "islet": əmr_işlət, "run": əmr_işlət,
     "tokenlər": əmr_tokenlər, "tokenler": əmr_tokenlər,
     "yoxla": əmr_yoxla,
+    "söhbət": əmr_söhbət, "sohbet": əmr_söhbət, "repl": əmr_söhbət,
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
     "versiya": əmr_versiya, "--versiya": əmr_versiya, "-v": əmr_versiya,

@@ -329,6 +329,48 @@ pəncərə.işlət()
 
 ---
 
+## 1.6½ İnteraktiv rejim — dili dərhal sınayın
+
+Fayl yaratmadan dili sınamaq üçün:
+
+```bash
+alqor söhbət
+```
+
+```
+alqor> 2 + 2
+4  // tam
+
+alqor> "ışıq".böyüyə()
+"IŞIQ"  // mətn
+
+alqor> hər i üçün 1..3 içində
+  ...     yaz("Rəqəm: {i}")
+  ... son
+Rəqəm: 1
+Rəqəm: 2
+Rəqəm: 3
+```
+
+Bloklar avtomatik davam edir — `onda`, `içində` yazıb Enter basın,
+`  ...` sətri görünəcək. `son` yazanda kod işləyəcək.
+
+Faydalı əmrlər:
+
+| Əmr | Nə edir |
+|---|---|
+| `:kömək` | bütün əmrlər |
+| `:hərflər` | Azərbaycan hərfləri və ASCII qarşılıqları |
+| `:tip <ifadə>` | ifadənin tipi |
+| `:siyahı` | təyin etdiyiniz adlar |
+| `:yüklə <fayl>` | faylı seansa yüklə |
+| `:çıx` | çıxış (Ctrl+D də işləyir) |
+
+> Son nəticə `nəticə` dəyişənində saxlanılır:
+> `alqor> 10 * 5` → `50`, sonra `alqor> nəticə + 1` → `51`
+
+---
+
 ## 1.7 Layihə yaratmaq
 
 Tək fayldan böyük bir şey yazanda layihə qurun:
@@ -368,7 +410,7 @@ alqor yeni mənim-kitabxanam --şablon kitabxana
 | `alqor sına` | Testləri işlədir |
 | `alqor format` | Kodu səliqəyə salır |
 | `alqor yoxla` | Xətaları tapır (sürətli) |
-| `alqor söhbət` | İnteraktiv rejim (REPL) |
+| `alqor söhbət` | **İnteraktiv rejim (REPL)** — dili sınamağın ən tez yolu |
 | `alqor paketlə` | Quraşdırıcı yaradır |
 | `alqor kömək` | Kömək |
 

@@ -229,31 +229,78 @@ Sənəddəki nümunə kodlar **test kimi də işlədilir** (`alqortest --sənəd
 
 ```
 $ alqor söhbət
-Alqor 1.0.0 — interaktiv rejim. Kömək üçün :kömək
+Alqor 1.0.0 — interaktiv rejim
+Azərbaycan dilində proqramlaşdırma dili
+
+  :kömək   bütün əmrlər
+  :çıx     çıxış (Ctrl+D də işləyir)
 
 alqor> 2 + 2
-4
+4  // tam
 
-alqor> dəyişən ad = "Aysel"
-alqor> yaz("Salam, {ad}")
-Salam, Aysel
+alqor> "ışıq".böyüyə()
+"IŞIQ"  // mətn
 
-alqor> funksiya ikiqat(x) qaytar x * 2 son
+alqor> funksiya ikiqat(x: tam) -> tam
+  ...     qaytar x * 2
+  ... son
+  funksiya `ikiqat` təyin edildi
+
 alqor> ikiqat(21)
-42
+42  // tam
 
-alqor> :tip ikiqat
-funksiyaTipi(tam) -> tam
-
-alqor> :yüklə mənim-fayl.alqor
-alqor> :siyahı
-alqor> :təmizlə
-alqor> :çıx
+alqor> nəticə + 1
+43  // tam
 ```
 
-Əmrlər: `:kömək` `:tip` `:yüklə` `:siyahı` `:təmizlə` `:vaxt` `:sənəd` `:çıx`
+### Davranış
 
----
+| Xüsusiyyət | Təsvir |
+|---|---|
+| **Çoxsətirli giriş** | Blok açılanda `  ...` davam sətri görünür. Lekserin kontekst yığını açıq blokları izləyir |
+| **İfadənin dəyəri** | Son ifadə avtomatik çap olunur, tipi ilə birlikdə (`4  // tam`) |
+| **`nəticə`** | Son çap olunmuş dəyər bu dəyişəndə saxlanılır |
+| **Vəziyyət** | Dəyişən, funksiya, sinif seans boyu yaşayır |
+| **Xətadan bərpa** | Xəta seansı dayandırmır |
+| **Ləğv etmək** | İki dəfə boş Enter, `:ləğv`, və ya Ctrl+C |
+| **Tarixçə** | `~/.alqor/tarixce` — yuxarı/aşağı oxlarla |
+| **Tab tamamlama** | Açar sözlər, tip adları, elan olunmuş adlar, `:əmrlər` |
+| **ASCII xəbərdarlığı** | `eger` yazsanız bir sətirlik xəbərdarlıq (`:ascii qapat` ilə söndürülür) |
+
+### Meta-əmrlər
+
+| Əmr | Təyinatı |
+|---|---|
+| `:kömək` `:k` `:?` | Bütün əmrlər və ipucları |
+| `:çıx` `:q` | Söhbəti bitir |
+| `:tip <ifadə>` `:t` | İfadənin tipini göstər |
+| `:siyahı` `:s` | Təyin edilmiş adlar (funksiya/sinif/dəyişən qruplarında) |
+| `:vaxt <ifadə>` `:v` | İcra müddətini ölç |
+| `:yüklə <fayl>` | Faylı seansa yüklə |
+| `:saxla <fayl>` | Seansı `.alqor` faylı kimi saxla |
+| `:tarixçə [n]` | Son n giriş |
+| `:təmizlə` | Bütün dəyişənləri sil |
+| `:tokenlər <kod>` | Lekserin çıxışı |
+| `:aac <kod>` | Sintaksis ağacı |
+| `:hərflər` | Azərbaycan hərfləri və ASCII qarşılıqları |
+| `:əlifba` | 32 hərfli əlifba və sıralama |
+| `:ascii aç\|qapat` | ASCII açar söz xəbərdarlığı |
+| `:ləğv` | Yarımçıq girişi ləğv et |
+
+> Hər meta-əmrin ASCII ləqəbi də var: `:komek`, `:cix`, `:siyahi`,
+> `:temizle`, `:yukle`, `:tarixce`, `:herfler`, `:elifba`.
+
+### Üzv adlarında ASCII təklifi
+
+ASCII çevrilməsi **yalnız açar sözlərə** aiddir. Üzv adında ASCII
+yazılsa, REPL düzgün adı təklif edir:
+
+```
+alqor> [1, 2, 3].cem()
+✖ ALQ-T006  `siyahı[tam]` tipində `cem` üzvü yoxdur — `cəm` demək
+            istəyirdiniz? ASCII çevrilməsi yalnız AÇAR SÖZLƏRƏ aiddir,
+            üzv adlarına yox
+```
 
 ## 13.8 `alqorls` — LSP serveri
 

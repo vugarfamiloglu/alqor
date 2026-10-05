@@ -2,10 +2,10 @@
 
 > Etalon implementasiya, **Python 3.12**. Son yenilənmə: 5 oktyabr 2026
 
-**Mərhələ 1 (lekser), 2 (parser) və 3 (interpretator) BİTDİ.**
-Dil işləyir: `alqorc.py işlət proqram.alqor`
+**Mərhələ 1–4 BİTDİ** (lekser, parser, interpretator, standart kitabxana)
+**+ `alqor söhbət` (REPL) tam hazırdır.**
 
-**259 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır, 5-i icra olunur
+**304 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır, 5-i icra olunur
 (05 veb modulunu, 06 JSX-i gözləyir).
 
 ---
@@ -14,7 +14,7 @@ Dil işləyir: `alqorc.py işlət proqram.alqor`
 
 ```
 alqorc/
-├── alqorc.py            CLI: işlət / tokenlər / yoxla / hərf / sırala
+├── alqorc.py            CLI: işlət / söhbət / tokenlər / yoxla / hərf / sırala
 ├── sina.py              sınaq işlədicisi
 ├── alqor/
 │   ├── elifba.py         az-AZ hərf qaydaları, əlifba sırası, ahəng qanunu
@@ -28,12 +28,14 @@ alqorc/
 │   ├── parser.py         rekursiv enmə + prioritet dırmaşması
 │   ├── deyerler.py       icra dəyərləri, Mühit, Sinif, Nümunə, Sadalama
 │   ├── icraci.py         ağac gəzən interpretator
-│   └── kitabxana.py      standart kitabxana (13 modul, ~250 funksiya)
+│   ├── kitabxana.py      standart kitabxana (13 modul, ~250 funksiya)
+│   └── sohbet.py         interaktiv rejim (REPL) — 18 meta-əmr
 └── sinaq/
     ├── test_elifba.py    (31)
     ├── test_menbe.py     (34)
     ├── test_lekser.py    (70)
-    └── test_icraci.py    (124)  parser + interpretator
+    ├── test_icraci.py    (124)  parser + interpretator
+    └── test_sohbet.py    (45)   REPL
 ```
 
 ## İşə salmaq
@@ -41,7 +43,8 @@ alqorc/
 ```bash
 cd alqorc
 
-python sina.py --nümunələr                       # 259 sınaq + nümunələr
+python alqorc.py söhbət                          # interaktiv rejim
+python sina.py --nümunələr                       # 304 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -80,6 +83,7 @@ python alqorc.py hərf "ışıq İmran"
 | Standart kitabxana: 13 modul | ✅ |
 | `generator` / `ver` | ⚠ sadələşdirilmiş (tənbəl deyil) |
 | `asinxron` / `gözlə` | ⚠ sinxron icra olunur |
+| **REPL** (`söhbət`) — çoxsətirli, 18 meta-əmr, tarixçə, tamamlama | ✅ |
 | JSX interfeys sintaksisi | ✖ Mərhələ 2b |
 | Tip yoxlayıcı (statik) | ✖ Mərhələ 5 |
 
@@ -131,6 +135,14 @@ kiçiyə("I")    → "ı"         (Python standartı: "i"     ✖)
 | 17 | `onluq` parametrə `3` verildikdə `3` qalırdı | İmplisit genişlənmə `tam` → `onluq` |
 | 18 | Python `RecursionError` bizim `StekDaşmaXətası`-dan əvvəl baş verirdi | `setrecursionlimit(30000)`, STEK_HƏDDİ = 1000 |
 | 19 | `genişlət mətn` daxilində `__sinif__` AttributeError verirdi | Daxili tiplərdə `sinif` sahəsi yoxdur — yoxlanılır |
+
+### REPL mərhələsində tapılanlar (düzəldilib)
+
+| # | Problem | Həll |
+|---|---|---|
+| 20 | **`1 ~/ 0` leksik xəta verirdi** — `"" in "xXbBoO"` Python-da **doğru** qaytarır, ona görə sətir sonundaki `0` onaltılıq prefiks sayılırdı | Üzvlük yoxlamaları kortejlə: `in ("x", "X", ...)`. `_gör()` sənədləşməsinə xəbərdarlıq əlavə edildi |
+| 21 | `_` son nəticə dəyişəni ola bilməz — o, atma tokenidir (OP) | `nəticə` dəyişəni işlədilir |
+| 22 | Üzv adında ASCII yazılanda (`siyahı.cem()`) səbəb izah olunmurdu | Xəta mesajı düzgün adı təklif edir və ASCII çevrilməsinin yalnız açar sözlərə aid olduğunu izah edir |
 
 ---
 

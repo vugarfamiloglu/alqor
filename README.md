@@ -26,16 +26,31 @@ son
 | Mərhələ | **1–3 hazırdır: lekser, parser, interpretator** |
 | Spesifikasiya | 1.0 (layihə) |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **259 keçir** |
+| Sınaqlar | **304 keçir** |
 | Tarix | 5 oktyabr 2026 |
 
 **Dil işləyir:**
 
 ```bash
 cd alqorc
+python alqorc.py söhbət                              # interaktiv rejim
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python sina.py --nümunələr
-python alqorc.py hərf "ışıq İmran"
+```
+
+```
+alqor> 2 + 2
+4  // tam
+
+alqor> "ışıq".böyüyə()
+"IŞIQ"  // mətn
+
+alqor> hər i üçün 1..3 içində
+  ...     yaz("Rəqəm: {i}")
+  ... son
+Rəqəm: 1
+Rəqəm: 2
+Rəqəm: 3
 ```
 
 ```
@@ -181,6 +196,7 @@ Dairə: sahə = 19.63, perimetr = 15.71
 | **2. Parser** | Kod → AAC, 19 səviyyəli prioritet, naxış uyğunlaşdırma | ✅ **Hazır** |
 | **3. İnterpretator** | `işlət` işləyir — siniflər, miras, qapanmalar, xətalar | ✅ **Hazır** |
 | **4. Standart kitabxana** | 13 modul, ~250 funksiya | ✅ **Hazır** |
+| **4b. REPL** (`alqor söhbət`) | Çoxsətirli giriş, 18 meta-əmr, tarixçə, tamamlama | ✅ **Hazır** |
 | 5. Tip yoxlayıcı | Tədrici tiplər, statik yoxlama | ⬜ |
 | 6. Veb backend | JS/WASM çıxışı + `veb` freymvorku | ⬜ |
 | 7. Native + paketləmə | ELF, `.deb`, `.AppImage` | ⬜ |
