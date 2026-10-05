@@ -12,7 +12,7 @@ import sys
 import unittest
 from pathlib import Path
 
-for _axın in (sys.stdout, sys.stderr):
+for _axın in (sys.stdout, sys.stderr, sys.stdin):
     try:
         _axın.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):

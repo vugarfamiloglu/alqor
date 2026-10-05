@@ -40,7 +40,7 @@ funksiya əsas(arqumentlər: siyahı[mətn])
 
     yaz("\n=== Ən çox işlənən 10 söz ===")
     dəyişən say = sözləriSay(məzmun)
-    dəyişən sıralı = say.cütlər().sıralaAçar((c) => -c.1)
+    dəyişən sıralı = say.cütlər().sıralanmış((c) => -c.1)
 
     hər i, (söz, n) üçün sıralı.dilim(0, 9) içində
         yaz("{i + 1:2}. {söz:<20} {n}")

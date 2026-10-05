@@ -24,6 +24,44 @@ from .xeta import XətaToplayıcı, mesaj
 
 TAM_HEDD = 2 ** 63            # işarəsiz hədd (unary `-` ayrıca operatordur)
 
+# ═══════════════════════════════════════════════════════════════════════
+#  Kontekst yığını — yeni sətir udulmasını idarə edir
+# ═══════════════════════════════════════════════════════════════════════
+#
+#  Problem: mötərizə içində yeni sətirlər udulur ki, çoxsətirli arqument
+#  siyahısı işləsin. Amma arqument kimi verilən anonim funksiyanın GÖVDƏSİ
+#  də mötərizə içindədir — orada yeni sətir ifadə ayırıcısıdır:
+#
+#      s.qrup("/api", funksiya(q)
+#          q.al("/a", idarəedici)      ← bu sətir ayrılmalıdır!
+#          q.al("/b", idarəedici)
+#      son)
+#
+#  Həll: tək dərinlik sayğacı yerinə KONTEKST YIĞINI.
+#    • `(` `[` `{`        → MÖTƏRİZƏ yığ
+#    • `)` `]` `}`        → ən yaxın MÖTƏRİZƏ-yə qədər boşalt (özünü sağaldır)
+#    • blok açan açar söz → BLOK yığ
+#    • `son`              → ən yaxın BLOK-u götür (MÖTƏRİZƏ-dən keçmir)
+#
+#  Qayda: yeni sətir YALNIZ yığın boş olanda, və ya təpədə BLOK olanda
+#  emissiya olunur.
+
+MÖTƏRİZƏ = "mötərizə"
+BLOK = "blok"
+
+#  `son` ilə bitdiyi ETİBARLI olan blok açanları.
+#  `qurucu` və `xassə` qəsdən yoxdur — onların qısa (gövdəsiz) forması var,
+#  həm də gövdələri həmişə `sinif` blokunun içindədir.
+BLOK_ACANLAR = frozenset({
+    "funksiya", "metod", "silinsin", "blok",
+    "sinif", "struktur", "interfeys", "sadalama", "modul", "obyekt",
+    "qarışıq", "komponent", "mağaza", "genişlət",
+    "əgər", "varsa", "yoxdursa", "seç",
+    "nə qədər ki", "həmişə", "təkrarla", "hər",
+    "cəhd et", "təmin", "istifadə",
+    "başlanğıc", "bitiş",
+})
+
 QACIS = {
     "n": "\n", "r": "\r", "t": "\t", "0": "\0",
     "\\": "\\", '"': '"', "'": "'", "`": "`",
@@ -47,7 +85,7 @@ class Lekser:
         self.i = 0
         self.x = toplayıcı
         self.ascii_xəbərdarlığı = ascii_xəbərdarlığı
-        self.dərinlik = 0                 # mötərizə dərinliyi
+        self.yığın: list[str] = []        # MÖTƏRİZƏ / BLOK kontekstləri
         self.direktivlər: dict[str, str] = {}
         self._tab_xəbərdarlığı_verildi = False
 
@@ -172,7 +210,8 @@ class Lekser:
         """
         SETIR_SONU emissiya edir — udulma qaydaları ilə (Spes. § 1.11).
         """
-        if self.dərinlik > 0:
+        # Yığın boş deyilsə və təpədə MÖTƏRİZƏ varsa — yeni sətir udulur
+        if self.yığın and self.yığın[-1] == MÖTƏRİZƏ:
             return
         son = self._son_əhəmiyyətli(hədəf)
         if son is None:
@@ -302,6 +341,7 @@ class Lekser:
             self.i = son_mövqe
             if ascii_var and self.ascii_xəbərdarlığı:
                 self._ascii_xəbərdarlıq(baş, self.i - baş, kanon)
+            self._yığını_yenilə(kanon)
             hədəf.append(Token(Növ.ACAR, kanon,
                                self.s.yer(baş, self.i - baş),
                                xam=self.m[baş:self.i],
@@ -314,6 +354,7 @@ class Lekser:
         if ascii_idi and self.ascii_xəbərdarlığı:
             self._ascii_xəbərdarlıq(baş, len(söz), kanonik)
 
+        self._yığını_yenilə(kanonik)
         hədəf.append(Token(Növ.ACAR, kanonik,
                            self.s.yer(baş, len(söz)),
                            xam=söz, ascii_idi=ascii_idi))
@@ -354,6 +395,15 @@ class Lekser:
             if uğur:
                 return AS.tamamla(" ".join(naxış)), mövqe, ascii_var
         return None
+
+    def _yığını_yenilə(self, acar: str) -> None:
+        """Blok açan açar sözləri və `son`-u kontekst yığınında izləyir."""
+        if acar in BLOK_ACANLAR:
+            self.yığın.append(BLOK)
+        elif acar == "son":
+            # Yalnız BLOK götür — MÖTƏRİZƏ-dən keçmirik
+            if self.yığın and self.yığın[-1] == BLOK:
+                self.yığın.pop()
 
     def _ascii_xəbərdarlıq(self, baş: int, uz: int, kanonik: str) -> None:
         yazılan = self.m[baş:baş + uz]
@@ -723,9 +773,13 @@ class Lekser:
             if parça in cədvəl:
                 self.i += uz
                 if parça in ACANLAR:
-                    self.dərinlik += 1
+                    self.yığın.append(MÖTƏRİZƏ)
                 elif parça in BAGLAYANLAR:
-                    self.dərinlik = max(0, self.dərinlik - 1)
+                    # Ən yaxın MÖTƏRİZƏ-yə qədər boşalt — bu, `son`-suz
+                    # qalmış BLOK qeydlərini də təmizləyir (özünü sağaldır)
+                    while self.yığın:
+                        if self.yığın.pop() == MÖTƏRİZƏ:
+                            break
                 hədəf.append(Token(Növ.OP, parça,
                                    self.s.yer(baş, uz), xam=parça))
                 return True

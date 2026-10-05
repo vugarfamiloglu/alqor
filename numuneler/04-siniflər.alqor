@@ -56,6 +56,6 @@ funksiya əsas()
 
     yaz("\nÜmumi sahə: {fiqurlar.çevir((f) => f.sahə()).cəm():.2}")
 
-    dəyişən ənBöyük = fiqurlar.sıralaAçar((f) => -f.sahə())[0]
+    dəyişən ənBöyük = fiqurlar.sıralanmış((f) => -f.sahə())[0]
     yaz("Ən böyük: {ənBöyük.ad}")
 son

@@ -456,12 +456,15 @@ son
     def test_açar_sözlər_tanınır(self):
         ts, _ = leksə(self.PROQRAM)
         acarlar = {t.dəyər for t in ts if t.növ is Növ.ACAR}
-        for gözlənilən in ("gətir", "funksiya", "qaytar", "tam", "dəyişən",
+        for gözlənilən in ("gətir", "funksiya", "qaytar", "dəyişən",
                            "əgər", "və", "onda", "yoxsa əgər", "yoxsa",
                            "son", "nə qədər ki", "hər", "üçün", "addım",
                            "içində", "davam et", "cəhd et", "tut",
                            "nəhayət"):
             self.assertIn(gözlənilən, acarlar)
+        # Tip adları açar söz DEYİL — öncədən elan olunmuş identifikatorlar
+        for tip_adı in ("tam", "mətn", "siyahı", "lüğət"):
+            self.assertNotIn(tip_adı, acarlar)
 
     def test_sənəd_şərhi_saxlanılır(self):
         ts, _ = leksə(self.PROQRAM)

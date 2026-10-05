@@ -70,20 +70,41 @@ LITERAL = [
     "doğru", "yanlış", "boş", "sonsuz", "ƏdədDeyil",
 ]
 
-TIPLER = [
-    "tam", "onluq", "mətn", "məntiq", "simvol", "bayt",
-    "siyahı", "lüğət", "dəst", "kortej", "funksiyaTipi",
-    "istənilən", "heç",
-]
-
 KOMEKCI = [
     "dayanNöqtəsi",
 ]
 
 ACAR_SOZLER: frozenset[str] = frozenset(
     ELAN + MODIFIKATOR + SERT + DOVR + AXIN + XETA
-    + OBYEKT + MODUL + MENTIQ + LITERAL + TIPLER + KOMEKCI
+    + OBYEKT + MODUL + MENTIQ + LITERAL + KOMEKCI
 )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  1b. TİP ADLARI — açar söz DEYİL, öncədən elan olunmuş identifikator
+# ═══════════════════════════════════════════════════════════════════════
+#
+#  Niyə qorunmur? Çünki `mətn`, `tam`, `say`, `tip` Azərbaycan dilində
+#  ən təbii sahə adlarıdır:
+#
+#      sinif Tapşırıq
+#          qurucu(açıq xassə mətn: mətn)     ← sahə adı `mətn`, tipi `mətn`
+#      son
+#
+#      funksiya sözləriSay(mətn: mətn) -> lüğət[mətn, tam]
+#
+#  Bunları açar söz etsək, yuxarıdaki tamamilə normal kod işləməzdi.
+#  Go (`int`, `string`) və Rust (`i32`, `str`) da eyni yolu seçib:
+#  tip adları prelüddə elan olunmuş adi identifikatorlardır.
+#
+#  Nəticə: istifadəçi `dəyişən mətn = "salam"` yazıb tip adını
+#  kölgələyə bilər. `alqorlint` bunu xəbərdarlıq kimi bildirir.
+
+TIP_ADLARI: frozenset[str] = frozenset([
+    "tam", "onluq", "mətn", "məntiq", "simvol", "bayt",
+    "siyahı", "lüğət", "dəst", "kortej", "funksiyaTipi",
+    "istənilən", "heç",
+])
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -329,10 +350,17 @@ def tamamla(kanonik: str) -> str:
 # ── Yeni sətrin udulacağı tokenlər (Spesifikasiya § 1.11) ──────────────
 #  Sətrin sonunda bu açar sözlər varsa, ifadə növbəti sətirdə davam edir.
 
+#  DİQQƏT: `içində` BURADA OLMAMALIDIR. O, `hər ... içində` başlığının
+#  SON tokenidir — ondan sonra ifadə davam etmir, dövrün gövdəsi başlayır.
+#  Siyahıda olsaydı, aşağıdaki iki konstruksiya fərqlənməzdi:
+#      hər x üçün s içində əgər x > 5      ← filtr şərti
+#      hər x üçün s içində
+#          əgər x > 5 onda ... son         ← gövdədəki şərt
+#  Yeni sətir udulanda parser ikincini də filtr kimi oxuyurdu.
 DAVAM_ACAR_SOZLERI: frozenset[str] = frozenset([
     VE, VE_YA, DEYIL, KIMI, TIPIDIR, ICINDEDIR,
     YENI, GETIR, AT, VER, GOZLE, IDDIA,
-    MIRAS, TETBIQ, ILE, UCUN, ICINDE, ADDIM, ONDA, HAL,
+    MIRAS, TETBIQ, ILE, UCUN, ADDIM, ONDA, HAL,
 ])
 
 
