@@ -23,17 +23,28 @@ son
 
 | | |
 |---|---|
-| Mərhələ | **1 — Lekser hazırdır** |
+| Mərhələ | **1–3 hazırdır: lekser, parser, interpretator** |
 | Spesifikasiya | 1.0 (layihə) |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | 135 keçir, 7 nümunə proqram leksə olunur |
+| Sınaqlar | **259 keçir** |
 | Tarix | 5 oktyabr 2026 |
+
+**Dil işləyir:**
 
 ```bash
 cd alqorc
+python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python sina.py --nümunələr
-python alqorc.py tokenlər ../numuneler/01-salam.alqor
 python alqorc.py hərf "ışıq İmran"
+```
+
+```
+Dairə: sahə = 78.54, perimetr = 31.42
+Düzbucaqlı: sahə = 12.00, perimetr = 14.00
+Dairə: sahə = 19.63, perimetr = 15.71
+
+Ümumi sahə: 110.17
+Ən böyük: Dairə
 ```
 
 ---
@@ -167,10 +178,10 @@ python alqorc.py hərf "ışıq İmran"
 |---|---|---|
 | **0. Spesifikasiya** | Sintaksis sənədi, EBNF qrammatika, bələdçi | ✅ **Hazır** |
 | **1. Lekser** | Token axını, az-AZ hərf qaydaları, Azərbaycanca xətalar | ✅ **Hazır** |
-| 2. Parser | Kod → AAC (abstrakt sintaksis ağacı) | ⬜ |
-| 3. İnterpretator | `alqor işlət` işləyir — ilk canlı proqram | ⬜ |
-| 4. Standart kitabxana | mətn, siyahı, lüğət, riyaziyyat, fayl, vaxt, json | ⬜ |
-| 5. Tip yoxlayıcı | Tədrici tiplər | ⬜ |
+| **2. Parser** | Kod → AAC, 19 səviyyəli prioritet, naxış uyğunlaşdırma | ✅ **Hazır** |
+| **3. İnterpretator** | `işlət` işləyir — siniflər, miras, qapanmalar, xətalar | ✅ **Hazır** |
+| **4. Standart kitabxana** | 13 modul, ~250 funksiya | ✅ **Hazır** |
+| 5. Tip yoxlayıcı | Tədrici tiplər, statik yoxlama | ⬜ |
 | 6. Veb backend | JS/WASM çıxışı + `veb` freymvorku | ⬜ |
 | 7. Native + paketləmə | ELF, `.deb`, `.AppImage` | ⬜ |
 | 8. Desktop UI | WebKitGTK pəncərələr | ⬜ |
@@ -226,17 +237,32 @@ Lekser bitdi. Növbəti: AAC (abstrakt sintaksis ağacı) və parser.
 
 Sonra: interpretator → standart kitabxana → tip yoxlayıcı → backend-lər.
 
-### Sonra lazım olacaq
-- **Rust alət zənciri** — istehsal kompilyatoru üçün (hazırda quraşdırılmayıb)
-- **WSL** — `.deb` / `.AppImage` / ELF hədəflərini real test etmək üçün
+### İnkişaf mühiti — [MUHIT.md](MUHIT.md)
 
-Lekser, parser və interpretator platformadan asılı deyil — WSL olmadan da
-Windows-da yazıla və test edilə bilər.
+| Alət | Vəziyyət |
+|---|---|
+| Python 3.12 | ✅ etalon implementasiya işləyir |
+| **Rust 1.99** | ✅ quraşdırıldı |
+| **Zig 0.16** (cross-linker) | ✅ quraşdırıldı |
+| Linux ELF qurması (Windows-dan) | ✅ **təsdiqləndi** |
+| WASM hədəfi | ✅ hazır |
+| WSL / Linux mühiti | ⬜ **sizin təsdiqiniz lazımdır** (yenidən başlatma) |
+
+Windows-dan həqiqi Linux ELF binarı artıq qurulur — WSL olmadan.
+Desktop (WebKitGTK) və IDE (Tauri) üçün WSL məcburidir; addımlar
+[MUHIT.md](MUHIT.md) faylındadır.
 
 ### Kodun açdığı spesifikasiya problemləri
 
-Lekseri yazarkən sənəddə 6 ziddiyyət tapıldı və düzəldildi — ən əsası:
-**`gətir riyaziyyatdan {kök}` işləmir**, çünki `-dan` şəkilçisi söz**ə
-yapışır** və lekser üçün `riyaziyyatdan` bir identifikatordur. Əvəzinə
-`gətir riyaziyyat.{kök}` qəbul edildi. Tam siyahı:
-[alqorc/VEZIYYET.md](alqorc/VEZIYYET.md)
+İmplementasiya zamanı sənəddə **19 ziddiyyət** tapıldı və düzəldildi.
+Ən əsas ikisi:
+
+1. **`gətir riyaziyyatdan {kök}` işləmir** — `-dan` şəkilçisi sözə
+   yapışır, lekser üçün `riyaziyyatdan` bir identifikatordur (`meydan`
+   adlı modul sınardı). Əvəzinə: `gətir riyaziyyat.{kök}`
+2. **`xassə mətn: mətn` işləmirdi** — tip adları açar söz idi, halbuki
+   `mətn`, `tam`, `say` Azərbaycan dilində ən təbii sahə adlarıdır.
+   Həll: tip adları artıq **öncədən elan olunmuş identifikatordur**
+   (Go-da `int`, Rust-da `i32` kimi).
+
+Tam siyahı: [alqorc/VEZIYYET.md](alqorc/VEZIYYET.md)

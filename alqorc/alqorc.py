@@ -16,7 +16,7 @@ from pathlib import Path
 
 # ── KRİTİK: Windows konsolu standart olaraq cp1251-dir və Azərbaycan
 #    hərflərini çap edə bilmir. Bu olmadan dil öz xəta mesajını göstərə bilmir.
-for _axın in (sys.stdout, sys.stderr):
+for _axın in (sys.stdout, sys.stderr, sys.stdin):
     try:
         _axın.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
@@ -96,7 +96,71 @@ def _token_çap(t, ətraflı: bool, girinti: int) -> None:
                     _token_çap(alt, ətraflı, girinti + 8)
 
 
+def əmr_işlət(arqumentlər: list[str]) -> int:
+    """Proqramı leksə → ayır → icra et."""
+    from alqor.deyerler import AlqorXəta
+    from alqor.icraci import İcraçı
+    from alqor.lekser import Lekser
+    from alqor.parser import Parser
+
+    if not arqumentlər:
+        çap_xəta("`işlət` əmri üçün fayl adı lazımdır")
+        return 3
+
+    yol = arqumentlər[0]
+    proqram_arqumentləri = (arqumentlər[arqumentlər.index("--") + 1:]
+                            if "--" in arqumentlər else [])
+
+    x = XətaToplayıcı()
+    if yol == "-":
+        s = Mənbə.mətndən(sys.stdin.read(), "<stdin>", x)
+    else:
+        s = Mənbə.fayldan(yol, x)
+    if s is None:
+        x.çap()
+        return 4
+
+    tokenlər = Lekser(s, x).leksə()
+    ağac = Parser(tokenlər, s, x).ayır()
+
+    if not x.uğurludur():
+        x.çap()
+        return 2
+    if x.xəbərdarlıqlar:
+        x.çap()
+
+    sys.stdout.flush()
+    icraçı = İcraçı()
+    try:
+        return icraçı.işlət(ağac, proqram_arqumentləri)
+    except AlqorXəta as xəta:
+        _icra_xətası_çap(xəta, s)
+        return 1
+    except RecursionError:
+        print("\n✖ StekDaşmaXətası: çağırış dərinliyi həddi aşıldı",
+              file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        print("\n⊣ dayandırıldı", file=sys.stderr)
+        return 130
+
+
+def _icra_xətası_çap(xəta, mənbə) -> None:
+    from alqor.xeta import Diaqnostika, Səviyyə
+    sys.stdout.flush()
+    d = Diaqnostika(
+        xəta.kod or "ALQ-R000",
+        f"{xəta.tip}: {xəta.mesaj}",
+        xəta.yer,
+        Səviyyə.XETA,
+        "burada baş verdi" if xəta.yer else "",
+    )
+    print(d.formatla(), file=sys.stderr)
+
+
 def əmr_yoxla(arqumentlər: list[str]) -> int:
+    from alqor.parser import Parser
+    from alqor.lekser import Lekser
     if not arqumentlər:
         çap_xəta("`yoxla` əmri üçün fayl adı lazımdır")
         return 3
@@ -121,7 +185,7 @@ def əmr_yoxla(arqumentlər: list[str]) -> int:
         x = XətaToplayıcı()
         s = Mənbə.fayldan(yol, x)
         if s is not None:
-            Lekser(s, x).leksə()
+            Parser(Lekser(s, x).leksə(), s, x).ayır()
         if x.siyahı:
             print(f"── {yol} " + "─" * max(0, 56 - len(yol)))
             x.çap()
@@ -185,6 +249,8 @@ def əmr_kömək(_: list[str]) -> int:
     python alqorc.py <əmr> [arqumentlər]
 
 ƏMRLƏR:
+    işlət <fayl>         Proqramı icra edir
+                         -- arq1 arq2    proqrama arqument ötürür
     tokenlər <fayl>      Faylı leksə edib tokenləri göstərir
                          --ətraflı / -e  əlavə məlumat
     yoxla <fayl|qovluq>  Leksik xətaları yoxlayır
@@ -194,6 +260,7 @@ def əmr_kömək(_: list[str]) -> int:
     kömək                Bu mətn
 
 NÜMUNƏLƏR:
+    python alqorc.py işlət ../numuneler/02-dovrler.alqor
     python alqorc.py tokenlər ../numuneler/01-salam.alqor
     python alqorc.py yoxla ../numuneler
     python alqorc.py hərf "ışıq İmran"
@@ -203,7 +270,7 @@ MÜHİT DƏYİŞƏNLƏRİ:
     ALQOR_RENG=həmişə|heçvaxt|avto     rəngli çıxış
 
 VƏZİYYƏT:
-    Mərhələ 1 (lekser) hazırdır. Parser və interpretator növbətidir.
+    Lekser, parser və interpretator hazırdır.
     Ətraflı: alqorc/VEZIYYET.md""")
     return 0
 
@@ -213,6 +280,7 @@ VƏZİYYƏT:
 # ═══════════════════════════════════════════════════════════════════════
 
 ƏMRLƏR = {
+    "işlət": əmr_işlət, "islet": əmr_işlət, "run": əmr_işlət,
     "tokenlər": əmr_tokenlər, "tokenler": əmr_tokenlər,
     "yoxla": əmr_yoxla,
     "hərf": əmr_hərf, "herf": əmr_hərf,
