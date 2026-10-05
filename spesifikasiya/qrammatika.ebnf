@@ -1,0 +1,528 @@
+(* ===================================================================
+   ALQOR DİLİ — RƏSMİ QRAMMATİKA
+   Versiya 1.0 (layihə)
+   Format: ISO/IEC 14977 EBNF (genişləndirilmiş)
+
+   Qeydlər:
+     ?...?   = leksik/semantik şərh
+     "..."   = terminal
+     [...]   = ixtiyari (0 və ya 1)
+     {...}   = təkrar (0 və ya daha çox)
+     (...)   = qruplaşdırma
+     |       = alternativ
+   =================================================================== *)
+
+
+(* ===================  1. LEKSİK SƏVİYYƏ  ======================== *)
+
+azKiçikHərf   = "a"|"b"|"c"|"ç"|"d"|"e"|"ə"|"f"|"g"|"ğ"|"h"|"x"
+              | "ı"|"i"|"j"|"k"|"q"|"l"|"m"|"n"|"o"|"ö"|"p"|"r"
+              | "s"|"ş"|"t"|"u"|"ü"|"v"|"y"|"z" ;
+
+azBöyükHərf   = "A"|"B"|"C"|"Ç"|"D"|"E"|"Ə"|"F"|"G"|"Ğ"|"H"|"X"
+              | "I"|"İ"|"J"|"K"|"Q"|"L"|"M"|"N"|"O"|"Ö"|"P"|"R"
+              | "S"|"Ş"|"T"|"U"|"Ü"|"V"|"Y"|"Z" ;
+
+hərf          = azKiçikHərf | azBöyükHərf ;
+rəqəm         = "0".."9" ;
+onaltılıqRəqəm= rəqəm | "a".."f" | "A".."F" ;
+ikilikRəqəm   = "0" | "1" ;
+səkkizlikRəqəm= "0".."7" ;
+
+identifikator = ( hərf | "_" ) , { hərf | rəqəm | "_" } ;
+                ?açar söz olmamalıdır?
+
+boşluq        = " " | "\t" ;
+yeniSətir     = "\n" | "\r\n" ;
+
+şərh          = sətirŞərhi | blokŞərhi | sənədŞərhi ;
+sətirŞərhi    = "//" , { ?yeniSətir olmayan simvol? } ;
+blokŞərhi     = "/*" , { blokŞərhi | ?istənilən simvol? } , "*/" ;
+sənədŞərhi    = "///" , { ?yeniSətir olmayan simvol? } ;
+modulŞərhi    = "//!" , { ?yeniSətir olmayan simvol? } ;
+direktiv      = "//" , boşluq* , "alqor:" , { ?yeniSətir olmayan? } ;
+
+
+(* ---------------------  Literallar  ----------------------------- *)
+
+tamLiteral      = onluqTam | onaltılıqTam | ikilikTam | səkkizlikTam ;
+onluqTam        = rəqəm , { rəqəm | "_" } ;
+onaltılıqTam    = ( "0x" | "0X" ) , onaltılıqRəqəm , { onaltılıqRəqəm | "_" } ;
+ikilikTam       = ( "0b" | "0B" ) , ikilikRəqəm , { ikilikRəqəm | "_" } ;
+səkkizlikTam    = ( "0o" | "0O" ) , səkkizlikRəqəm , { səkkizlikRəqəm | "_" } ;
+
+onluqLiteral    = onluqTam , "." , onluqTam , [ eksponent ]
+                | onluqTam , eksponent ;
+eksponent       = ( "e" | "E" ) , [ "+" | "-" ] , onluqTam ;
+
+mətnLiteral     = sadəMətn | çoxSətirliMətn | xamMətn | baytMətn ;
+sadəMətn        = '"' , { mətnParçası } , '"'
+                | "'" , { mətnParçası } , "'" ;
+mətnParçası     = ?qaçış olmayan simvol? | qaçış | interpolyasiya ;
+qaçış           = "\\" , ( "n"|"r"|"t"|"\\"|'"'|"'"|"0"|"e"|"{"|"}"
+                         | "u{" , onaltılıqRəqəm+ , "}"
+                         | "x"  , onaltılıqRəqəm , onaltılıqRəqəm ) ;
+interpolyasiya  = "{" , ifadə , [ ":" , formatSpesifikatoru ] , "}" ;
+formatSpesifikatoru = { ?} olmayan simvol? } ;
+çoxSətirliMətn  = '"""' , { ?istənilən? } , '"""' ;
+xamMətn         = "x" , ( '"' , { ?" olmayan? } , '"' ) ;
+baytMətn        = "b" , sadəMətn ;
+
+simvolLiteral   = "`" , ( ?bir qrafem klasteri? | qaçış ) , "`" ;
+məntiqLiteral   = "doğru" | "yanlış" ;
+boşLiteral      = "boş" ;
+
+
+(* =================  2. PROQRAMIN QURULUŞU  ====================== *)
+
+proqram         = [ shebang ] , { modulŞərhi } , { üstSəviyyəElement } ;
+shebang         = "#!" , { ?yeniSətir olmayan? } , yeniSətir ;
+
+üstSəviyyəElement
+                = idxalElanı
+                | ixracElanı
+                | elan
+                | ifadəCümləsi
+                | başlanğıcBloku
+                | bitişBloku ;
+
+başlanğıcBloku  = "başlanğıc" , blok , son ;
+bitişBloku      = "bitiş" , blok , son ;
+son             = "son" , [ blokNövü ] ;
+blokNövü        = "əgər" | "funksiya" | "sinif" | "metod" | "seç"
+                | "təkrarla" | "hər" | "cəhd" | "nə qədər ki"
+                | "modul" | "interfeys" | "sadalama" | "struktur" ;
+
+
+(* -------------------  İdxal / İxrac  ---------------------------- *)
+
+idxalElanı      = "gətir" , idxalHədəfi ;
+idxalHədəfi     = modulYolu , [ "kimi" , identifikator ]
+                | modulYolu , "dan" , "{" , idxalSiyahısı , "}"
+                | modulYolu , "dan" , "*"
+                | "{" , idxalSiyahısı , "}" , modulYolu , "dan" ;
+idxalSiyahısı   = idxalElementi , { "," , idxalElementi } ;
+idxalElementi   = identifikator , [ "kimi" , identifikator ] ;
+modulYolu       = identifikator , { "." , identifikator }
+                | mətnLiteral ;
+
+ixracElanı      = "ixrac" , "et" , ( [ "standart" ] , elan
+                                   | "{" , idxalSiyahısı , "}"
+                                   | "*" , modulYolu , "dan" ) ;
+
+
+(* ======================  3. ELANLAR  ============================ *)
+
+elan            = dəyişənElanı
+                | funksiyaElanı
+                | sinifElanı
+                | strukturElanı
+                | interfeysElanı
+                | sadalamaElanı
+                | modulElanı
+                | tipAliası
+                | genişlətmə
+                | obyektElanı ;
+
+görünüş         = "açıq" | "gizli" | "qorunan" | "modul" ;
+
+
+(* ---------------------  Dəyişənlər  ----------------------------- *)
+
+dəyişənElanı    = [ görünüş ] , dəyişənNövü , bağlamaSiyahısı ,
+                  [ ":" , tip ] , [ "=" , ifadəSiyahısı ] ;
+dəyişənNövü     = "dəyişən" | "sabit" | "dəyişməz" ;
+bağlamaSiyahısı = bağlama , { "," , bağlama } ;
+bağlama         = identifikator
+                | "_"
+                | "..." , identifikator
+                | "(" , bağlamaSiyahısı , ")"
+                | "{" , sahəBağlaması , { "," , sahəBağlaması } , "}" ;
+sahəBağlaması   = identifikator , [ ":" , bağlama ] ;
+
+
+(* ---------------------  Funksiyalar  ---------------------------- *)
+
+funksiyaElanı   = [ annotasiyalar ] , [ görünüş ] , [ "asinxron" ] ,
+                  [ "generator" ] , "funksiya" , identifikator ,
+                  [ generikParametrlər ] , "(" , [ parametrSiyahısı ] , ")" ,
+                  [ "->" , tip ] , blok , son ;
+
+parametrSiyahısı= parametr , { "," , parametr }
+                | parametr , { "," , parametr } , "," , "*" ,
+                  "," , parametr , { "," , parametr } ;
+parametr        = [ "..." | "**" ] , identifikator , [ ":" , tip ] ,
+                  [ "=" , ifadə ]
+                | görünüş , "xassə" , identifikator , ":" , tip ;
+
+generikParametrlər = "[" , generikParametr , { "," , generikParametr } , "]" ;
+generikParametr = identifikator , [ ":" , tipMəhdudiyyəti ] ;
+tipMəhdudiyyəti = tip , { "və" , tip } ;
+
+annotasiyalar   = { "@" , identifikator , [ "(" , [ arqumentSiyahısı ] , ")" ] } ;
+
+
+(* -----------------------  Siniflər  ----------------------------- *)
+
+sinifElanı      = [ annotasiyalar ] , [ görünüş ] , [ "mücərrəd" | "son" ] ,
+                  "sinif" , identifikator , [ generikParametrlər ] ,
+                  [ "miras" , tip ] ,
+                  [ "tətbiq" , tip , { "," , tip } ] ,
+                  [ "ilə" , tip , { "," , tip } ] ,
+                  { sinifÜzvü } , son ;
+
+sinifÜzvü       = xassəElanı
+                | metodElanı
+                | qurucuElanı
+                | dağıdıcıElanı
+                | elan ;
+
+xassəElanı      = [ annotasiyalar ] , [ görünüş ] , [ "statik" ] ,
+                  [ "sabit" | "tənbəl" ] , "xassə" , identifikator ,
+                  ":" , tip , [ "=" , ifadə ] ,
+                  [ xassəAksessorları ] ;
+xassəAksessorları = { ( "oxu" | "yaz" , [ "(" , identifikator , ")" ] ) ,
+                      blok , son } , son ;
+
+metodElanı      = [ annotasiyalar ] , [ görünüş ] ,
+                  [ "statik" | "mücərrəd" | "son" ] ,
+                  [ "əvəz" , "et" ] , [ "asinxron" ] , [ "generator" ] ,
+                  "metod" , identifikator , [ generikParametrlər ] ,
+                  "(" , [ parametrSiyahısı ] , ")" , [ "->" , tip ] ,
+                  ( blok , son | ?mücərrəd: gövdə yoxdur? ) ;
+
+qurucuElanı     = [ görünüş ] , "qurucu" , [ identifikator ] ,
+                  "(" , [ parametrSiyahısı ] , ")" ,
+                  [ blok ] , [ son ] ;
+dağıdıcıElanı   = "silinsin" , "(" , ")" , blok , son ;
+
+strukturElanı   = [ görünüş ] , "struktur" , identifikator ,
+                  [ generikParametrlər ] ,
+                  [ "tətbiq" , tip , { "," , tip } ] ,
+                  { sinifÜzvü } , son ;
+
+interfeysElanı  = [ görünüş ] , "interfeys" , identifikator ,
+                  [ generikParametrlər ] , [ "miras" , tip , { "," , tip } ] ,
+                  { interfeysÜzvü } , son ;
+interfeysÜzvü   = "metod" , identifikator , "(" , [ parametrSiyahısı ] , ")" ,
+                  [ "->" , tip ] , [ blok , son ]
+                | "xassə" , identifikator , ":" , tip ;
+
+obyektElanı     = [ görünüş ] , "obyekt" , identifikator ,
+                  { sinifÜzvü } , son ;
+
+genişlətmə      = "genişlət" , tip , { sinifÜzvü } , son ;
+
+qarışıqElanı    = "qarışıq" , identifikator , { sinifÜzvü } , son ;
+
+
+(* ----------------------  Sadalama  ------------------------------ *)
+
+sadalamaElanı   = [ görünüş ] , "sadalama" , identifikator ,
+                  [ generikParametrlər ] , [ ":" , tip ] ,
+                  sadalamaVariantı , { sadalamaVariantı } ,
+                  { sinifÜzvü } , son ;
+sadalamaVariantı= identifikator ,
+                  [ "=" , ifadə
+                  | "(" , [ arqumentSiyahısı | parametrSiyahısı ] , ")" ] ;
+
+
+(* ------------------------  Modul  ------------------------------- *)
+
+modulElanı      = [ görünüş ] , "modul" , identifikator ,
+                  { üstSəviyyəElement } , son ;
+
+tipAliası       = [ görünüş ] , "tip" , identifikator ,
+                  [ generikParametrlər ] , "=" , tip ;
+
+
+(* =======================  4. TİPLƏR  ============================ *)
+
+tip             = birləşməTipi ;
+birləşməTipi    = əsasTip , { "|" , əsasTip } ;
+əsasTip         = ( sadəTip | generikTip | funksiyaTipi
+                  | kortejTipi | "(" , tip , ")" ) , [ "?" ] ;
+
+sadəTip         = "tam" | "onluq" | "mətn" | "məntiq" | "simvol"
+                | "bayt" | "istənilən" | "heç"
+                | identifikator , { "." , identifikator } ;
+
+generikTip      = sadəTip , "[" , tip , { "," , tip } , "]" ;
+
+funksiyaTipi    = "funksiyaTipi" , "(" , [ tip , { "," , tip } ] , ")" ,
+                  [ "->" , tip ] ;
+
+kortejTipi      = "(" , tip , "," , [ tip , { "," , tip } ] , ")" ;
+
+
+(* =====================  5. İFADƏLƏR (statement)  ================ *)
+
+blok            = { cümlə } ;
+
+cümlə           = elan
+                | ifadəCümləsi
+                | mənimsətmə
+                | şərtCümləsi
+                | varsaCümləsi
+                | yoxdursaCümləsi
+                | seçCümləsi
+                | nəQədərKiCümləsi
+                | həmişəCümləsi
+                | təkrarlaCümləsi
+                | hərCümləsi
+                | dayanCümləsi
+                | davamCümləsi
+                | qaytarCümləsi
+                | verCümləsi
+                | atCümləsi
+                | cəhdCümləsi
+                | iddiaCümləsi
+                | təminCümləsi
+                | gecikdirCümləsi
+                | istifadəCümləsi
+                | keçCümləsi
+                | qlobalCümləsi
+                | dayanNöqtəsi ;
+
+ifadəCümləsi    = ifadə ;
+mənimsətmə      = hədəfSiyahısı , mənimsətməOperatoru , ifadəSiyahısı
+                | hədəf , ( "++" | "--" ) ;
+hədəfSiyahısı   = hədəf , { "," , hədəf } ;
+hədəf           = identifikator
+                | ifadə , "." , identifikator
+                | ifadə , "[" , ifadə , "]"
+                | "_" ;
+mənimsətməOperatoru = "=" | "+=" | "-=" | "*=" | "/=" | "~/=" | "%="
+                    | "**=" | "&=" | "|=" | "^=" | "<<=" | ">>="
+                    | "??=" | "?=" ;
+
+
+(* ---------------------  Şərt  ----------------------------------- *)
+
+şərtCümləsi     = "əgər" , ifadə , "onda" , blok ,
+                  { ( "yoxsa" , "əgər" ) , ifadə , "onda" , blok } ,
+                  [ ( "yoxsa" | "əks" , "halda" ) , blok ] , son ;
+
+varsaCümləsi    = "varsa" , varsaBağlaması , { "," , varsaBağlaması } ,
+                  "onda" , blok ,
+                  [ ( "yoxsa" | "əks" , "halda" ) , blok ] , son ;
+varsaBağlaması  = identifikator , "=" , ifadə | ifadə ;
+
+yoxdursaCümləsi = "yoxdursa" , varsaBağlaması , { "," , varsaBağlaması } ,
+                  "onda" , blok , son ;
+
+
+(* ---------------------  Seçim  ---------------------------------- *)
+
+seçCümləsi      = "seç" , [ "tipi" ] , [ ifadə ] ,
+                  { halBəndi } , [ digərBəndi ] , son ;
+halBəndi        = "hal" , naxışSiyahısı , [ "əgər" , ifadə ] ,
+                  ( "→" , cümlə | blok ) , [ "keç" ] ;
+digərBəndi      = "digər" , "hallarda" , ( "→" , cümlə | blok ) ;
+naxışSiyahısı   = naxış , { "," , naxış } ;
+naxış           = literal
+                | identifikator
+                | "_"
+                | tip
+                | diapazonNaxışı
+                | kortejNaxışı
+                | siyahıNaxışı
+                | obyektNaxışı ;
+diapazonNaxışı  = ifadə , ( ".." | "..<" ) , ifadə ;
+kortejNaxışı    = "(" , [ naxış , { "," , naxış } ] , ")" ;
+siyahıNaxışı    = "[" , [ naxış , { "," , naxış } ,
+                        [ "," , "..." , identifikator ] ] , "]" ;
+obyektNaxışı    = tip , "{" , [ sahəNaxışı , { "," , sahəNaxışı } ] , "}" ;
+sahəNaxışı      = identifikator , [ ":" , naxış ] ;
+
+
+(* ---------------------  Dövrlər  -------------------------------- *)
+
+nəQədərKiCümləsi= [ etiket , ":" ] , "nə" , "qədər" , "ki" , ifadə ,
+                  blok , son ;
+
+həmişəCümləsi   = [ etiket , ":" ] , "həmişə" , blok , son ;
+
+təkrarlaCümləsi = [ etiket , ":" ] , "təkrarla" ,
+                  ( [ identifikator , "," ] , ifadə , "dəfə" , blok , son
+                  | blok , "nə" , "qədər" , "ki" , ifadə ) ;
+
+hərCümləsi      = [ etiket , ":" ] , "hər" , bağlamaSiyahısı , "üçün" ,
+                  ifadə , [ "addım" , ifadə ] , "içində" , [ "gözlə" ] ,
+                  [ "əgər" , ifadə ] , blok ,
+                  [ "yoxsa" , blok ] , son ;
+
+etiket          = identifikator ;
+dayanCümləsi    = "dayan" , [ etiket ] ;
+davamCümləsi    = "davam" , "et" , [ etiket ] ;
+
+
+(* -----------------  Axın idarəsi / xətalar  --------------------- *)
+
+qaytarCümləsi   = "qaytar" , [ ifadəSiyahısı ] ;
+verCümləsi      = "ver" , [ ifadə ] ;
+atCümləsi       = "at" , [ ifadə ] ;
+keçCümləsi      = "keç" ;
+qlobalCümləsi   = "global" , identifikator , { "," , identifikator } ;
+dayanNöqtəsi    = "dayanNöqtəsi" ;
+
+cəhdCümləsi     = "cəhd" , "et" , blok ,
+                  { "tut" , [ "(" , identifikator , ":" , tip , ")" ] ,
+                    [ "əgər" , ifadə ] , blok } ,
+                  [ "nəhayət" , blok ] , son ;
+
+iddiaCümləsi    = "iddia" , ifadə , [ "," , ifadə ] ;
+təminCümləsi    = "təmin" , ifadə , "yoxsa" , blok , son ;
+gecikdirCümləsi = "gecikdir" , ifadə ;
+istifadəCümləsi = "istifadə" , istifadəBağlaması ,
+                  { "," , istifadəBağlaması } , blok , son ;
+istifadəBağlaması = identifikator , "=" , ifadə ;
+
+
+(* =====================  6. İFADƏLƏR (expression)  =============== *)
+(* Prioritet aşağıdan yuxarıya artır *)
+
+ifadəSiyahısı   = ifadə , { "," , ifadə } ;
+
+ifadə           = boruİfadəsi ;
+
+boruİfadəsi     = boşBirləşmə , { "|>" , boşBirləşmə } ;
+boşBirləşmə     = məntiqiYa , { "??" , məntiqiYa } ;
+məntiqiYa       = məntiqiVə , { ( "və" , "ya" | "||" ) , məntiqiVə } ;
+məntiqiVə       = bərabərlik , { ( "və" | "&&" ) , bərabərlik } ;
+bərabərlik      = müqayisə , { ( "==" | "!=" ) , müqayisə } ;
+müqayisə        = diapazon , { ( "<" | ">" | "<=" | ">=" | "<=>"
+                              | "içindədir" | "içində" , "deyil"
+                              | "tipidir" | "tipidir" , "deyil" ) , diapazon } ;
+diapazon        = bitYa , [ ( ".." | "..<" ) , bitYa , [ "addım" , bitYa ] ] ;
+bitYa           = bitXor , { "|" , bitXor } ;
+bitXor          = bitVə , { "^" , bitVə } ;
+bitVə           = sürüşmə , { "&" , sürüşmə } ;
+sürüşmə         = toplama , { ( "<<" | ">>" | ">>>" ) , toplama } ;
+toplama         = vurma , { ( "+" | "-" ) , vurma } ;
+vurma           = çevirmə , { ( "*" | "/" | "~/" | "%" ) , çevirmə } ;
+çevirmə         = təkOperand , { ( "kimi" | "kimi?" ) , tip } ;
+təkOperand      = ( "-" | "+" | "deyil" | "!" | "~" ) , təkOperand
+                | qüvvət ;
+qüvvət          = postfiks , [ "**" , təkOperand ] ;   (* sağ assosiativ *)
+
+postfiks        = əsasİfadə , { postfiksSonluğu } ;
+postfiksSonluğu = "." , identifikator
+                | "?." , identifikator
+                | "!"
+                | "." , tamLiteral                     (* kortej indeksi *)
+                | "(" , [ arqumentSiyahısı ] , ")"
+                | "[" , indeksİfadəsi , "]"
+                | "?" ;                                 (* Nəticə yayma *)
+
+indeksİfadəsi   = ifadə
+                | [ ifadə ] , ( ".." | "..<" ) , [ ifadə ] ;
+
+arqumentSiyahısı= arqument , { "," , arqument } ;
+arqument        = [ identifikator , ":" ] , ifadə
+                | "..." , ifadə ;
+
+əsasİfadə       = literal
+                | identifikator
+                | "özü"
+                | "üst"
+                | "(" , ifadə , ")"
+                | kortejİfadəsi
+                | siyahıİfadəsi
+                | lüğətİfadəsi
+                | dəstİfadəsi
+                | yeniİfadəsi
+                | lambdaİfadəsi
+                | anonimFunksiya
+                | şərtİfadəsi
+                | seçİfadəsi
+                | blokİfadəsi
+                | cəhdİfadəsi
+                | gözləİfadəsi
+                | qurma
+                | JSXElementi ;
+
+literal         = tamLiteral | onluqLiteral | mətnLiteral
+                | simvolLiteral | məntiqLiteral | boşLiteral ;
+
+kortejİfadəsi   = "(" , ")"
+                | "(" , ifadə , "," , ")"
+                | "(" , ifadə , "," , ifadəSiyahısı , [ "," ] , ")" ;
+
+siyahıİfadəsi   = "[" , [ elementSiyahısı , [ "," ] ] , "]" ;
+elementSiyahısı = element , { "," , element } ;
+element         = ifadə | "..." , ifadə ;
+
+lüğətİfadəsi    = "{" , [ cüt , { "," , cüt } , [ "," ] ] , "}" ;
+cüt             = ifadə , ":" , ifadə | "..." , ifadə ;
+
+dəstİfadəsi     = "dəst" , "(" , [ ifadəSiyahısı ] , ")"
+                | "{" , ifadə , { "," , ifadə } , [ "," ] , "}" ;
+
+yeniİfadəsi     = "yeni" , tip , [ "." , identifikator ] ,
+                  "(" , [ arqumentSiyahısı ] , ")" ;
+
+lambdaİfadəsi   = ( identifikator
+                  | "(" , [ parametrSiyahısı ] , ")" ) ,
+                  "=>" , ( ifadə | blokİfadəsi ) ;
+
+anonimFunksiya  = [ tutSiyahısı ] , [ "asinxron" ] , "funksiya" ,
+                  "(" , [ parametrSiyahısı ] , ")" , [ "->" , tip ] ,
+                  blok , son ;
+tutSiyahısı     = "[" , "tut" , identifikator , { "," , identifikator } , "]" ;
+
+şərtİfadəsi     = "əgər" , ifadə , "onda" , ifadə ,
+                  { "yoxsa" , "əgər" , ifadə , "onda" , ifadə } ,
+                  "yoxsa" , ifadə , son ;
+
+seçİfadəsi      = seçCümləsi ;     (* hər bənd dəyər verir *)
+blokİfadəsi     = "blok" , blok , son ;   (* `ver` ilə dəyər qaytarır *)
+cəhdİfadəsi     = cəhdCümləsi ;    (* `ver` ilə dəyər qaytarır *)
+gözləİfadəsi    = "gözlə" , ifadə ;
+
+qurma           = siyahıQurması | lüğətQurması | dəstQurması | generatorQurması ;
+siyahıQurması   = "[" , ifadə , "üçün" , bağlama , "içində" , ifadə ,
+                  [ "əgər" , ifadə ] , "]" ;
+lüğətQurması    = "{" , ifadə , ":" , ifadə , "üçün" , bağlama ,
+                  "içində" , ifadə , [ "əgər" , ifadə ] , "}" ;
+dəstQurması     = "{" , ifadə , "üçün" , bağlama , "içində" , ifadə ,
+                  [ "əgər" , ifadə ] , "}" ;
+generatorQurması= "(" , ifadə , "üçün" , bağlama , "içində" , ifadə ,
+                  [ "əgər" , ifadə ] , ")" ;
+
+
+(* ============  7. İNTERFEYS SİNTAKSİSİ (JSX bənzəri)  =========== *)
+
+JSXElementi     = "<" , JSXAdı , { JSXAtributu } , "/" , ">"
+                | "<" , JSXAdı , { JSXAtributu } , ">" ,
+                  { JSXUşağı } ,
+                  "<" , "/" , JSXAdı , ">" ;
+JSXAdı          = identifikator , { "." , identifikator } ;
+JSXAtributu     = identifikator , [ "=" , ( mətnLiteral
+                                          | "{" , ifadə , "}" ) ]
+                | "{" , "..." , ifadə , "}" ;
+JSXUşağı        = JSXElementi
+                | "{" , ifadə , "}"
+                | ?mətn? ;
+
+
+(* ==================  8. KOMPONENT / MAĞAZA  ===================== *)
+
+komponentElanı  = [ görünüş ] , "komponent" , identifikator ,
+                  { komponentÜzvü } , son ;
+komponentÜzvü   = "vəziyyət" , identifikator , ":" , tip , [ "=" , ifadə ]
+                | "xassə" , identifikator , ":" , tip , [ "=" , ifadə ]
+                | "hadisə" , identifikator
+                | "hesablanan" , identifikator , ":" , tip , blok , son
+                | metodElanı
+                | "göstər" , "(" , ")" , blok , son ;
+
+mağazaElanı     = [ görünüş ] , "mağaza" , identifikator ,
+                  { mağazaÜzvü } , son ;
+mağazaÜzvü      = "vəziyyət" , identifikator , ":" , tip , [ "=" , ifadə ]
+                | "hesablanan" , identifikator , ":" , tip , blok , son
+                | [ "asinxron" ] , "əməl" , identifikator ,
+                  "(" , [ parametrSiyahısı ] , ")" , blok , son ;
+
+
+(* =====================  SON  ==================================== *)

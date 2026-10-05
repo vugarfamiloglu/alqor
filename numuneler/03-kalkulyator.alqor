@@ -1,0 +1,45 @@
+// Nümunə 3 — Konsol kalkulyatoru
+
+funksiya hesabla(a: onluq, əməl: mətn, b: onluq) -> onluq
+    seç əməl
+        hal "+" → qaytar a + b
+        hal "-" → qaytar a - b
+        hal "*" → qaytar a * b
+        hal "/"
+            təmin b != 0 yoxsa
+                at BölməXətası("Sıfıra bölmək olmaz")
+            son
+            qaytar a / b
+        digər hallarda
+            at ArqumentXətası("Naməlum əməliyyat: {əməl}")
+    son
+son
+
+funksiya əsas()
+    yaz("=== Alqor Kalkulyator ===")
+    yaz("Çıxmaq üçün 'çıx' yazın")
+
+    həmişə
+        dəyişən giriş = oxu("\n> ")
+        əgər giriş.kəs() == "çıx" onda
+            yaz("Sağ olun!")
+            dayan
+        son
+
+        cəhd et
+            dəyişən hissələr = giriş.kəs().böl()
+            əgər uzunluq(hissələr) != 3 onda
+                yaz("Format: <ədəd> <əməl> <ədəd>")
+                davam et
+            son
+
+            dəyişən a = onluqƏt(hissələr[0])
+            dəyişən b = onluqƏt(hissələr[2])
+            yaz("= {hesabla(a, hissələr[1], b)}")
+        tut (x: ÇevrilməXətası)
+            yaz("Xəta: ədəd daxil edin")
+        tut (x: Xəta)
+            yaz("Xəta: {x.mesaj}")
+        son
+    son
+son

@@ -1,0 +1,48 @@
+// Nümunə 7 — Fayl emalı və mətn analizi
+
+gətir fayl
+gətir sistem
+
+funksiya sözləriSay(mətn: mətn) -> lüğət[mətn, tam]
+    dəyişən say: lüğət[mətn, tam] = {}
+
+    hər söz üçün mətn.kiçiyə().sözlər() içində
+        dəyişən təmiz = söz.kəs(".,!?;:()\"'")
+        əgər təmiz == "" onda davam et son
+        say[təmiz] = say.al(təmiz, 0) + 1
+    son
+
+    qaytar say
+son
+
+funksiya əsas(arqumentlər: siyahı[mətn])
+    əgər uzunluq(arqumentlər) == 0 onda
+        yaz("İstifadə: alqor işlət 07-fayl-emali.alqor -- <fayl>")
+        sistem.dayan(2)
+    son
+
+    dəyişən yol = arqumentlər[0]
+
+    əgər deyil fayl.vardır(yol) onda
+        yazXəta("Fayl tapılmadı: {yol}")
+        sistem.dayan(4)
+    son
+
+    dəyişən məzmun = fayl.oxu(yol)
+    dəyişən sətirlər = məzmun.sətirlər()
+    dəyişən sözlər = məzmun.sözlər()
+
+    yaz("=== {yol} ===")
+    yaz("Sətir:   {uzunluq(sətirlər)}")
+    yaz("Söz:     {uzunluq(sözlər)}")
+    yaz("Simvol:  {məzmun.uzunluq()}")
+    yaz("Ölçü:    {fayl.ölçü(yol)} bayt")
+
+    yaz("\n=== Ən çox işlənən 10 söz ===")
+    dəyişən say = sözləriSay(məzmun)
+    dəyişən sıralı = say.cütlər().sıralaAçar((c) => -c.1)
+
+    hər i, (söz, n) üçün sıralı.dilim(0, 9) içində
+        yaz("{i + 1:2}. {söz:<20} {n}")
+    son
+son

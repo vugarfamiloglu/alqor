@@ -1,0 +1,65 @@
+// Nümunə 5 — Veb server + REST API
+
+gətir veb
+gətir json
+
+sinif Tapşırıq
+    qurucu(açıq xassə id: tam,
+           açıq xassə mətn: mətn,
+           açıq xassə bitib: məntiq = yanlış)
+son
+
+dəyişən tapşırıqlar: siyahı[Tapşırıq] = []
+dəyişən növbətiId = 1
+
+funksiya əsas()
+    dəyişən s = yeni veb.Server()
+
+    s.ara(veb.jurnal())
+    s.ara(veb.CORS(mənbələr: ["*"]))
+    s.statik("/statik", "statik/")
+
+    // Əsas səhifə
+    s.al("/", funksiya(sorğu)
+        qaytar veb.şablon("siyahı.alqorhtml", {"tapşırıqlar": tapşırıqlar})
+    son)
+
+    // REST API
+    s.qrup("/api", funksiya(q)
+
+        q.al("/tapşırıq", funksiya(sorğu)
+            qaytar veb.json(tapşırıqlar)
+        son)
+
+        q.al("/tapşırıq/:id", funksiya(sorğu)
+            dəyişən id = tamƏt(sorğu.parametr("id"))
+            varsa t = tapşırıqlar.tap((t) => t.id == id) onda
+                qaytar veb.json(t)
+            son
+            qaytar veb.json({"xəta": "Tapılmadı"}).kod(404)
+        son)
+
+        q.göndər("/tapşırıq", funksiya(sorğu)
+            dəyişən v = sorğu.json()
+            dəyişən mətn = v["mətn"] ?? ""
+
+            əgər mətn.kəs() == "" onda
+                qaytar veb.json({"xəta": "Mətn boş ola bilməz"}).kod(422)
+            son
+
+            dəyişən t = yeni Tapşırıq(növbətiId, mətn)
+            növbətiId += 1
+            tapşırıqlar.əlavə(t)
+            qaytar veb.json(t).kod(201)
+        son)
+
+        q.sil("/tapşırıq/:id", funksiya(sorğu)
+            dəyişən id = tamƏt(sorğu.parametr("id"))
+            tapşırıqlar = tapşırıqlar.filtr((t) => t.id != id)
+            qaytar veb.boş(204)
+        son)
+    son)
+
+    yaz("Server işləyir: http://localhost:8080")
+    s.dinlə(8080)
+son

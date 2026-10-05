@@ -1,0 +1,68 @@
+// Nümunə 6 — Desktop tətbiq
+
+gətir pəncərə
+gətir pəncərə.dialoq
+gətir fayl
+
+komponent Sayğac
+    vəziyyət say: tam = 0
+    vəziyyət tarixçə: siyahı[tam] = []
+
+    hesablanan cəmi: tam
+        qaytar özü.tarixçə.cəm()
+    son
+
+    metod artır()
+        özü.say += 1
+        özü.tarixçə.əlavə(özü.say)
+    son
+
+    metod azalt()
+        özü.say -= 1
+        özü.tarixçə.əlavə(özü.say)
+    son
+
+    metod sıfırla()
+        əgər dialoq.təsdiqlə("Sıfırlansın?", "Tarixçə də silinəcək") onda
+            özü.say = 0
+            özü.tarixçə = []
+        son
+    son
+
+    metod saxla()
+        varsa yol = dialoq.faylSaxla(standartAd: "sayğac.txt") onda
+            fayl.yaz(yol, özü.tarixçə.çevir(mətnƏt).birləşdir("\n"))
+            pəncərə.bildiriş("Saxlanıldı", "Fayl: {yol}")
+        son
+    son
+
+    göstər()
+        qaytar <div sinif="sayğac">
+            <h1>{özü.say}</h1>
+            <div sinif="düymələr">
+                <button klik={özü.azalt}>−</button>
+                <button klik={özü.artır}>+</button>
+                <button klik={özü.sıfırla}>Sıfırla</button>
+            </div>
+            <p>Addım sayı: {uzunluq(özü.tarixçə)} · Cəmi: {özü.cəmi}</p>
+        </div>
+    son
+son
+
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 400, 300)
+    dəyişən s = yeni Sayğac()
+
+    p.menyu([
+        pəncərə.menyu("Fayl", [
+            pəncərə.element("Saxla...", qısayol: "Ctrl+S", klik: s.saxla),
+            pəncərə.ayırıcı(),
+            pəncərə.element("Çıxış", qısayol: "Ctrl+Q", klik: () => p.bağla())
+        ])
+    ])
+
+    p.məzmun(<Sayğac />)
+    p.mərkəzə()
+    p.göstər()
+    pəncərə.işlət()
+son
