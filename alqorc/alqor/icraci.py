@@ -1252,9 +1252,35 @@ class İcraçı:
         if metod is not None:
             return metod
 
-        raise AlqorXəta("ArqumentXətası",
-                        f"`{tip_adı(obyekt)}` tipində `{ad}` üzvü yoxdur",
-                        yer, "ALQ-T006")
+        raise self._üzv_xətası(obyekt, ad, yer)
+
+    @staticmethod
+    def _üzv_xətası(obyekt: Any, ad: str, yer: Yer | None) -> AlqorXəta:
+        """
+        Tapılmayan üzv üçün xəta — ASCII yazılış təklifi ilə.
+
+        `siyahı.cem()` yazılıbsa, `cəm()` təklif olunur. Bu, ASCII
+        çevrilməsinin YALNIZ açar sözlərə aid olduğunu izah edir.
+        """
+        from .elifba import latınla
+        from .kitabxana import mövcud_üzvlər
+
+        x = AlqorXəta("ArqumentXətası",
+                      f"`{tip_adı(obyekt)}` tipində `{ad}` üzvü yoxdur",
+                      yer, "ALQ-T006")
+        üzvlər = mövcud_üzvlər(obyekt)
+        # Dəqiq ASCII uyğunluğu
+        for ü in üzvlər:
+            if latınla(ü) == ad and ü != ad:
+                x.mesaj += (f" — `{ü}` demək istəyirdiniz?"
+                            " ASCII çevrilməsi yalnız AÇAR SÖZLƏRƏ"
+                            " aiddir, üzv adlarına yox")
+                return x
+        # Yaxın ad
+        yaxın = [ü for ü in üzvlər if ü.startswith(ad[:3])][:3]
+        if yaxın:
+            x.mesaj += f" — bəlkə: {', '.join(yaxın)}"
+        return x
 
     def _nümunə_üzvü(self, n: Nümunə, ad: str, yer: Yer | None) -> Any:
         if ad in n.sahələr:

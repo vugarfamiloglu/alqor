@@ -349,6 +349,31 @@ class _XətaSinfi(Çağırılan):
 #  2. DAXİLİ TİPLƏRİN METODLARI
 # ═══════════════════════════════════════════════════════════════════════
 
+def mövcud_üzvlər(obyekt: Any) -> list[str]:
+    """Obyektin bütün mümkün üzv adları — xəta təklifləri üçün."""
+    adlar: list[str] = []
+    tip = tip_adı(obyekt).split("[")[0]
+    adlar.extend(_GENİŞLƏTMƏLƏR.get(tip, {}))
+    cədvəl = _CƏDVƏLLƏR.get(type(obyekt))
+    if cədvəl is None:
+        if isinstance(obyekt, AlqorDiapazon):
+            cədvəl = _DIAPAZON
+        elif isinstance(obyekt, AlqorGenerator):
+            cədvəl = _GENERATOR
+    if cədvəl:
+        adlar.extend(cədvəl)
+    if isinstance(obyekt, Nümunə):
+        adlar.extend(obyekt.sahələr)
+        s = obyekt.sinif
+        while s is not None:
+            adlar.extend(s.metodlar)
+            adlar.extend(s.hesablananlar)
+            s = s.baza
+    if isinstance(obyekt, Modul):
+        adlar.extend(obyekt.üzvlər)
+    return sorted(set(adlar))
+
+
 def daxili_metod(icraçı, obyekt: Any, ad: str) -> BağlıMetod | None:
     """`obyekt.ad` — daxili tip metodu varsa qaytarır."""
     tip = tip_adı(obyekt).split("[")[0]

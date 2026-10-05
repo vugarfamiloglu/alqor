@@ -423,7 +423,8 @@ class Lekser:
         baş = self.i
 
         # ── Prefiksli formalar ──────────────────────────────────
-        if self.m[self.i] == "0" and self._gör(1) in "xXbBoO":
+        if (self.m[self.i] == "0"
+                and self._gör(1) in ("x", "X", "b", "B", "o", "O")):
             növ_hərfi = self._gör(1)
             self.i += 2
             if növ_hərfi in "xX":
@@ -467,7 +468,7 @@ class Lekser:
             self._rəqəmlər_atla()
 
         # Eksponent
-        if self._gör(0) in "eE":
+        if self._gör(0) in ("e", "E"):
             j = self.i + 1
             if j < self.n and self.m[j] in "+-":
                 j += 1
@@ -790,6 +791,13 @@ class Lekser:
     # ═══════════════════════════════════════════════════════════════════
 
     def _gör(self, irəli: int = 0) -> str:
+        """
+        Mövqedən `irəli` qədər irəlidəki simvol, sonda isə boş sətir.
+
+        DİQQƏT: nəticəni `in "abc"` ilə yoxlamayın — Python-da
+        `"" in "abc"` DOĞRU qaytarır və sətrin sonunda yanlış nəticə
+        verir. Kortej işlədin: `in ("a", "b", "c")`.
+        """
         j = self.i + irəli
         return self.m[j] if j < self.n else ""
 
