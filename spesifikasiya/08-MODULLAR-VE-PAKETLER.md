@@ -1,0 +1,395 @@
+# Alqor — Bölmə 8: Modullar və Paketlər
+
+---
+
+## 8.1 Modul anlayışı
+
+**Hər `.alqor` faylı bir moduldur.** Modul adı fayl adından gəlir:
+
+```
+riyazi-alətlər.alqor   →   modul adı: riyazi_alətlər
+şəbəkə/http.alqor      →   modul adı: şəbəkə.http
+```
+
+---
+
+## 8.2 İxrac — `ixrac et`
+
+Standart olaraq **hər şey gizlidir**. Yalnız `ixrac et` ilə işarələnən üzvlər kənardan görünür.
+
+```alqor
+// riyazi.alqor
+
+ixrac et sabit Pİ = 3.14159265358979
+
+ixrac et funksiya kvadrat(x: onluq) -> onluq
+    qaytar x * x
+son
+
+ixrac et sinif Vektor
+    ...
+son
+
+funksiya daxiliKöməkçi()          // ixrac olunmur — gizli
+    ...
+son
+
+// Toplu ixrac
+ixrac et {kvadrat, kub, kök}
+
+// Standart ixrac (modulun əsas elementi)
+ixrac et standart funksiya hesabla() ... son
+
+// Yenidən ixrac
+ixrac et {topla, çıx} riyazi.əsasdan
+ixrac et * riyazi.həndəsədən
+```
+
+---
+
+## 8.3 İdxal — `gətir`
+
+### Bütöv modul
+```alqor
+gətir riyaziyyat
+
+yaz(riyaziyyat.Pİ)
+yaz(riyaziyyat.kök(16))
+```
+
+### Ləqəblə
+```alqor
+gətir riyaziyyat kimi r
+
+yaz(r.Pİ)
+```
+
+### Seçmə idxal
+```alqor
+gətir riyaziyyatdan {Pİ, kök, qüvvət}
+
+yaz(Pİ)
+yaz(kök(16))
+```
+
+### Ləqəbli seçmə idxal
+```alqor
+gətir riyaziyyatdan {kök kimi kvadratKök, Pİ kimi PI}
+```
+
+### Hamısını idxal (tövsiyə olunmur)
+```alqor
+gətir riyaziyyatdan *
+```
+
+### Standart idxal
+```alqor
+gətir hesabla riyazidən          // `ixrac et standart` elementi
+```
+
+### Yerli fayldan
+```alqor
+gətir "./köməkçilər.alqor" kimi k
+gətir "../ortaq/model.alqor" kimi model
+gətir "./alt_qovluq/" kimi alt    // qovluğun `indeks.alqor` faylı
+```
+
+### Paketdən
+```alqor
+gətir veb                         // standart kitabxana
+gətir @şirkət/analitika           // ad fəzalı paket
+gətir tarix_alətləri              // alqorhub paketi
+```
+
+### Şərti idxal
+```alqor
+@əgərHədəf("veb")
+gətir brauzer
+
+@əgərHədəf("desktop")
+gətir pəncərə
+```
+
+### Dinamik idxal (asinxron)
+```alqor
+asinxron funksiya yüklə()
+    dəyişən modul = gözlə gətirDinamik("./ağır-modul.alqor")
+    modul.işlət()
+son
+```
+
+---
+
+## 8.4 Modul daxilində `modul` bloku
+
+Bir faylda bir neçə ad fəzası:
+
+```alqor
+// həndəsə.alqor
+
+ixrac et modul ikiÖlçülü
+    ixrac et sinif Nöqtə
+        xassə x: onluq
+        xassə y: onluq
+    son
+son
+
+ixrac et modul üçÖlçülü
+    ixrac et sinif Nöqtə
+        xassə x: onluq
+        xassə y: onluq
+        xassə z: onluq
+    son
+son
+```
+
+```alqor
+gətir həndəsə
+
+dəyişən a = yeni həndəsə.ikiÖlçülü.Nöqtə()
+dəyişən b = yeni həndəsə.üçÖlçülü.Nöqtə()
+```
+
+---
+
+## 8.5 Modulun ilkinləşdirilməsi
+
+```alqor
+// verilənlər.alqor
+
+dəyişən _bağlantı: Bağlantı?
+
+// Modul ilk dəfə idxal olunanda bir dəfə işləyir
+başlanğıc
+    _bağlantı = Bağlantı.aç(sistem.mühit("DB_URL"))
+    jurnal.info("Verilənlər bazası bağlandı")
+son
+
+// Proqram bitəndə işləyir
+bitiş
+    _bağlantı?.bağla()
+son
+```
+
+---
+
+## 8.6 Dövri asılılıqlar
+
+Alqor dövri idxalı **aşkarlayır və xəta verir** (`ALQ-M005`):
+
+```
+✖ ALQ-M005  Dövri modul asılılığı
+   a.alqor → b.alqor → c.alqor → a.alqor
+
+   = kömək: ortaq hissəni ayrıca modula çıxarın
+```
+
+Həlli: interfeysi ayrıca modula çıxarmaq, və ya `gətirDinamik()` istifadə etmək.
+
+---
+
+## 8.7 Paket quruluşu
+
+```
+mənim-layihəm/
+├── layihe.alqor              # paket manifesti
+├── alqor.kilid               # dəqiq versiya kilidi (avtomatik)
+├── mənbə/
+│   ├── əsas.alqor            # giriş nöqtəsi
+│   ├── model/
+│   │   ├── indeks.alqor      # `gətir ./model` bunu yükləyir
+│   │   ├── istifadəçi.alqor
+│   │   └── sifariş.alqor
+│   └── xidmət/
+│       └── auth.alqor
+├── sınaq/
+│   ├── istifadəçi_sınaq.alqor
+│   └── auth_sınaq.alqor
+├── statik/                   # veb üçün statik fayllar
+│   ├── üslub.css
+│   └── şəkil/
+├── sənəd/
+├── paketlər/                 # asılılıqlar (alqorpm yükləyir)
+└── qurma/                    # kompilyasiya nəticələri
+    ├── linux-x64/
+    ├── veb/
+    └── paket/
+```
+
+---
+
+## 8.8 `layihe.alqor` — manifest faylı
+
+```toml
+[paket]
+ad = "mənim-layihəm"
+versiya = "1.0.0"
+təsvir = "Nümunə Alqor layihəsi"
+müəllif = ["Vüqar Qənbərov <vuqar@nümunə.az>"]
+lisenziya = "MIT"
+depo = "https://github.com/istifadəçi/mənim-layihəm"
+sənəd = "https://alqor.az/paket/mənim-layihəm"
+açarSözlər = ["veb", "api"]
+alqor_versiya = ">=1.0.0"
+
+[qurma]
+giriş = "mənbə/əsas.alqor"
+hədəf = ["linux-x64", "veb"]      # linux-x64 | linux-arm64 | veb | wasm | windows-x64 | macos-arm64
+çıxış = "qurma/"
+optimallaşdırma = 2                # 0=yox 1=sürətli 2=balanslı 3=maksimum
+simvollar = yanlış                 # debaq simvolları
+statik = doğru                     # statik bağlama (asılılıqsız binar)
+sıxılma = doğru
+
+[tip]
+rejim = "normal"                   # sərbəst | normal | sərt
+sərt_boş = doğru                   # ixtiyari tiplər məcburi yoxlanır
+
+[icra]
+stek_dərinliyi = 8192
+zibil_yığıcı = "nəsilli"           # istinad | nəsilli | yoxdur
+yaddaş_limiti = "512MB"
+
+[asılılıqlar]
+veb = "2.1"
+verilənlər = "^3.0"                # 3.x.x
+json = "~1.4.2"                    # 1.4.x
+"@şirkət/analitika" = "1.0"
+yerli_paket = { yol = "../yerli" }
+qit_paket = { qit = "https://github.com/a/b", teq = "v1.0" }
+
+[inkişaf_asılılıqları]
+sınaq_köməkçi = "1.0"
+
+[sınaq]
+qovluq = "sınaq/"
+örtük_minimum = 80
+
+[veb]
+port = 8080
+host = "0.0.0.0"
+statik_qovluq = "statik/"
+canlı_yeniləmə = doğru
+
+[desktop]
+pəncərə_başlıq = "Mənim Proqramım"
+en = 1024
+hündürlük = 768
+ikon = "statik/ikon.png"
+dəyişdirilə_bilən = doğru
+
+[paketləmə]
+deb = { ad = "menim-layihem", asılılıqlar = ["libwebkit2gtk-4.1-0"] }
+appimage = { kateqoriya = "Utility" }
+flatpak = { id = "az.numune.MenimLayihem" }
+docker = { baza = "debian:bookworm-slim" }
+
+[skriptlər]
+başlat = "alqor işlət mənbə/əsas.alqor"
+qur = "alqor qur --buraxılış"
+sınaq = "alqortest"
+format = "alqorfmt ."
+```
+
+---
+
+## 8.9 `alqorpm` — paket meneceri
+
+```bash
+alqorpm başlat                      # yeni layihə yarat
+alqorpm əlavə veb                   # paket əlavə et
+alqorpm əlavə veb@2.1               # konkret versiya
+alqorpm əlavə --inkişaf sınaq_köməkçi
+alqorpm sil veb                     # paket sil
+alqorpm yüklə                       # layihe.alqor-dakı hamısını yüklə
+alqorpm yenilə                      # asılılıqları yenilə
+alqorpm yenilə veb                  # bir paketi yenilə
+alqorpm siyahı                      # quraşdırılmışları göstər
+alqorpm ağac                        # asılılıq ağacı
+alqorpm axtar json                  # alqorhub-da axtar
+alqorpm məlumat veb                 # paket haqqında
+alqorpm təmizlə                     # keşi təmizlə
+alqorpm yoxla                       # təhlükəsizlik auditi
+alqorpm yayımla                     # alqorhub-a göndər
+alqorpm giriş                       # alqorhub hesabına giriş
+```
+
+### Versiya sintaksisi
+
+| Yazılış | Mənası |
+|---|---|
+| `1.2.3` | dəqiq bu versiya |
+| `^1.2.3` | `>=1.2.3 <2.0.0` (uyğun yeniləmələr) |
+| `~1.2.3` | `>=1.2.3 <1.3.0` (yalnız yamaqlar) |
+| `>=1.2` | bu və daha yuxarı |
+| `1.2.*` | `1.2.x` |
+| `*` | istənilən |
+| `1.0 \|\| 2.0` | ya biri, ya digəri |
+
+---
+
+## 8.10 Ad həlli sırası
+
+`gətir X` ifadəsi belə axtarır:
+
+1. Standart kitabxana modulları (`nüvə`, `mətn`, `riyaziyyat`, ...)
+2. Layihənin `mənbə/` qovluğu
+3. `paketlər/` qovluğu (yerli asılılıqlar)
+4. Qlobal keş: `~/.alqor/paketlər/`
+5. Sistem: `/usr/lib/alqor/paketlər/`
+
+Tapılmasa: `ALQ-M001`.
+
+---
+
+## 8.11 Ad münaqişələri
+
+```alqor
+gətir riyaziyyatdan {kök}
+gətir həndəsədən {kök}              // ✖ ALQ-M006 ad münaqişəsi
+
+// Həlli:
+gətir riyaziyyatdan {kök kimi riyaziKök}
+gətir həndəsədən {kök kimi həndəsiKök}
+
+// Və ya:
+gətir riyaziyyat
+gətir həndəsə
+yaz(riyaziyyat.kök(16))
+yaz(həndəsə.kök(düyün))
+```
+
+---
+
+## 8.12 Görünüş
+
+| Modifikator | Görünür |
+|---|---|
+| (yoxdur) | yalnız həmin fayl |
+| `ixrac et` | idxal edən hər kəs |
+| `ixrac et modul` | yalnız eyni paket daxilində |
+
+```alqor
+ixrac et modul funksiya daxiliAPI()     // paket daxilində açıq, kənarda gizli
+    ...
+son
+```
+
+---
+
+## 8.13 Modul xəta kodları
+
+| Kod | Mesaj |
+|---|---|
+| `ALQ-M001` | Modul tapılmadı |
+| `ALQ-M002` | Modulda belə ixrac yoxdur |
+| `ALQ-M003` | İxrac olunmayan üzvə müraciət |
+| `ALQ-M004` | Yanlış modul yolu |
+| `ALQ-M005` | Dövri modul asılılığı |
+| `ALQ-M006` | İdxalda ad münaqişəsi |
+| `ALQ-M007` | Versiya uyğunsuzluğu |
+| `ALQ-M008` | `layihe.alqor` tapılmadı |
+| `ALQ-M009` | `layihe.alqor` formatı pozulub |
+| `ALQ-M010` | Paket imzası doğrulanmadı |
+| `ALQ-M011` | ⚠ İstifadə olunmayan idxal |
+| `ALQ-M012` | ⚠ `gətir *` tövsiyə olunmur |

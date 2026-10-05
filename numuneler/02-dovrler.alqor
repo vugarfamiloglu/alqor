@@ -1,0 +1,27 @@
+// Nümunə 2 — Dövrlər
+
+// 1-dən 5-ə
+hər i üçün 1..5 içində
+    yaz("Rəqəm: {i}")
+son
+
+// Şərtli dövr
+dəyişən i = 1
+nə qədər ki i <= 5
+    yaz("Say: {i}")
+    i++
+son
+
+// Sayla təkrar
+təkrarla 3 dəfə
+    yaz("Salam")
+son
+
+// Vurma cədvəli
+hər a üçün 1..9 içində
+    dəyişən sətir = ""
+    hər b üçün 1..9 içində
+        sətir += "{a * b:4}"
+    son
+    yaz(sətir)
+son

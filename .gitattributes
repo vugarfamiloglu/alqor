@@ -1,0 +1,8 @@
+# Bütün mənbə faylları UTF-8 və LF olmalıdır — Azərbaycan hərfləri üçün kritik
+*           text=auto eol=lf
+*.md        text eol=lf
+*.py        text eol=lf
+*.alqor     text eol=lf
+*.alq       text eol=lf
+*.ebnf      text eol=lf
+*.toml      text eol=lf

@@ -1,0 +1,61 @@
+// Nümunə 4 — Obyekt yönümlü proqramlaşdırma
+
+mücərrəd sinif Fiqur
+    xassə ad: mətn
+
+    qurucu(ad: mətn)
+        özü.ad = ad
+    son
+
+    mücərrəd metod sahə() -> onluq
+    mücərrəd metod perimetr() -> onluq
+
+    metod təsvir()
+        yaz("{özü.ad}: sahə = {özü.sahə():.2}, perimetr = {özü.perimetr():.2}")
+    son
+son
+
+sinif Dairə miras Fiqur
+    qurucu(açıq xassə radius: onluq)
+        üst("Dairə")
+    son
+
+    əvəz et metod sahə() -> onluq
+        qaytar riyaziyyat.Pİ * özü.radius ** 2
+    son
+
+    əvəz et metod perimetr() -> onluq
+        qaytar 2 * riyaziyyat.Pİ * özü.radius
+    son
+son
+
+sinif Düzbucaqlı miras Fiqur
+    qurucu(açıq xassə en: onluq, açıq xassə hündürlük: onluq)
+        üst("Düzbucaqlı")
+    son
+
+    əvəz et metod sahə() -> onluq
+        qaytar özü.en * özü.hündürlük
+    son
+
+    əvəz et metod perimetr() -> onluq
+        qaytar 2 * (özü.en + özü.hündürlük)
+    son
+son
+
+funksiya əsas()
+    dəyişən fiqurlar: siyahı[Fiqur] = [
+        yeni Dairə(5),
+        yeni Düzbucaqlı(3, 4),
+        yeni Dairə(2.5)
+    ]
+
+    hər f üçün fiqurlar içində
+        f.təsvir()
+    son
+
+    yaz("\nÜmumi sahə: {fiqurlar.çevir((f) => f.sahə()).cəm():.2}")
+
+    dəyişən ənBöyük = fiqurlar.sıralaAçar((f) => -f.sahə())[0]
+    yaz("Ən böyük: {ənBöyük.ad}")
+son

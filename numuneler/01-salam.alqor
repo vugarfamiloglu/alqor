@@ -1,0 +1,13 @@
+// Nümunə 1 — Ən sadə proqram
+
+yaz("Adınızı daxil edin:")
+dəyişən ad = oxu()
+
+yaz("Yaşınızı daxil edin:")
+dəyişən yaş = oxuTam()
+
+əgər yaş >= 18 onda
+    yaz("{ad}, siz yetkinsiniz.")
+yoxsa
+    yaz("{ad}, siz hələ yetkin deyilsiniz.")
+son

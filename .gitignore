@@ -1,0 +1,31 @@
+# ─── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+venv/
+.venv/
+env/
+
+# ─── Alqor qurma nəticələri ───────────────────────────────
+qurma/
+paketlər/
+*.alqor.o
+alqor.kilid
+
+# ─── Rust (gələcək) ───────────────────────────────────────
+target/
+Cargo.lock
+
+# ─── Redaktor ─────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# ─── Sistem ───────────────────────────────────────────────
+Thumbs.db
+desktop.ini
