@@ -23,6 +23,8 @@ from typing import Any, Callable
 
 from . import elifba as E
 from .korutin import Gələcək, Korutin, LəğvNişanı
+from .veb import (Cavab, Qrup, Server, Sessiya, Sorğu,
+                  SınaqMüştərisi)
 from .deyerler import (AlqorDiapazon, AlqorGenerator, AlqorXəta, BağlıMetod,
                        Element,
                        Çağırılan, Daxili, DayanmaSiqnalı, Funksiya, Modul,
@@ -861,8 +863,98 @@ def _ləğv_yoxla(n):
     return None
 
 
+# ── veb modulu ─────────────────────────────────────────────────────────
+
+_SERVER: dict[str, Callable] = {
+    "al": lambda i, s, n, *a: s.al(n, *a),
+    "göndər": lambda i, s, n, *a: s.göndər(n, *a),
+    "yenilə": lambda i, s, n, *a: s.yenilə(n, *a),
+    "yamaq": lambda i, s, n, *a: s.yamaq(n, *a),
+    "sil": lambda i, s, n, *a: s.sil(n, *a),
+    "hamısı": lambda i, s, n, *a: s.hamısı(n, *a),
+    "qrup": lambda i, s, p, f: s.qrup(p, f),
+    "ara": lambda i, s, a: s.ara(a),
+    "statik": lambda i, s, p, q, indeks="": s.statik(p, q, indeks),
+    "şablonQovluğu": lambda i, s, q: s.şablonQovluğu(q),
+    "xətaİdarəedicisi": lambda i, s, f: s.xətaİdarəedicisi(f),
+    "tapılmadı": lambda i, s, f: s.tapılmadı(f),
+    "dinlə": lambda i, s, port=8080, host="127.0.0.1": s.dinlə(
+        port, host),
+    "dayandır": lambda i, s: (s.dayandır(), None)[1],
+    "marşrutlar": lambda i, s: [list(m) for m in s.marşrutlar()],
+    "mətnƏt": lambda i, s: repr(s),
+}
+
+_SORĞU: dict[str, Callable] = {
+    "metod": lambda i, s: s.metod(),
+    "yol": lambda i, s: s.yol(),
+    "tamURL": lambda i, s: s.tamURL(),
+    "IP": lambda i, s: s.IP(),
+    "istifadəçiAgenti": lambda i, s: s.istifadəçiAgenti(),
+    "parametr": lambda i, s, a, d=None: s.parametr(a, d),
+    "parametrlər": lambda i, s: s.parametrlər(),
+    "sorğuParametr": lambda i, s, a, d=None: s.sorğuParametr(a, d),
+    "sorğuParametrHamısı": lambda i, s: s.sorğuParametrHamısı(),
+    "başlıq": lambda i, s, a, d=None: s.başlıq(a, d),
+    "başlıqlar": lambda i, s: s.başlıqlar(),
+    "kuki": lambda i, s, a, d=None: s.kuki(a, d),
+    "gövdə": lambda i, s: s.gövdə(),
+    "gövdəBayt": lambda i, s: s.gövdəBayt(),
+    "json": lambda i, s: s.json(),
+    "form": lambda i, s: s.form(),
+    "sessiya": lambda i, s: s.sessiya(),
+    "mətnƏt": lambda i, s: repr(s),
+}
+
+_CAVAB: dict[str, Callable] = {
+    "kod": lambda i, c, v: c.kod(v),
+    # Bir arqumentlə oxuyucu, ikiylə təyinedici
+    "başlıq": lambda i, c, a, *d: c.başlıq(a, *d),
+    "kuki": lambda i, c, a, d, **k: c.kuki(a, d, **k),
+    "kukiSil": lambda i, c, a, yol="/": c.kukiSil(a, yol),
+    "vəziyyət": lambda i, c: c.vəziyyət,
+    "mətnƏt": lambda i, c: c.mətnƏt(),
+    "json": lambda i, c: _json.loads(c.mətnƏt()),
+    "uzunluq": lambda i, c: c.uzunluq(),
+    "uğurludur": lambda i, c: 200 <= c.vəziyyət < 400,
+}
+
+_QRUP: dict[str, Callable] = {
+    "al": lambda i, g, n, *a: g.al(n, *a),
+    "göndər": lambda i, g, n, *a: g.göndər(n, *a),
+    "yenilə": lambda i, g, n, *a: g.yenilə(n, *a),
+    "yamaq": lambda i, g, n, *a: g.yamaq(n, *a),
+    "sil": lambda i, g, n, *a: g.sil(n, *a),
+    "hamısı": lambda i, g, n, *a: g.hamısı(n, *a),
+    "qrup": lambda i, g, p, f: g.qrup(p, f),
+    "ara": lambda i, g, a: g.ara(a),
+}
+
+_SESSİYA: dict[str, Callable] = {
+    "al": lambda i, s, a, d=None: s.al(a, d),
+    "qoy": lambda i, s, a, d: (s.qoy(a, d), None)[1],
+    "sil": lambda i, s, a: s.sil(a),
+    "təmizlə": lambda i, s: (s.təmizlə(), None)[1],
+    "ehtiva": lambda i, s, a: s.ehtiva(a),
+}
+
+_MÜŞTƏRİ: dict[str, Callable] = {
+    "al": lambda i, m, y, b=None: m.al(y, b),
+    "göndər": lambda i, m, y, g=None, b=None: m.göndər(y, g, b),
+    "yenilə": lambda i, m, y, g=None, b=None: m.yenilə(y, g, b),
+    "yamaq": lambda i, m, y, g=None, b=None: m.yamaq(y, g, b),
+    "sil": lambda i, m, y, b=None: m.sil(y, b),
+}
+
+
 _CƏDVƏLLƏR: dict[type, dict[str, Callable]] = {
     Element: _ELEMENT,
+    Server: _SERVER,
+    Sorğu: _SORĞU,
+    Cavab: _CAVAB,
+    Qrup: _QRUP,
+    Sessiya: _SESSİYA,
+    SınaqMüştərisi: _MÜŞTƏRİ,
     Gələcək: _GƏLƏCƏK,
     LəğvNişanı: _LƏĞV,
     str: _MƏTN,
@@ -1413,7 +1505,58 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
                    1, 1),
     })
 
+    # ── veb ─────────────────────────────────────────────────
+    from . import veb as _veb
+
+    def v_şablon(yol, verilənlər=None):
+        """Şablon qovluğu `veb.şablon_qovluğu(icraçı)` ilə həll olunur:
+        `veb.şablonQovluğu(...)` və `server.şablonQovluğu(...)` eyni
+        yerə yazır."""
+        return _veb.c_şablon(icraçı, _veb.şablon_qovluğu(icraçı),
+                             yol, verilənlər)
+
+    veb = Modul("veb", {
+        "Server": D("Server", lambda: _veb.Server(icraçı)),
+        # Cavab qurucuları
+        "mətn": D("mətn", lambda d: _veb.c_mətn(icraçı, d), 1, 1),
+        "html": D("html", lambda d: _veb.c_html(icraçı, d), 1, 1),
+        "json": D("json", lambda d: _veb.c_json(icraçı, d), 1, 1),
+        "boş": D("boş", lambda k=204: _veb.c_boş(k), 0, 1),
+        "yönləndir": D("yönləndir",
+                       lambda u: _veb.c_yönləndir(u, 302), 1, 1),
+        "yönləndirDaimi": D("yönləndirDaimi",
+                            lambda u: _veb.c_yönləndir(u, 301), 1, 1),
+        "xəta": D("xəta", lambda k, m="": _veb.c_xəta(k, m), 1, 2),
+        "fayl": D("fayl", lambda y: _veb.c_fayl(icraçı, y), 1, 1),
+        "yüklə": D("yüklə", lambda y, a="": _veb.c_fayl(
+            icraçı, y, a or Path(y).name), 1, 2),
+        "şablon": D("şablon", v_şablon, 1, 2),
+        "şablonQovluğu": D("şablonQovluğu", lambda q: (
+            _veb.şablon_qovluğunu_təyin_et(icraçı, q)), 1, 1),
+        # Ara proqramlar
+        "jurnal": D("jurnal", lambda: _veb.ara_jurnal(icraçı)),
+        "CORS": D("CORS", lambda mənbələr=None, metodlar=None:
+                  _veb.ara_CORS(icraçı, mənbələr, metodlar), 0, 2),
+        "sıxma": D("sıxma", lambda minimum=512:
+                   _veb.ara_sıxma(icraçı, minimum), 0, 1),
+        "təhlükəsizlikBaşlıqları": D(
+            "təhlükəsizlikBaşlıqları",
+            lambda: _veb.ara_təhlükəsizlik(icraçı)),
+        "sessiya": D("sessiya", lambda gizli=None:
+                     _veb.ara_sessiya(icraçı, gizli), 0, 1),
+        "sürətLimiti": D("sürətLimiti", lambda say=100, pəncərə="1dəq":
+                         _veb.ara_sürət_limiti(icraçı, say, pəncərə),
+                         0, 2),
+        # Köməkçi
+        "boşPort": D("boşPort", lambda b=8080: _veb.boş_port(b), 0, 1),
+        "sınaq": Modul("veb.sınaq", {
+            "server": D("server", lambda s: _veb.SınaqMüştərisi(
+                s, icraçı), 1, 1),
+        }),
+    })
+
     return {
+        "veb": veb,
         "paralel": paralel, "sap": sap,
         "riyaziyyat": riyaziyyat, "mətn": mətn_modulu,
         "təsadüfi": təsadüfi, "vaxt": vaxt, "fayl": fayl,

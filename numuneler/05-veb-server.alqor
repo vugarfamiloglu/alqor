@@ -1,7 +1,10 @@
 // Nümunə 5 — Veb server + REST API
+//
+//   alqor işlət 05-veb-server.alqor            serveri işə salır
+//   alqor işlət 05-veb-server.alqor -- sınaq   port açmadan yoxlayır
 
 gətir veb
-gətir json
+gətir sistem
 
 sinif Tapşırıq
     qurucu(açıq xassə id: tam,
@@ -12,19 +15,32 @@ son
 dəyişən tapşırıqlar: siyahı[Tapşırıq] = []
 dəyişən növbətiId = 1
 
-funksiya əsas()
+funksiya tapşırıqTap(id: tam) -> Tapşırıq?
+    qaytar tapşırıqlar.tap((t) => t.id == id)
+son
+
+funksiya serveriQur() -> istənilən
     dəyişən s = yeni veb.Server()
 
     s.ara(veb.jurnal())
+    s.ara(veb.təhlükəsizlikBaşlıqları())
     s.ara(veb.CORS(mənbələr: ["*"]))
-    s.statik("/statik", "statik/")
+    s.statik("/statik", "statik")
 
-    // Əsas səhifə
+    // ── Əsas səhifə ─────────────────────────────────────────
     s.al("/", funksiya(sorğu)
-        qaytar veb.şablon("siyahı.alqorhtml", {"tapşırıqlar": tapşırıqlar})
+        dəyişən sətirlər = tapşırıqlar.çevir((t) =>
+            <li>{t.mətn}{əgər t.bitib onda " ✓" yoxsa "" son}</li>)
+        qaytar veb.html(<html>
+            <head><meta charset="UTF-8" /><title>Tapşırıqlar</title></head>
+            <body>
+                <h1>Tapşırıqlar ({uzunluq(tapşırıqlar)})</h1>
+                <ul>{sətirlər}</ul>
+            </body>
+        </html>)
     son)
 
-    // REST API
+    // ── REST API ────────────────────────────────────────────
     s.qrup("/api", funksiya(q)
 
         q.al("/tapşırıq", funksiya(sorğu)
@@ -32,8 +48,8 @@ funksiya əsas()
         son)
 
         q.al("/tapşırıq/:id", funksiya(sorğu)
-            dəyişən id = tamƏt(sorğu.parametr("id"))
-            varsa t = tapşırıqlar.tap((t) => t.id == id) onda
+            dəyişən id = tamƏt(sorğu.parametr("id"), -1)
+            varsa t = tapşırıqTap(id) onda
                 qaytar veb.json(t)
             son
             qaytar veb.json({"xəta": "Tapılmadı"}).kod(404)
@@ -47,19 +63,70 @@ funksiya əsas()
                 qaytar veb.json({"xəta": "Mətn boş ola bilməz"}).kod(422)
             son
 
-            dəyişən t = yeni Tapşırıq(növbətiId, mətn)
+            dəyişən t = yeni Tapşırıq(növbətiId, mətn.kəs())
             növbətiId += 1
             tapşırıqlar.əlavə(t)
             qaytar veb.json(t).kod(201)
         son)
 
+        q.yamaq("/tapşırıq/:id", funksiya(sorğu)
+            dəyişən id = tamƏt(sorğu.parametr("id"), -1)
+            yoxdursa t = tapşırıqTap(id) onda
+                qaytar veb.json({"xəta": "Tapılmadı"}).kod(404)
+            son
+            t.bitib = doğru
+            qaytar veb.json(t)
+        son)
+
         q.sil("/tapşırıq/:id", funksiya(sorğu)
-            dəyişən id = tamƏt(sorğu.parametr("id"))
+            dəyişən id = tamƏt(sorğu.parametr("id"), -1)
             tapşırıqlar = tapşırıqlar.filtr((t) => t.id != id)
             qaytar veb.boş(204)
         son)
     son)
 
-    yaz("Server işləyir: http://localhost:8080")
+    qaytar s
+son
+
+// ═══════════════════════════════════════════════════════════════
+//  Port açmadan yoxlama — `veb.sınaq.server`
+// ═══════════════════════════════════════════════════════════════
+
+funksiya yoxla(s: istənilən)
+    dəyişən m = veb.sınaq.server(s)
+
+    yaz("── API yoxlaması ──")
+    yaz("GET  /api/tapşırıq      → {m.al("/api/tapşırıq").mətnƏt()}")
+
+    dəyişən c = m.göndər("/api/tapşırıq", {"mətn": "Süd al"})
+    yaz("POST /api/tapşırıq      → {c.vəziyyət()} {c.mətnƏt()}")
+
+    m.göndər("/api/tapşırıq", {"mətn": "Kod yaz"})
+
+    dəyişən pis = m.göndər("/api/tapşırıq", {"mətn": "   "})
+    yaz("POST boş mətnlə        → {pis.vəziyyət()} {pis.mətnƏt()}")
+
+    yaz("GET  /api/tapşırıq/1    → {m.al("/api/tapşırıq/1").mətnƏt()}")
+    yaz("GET  /api/tapşırıq/99   → {m.al("/api/tapşırıq/99").vəziyyət()}")
+
+    dəyişən y = m.yamaq("/api/tapşırıq/1")
+    yaz("PATCH /api/tapşırıq/1   → {y.mətnƏt()}")
+
+    yaz("DELETE /api/tapşırıq/2  → {m.sil("/api/tapşırıq/2").vəziyyət()}")
+    yaz("GET  /api/tapşırıq      → {m.al("/api/tapşırıq").mətnƏt()}")
+    yaz("GET  /yoxdur            → {m.al("/yoxdur").vəziyyət()}")
+    yaz("")
+    yaz("── HTML səhifə ──")
+    yaz(m.al("/").mətnƏt())
+son
+
+funksiya əsas(arqumentlər: siyahı[mətn])
+    dəyişən s = serveriQur()
+
+    əgər "sınaq" içindədir arqumentlər onda
+        yoxla(s)
+        qaytar
+    son
+
     s.dinlə(8080)
 son

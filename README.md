@@ -23,11 +23,11 @@ son
 
 | | |
 |---|---|
-| Mərhələ | **Dil nüvəsi tamamdır** (1–5) |
+| Mərhələ | **Dil nüvəsi + veb tamamdır** (1–5) |
 | Spesifikasiya | 1.0 (layihə) |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **456 keçir** |
-| Tarix | 5 oktyabr 2026 |
+| Sınaqlar | **525 keçir** |
+| Tarix | 6 oktyabr 2026 |
 
 **Dil işləyir:**
 
@@ -35,6 +35,7 @@ son
 cd alqorc
 python alqorc.py söhbət                              # interaktiv rejim
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
+python alqorc.py işlət ../numuneler/05-veb-server.alqor   # veb server
 python sina.py --nümunələr
 ```
 
@@ -260,9 +261,11 @@ PROQRAMLASDIRMA DILI/
     │   ├── deyerler.py       icra dəyərləri, Mühit, Sinif, Element
     │   ├── korutin.py        Korutin, Gələcək, LəğvNişanı
     │   ├── icraci.py         ağac gəzən interpretator
-    │   ├── kitabxana.py      standart kitabxana (15 modul)
+    │   ├── kitabxana.py      standart kitabxana (16 modul)
+    │   ├── veb.py            HTTP server, marşrutlar, sessiya
+    │   ├── sablon.py         `.alqorhtml` şablon mühərriki
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                456 sınaq
+    └── sinaq/                525 sınaq
 ```
 
 ---
