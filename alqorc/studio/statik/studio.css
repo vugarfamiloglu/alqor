@@ -120,7 +120,9 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 .vidjet-elementi b { font-family: var(--kod-şrift); font-weight: 600; font-size: 12.5px; }
 .vidjet-elementi small { grid-column: 1 / -1; color: var(--sönük); }
 .vidjet-elementi .nişan-skelet { color: var(--uğur); font-size: 11px; }
-.elementlər { display: flex; flex-direction: column; gap: 3px; }
+.fayl-elementləri { border: 1px solid var(--kənar); border-radius: 8px; padding: 4px 8px; background: var(--fon); flex: none; }
+.fayl-elementləri > summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+.elementlər { display: flex; flex-direction: column; gap: 3px; max-height: 28vh; overflow: auto; margin-top: 4px; }
 .fayl-elementi { display: flex; gap: 6px; align-items: baseline; padding: 3px 6px; border-radius: 5px; cursor: pointer;
   font-family: var(--kod-şrift); font-size: 12px; }
 .fayl-elementi:hover { background: var(--fon-3); }
