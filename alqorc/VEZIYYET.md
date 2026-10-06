@@ -5,11 +5,10 @@
 **Mərhələ 1–5 BİTDİ** — dil nüvəsi tamamdır:
 lekser · parser · interpretator · standart kitabxana · REPL ·
 **JSX** · **tənbəl generatorlar** · **asinxron icra** ·
-**statik tip yoxlayıcı** · **veb server + şablon mühərriki**
+**statik tip yoxlayıcı** · **veb server + şablon** · **desktop**
 
-**525 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır və tip
-yoxlamasından keçir; 6-sı icra olunur (06 `pəncərə` modulunu
-gözləyir).
+**600 sınaq keçir.** 7 nümunə proqramın **hamısı** ayrılır, tip
+yoxlamasından keçir və icra olunur.
 
 ---
 
@@ -38,7 +37,8 @@ alqorc/
 │   ├── tipler.py         tip təsviri və uyğunluq qaydaları
 │   ├── tipyoxlayici.py   statik tip yoxlayıcı
 │   ├── sablon.py         `.alqorhtml` şablon mühərriki
-│   └── veb.py            HTTP server, marşrutlar, sessiya, ara proqramlar
+│   ├── veb.py            HTTP server, marşrutlar, sessiya, ara proqramlar
+│   └── pencere.py        desktop: pəncərə, menyu, dialoq, hadisə dövrü
 └── sinaq/
     ├── test_elifba.py        (31)
     ├── test_menbe.py         (34)
@@ -47,7 +47,8 @@ alqorc/
     ├── test_sohbet.py        (45)   REPL
     ├── test_korutin.py       (43)   generatorlar + asinxron
     ├── test_tipyoxlayici.py  (83)   tip yoxlayıcı
-    └── test_veb.py           (69)   server + marşrut + şablon
+    ├── test_veb.py           (69)   server + marşrut + şablon
+    └── test_pencere.py       (75)   pəncərə + menyu + dialoq + komponent
 ```
 
 ## İşə salmaq
@@ -58,7 +59,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 525 sınaq + nümunələr
+python sina.py --nümunələr                       # 600 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -68,6 +69,10 @@ python alqorc.py hərf "ışıq İmran"
 # Veb server
 python alqorc.py işlət ../numuneler/05-veb-server.alqor          # port 8080
 python alqorc.py işlət ../numuneler/05-veb-server.alqor -- sınaq # port açmadan
+
+# Desktop tətbiq
+python alqorc.py işlət ../numuneler/06-desktop.alqor             # pəncərə açır
+python alqorc.py işlət ../numuneler/06-desktop.alqor -- sınaq    # başsız
 ```
 
 ---
@@ -235,6 +240,44 @@ parser və interpretator işləyir, ayrı şablon dili yoxdur.
 
 ---
 
+## `pəncərə` modulu — desktop
+
+**Arxitektura: yerli server + yerli pəncərə (Tauri modeli).**
+Komponentin `göstər()` metodu JSX qaytarır, JSX isə artıq HTML-ə
+çevrilir — deməli desktop üçün ayrı düzülüş mühərriki lazım deyil.
+HTML-i `127.0.0.1`-dəki yerli server verir, onu yerli pəncərə göstərir.
+
+Aparıcı bu sıra ilə seçilir:
+
+| # | Aparıcı | Şərt |
+|---|---|---|
+| 1 | `pywebview` | quraşdırılıbsa — həqiqi yerli pəncərə |
+| 2 | Chrome/Edge/Brave `--app=` | **standart** — asılılıq yoxdur |
+| 3 | Sistem brauzeri | son çarə |
+| 4 | Başsız | `ALQOR_BASSIZ=1`, `--başsız`, ekransız Linux, CI |
+
+**Hadisələr əsas sapda işləyir.** Brauzer `/_alqor/hadise`-yə POST
+göndərir, server sapı işi növbəyə qoyub cavab gözləyir, növbəni isə
+`pəncərə.işlət()` — əsas sap — boşaldır. Nəticə: idarəedicilər arasında
+vəziyyət yarışı olmur və `dialoq.*` tkinter dialoqlarını əsas sapdan
+çağırır (tkinter bunu tələb edir).
+
+| Sahə | Vəziyyət |
+|---|---|
+| Pəncərə | `başlıq` `məzmun` `üslub` `ölç` `mərkəzə` `ölçüsüSabit` `göstər` `bağla` `gözlə` `yenilə` `ünvan` |
+| Məzmun | sabit element · `<Komponent />` (vəziyyət dəyişəndə özü yenilənir) · funksiya |
+| Menyu | `pəncərə.menyu` `element` `ayırıcı`; qısayollar, işarə, sönük element |
+| Hadisələr | 15 hadisə: `klik` `ikiKlik` `dəyişdi` `yazıldı` `göndərildi` `fokus` … |
+| Dialoqlar | `təsdiqlə` `xəbərdarlıq` `məlumat` `xəta` `soruş` `faylAç` `faylAçHamısı` `faylSaxla` `qovluqSeç` `rəngSeç` |
+| Bildiriş | `notify-send` (Linux) · AppleScript (macOS) · toast (Windows) |
+| Sınaq | `pəncərə.sınaq.aç(p)` — pəncərə açmadan düymə basır, HTML oxuyur |
+
+Dialoqlar tkinter ilə işləyir (standart kitabxana). `python3-tk`
+quraşdırılmayıbsa və ya başsız rejimdədirsə `pəncərə.sınaq.cavablar([…])`
+növbəsindən cavab götürülür — buna görə dialoqlu kod da sınanıla bilir.
+
+---
+
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
 ### 1. `hər x üçün siyahı içində` söz sırası
@@ -268,14 +311,24 @@ gəlir. Düzgün həll: unifikasiya alqoritmi.
 
 | # | İş | Həcm |
 |---|---|---|
-| 1 | `pəncərə` modulu (desktop) — 06 nümunəsi üçün | ~600 sətir |
+| 1 | **`vidjet`** — hazır UI elementləri (veb + desktop, tək mənbə) | ~900 sətir |
 | 2 | `alqorfmt` (formatter + `--ascii-düzəlt`) | ~400 sətir |
 | 3 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
 | 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
 | 5 | Qalan standart kitabxana modulları (`http`, `verilənlər`, …) | böyük |
-| 6 | Mərhələ 6 — JS/WASM transpilyator | böyük |
-| 7 | `alqorpm` + `alqorhub` (paket meneceri və reyestr) | böyük |
-| 8 | Alqor Studio (redaktor) | böyük |
-| 9 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
+| 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
+| 7 | Mərhələ 6 — JS/WASM transpilyator | böyük |
+| 8 | `alqorpm` + `alqorhub` (paket meneceri və reyestr) | böyük |
+| 9 | **Alqor Studio** (redaktor) — vidjet paleti + iki klikdə kod | böyük |
+| 10 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
+
+### `vidjet` və Alqor Studio — tələb
+
+İstifadəçi tələbi: hazır elementlər (form, düymə, tərəqqi çubuğu,
+cədvəl, nişan, modal…) **həm veb, həm desktop** üçün eyni mənbədən
+işləməlidir. Alqor Studio-da element əlavə edildikdən sonra **üzərinə
+iki dəfə klikləmək** o elementin işləməsi üçün lazım olan kodu
+(hadisə idarəedicisi, vəziyyət sahəsi, `gətir` sətri) avtomatik
+yazmalıdır. Hər vidjetin yanında bu "kod skeleti" şablonu saxlanılır.
 
 Mühit vəziyyəti (Rust, Zig, WSL): [../MUHIT.md](../MUHIT.md)

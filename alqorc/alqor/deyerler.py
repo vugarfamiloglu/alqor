@@ -473,13 +473,17 @@ HADİSƏ_ATRIBUTLARI = frozenset({
 class Element:
     """`<div sinif="a">salam</div>` ifadəsinin nəticəsi."""
 
-    __slots__ = ("ad", "atributlar", "uşaqlar")
+    __slots__ = ("ad", "atributlar", "uşaqlar", "komponent")
 
     def __init__(self, ad: str, atributlar: dict[str, Any] | None = None,
                  uşaqlar: list[Any] | None = None):
         self.ad = ad
         self.atributlar: dict[str, Any] = atributlar or {}
         self.uşaqlar: list[Any] = uşaqlar or []
+        # Ağacı hansı komponent nümunəsi yaradıb — `pəncərə` modulu
+        # vəziyyət dəyişəndə `göstər()`-i yenidən çağırmaq üçün buna
+        # baxır. JSX olmayan elementlərdə `None` qalır.
+        self.komponent: Any = None
 
     # ── HTML-ə çevirmə ────────────────────────────────────────────────
 
