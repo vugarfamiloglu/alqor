@@ -777,13 +777,24 @@ def _modullar() -> dict[str, T.ModulTipi]:
     })
 
     konsol = T.ModulTipi("konsol", {
-        "qırmızı": F(m, qaytarır=m), "yaşıl": F(m, qaytarır=m),
-        "sarı": F(m, qaytarır=m), "mavi": F(m, qaytarır=m),
-        "qalın": F(m, qaytarır=m), "altXətt": F(m, qaytarır=m),
+        "qırmızı": F(e, qaytarır=m), "yaşıl": F(e, qaytarır=m),
+        "sarı": F(e, qaytarır=m), "mavi": F(e, qaytarır=m),
+        "boz": F(e, qaytarır=m),
+        "qalın": F(e, qaytarır=m), "altXətt": F(e, qaytarır=m),
+        "rəng": F(e, m, m, b, qaytarır=m, standart=3),
         "təmizlə": F(qaytarır=h),
+        "kursor": F(i, i, qaytarır=h, standart=1),
+        "ölçü": F(qaytarır=T.Kortej((i, i))),
+        "terminaldır": F(qaytarır=b),
         "cədvəl": F(e, e, qaytarır=h),
-        "soruş": F(m, qaytarır=m, standart=1),
-        "təsdiqlə": F(m, qaytarır=b),
+        "soruş": F(m, e, qaytarır=m, standart=2),
+        "parolSoruş": F(m, qaytarır=m, standart=1),
+        "təsdiqlə": F(m, e, qaytarır=b, standart=1),
+        "seç": F(m, T.Siyahı(e), qaytarır=e),
+        "çoxSeç": F(m, T.Siyahı(e), qaytarır=T.Siyahı(e)),
+        "irəliləyiş": F(i, m, qaytarır=e, standart=1),
+        "fırlanan": F(m, qaytarır=e, standart=1),
+        "arqumentlər": F(qaytarır=e),
     })
 
     jurnal = T.ModulTipi("jurnal", {

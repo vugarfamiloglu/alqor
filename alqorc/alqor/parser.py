@@ -1853,7 +1853,8 @@ class Parser:
             self._ayırıcı_atla()
             if self._qəbul_op("..."):
                 nəticə.append(A.Arqument(self._ifadə(), None, True))
-            elif (self._bax().növ is Növ.AD and self._op(":", irəli=1)):
+            elif (self._etiket_ola_bilər(self._bax())
+                  and self._op(":", irəli=1)):
                 ad = self._al().dəyər
                 self._al()
                 nəticə.append(A.Arqument(self._ifadə(), ad))
@@ -2089,7 +2090,37 @@ class Parser:
             gövdə = self._blok()
             self._son_tələb("blok")
             return A.Lambda(yer, parametrlər, gövdə)
-        return A.Lambda(yer, parametrlər, self._ifadə())
+        b_yer = self._bax().yer
+        ifadə = self._ifadə()
+        # Tək mənimsətmə gövdə ola bilər — UI idarəedicisinin ən təbii
+        # forması: `klik: () => özü.say += 1`. Nəticəsi `heç`-dir.
+        # Vergüllü mənimsətmə (`a, b = …`) arqument siyahısı ilə
+        # qarışacağı üçün yalnız `blok` formasında yazılır.
+        if self._op(*MƏNİMSƏTMƏ_OPLARI):
+            op = self._al().dəyər
+            dəyər = self._ifadə()
+            return A.Lambda(yer, parametrlər, [A.İfadəCümləsi(
+                b_yer, A.Mənimsətmə(b_yer, [ifadə], op, [dəyər]))])
+        if self._op("++", "--"):
+            op = self._al().dəyər
+            return A.Lambda(yer, parametrlər,
+                            [A.Artırma(b_yer, ifadə, op)])
+        return A.Lambda(yer, parametrlər, ifadə)
+
+    @staticmethod
+    def _etiket_ola_bilər(tok: Token) -> bool:
+        """
+        Adlı arqumentin etiketi: ad və ya TƏK SÖZLÜ açar söz.
+
+        `seçim(standart: "a")`, `vidjet.qutu(sinif: "x")` — arqument
+        siyahısında `açar_söz :` heç bir ifadənin başlanğıcı ola
+        bilmədiyi üçün qeyri-müəyyənlik yoxdur. Çoxsözlü açar sözlər
+        (`və ya`, `digər hallarda`) etiket ola bilməz.
+        """
+        if tok.növ is Növ.AD:
+            return True
+        return (tok.növ is Növ.ACAR and isinstance(tok.dəyər, str)
+                and " " not in tok.dəyər)
 
     def _lambda_mı(self) -> bool:
         """`(` mövqeyindən: bu lambda parametr siyahısıdırmı?"""

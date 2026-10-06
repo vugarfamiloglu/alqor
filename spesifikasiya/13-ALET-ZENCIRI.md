@@ -64,6 +64,24 @@ alqor versiya
 alqor kömək <əmr>
 ```
 
+### Etalon implementasiyada vəziyyət
+
+Python etalonunda CLI `python alqorc.py <əmr>` kimi çağırılır. Hər əmrin
+ASCII ləqəbi var (`işlət` = `islet` = `run`) — Windows konsolunda
+Azərbaycan hərfləri yazmaq çətin olanda.
+
+| Əmr | Vəziyyət |
+|---|---|
+| `işlət <fayl> [--tip] [-- arq…]` | ✅ |
+| `yoxla <fayl\|qovluq>` | ✅ leksik + sintaktik + tip |
+| `tip <fayl\|qovluq> [--rejim]` | ✅ |
+| `söhbət` | ✅ (§ 13.7) |
+| `tokenlər <fayl>` | ✅ diaqnostika üçün |
+| `hərf <mətn>`, `sırala <söz>…` | ✅ az-AZ hərf qaydaları |
+| `versiya`, `kömək` | ✅ |
+| `format`, `yeni`, `qur`, `sına`, `sənəd`, `təmizlə` | planlaşdırılır |
+| `paketlə`, `yerləşdir` | planlaşdırılır |
+
 ### `alqor qur` seçimləri
 ```bash
 alqor qur --hədəf linux-x64      # linux-x64 | linux-arm64 | veb | wasm
@@ -453,6 +471,11 @@ jobs:
 | `ALQOR_DIL` | Mesaj dili (`az` standart, `en` ikinci) |
 | `ALQOR_SAP` | Kompilyator sap sayı |
 | `ALQORHUB_TOKEN` | Paket yayımlama tokeni |
+| `ALQOR_BASSIZ` | `1` — `pəncərə` pəncərə açmır (CI, sınaq; § 12.2.1) |
+| `NO_COLOR` | təyin olunubsa `konsol` rəng kodları çap etmir ([no-color.org](https://no-color.org)) |
+
+Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ` və
+`NO_COLOR` oxunur; qalanları kompilyator və paket meneceri ilə gələcək.
 
 > **Niyə adlar ASCII-dir?**
 > `ALQOR_RƏNG` kimi ad shell-də təyin oluna bilmir — POSIX mühit dəyişəni
