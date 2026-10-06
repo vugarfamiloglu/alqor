@@ -13,7 +13,7 @@ pəncərəsinə) göstərir. Deməli eyni form, eyni cədvəl, eyni tərəqqi
     gətir vidjet
 
     funksiya əsas()
-        dəyişənAdı p = yeni pəncərə.Pəncərə("Qeydiyyat")
+        dəyişən p = yeni pəncərə.Pəncərə("Qeydiyyat")
         p.məzmun(vidjet.form(məzmun: [
             vidjet.sahə(etiket: "Ad", ad: "ad"),
             vidjet.parol(etiket: "Şifrə", ad: "şifrə"),
@@ -1169,7 +1169,7 @@ def bildirişQutusu(icraçı, mətn: Any = "", növ: Any = "məlumat",
 
 
 # ═══════════════════════════════════════════════════════════════════════
-#  Vidjet kataloqu — Alqor Studio sahəsi
+#  Vidjet kataloqu — Alqor Studio üçün
 # ═══════════════════════════════════════════════════════════════════════
 
 @dataclass
@@ -1246,7 +1246,7 @@ KATALOQ: list[Məlumat] = [
             'metod {ad}Dəyişdi(dəyər: mətn)\n'
             '    özü.{ad} = tamƏt(dəyər, 0)\n'
             'son',
-            'vəziyyət {ad}: tamEn = 0'),
+            'vəziyyət {ad}: tam = 0'),
     Məlumat("axtarış", FORM, "Axtarış sahəsi",
             'vidjet.axtarış(yazıldı: özü.axtar)',
             ["yazıldı", "göndərildi"],
@@ -1306,7 +1306,7 @@ KATALOQ: list[Məlumat] = [
             'metod {ad}Dəyişdi(dəyər: mətn)\n'
             '    özü.{ad} = tamƏt(dəyər, 0)\n'
             'son',
-            'vəziyyət {ad}: tamEn = 50'),
+            'vəziyyət {ad}: tam = 50'),
     Məlumat("tarix", FORM, "Tarix seçimi",
             'vidjet.tarix(etiket: "Doğum tarixi", ad: "{ad}",\n'
             '             dəyişdi: özü.{ad}Dəyişdi)',
@@ -1391,10 +1391,10 @@ KATALOQ: list[Məlumat] = [
     Məlumat("tərəqqi", VƏZİYYƏT, "Tərəqqi çubuğu",
             'vidjet.tərəqqi(dəyər: özü.{ad}, maksimum: 100,\n'
             '               etiket: "Yüklənir")',
-            [], '', 'vəziyyət {ad}: tamEn = 0'),
+            [], '', 'vəziyyət {ad}: tam = 0'),
     Məlumat("halqaTərəqqi", VƏZİYYƏT, "Halqa şəklində tərəqqi",
             'vidjet.halqaTərəqqi(dəyər: özü.{ad}, ölçü: 80)',
-            [], '', 'vəziyyət {ad}: tamEn = 0'),
+            [], '', 'vəziyyət {ad}: tam = 0'),
     Məlumat("fırlanan", VƏZİYYƏT, "Gözləmə göstəricisi",
             'vidjet.fırlanan(mətn: "Yüklənir…")'),
     Məlumat("skeletYüklənmə", VƏZİYYƏT, "Yüklənmə skeleti",
@@ -1442,11 +1442,11 @@ KATALOQ: list[Məlumat] = [
             'metod {ad}Dəyişdi(dəyər: mətn)\n'
             '    özü.{ad} = tamƏt(dəyər, 1)\n'
             'son',
-            'vəziyyət {ad}: tamEn = 1'),
+            'vəziyyət {ad}: tam = 1'),
     Məlumat("addımlar", NAVİQASİYA, "Addım göstəricisi",
             'vidjet.addımlar(adlar: ["Ad", "Ünvan", "Təsdiq"],\n'
             '                cari: özü.{ad})',
-            [], '', 'vəziyyət {ad}: tamEn = 1'),
+            [], '', 'vəziyyət {ad}: tam = 1'),
     Məlumat("çörəkQırıntıları", NAVİQASİYA, "Yol göstəricisi",
             'vidjet.çörəkQırıntıları(yollar: [\n'
             '    ["/", "Ana səhifə"], ["/mal", "Mallar"]\n'
@@ -1499,7 +1499,7 @@ def _kataloqu_yoxla() -> None:
 
 
 def kataloq(icraçı, kateqoriya: Any = None) -> list:
-    """IDE paleti sahəsi bütün vidjetlərin təsviri."""
+    """IDE paleti üçün bütün vidjetlərin təsviri."""
     k = _m(kateqoriya, icraçı) if kateqoriya is not None else None
     if k and k not in KATEQORİYALAR:
         raise AlqorXəta(
@@ -1526,7 +1526,7 @@ def kateqoriyalar(icraçı) -> list[str]:
 
 def skelet(icraçı, ad: Any, dəyişənAdı: Any = "") -> str:
     """
-    Elementin işləməsi sahəsi lazım olan kod. Alqor Studio-da elementin
+    Elementin işləməsi üçün lazım olan kod. Alqor Studio-da elementin
     üzərinə iki dəfə klikləndikdə bu mətn redaktora yazılır.
 
         vidjet.skelet("sahə", "istifadəçiAdı")
@@ -1568,7 +1568,7 @@ def nümunə(icraçı, ad: Any, dəyişənAdı: Any = "") -> str:
 
 
 def _standart_ad(vidjet_adı: str) -> str:
-    """`sahə` → `sahə1` kimi təhlükəsiz dəyişənAdı adı."""
+    """`sahə` → `sahə1` kimi təhlükəsiz dəyişən adı."""
     from .elifba import KICIK
     təmiz = "".join(c for c in vidjet_adı
                     if c in KICIK or c.isalnum() or c == "_")
@@ -1949,7 +1949,7 @@ def üslublar(icraçı) -> Element:
 def səhifə(icraçı, başlıq: Any = "Alqor", məzmun: Any = None,
            dil: Any = "az", əlavəÜslub: Any = None) -> Element:
     """
-    Vidjet üslubu hazır tamEn HTML sənədi — veb sahəsi.
+    Vidjet üslubu hazır tam HTML sənədi — veb üçün.
 
         qaytar veb.html(vidjet.səhifə(başlıq: "Ana səhifə",
                                       məzmun: [...]))
@@ -1970,7 +1970,7 @@ def səhifə(icraçı, başlıq: Any = "Alqor", məzmun: Any = None,
     ])
 
 
-# `vidjet.səhifə` sahəsi minimal sənəd üslubu (desktopda `pəncərə` verir)
+# `vidjet.səhifə` üçün minimal sənəd üslubu (desktopda `pəncərə` verir)
 ƏSAS_ÜSLUB = """
 *{box-sizing:border-box}
 html,body{margin:0}
