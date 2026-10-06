@@ -1055,5 +1055,36 @@ class SpesifikasiyaSınağı(unittest.TestCase):
                             f"ayrılmır:\n{b}\n{x.hesabat(False)}")
 
 
+class TapşırıqNümunəsiSınağı(unittest.TestCase):
+    """09 — desktop dərsliyinin yekun proqramı (bələdçi § 4)."""
+
+    def test_09_tapsiriqlar_işləyir(self):
+        yol = (Path(__file__).parent.parent.parent / "numuneler"
+               / "09-tapsiriqlar.alqor")
+        from alqor.icraci import İcraçı
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.tipyoxlayici import TipYoxlayıcı
+        from alqor.xeta import XətaToplayıcı
+
+        x = XətaToplayıcı()
+        mənbə = Mənbə.fayldan(yol, x)
+        ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+        t = XətaToplayıcı()
+        TipYoxlayıcı(t).yoxla(ağac)
+        self.assertTrue(t.uğurludur(), t.hesabat(False))
+
+        sətirlər: list[str] = []
+        icraçı = İcraçı(çıxış=sətirlər.append, giriş=lambda: "")
+        icraçı.əsas_qovluq = yol.parent
+        self.assertEqual(icraçı.işlət(ağac, ["sınaq"]), 0)
+        self.assertEqual(len(sətirlər), 8, sətirlər)
+        for s in sətirlər:
+            self.assertNotIn("yanlış", s)
+            self.assertTrue(s.endswith("doğru"), s)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

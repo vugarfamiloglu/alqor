@@ -181,6 +181,91 @@ class HadisəCədvəliSınağı(unittest.TestCase):
 #  Dil səviyyəsi — pəncərə və göstərmə
 # ═══════════════════════════════════════════════════════════════════════
 
+class DərslikDüzəlişləriSınağı(unittest.TestCase):
+    """Desktop dərsliyi yazılarkən tapılan boşluqlar."""
+
+    KOMP = """
+komponent Siyahı
+    vəziyyət vacib: məntiq = yanlış
+    vəziyyət seçilən: mətn = "-"
+    metod vacibDəyişdi(d: məntiq)
+        özü.vacib = d
+    son
+    metod seçildi(d: mətn)
+        özü.seçilən = d
+    son
+    metod sıfırla()
+        özü.seçilən = "-"
+    son
+    göstər()
+        qaytar <div>
+            <label><input növ="checkbox" ad="v"
+                dəyişdi={özü.vacibDəyişdi} /> Vacib</label>
+            <table><tr dəyər="0" klik={özü.seçildi}><td>Süd al</td>
+                <td>aktiv</td></tr></table>
+            <button klik={özü.sıfırla}>Sil</button>
+            <button klik={özü.sıfırla}>Bitmişləri sil</button>
+            <p>vacib={özü.vacib} seçilən={özü.seçilən}</p>
+        </div>
+    son
+son
+"""
+
+    def test_məzmun_komponent_nümunəsi_qəbul_edir(self):
+        """Menyudan `menecer.metod()` çağırmaq üçün."""
+        s = başsız(self.KOMP + """
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("S")
+    dəyişən k = yeni Siyahı()
+    p.məzmun(k)
+    k.seçilən = "menyudan"
+    yaz(pəncərə.sınaq.aç(p).ehtiva("seçilən=menyudan"))
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_məzmun_komponent_olmayan_nümunə_xətadır(self):
+        from test_icraci import xəta_tipi
+        self.assertEqual(xəta_tipi(BAŞLIQ + """
+sinif A
+son
+yeni pəncərə.Pəncərə("S").məzmun(yeni A())
+"""), "TipXətası")
+
+    def test_sürücü_qutucuğa_məntiq_göndərir(self):
+        """Brauzer qutucuq üçün mətn yox, məntiq göndərir."""
+        s = başsız(self.KOMP + """
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("S")
+    p.məzmun(<Siyahı />)
+    dəyişən s = pəncərə.sınaq.aç(p)
+    s.yaz("v", doğru)
+    yaz(s.ehtiva("vacib=doğru"))
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_sürücü_sətri_başlanğıc_mətnlə_tapır(self):
+        s = başsız(self.KOMP + """
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("S")
+    p.məzmun(<Siyahı />)
+    dəyişən s = pəncərə.sınaq.aç(p)
+    s.klik("Süd al")
+    yaz(s.ehtiva("seçilən=0"))
+    s.klik("Sil")                 // dəqiq "Sil", "Bitmişləri sil" deyil
+    yaz(s.ehtiva("seçilən=-"))
+son
+""")
+        self.assertEqual(s, ["doğru", "doğru"])
+
+    def test_başlanğıc_söz_sərhədində(self):
+        self.assertTrue(P._başlayır("Süd al aktiv", "Süd al"))
+        self.assertTrue(P._başlayır("Sud al", "Süd al"))
+        self.assertFalse(P._başlayır("Südlü çay", "Süd"))
+        self.assertFalse(P._başlayır("", "a"))
+
+
 class PəncərəSınağı(unittest.TestCase):
     def test_başlıq(self):
         sətirlər = başsız('''

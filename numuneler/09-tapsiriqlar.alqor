@@ -1,0 +1,269 @@
+// Nümunə 9 — Tapşırıq meneceri: desktop dərsliyinin (bələdçi § 4)
+// yekun proqramı. Eyni komponent desktopda və vebdə işləyir.
+//
+//   alqor işlət 09-tapsiriqlar.alqor            desktop pəncərəsi
+//   alqor işlət 09-tapsiriqlar.alqor -- veb     veb server (8082)
+//   alqor işlət 09-tapsiriqlar.alqor -- sınaq   pəncərə açmadan yoxlayır
+
+gətir vidjet
+gətir pəncərə
+gətir pəncərə.dialoq
+gətir veb
+gətir json
+gətir fayl
+gətir qovluq
+
+// ── Model ────────────────────────────────────────────────────────────
+
+sinif Tapşırıq
+    qurucu(açıq xassə ad: mətn,
+           açıq xassə vacib: məntiq,
+           açıq xassə bitib: məntiq)
+son
+
+funksiya lüğətə(t: Tapşırıq) -> lüğət[mətn, istənilən]
+    qaytar {"ad": t.ad, "vacib": t.vacib, "bitib": t.bitib}
+son
+
+funksiya lüğətdən(l: lüğət[mətn, istənilən]) -> Tapşırıq
+    qaytar yeni Tapşırıq(l["ad"], l["vacib"] == doğru, l["bitib"] == doğru)
+son
+
+// ── İnterfeys ────────────────────────────────────────────────────────
+
+komponent Menecer
+    vəziyyət tapşırıqlar: siyahı[Tapşırıq] = []
+    vəziyyət yeniAd: mətn = ""
+    vəziyyət vacibdir: məntiq = yanlış
+    vəziyyət süzgəc: mətn = "Hamısı"
+    vəziyyət xəta: mətn = ""
+    vəziyyət silinəcək: tam = -1
+
+    // ── Hesablananlar ──
+
+    hesablanan görünənlər: siyahı[Tapşırıq]
+        seç özü.süzgəc
+            hal "Aktiv" → qaytar özü.tapşırıqlar.filtr((t) => deyil t.bitib)
+            hal "Bitmiş" → qaytar özü.tapşırıqlar.filtr((t) => t.bitib)
+            digər hallarda → qaytar özü.tapşırıqlar
+        son
+    son
+
+    hesablanan bitmişSayı: tam
+        qaytar özü.tapşırıqlar.filtr((t) => t.bitib).uzunluq()
+    son
+
+    // ── Hadisələr ──
+
+    metod adYazıldı(dəyər: mətn)
+        özü.yeniAd = dəyər
+        özü.xəta = ""
+    son
+
+    metod vaciblikDəyişdi(dəyər: məntiq)
+        özü.vacibdir = dəyər
+    son
+
+    metod əlavəEt()
+        dəyişən ad = özü.yeniAd.kəs()
+        əgər ad == "" onda
+            özü.xəta = "Tapşırığın adını yazın"
+            qaytar
+        son
+        özü.tapşırıqlar = özü.tapşırıqlar + [
+            yeni Tapşırıq(ad, özü.vacibdir, yanlış)]
+        özü.yeniAd = ""
+        özü.vacibdir = yanlış
+    son
+
+    metod süzgəcSeçildi(dəyər: mətn)
+        özü.süzgəc = dəyər
+    son
+
+    metod sətirSeçildi(dəyər: mətn)
+        // Cədvəl görünən sətrin indeksini verir — əsl tapşırığı tapırıq
+        dəyişən t = özü.görünənlər[tamƏt(dəyər, 0)]
+        t.bitib = deyil t.bitib
+        özü.tapşırıqlar = özü.tapşırıqlar     // yenidən göstər
+    son
+
+    metod silməyiSoruş()
+        əgər uzunluq(özü.görünənlər) > 0 onda
+            özü.silinəcək = 0
+        son
+    son
+
+    metod silməniLəğvEt()
+        özü.silinəcək = -1
+    son
+
+    metod bitmişləriSil()
+        özü.tapşırıqlar = özü.tapşırıqlar.filtr((t) => deyil t.bitib)
+        özü.silinəcək = -1
+    son
+
+    // ── Fayl ──
+
+    metod saxla()
+        dəyişən yol = dialoq.faylSaxla(standartAd: "tapşırıqlar.json",
+                                       süzgəclər: {"JSON": "*.json"})
+        əgər yol boşdur onda
+            qaytar
+        son
+        json.faylYaz(yol, özü.tapşırıqlar.çevir(lüğətə))
+        pəncərə.bildiriş("Saxlanıldı", yol)
+    son
+
+    metod aç()
+        dəyişən yol = dialoq.faylAç(süzgəclər: {"JSON": "*.json"})
+        əgər yol boşdur onda
+            qaytar
+        son
+        cəhd et
+            özü.tapşırıqlar = json.faylOxu(yol).çevir(lüğətdən)
+        tut x
+            dialoq.xəta("Fayl oxunmadı", x.mesaj)
+        son
+    son
+
+    // ── Görünüş ──
+
+    göstər()
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.başlıq(mətn: "Tapşırıqlar",
+                          altMətn: "{özü.bitmişSayı} / "
+                                   + "{uzunluq(özü.tapşırıqlar)} bitib"),
+
+            vidjet.tərəqqi(dəyər: özü.bitmişSayı,
+                           maksimum: maksimum(1, uzunluq(özü.tapşırıqlar)),
+                           növ: "uğur"),
+
+            vidjet.form(göndərildi: özü.əlavəEt, məzmun: [
+                vidjet.sətir(şaquli: "son", məzmun: [
+                    vidjet.sahə(etiket: "Yeni tapşırıq", ad: "yeniAd",
+                                dəyər: özü.yeniAd, yer: "Nə etmək lazımdır?",
+                                xəta: özü.xəta, yazıldı: özü.adYazıldı),
+                    vidjet.qeyd(etiket: "Vacib", ad: "vacib",
+                                işarələnmiş: özü.vacibdir,
+                                dəyişdi: özü.vaciblikDəyişdi),
+                    vidjet.düymə(mətn: "Əlavə et", klik: özü.əlavəEt)
+                ])
+            ]),
+
+            vidjet.nişanlar(elementlər: ["Hamısı", "Aktiv", "Bitmiş"],
+                            cari: özü.süzgəc, klik: özü.süzgəcSeçildi),
+
+            əgər uzunluq(özü.görünənlər) == 0 onda
+                vidjet.boşBaxış(başlıq: "Tapşırıq yoxdur",
+                                mətn: "Yuxarıdan yenisini əlavə edin")
+            yoxsa
+                vidjet.cədvəl(
+                    sütunlar: ["Tapşırıq", "Vəziyyət"],
+                    sətirlər: özü.görünənlər.çevir((t) => [
+                        əgər t.vacib onda "★ {t.ad}" yoxsa t.ad son,
+                        əgər t.bitib onda
+                            vidjet.nişan(mətn: "bitib", növ: "uğur")
+                        yoxsa
+                            vidjet.nişan(mətn: "aktiv")
+                        son
+                    ]),
+                    sətirKlik: özü.sətirSeçildi)
+            son,
+
+            vidjet.düymə(mətn: "Bitmişləri sil", növ: "təhlükə",
+                         söndürülmüş: özü.bitmişSayı == 0,
+                         klik: özü.silməyiSoruş),
+
+            vidjet.modal(başlıq: "Bitmiş tapşırıqlar silinsin?",
+                         görünür: özü.silinəcək >= 0,
+                         bağlandı: özü.silməniLəğvEt,
+                         məzmun: [vidjet.mətn(
+                             məzmun: "{özü.bitmişSayı} tapşırıq silinəcək.")],
+                         altlıq: [
+                             vidjet.düymə(mətn: "Ləğv et", növ: "ikinci",
+                                          klik: özü.silməniLəğvEt),
+                             vidjet.düymə(mətn: "Sil", növ: "təhlükə",
+                                          klik: özü.bitmişləriSil)
+                         ])
+        ])
+    son
+son
+
+// ── Üç hədəf ─────────────────────────────────────────────────────────
+
+funksiya pəncərəQur() -> istənilən
+    dəyişən p = yeni pəncərə.Pəncərə("Tapşırıqlar", 560, 640)
+    // Nümunəni özümüz yaradırıq ki, menyu onun metodlarını çağırsın
+    dəyişən menecer = yeni Menecer()
+    p.məzmun(menecer)
+    p.menyu([
+        pəncərə.menyu("Fayl", [
+            pəncərə.element("Aç…", qısayol: "Ctrl+O",
+                            klik: () => menecer.aç()),
+            pəncərə.element("Saxla…", qısayol: "Ctrl+S",
+                            klik: () => menecer.saxla()),
+            pəncərə.ayırıcı(),
+            pəncərə.element("Çıxış", qısayol: "Ctrl+Q", klik: () => p.bağla())
+        ])
+    ])
+    qaytar p
+son
+
+funksiya desktop()
+    dəyişən p = pəncərəQur()
+    p.mərkəzə().göstər()
+    pəncərə.işlət()
+son
+
+funksiya vebServeri()
+    dəyişən s = yeni veb.Server()
+    s.komponent("/", Menecer, başlıq: "Tapşırıqlar")
+    s.dinlə(8082)
+son
+
+funksiya yoxla()
+    dəyişən s = pəncərə.sınaq.aç(pəncərəQur())
+
+    s.klik("Əlavə et")
+    yaz("Boş ad xətası : {s.ehtiva("Tapşırığın adını yazın")}")
+
+    s.hadisə("yazıldı", "yeniAd", "Süd al")
+    s.klik("Əlavə et")
+    s.hadisə("yazıldı", "yeniAd", "Hesabatı yaz")
+    s.yaz("vacib", doğru)
+    s.klik("Əlavə et")
+    yaz("İki tapşırıq  : {s.ehtiva("Süd al")}, {s.ehtiva("★ Hesabatı yaz")}")
+
+    s.klik("Süd al")                // cədvəl sətrinə klik
+    yaz("Bitdi         : {s.ehtiva("1 / 2 bitib")}")
+
+    s.klik("Aktiv")
+    yaz("Aktiv süzgəci : {deyil s.ehtiva("Süd al")}")
+    s.klik("Hamısı")
+
+    s.klik("Bitmişləri sil")
+    yaz("Modal         : {s.ehtiva("silinsin?")}")
+    s.klik("Sil")
+    yaz("Silindi       : {deyil s.ehtiva("Süd al")}")
+
+    // Fayla saxlama — dialoq cavabı əvvəlcədən verilir
+    dəyişən yol = qovluq.müvəqqəti() + "/alqor-tapşırıqlar.json"
+    pəncərə.sınaq.cavablar([yol, yol])
+    s.klik("Saxla…")
+    yaz("Saxlanıldı    : {fayl.vardır(yol)}")
+    s.hadisə("yazıldı", "yeniAd", "Müvəqqəti")
+    s.klik("Əlavə et")
+    s.klik("Aç…")
+    yaz("Fayldan açıldı: {deyil s.ehtiva("Müvəqqəti")}")
+    fayl.sil(yol)
+son
+
+funksiya əsas(arqumentlər: siyahı[mətn])
+    əgər "sınaq" içindədir arqumentlər onda
+        yoxla()
+    yoxsa əgər "veb" içindədir arqumentlər onda
+        vebServeri()
+    yoxsa
+        desktop()
+    son
+son

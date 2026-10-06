@@ -184,6 +184,19 @@ yaz(artır())"""), ["4", "1", "boş"])
         _, x = ayır("yaz(<b klik={() => x}>{1 + 2}</b>)")
         self.assertTrue(x.uğurludur(), x.hesabat(False))
 
+    def test_tut_ad_istənilən_xətanı_bağlayır(self):
+        """Əvvəllər `tut x`-də `x` gövdənin ilk cümləsi sayılırdı."""
+        self.assertEqual(çıxış("""cəhd et
+    yaz(1 / 0)
+tut x
+    yaz("tutuldu: {x.mesaj}")
+son
+cəhd et
+    yaz(boş!)
+tut x əgər x.mesaj != ""
+    yaz("mühafizə ilə")
+son"""), ["tutuldu: sıfıra bölmək olmaz", "mühafizə ilə"])
+
     def test_çox_xəta_bir_keçiddə(self):
         _, x = ayır("dəyişən a = $\ndəyişən b = $\ndəyişən c = $")
         self.assertGreaterEqual(len(x.xətalar), 3)
