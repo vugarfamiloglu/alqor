@@ -8,15 +8,18 @@ AAC-ni birbaşa icra edir. Kompilyasiya mərhələsi yoxdur —
 from __future__ import annotations
 import math
 import sys
+import threading
 from typing import Any
 
 from . import aac as A
 from .deyerler import (AlqorDiapazon, AlqorGenerator, AlqorXəta, BağlıMetod,
+                       Element,
                        Çağırılan, Daxili, DavamSiqnalı, DayanmaSiqnalı,
                        DayanSiqnalı, Funksiya, Modul, Mühit, Nümunə,
                        QaytarSiqnalı, Sadalama, SadalamaDəyəri, Sinif,
                        VerSiqnalı, mətnə, tip_adı, xəta_uyğundur)
 from .elifba import böyüyə, kiçiyə
+from .korutin import Gələcək, Korutin, LəğvNişanı
 from .token import Yer
 
 # Hər Alqor çağırışı ~10 Python kadrı tutur, ona görə Python limitini
@@ -32,12 +35,13 @@ class İcraçı:
         self.qlobal = qlobal_mühit(self)
         self.çıxış = çıxış or (lambda s: print(s))
         self.giriş = giriş or input
-        self.dərinlik = 0
+        # Vəziyyət SAP-YERLİDİR: korutinlər və `paralel(...)` ayrı
+        # saplarda işləyir, ona görə dərinlik sayğacı, `gecikdir`
+        # yığını və cari korutin hər sapda müstəqil olmalıdır.
+        self._yerli = _SapYerli()
         self.yığın: list[str] = []
         if sys.getrecursionlimit() < _PYTHON_LİMİTİ:
             sys.setrecursionlimit(_PYTHON_LİMİTİ)
-        self._gecikdirilmiş: list[list[tuple[A.İfadə, Mühit]]] = []
-        self._ver_yığımı: list | None = None
 
     # ═══════════════════════════════════════════════════════════════════
     #  Giriş nöqtəsi
@@ -452,6 +456,8 @@ class İcraçı:
 
         dayandı = False
         for indeks, element in enumerate(self._iterasiya(mənbə, c.yer)):
+            if c.asinxron:
+                element = self.gözlə(element, c.yer)
             alt = m.alt()
             if çoxlu and lüğətdir:
                 self._dövr_bağla(c.bağlamalar,
@@ -521,10 +527,11 @@ class İcraçı:
 
     def _c_ver(self, c: A.Ver, m: Mühit) -> None:
         dəyər = self._ifadə(c.dəyər, m) if c.dəyər is not None else None
-        # Generator daxilindəyiksə dəyəri yığ, əks halda bloku bitir
-        yığım = getattr(self, "_ver_yığımı", None)
-        if yığım is not None:
-            yığım.append(dəyər)
+        # Generator gövdəsindəyiksə — korutini dayandırıb dəyəri ver.
+        # Əks halda `ver` blok ifadəsini dəyərlə bitirir.
+        ver = self._yerli.ver
+        if ver is not None:
+            ver(dəyər)
             return
         raise VerSiqnalı(dəyər)
 
@@ -603,8 +610,9 @@ class İcraçı:
             self._blok(c.gövdə, m.alt())
 
     def _c_gecikdir(self, c: A.Gecikdir, m: Mühit) -> None:
-        if self._gecikdirilmiş:
-            self._gecikdirilmiş[-1].append((c.ifadə, m))
+        yığın = self._yerli.gecikdirilmiş
+        if yığın:
+            yığın[-1].append((c.ifadə, m))
         else:
             self._ifadə(c.ifadə, m)
 
@@ -1239,6 +1247,10 @@ class İcraçı:
                             f"`{obyekt.ad}` modulunda `{ad}` yoxdur", yer,
                             "ALQ-M002")
 
+        if isinstance(obyekt, Element) and ad in ("ad", "atributlar",
+                                                   "uşaqlar"):
+            return getattr(obyekt, ad)
+
         if isinstance(obyekt, tuple) and ad.isdigit():
             i = int(ad)
             if i >= len(obyekt):
@@ -1462,6 +1474,8 @@ class İcraçı:
                                      arqumentlər, adlı, yer)
         if isinstance(funksiya, _VariantQurucusu):
             return funksiya.yarat(self, arqumentlər, adlı)
+        if isinstance(funksiya, Modul) and funksiya.çağırışçı is not None:
+            return funksiya.çağırışçı.çağır(self, arqumentlər, adlı, yer)
         if isinstance(funksiya, Çağırılan):
             return funksiya.çağır(self, arqumentlər, adlı, yer)
         if isinstance(funksiya, Nümunə):
@@ -1475,6 +1489,17 @@ class İcraçı:
 
     def funksiya_çağır(self, f: Funksiya, arqumentlər: list, adlı: dict,
                        yer: Yer | None = None) -> Any:
+        # `asinxron funksiya` dərhal `Gələcək` qaytarır — gövdə yalnız
+        # `gözlə` (və ya `paralel`) ilə işə düşür.
+        if f.asinxron and not f.generator:
+            sinxron = Funksiya(
+                f.ad, f.parametrlər, f.gövdə, f.mühit, False,
+                f.generator, f.özü, f.sinif, f.annotasiyalar, None)
+            return Gələcək(
+                lambda: self.funksiya_çağır(sinxron, arqumentlər, adlı,
+                                            yer),
+                f.ad)
+
         if f.yaddaş is not None and not adlı:
             açar = tuple(
                 x if isinstance(x, (int, float, str, bool, type(None)))
@@ -1482,9 +1507,9 @@ class İcraçı:
             if açar in f.yaddaş:
                 return f.yaddaş[açar]
 
-        self.dərinlik += 1
-        if self.dərinlik > STEK_HƏDDİ:
-            self.dərinlik -= 1
+        self._yerli.dərinlik += 1
+        if self._yerli.dərinlik > STEK_HƏDDİ:
+            self._yerli.dərinlik -= 1
             raise AlqorXəta(
                 "StekDaşmaXətası",
                 f"çağırış dərinliyi {STEK_HƏDDİ} həddini aşdı — "
@@ -1505,10 +1530,10 @@ class İcraçı:
             self._parametrləri_bağla(f, arqumentlər, adlı, m, yer)
 
             if f.generator:
-                return AlqorGenerator(self._generator_işlət(f, m))
+                return AlqorGenerator(self._korutin_qur(f, m))
 
             if isinstance(f.gövdə, list):
-                self._gecikdirilmiş.append([])
+                self._yerli.gecikdirilmiş.append([])
                 try:
                     try:
                         self._blok(f.gövdə, m)
@@ -1516,7 +1541,8 @@ class İcraçı:
                     except QaytarSiqnalı as s:
                         nəticə = s.dəyər
                 finally:
-                    for ifadə, mm in reversed(self._gecikdirilmiş.pop()):
+                    gecikmiş = self._yerli.gecikdirilmiş.pop()
+                    for ifadə, mm in reversed(gecikmiş):
                         try:
                             self._ifadə(ifadə, mm)
                         except AlqorXəta:
@@ -1528,7 +1554,7 @@ class İcraçı:
                 f.yaddaş[açar] = nəticə
             return nəticə
         finally:
-            self.dərinlik -= 1
+            self._yerli.dərinlik -= 1
 
     def _son_ifadənin_dəyəri(self, f: Funksiya, m: Mühit) -> Any:
         """`qaytar`-sız son ifadə avtomatik qaytarılır (Spes. § 5.3)."""
@@ -1543,27 +1569,28 @@ class İcraçı:
                 return None
         return None
 
-    def _generator_işlət(self, f: Funksiya, m: Mühit):
-        """`ver` siqnallarını Python generatoruna çevirir."""
-        yığım: list[Any] = []
+    def _korutin_qur(self, f: Funksiya, m: Mühit) -> Korutin:
+        """
+        Generator gövdəsini TƏNBƏL korutinə çevirir.
 
-        class _Toplayıcı(Exception):
-            pass
+        Gövdə ayrıca sapda işləyir; `ver` icranı dayandırır. Beləliklə
+        sonsuz generatorlar da işləyir.
+        """
+        gövdə = f.gövdə
 
-        # Sadə yanaşma: gövdəni icra edib bütün `ver` dəyərlərini yığırıq.
-        # Tənbəl generatorlar Mərhələ 3b-də (korutinlər) gələcək.
-        köhnə = self._ver_yığımı
-        self._ver_yığımı = yığım
-        try:
+        def işlədici(ver) -> None:
+            köhnə = self._yerli.ver
+            self._yerli.ver = ver
             try:
-                self._blok(f.gövdə, m)   # type: ignore[arg-type]
+                self._blok(gövdə, m)        # type: ignore[arg-type]
             except QaytarSiqnalı:
                 pass
             except DayanSiqnalı:
                 pass
-        finally:
-            self._ver_yığımı = köhnə
-        return iter(yığım)
+            finally:
+                self._yerli.ver = köhnə
+
+        return Korutin(işlədici, f.ad)
 
     def _parametrləri_bağla(self, f: Funksiya, arqumentlər: list,
                             adlı: dict, m: Mühit,
@@ -1865,8 +1892,25 @@ class İcraçı:
         return dəyər
 
     def _e_gözlə(self, e: A.Gözlə, m: Mühit) -> Any:
-        # Sinxron icra — asinxronluq Mərhələ 3b-də (hadisə dövrü)
-        return self._ifadə(e.ifadə, m)
+        dəyər = self._ifadə(e.ifadə, m)
+        return self.gözlə(dəyər, e.yer)
+
+    def gözlə(self, dəyər: Any, yer: Yer | None = None) -> Any:
+        """`Gələcək`-i həll edir; adi dəyər olduğu kimi qaytarılır."""
+        if isinstance(dəyər, Gələcək):
+            try:
+                return dəyər.al()
+            except TimeoutError as x:
+                raise AlqorXəta("VaxtBitdiXətası", str(x), yer,
+                                "ALQ-R011")
+        if isinstance(dəyər, (list, tuple)) and any(
+                isinstance(d, Gələcək) for d in dəyər):
+            for d in dəyər:
+                if isinstance(d, Gələcək):
+                    d.başlat()
+            nəticə = [self.gözlə(d, yer) for d in dəyər]
+            return tuple(nəticə) if isinstance(dəyər, tuple) else nəticə
+        return dəyər
 
     # ── Kolleksiyalar ─────────────────────────────────────────────────
 
@@ -1951,6 +1995,107 @@ class İcraçı:
             return AlqorGenerator(iter(nəticə_siyahı))
         return nəticə_siyahı
 
+    # ── İnterfeys sintaksisi (JSX) ────────────────────────────────────
+
+    def _e_jsx(self, e: A.JSXElement, m: Mühit) -> Any:
+        atributlar = self._jsx_atributlar(e.atributlar, m)
+        uşaqlar = self._jsx_uşaqlar(e.uşaqlar, m)
+        if e.komponentdir:
+            return self._komponent_göstər(e.ad, atributlar, uşaqlar,
+                                          e.yer, m)
+        return Element(e.ad, atributlar, uşaqlar)
+
+    def _e_jsx_parça(self, e: A.JSXParça, m: Mühit) -> Element:
+        return Element("", {}, self._jsx_uşaqlar(e.uşaqlar, m))
+
+    def _jsx_atributlar(self, atributlar, m: Mühit) -> dict:
+        nəticə: dict[str, Any] = {}
+        for a in atributlar:
+            if a.yayma:
+                dəyər = self._ifadə(a.dəyər, m)
+                if isinstance(dəyər, dict):
+                    nəticə.update({str(k): v for k, v in dəyər.items()})
+                elif isinstance(dəyər, Nümunə):
+                    nəticə.update(dəyər.sahələr)
+                else:
+                    raise AlqorXəta(
+                        "TipXətası",
+                        f"`{{...}}` yayması lüğət və ya obyekt gözləyir, "
+                        f"`{tip_adı(dəyər)}` gəlib",
+                        getattr(a.dəyər, "yer", None), "ALQ-T001")
+            elif a.dəyər is None:
+                nəticə[a.ad] = True
+            else:
+                nəticə[a.ad] = self._ifadə(a.dəyər, m)
+        return nəticə
+
+    def _jsx_uşaqlar(self, uşaqlar, m: Mühit) -> list:
+        nəticə: list[Any] = []
+        for u in uşaqlar:
+            if isinstance(u, A.JSXMətn):
+                nəticə.append(u.dəyər)
+                continue
+            dəyər = self._ifadə(u, m)
+            if dəyər is None or dəyər is False:
+                continue
+            if isinstance(dəyər, (list, tuple)):
+                nəticə.extend(x for x in dəyər
+                              if x is not None and x is not False)
+            else:
+                nəticə.append(dəyər)
+        return nəticə
+
+    def _komponent_göstər(self, ad: str, atributlar: dict,
+                          uşaqlar: list, yer: Yer | None,
+                          m: Mühit) -> Any:
+        """
+        Böyük hərflə başlayan JSX adı komponent istinadıdır.
+
+        Sinif/komponent  → nümunə yaradılır, `göstər()` çağırılır
+        Funksiya         → adlı arqumentlərlə çağırılır
+        """
+        hissələr = ad.split(".")
+        try:
+            hədəf: Any = m.al(hissələr[0])
+        except AlqorXəta:
+            raise AlqorXəta(
+                "ArqumentXətası",
+                f"`<{ad} />` komponenti tapılmadı", yer, "ALQ-T022",
+            )
+        for h in hissələr[1:]:
+            hədəf = self._üzv_al(hədəf, h, yer)
+
+        if isinstance(hədəf, Sinif):
+            qurucu = self._qurucu_tap(hədəf, "")
+            if qurucu is not None and qurucu.parametrlər:
+                n = self.nümunə_yarat(hədəf, None, [], atributlar, yer)
+            else:
+                n = self.nümunə_yarat(hədəf, None, [], {}, yer)
+                for a, d in atributlar.items():
+                    n.sahələr[a] = d
+            if uşaqlar:
+                n.sahələr.setdefault("uşaqlar", uşaqlar)
+
+            göstər = hədəf.metod_tap("göstər")
+            if göstər is None:
+                raise AlqorXəta(
+                    "TipXətası",
+                    f"`{hədəf.ad}` komponentində `göstər()` metodu yoxdur",
+                    yer, "ALQ-T053",
+                )
+            return self.funksiya_çağır(göstər.bağla(n), [], {}, yer)
+
+        if isinstance(hədəf, Çağırılan):
+            adlı = dict(atributlar)
+            if uşaqlar:
+                adlı.setdefault("uşaqlar", uşaqlar)
+            return hədəf.çağır(self, [], adlı, yer)
+
+        raise AlqorXəta(
+            "TipXətası",
+            f"`<{ad} />` sinif və ya funksiya olmalıdır, "
+            f"`{tip_adı(hədəf)}` gəlib", yer, "ALQ-T008")
+
     # ── Blok şəklində ifadələr ────────────────────────────────────────
 
     def _e_şərt_ifadəsi(self, e: A.ŞərtIfadəsi, m: Mühit) -> Any:
@@ -2026,6 +2171,21 @@ class İcraçı:
 # ═══════════════════════════════════════════════════════════════════════
 #  Köməkçi daxili tiplər
 # ═══════════════════════════════════════════════════════════════════════
+
+class _SapYerli(threading.local):
+    """
+    Hər sapda müstəqil icra vəziyyəti.
+
+    Korutin gövdəsi və `paralel(...)` ayrı saplarda işləyir. Dərinlik
+    sayğacı, `gecikdir` yığını və cari `ver` funksiyası sap başına
+    saxlanılmalıdır, yoxsa bir sap digərinin vəziyyətini pozar.
+    """
+
+    def __init__(self):
+        self.dərinlik: int = 0
+        self.gecikdirilmiş: list[list[tuple[A.İfadə, Mühit]]] = []
+        self.ver = None
+
 
 class _Üst:
     __slots__ = ("nümunə", "sinif")
@@ -2175,4 +2335,6 @@ _İFADƏLƏR: dict[type, Any] = {
     A.ŞərtIfadəsi: İcraçı._e_şərt_ifadəsi,
     A.BlokIfadəsi: İcraçı._e_blok_ifadəsi,
     A.Lambda: İcraçı._e_lambda,
+    A.JSXElement: İcraçı._e_jsx,
+    A.JSXParça: İcraçı._e_jsx_parça,
 }

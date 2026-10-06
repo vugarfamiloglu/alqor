@@ -86,10 +86,6 @@ class ParserQuruluşu(unittest.TestCase):
         _, x = ayır("əgər x > 5\n    yaz(1)\nson")
         self.assertEqual(x.xətalar[0].kod, "ALQ-P004")
 
-    def test_jsx_hələ_dəstəklənmir(self):
-        _, x = ayır("dəyişən a = <div>salam</div>")
-        self.assertEqual(x.xətalar[0].kod, "ALQ-P030")
-
     def test_tip_adı_identifikator_ola_bilər(self):
         """`xassə mətn: mətn` — tip adları açar söz deyil."""
         ağac, x = ayır("""sinif Qeyd
@@ -896,6 +892,152 @@ yaz(riyazi.kvadrat(5))"""
 
     def test_tapılmayan_modul(self):
         self.assertEqual(xəta_tipi("gətir yoxdurbelə"), "ArqumentXətası")
+
+
+class JSXSınağı(unittest.TestCase):
+    """İnterfeys sintaksisi — lekserdə xam skan, parserdə ayırma."""
+
+    def test_sadə_element(self):
+        self.assertEqual(çıxış("yaz(<div>salam</div>)"),
+                         ["<div>salam</div>"])
+
+    def test_öz_bağlanan(self):
+        self.assertEqual(çıxış("yaz(<br />)"), ["<br>"])
+        self.assertEqual(çıxış('yaz(<img mənbə="a.png" />)'),
+                         ['<img src="a.png">'])
+
+    def test_atributlar(self):
+        self.assertEqual(çıxış('yaz(<div sinif="qutu">a</div>)'),
+                         ['<div class="qutu">a</div>'])
+
+    def test_məntiqi_atribut(self):
+        self.assertEqual(çıxış("yaz(<input söndürülüb />)"),
+                         ["<input disabled>"])
+
+    def test_ifadə_atributu(self):
+        self.assertEqual(
+            çıxış('dəyişən r = "qırmızı"\nyaz(<div sinif={r}>a</div>)'),
+            ['<div class="qırmızı">a</div>'])
+
+    def test_atributda_interpolyasiya(self):
+        self.assertEqual(
+            çıxış('dəyişən r = "yaşıl"\n'
+                  'yaz(<div sinif="düymə-{r}">a</div>)'),
+            ['<div class="düymə-yaşıl">a</div>'])
+
+    def test_yayma_atributu(self):
+        self.assertEqual(
+            çıxış('dəyişən x = {"sinif": "a", "id": "b"}\n'
+                  "yaz(<div {...x} />)"),
+            ['<div class="a" id="b"></div>'])
+
+    def test_ifadə_uşağı(self):
+        self.assertEqual(
+            çıxış('dəyişən ad = "Aysel"\nyaz(<h1>Salam, {ad}!</h1>)'),
+            ["<h1>Salam, Aysel!</h1>"])
+
+    def test_iç_içə(self):
+        self.assertEqual(çıxış("yaz(<div><p><b>a</b></p></div>)"),
+                         ["<div><p><b>a</b></p></div>"])
+
+    def test_siyahı_uşağı_düzlənir(self):
+        self.assertEqual(
+            çıxış('yaz(<ul>{["a", "b"].çevir((m) => <li>{m}</li>)}</ul>)'),
+            ["<ul><li>a</li><li>b</li></ul>"])
+
+    def test_parça(self):
+        self.assertEqual(çıxış("yaz(<><b>a</b><i>b</i></>)"),
+                         ["<b>a</b><i>b</i>"])
+
+    def test_mətndə_sadə_kiçikdir(self):
+        """`5 < 10` JSX mətni daxilində qanunidir."""
+        self.assertEqual(çıxış("yaz(<p>5 < 10</p>)"),
+                         ["<p>5 &lt; 10</p>"])
+
+    def test_mətndə_tire(self):
+        """`—` leksik xəta verməməlidir — lekser JSX-i xam skan edir."""
+        self.assertEqual(çıxış("yaz(<p>Nümunə — izah</p>)"),
+                         ["<p>Nümunə — izah</p>"])
+
+    def test_xss_qoruması(self):
+        self.assertEqual(çıxış('yaz(<p>{"<script>pis()</script>"}</p>)'),
+                         ["<p>&lt;script&gt;pis()&lt;/script&gt;</p>"])
+
+    def test_çoxsətirli_boşluq_yığılır(self):
+        kod = "yaz(<div>\n    Salam\n    dünya\n</div>)"
+        self.assertEqual(çıxış(kod), ["<div>Salam dünya</div>"])
+
+    def test_müqayisə_jsx_deyil(self):
+        self.assertEqual(çıxış("yaz(1 < 2)"), ["doğru"])
+        self.assertEqual(çıxış("dəyişən a = 5\nyaz(a < 10)"), ["doğru"])
+
+    def test_komponent(self):
+        kod = ('komponent Düymə\n'
+               '    xassə mətn: mətn = "Bas"\n'
+               '    göstər()\n'
+               '        qaytar <button>{özü.mətn}</button>\n'
+               '    son\n'
+               'son\n'
+               'yaz(<Düymə mətn="Göndər" />)')
+        self.assertEqual(çıxış(kod), ["<button>Göndər</button>"])
+
+    def test_komponent_standart_xassə(self):
+        kod = ('komponent D\n'
+               '    xassə mətn: mətn = "standart"\n'
+               '    göstər() qaytar <b>{özü.mətn}</b> son\n'
+               'son\n'
+               'yaz(<D />)')
+        self.assertEqual(çıxış(kod), ["<b>standart</b>"])
+
+    def test_komponent_uşaqları(self):
+        kod = ('komponent Kart\n'
+               '    göstər()\n'
+               '        qaytar <div sinif="kart">{özü.uşaqlar}</div>\n'
+               '    son\n'
+               'son\n'
+               'yaz(<Kart><p>içi</p></Kart>)')
+        self.assertEqual(çıxış(kod),
+                         ['<div class="kart"><p>içi</p></div>'])
+
+    def test_komponent_göstər_yoxdursa(self):
+        self.assertEqual(xəta_tipi("sinif X\nson\nyaz(<X />)"),
+                         "TipXətası")
+
+    def test_tapılmayan_komponent(self):
+        self.assertEqual(xəta_tipi("yaz(<YoxdurBelə />)"),
+                         "ArqumentXətası")
+
+    def test_element_üzvləri(self):
+        kod = ('dəyişən e = <div sinif="x"><b>qalın</b></div>\n'
+               'yaz(e.ad)\n'
+               'yaz(e.mətn())\n'
+               'yaz(e.atribut("sinif"))\n'
+               'yaz(e.tap("b").mətn())\n'
+               'yaz(uzunluq(e.uşaqlar))')
+        self.assertEqual(çıxış(kod), ["div", "qalın", "x", "qalın", "1"])
+
+    def test_tip_adı(self):
+        self.assertEqual(çıxış("yaz(tip(<div />))"), ["element"])
+
+    def test_bağlanmamış_element(self):
+        _, x = ayır("yaz(<div>salam)")
+        self.assertFalse(x.uğurludur())
+        self.assertEqual(x.xətalar[0].kod, "ALQ-P031")
+
+    def test_uyğun_gəlməyən_teq(self):
+        _, x = ayır("yaz(<div>a</span>)")
+        self.assertIn("ALQ-P032", [d.kod for d in x.xətalar])
+
+    def test_boş_uşaq_atılır(self):
+        self.assertEqual(çıxış("yaz(<div>{boş}{yanlış}a</div>)"),
+                         ["<div>a</div>"])
+
+    def test_funksiyadan_qaytarma(self):
+        kod = ("funksiya f()\n"
+               "    qaytar <p>a</p>\n"
+               "son\n"
+               "yaz(f())")
+        self.assertEqual(çıxış(kod), ["<p>a</p>"])
 
 
 class NümunələrSınağı(unittest.TestCase):

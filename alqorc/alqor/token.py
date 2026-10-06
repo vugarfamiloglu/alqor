@@ -37,6 +37,13 @@ class Növ(Enum):
     # ── Simvollar ───────────────────────────────────────────
     OP = auto()           # operator və ayırıcı
 
+    # ── İnterfeys sintaksisi ────────────────────────────────
+    #  Lekser JSX elementini XAM skan edib bir token kimi buraxır.
+    #  `dəyər` = (başlanğıc_ofset, son_ofset). Parser `parser_jsx` ilə
+    #  həmin aralığı ayırır. Belə olmasa, JSX mətnindəki `—`, `'`, `"`
+    #  kimi simvollar leksik xəta verərdi.
+    JSX = auto()
+
     # ── Struktur ────────────────────────────────────────────
     SETIR_SONU = auto()   # ifadə ayırıcısı
     FAYL_SONU = auto()
@@ -206,3 +213,10 @@ IFADE_BITIREN_OP = frozenset({")", "]", "}", "!", "++", "--", "?"})
 
 # `→` və `->` ekvivalentdir (`hal` kontekstində)
 OX_FORMALARI = frozenset({"→", "->"})
+
+# İfadəni bitirə bilən tokenlər — `<` operator yoxsa JSX olduğunu ayırır.
+# `a < b` → əvvəlki token `a` ifadəni bitirir, deməli müqayisədir.
+# `qaytar <div>` → `qaytar` ifadəni bitirmir, deməli JSX-dir.
+IFADE_BITIREN_LITERALLAR = frozenset({
+    "doğru", "yanlış", "boş", "özü", "üst", "sonsuz", "ƏdədDeyil",
+})

@@ -17,7 +17,8 @@ from . import acar_sozler as AS
 from .elifba import (ad_başlanğıcı_ola_bilər, ad_davamı_ola_bilər,
                      hərfdir, rəqəmdir)
 from .menbe import Mənbə
-from .token import (ACANLAR, BAGLAYANLAR, IFADE_BITIREN_OP, OPERATORLAR_1,
+from .token import (ACANLAR, BAGLAYANLAR, IFADE_BITIREN_LITERALLAR,
+                    IFADE_BITIREN_OP, OPERATORLAR_1,
                     OPERATORLAR_2, OPERATORLAR_3, KodParçası, MətnParçası,
                     Növ, Parça, Token, Yer)
 from .xeta import XətaToplayıcı, mesaj
@@ -59,7 +60,6 @@ BLOK_ACANLAR = frozenset({
     "əgər", "varsa", "yoxdursa", "seç",
     "nə qədər ki", "həmişə", "təkrarla", "hər",
     "cəhd et", "təmin", "istifadə",
-    "başlanğıc", "bitiş",
 })
 
 QACIS = {
@@ -67,6 +67,11 @@ QACIS = {
     "\\": "\\", '"': '"', "'": "'", "`": "`",
     "e": "\x1b", "{": "{", "}": "}",
 }
+
+DIRNAQ = chr(34)         # "
+APOSTROF = chr(39)       # '
+QRAVIS = chr(96)         # `
+TERS_KESIK = chr(92)     # \
 
 ONALTILIQ = "0123456789abcdefABCDEF"
 IKILIK = "01"
@@ -157,6 +162,12 @@ class Lekser:
         # ── Ad / açar söz ───────────────────────────────────────
         if ad_başlanğıcı_ola_bilər(c):
             self._ad_oxu(hədəf)
+            return
+
+        # ── İnterfeys sintaksisi (JSX) ──────────────────────────
+        #  `<` ifadə mövqeyindədirsə, element xam skan edilir.
+        if c == "<" and self._jsx_başlayır(hədəf):
+            self._jsx_oxu(hədəf)
             return
 
         # ── Operatorlar ─────────────────────────────────────────
@@ -761,6 +772,165 @@ class Lekser:
                     "simvol literalı `` ` `` ilə bağlanmalıdır",
                     "nümunə: `ə`  `\\n`  `A`",
                     "bir simvoldan çox üçün mətn literalı: \"...\"")
+
+    # ═══════════════════════════════════════════════════════════════════
+    #  İnterfeys sintaksisi (JSX) — xam skan
+    # ═══════════════════════════════════════════════════════════════════
+    #
+    #  Niyə lekserdə? JSX mətn məzmununda istənilən simvol qanunidir:
+    #      <p>5 < 10 — bu normaldır</p>
+    #  Lekser kontekstsiz işləsəydi, `—` ALQ-L002, apostrof isə
+    #  bağlanmamış mətn xətası verərdi. Ona görə `<` ifadə mövqeyində
+    #  görünəndə element BALANSLI TEQ UYĞUNLAŞDIRMASI ilə xam skan
+    #  edilir və bir `Növ.JSX` tokeni kimi buraxılır. Parser (parser_jsx)
+    #  həmin aralığı öz oxuyucusu ilə ayırır.
+
+    def _jsx_başlayır(self, hədəf: list[Token]) -> bool:
+        """
+        `<` müqayisə operatorudur, yoxsa JSX elementinin başlanğıcı?
+
+        Qayda: əvvəlki token İFADƏ BİTİRƏ BİLİRSƏ, `<` müqayisədir
+        (`a < b`). Bitirə bilmirsə, JSX-dir (`qaytar <div>`, `f(<p/>)`).
+        """
+        növbəti = self._gör(1)
+        if not (növbəti == ">" or növbəti == "/"
+                or ad_başlanğıcı_ola_bilər(növbəti)):
+            return False
+
+        son = self._son_əhəmiyyətli(hədəf)
+        if son is None:
+            return True
+        if son.növ in (Növ.AD, Növ.TAM, Növ.ONLUQ, Növ.METN,
+                       Növ.SIMVOL, Növ.BAYT, Növ.JSX):
+            return False
+        if son.növ is Növ.OP:
+            return son.dəyər not in IFADE_BITIREN_OP
+        if son.növ is Növ.ACAR:
+            return son.dəyər not in IFADE_BITIREN_LITERALLAR
+        return True
+
+    def _jsx_oxu(self, hədəf: list[Token]) -> None:
+        """Elementi xam skan edib bir JSX tokeni emissiya edir."""
+        baş = self.i
+        son = self._jsx_sonunu_tap(baş)
+        if son is None:
+            self.x.xəta(
+                "ALQ-P031", "İnterfeys elementi bağlanmayıb",
+                self.s.yer(baş, 1), "burada açılıb",
+                "bağlayan teq əlavə edin: </ad>",
+                "öz-bağlanan element: <ad />")
+            self.i += 1
+            hədəf.append(Token(Növ.OP, "<", self.s.yer(baş, 1), xam="<"))
+            return
+        self.i = son
+        hədəf.append(Token(Növ.JSX, (baş, son),
+                           self.s.yer(baş, son - baş),
+                           xam=self.m[baş:son]))
+
+    def _jsx_sonunu_tap(self, baş: int) -> int | None:
+        """Balanslı teq uyğunlaşdırması ilə elementin son ofseti."""
+        i = baş
+        dərinlik = 0
+        while i < self.n:
+            c = self.m[i]
+
+            if c == "<":
+                # `5 < 10` kimi mətn: `<`-dan sonra hərf/`/`/`>` yoxdursa
+                # bu teq deyil, adi mətndir
+                növbəti = self.m[i + 1] if i + 1 < self.n else ""
+                if not (növbəti in ("/", ">")
+                        or ad_başlanğıcı_ola_bilər(növbəti)):
+                    if dərinlik == 0:
+                        return None
+                    i += 1
+                    continue
+                if növbəti == "/":
+                    yer = self.m.find(">", i)
+                    if yer == -1:
+                        return None
+                    i = yer + 1
+                    dərinlik -= 1
+                    if dərinlik == 0:
+                        return i
+                    if dərinlik < 0:
+                        return None
+                    continue
+
+                nəticə = self._jsx_teqi_atla(i)
+                if nəticə is None:
+                    return None
+                i, öz_bağlanan = nəticə
+                if not öz_bağlanan:
+                    dərinlik += 1
+                elif dərinlik == 0:
+                    return i
+                continue
+
+            if c == "{" and dərinlik > 0:
+                nəticə = self._jsx_fiqurlu_atla(i)
+                if nəticə is None:
+                    return None
+                i = nəticə
+                continue
+
+            if dərinlik == 0:
+                return None
+            i += 1
+        return None
+
+    def _jsx_teqi_atla(self, i: int):
+        """`<` mövqeyindən teqin sonunu keçir → (yeni_i, öz_bağlanan)."""
+        i += 1
+        if i < self.n and self.m[i] == ">":
+            return i + 1, False
+        while i < self.n:
+            c = self.m[i]
+            if c == DIRNAQ or c == APOSTROF:
+                i = self._jsx_literalı_atla(i)
+                continue
+            if c == "{":
+                nəticə = self._jsx_fiqurlu_atla(i)
+                if nəticə is None:
+                    return None
+                i = nəticə
+                continue
+            if c == "/" and i + 1 < self.n and self.m[i + 1] == ">":
+                return i + 2, True
+            if c == ">":
+                return i + 1, False
+            i += 1
+        return None
+
+    def _jsx_fiqurlu_atla(self, i: int) -> int | None:
+        dərinlik = 0
+        while i < self.n:
+            c = self.m[i]
+            if c in (DIRNAQ, APOSTROF, QRAVIS):
+                i = self._jsx_literalı_atla(i)
+                continue
+            if c in "([{":
+                dərinlik += 1
+            elif c in ")]}":
+                dərinlik -= 1
+                if dərinlik == 0:
+                    return i + 1
+            i += 1
+        return None
+
+    def _jsx_literalı_atla(self, i: int) -> int:
+        sitat = self.m[i]
+        if self.m.startswith(sitat * 3, i):
+            son = self.m.find(sitat * 3, i + 3)
+            return self.n if son == -1 else son + 3
+        i += 1
+        while i < self.n:
+            if self.m[i] == TERS_KESIK:
+                i += 2
+                continue
+            if self.m[i] == sitat:
+                return i + 1
+            i += 1
+        return i
 
     # ═══════════════════════════════════════════════════════════════════
     #  Operatorlar

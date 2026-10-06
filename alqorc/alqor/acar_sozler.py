@@ -59,8 +59,12 @@ OBYEKT = [
 ]
 
 MODUL = [
-    "gətir", "ixrac", "kimi", "standart", "başlanğıc", "bitiş",
+    "gətir", "ixrac", "kimi", "standart",
 ]
+#  `başlanğıc` və `bitiş` QƏSDƏN burada yoxdur — onlar KONTEKSTLİDİR.
+#  Səbəb: `dəyişən başlanğıc = vaxt.ölç()` Azərbaycan dilində tamamilə
+#  normal koddur. Bu sözlər yalnız modul səviyyəsində, ardınca yeni
+#  sətir gələndə blok açar sözü sayılır.
 
 MENTIQ = [
     "və", "ya", "deyil", "içindədir", "tipidir", "boşdur",
@@ -119,6 +123,7 @@ KONTEKSTLI: frozenset[str] = frozenset([
     "oxu", "yaz",                                  # xassə aksessorları
     "vəziyyət", "hesablanan", "əməl", "hadisə", "göstər",   # komponent
     "sınaq", "ölç", "sil", "panika", "eynidir",    # standart kitabxana
+    "başlanğıc", "bitiş",                          # modul blokları
 ])
 
 

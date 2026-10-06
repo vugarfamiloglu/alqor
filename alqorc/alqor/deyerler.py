@@ -442,13 +442,158 @@ class SadalamaDəyəri:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+#  İnterfeys elementi (JSX nəticəsi)
+# ═══════════════════════════════════════════════════════════════════════
+
+#  HTML-də özünü bağlayan teqlər
+TƏK_TEQLƏR = frozenset({
+    "br", "img", "input", "hr", "meta", "link", "area", "base",
+    "col", "embed", "source", "track", "wbr",
+})
+
+#  Azərbaycan atribut adı → HTML atributu
+ATRIBUT_XƏRİTƏSİ = {
+    "sinif": "class", "üslub": "style", "dəyər": "value",
+    "yerTutucu": "placeholder", "növ": "type", "başlıq": "title",
+    "mənbə": "src", "ünvan": "href", "alt": "alt", "ad": "name",
+    "id": "id", "açar": "key", "hədəf": "target", "en": "width",
+    "hündürlük": "height", "söndürülüb": "disabled",
+    "oxunan": "readonly", "tələbolunan": "required",
+    "seçilib": "checked", "maksimum": "max", "minimum": "min",
+}
+
+#  Hadisə atributları — HTML-ə çıxarılmır, icra mühitində işlənir
+HADİSƏ_ATRIBUTLARI = frozenset({
+    "klik", "ikiKlik", "dəyişdi", "göndərildi", "fokus", "fokusGetdi",
+    "düyməBasma", "düyməBuraxma", "siçanÜstdə", "siçanÇıxdı",
+    "sürükləndi", "buraxıldı", "sürüşdü", "basıldı", "quraşdırıldı",
+})
+
+
+class Element:
+    """`<div sinif="a">salam</div>` ifadəsinin nəticəsi."""
+
+    __slots__ = ("ad", "atributlar", "uşaqlar")
+
+    def __init__(self, ad: str, atributlar: dict[str, Any] | None = None,
+                 uşaqlar: list[Any] | None = None):
+        self.ad = ad
+        self.atributlar: dict[str, Any] = atributlar or {}
+        self.uşaqlar: list[Any] = uşaqlar or []
+
+    # ── HTML-ə çevirmə ────────────────────────────────────────────────
+
+    def HTML(self, icraçı=None, girinti: int = 0) -> str:
+        if self.ad == "":                       # parça <>...</>
+            return "".join(_uşaq_html(u, icraçı, girinti)
+                           for u in self.uşaqlar)
+
+        atr = self._atributlar_html(icraçı)
+        if self.ad in TƏK_TEQLƏR:
+            return f"<{self.ad}{atr}>"
+        içi = "".join(_uşaq_html(u, icraçı, girinti + 1)
+                      for u in self.uşaqlar)
+        return f"<{self.ad}{atr}>{içi}</{self.ad}>"
+
+    def _atributlar_html(self, icraçı) -> str:
+        hissələr: list[str] = []
+        for ad, dəyər in self.atributlar.items():
+            if ad in HADİSƏ_ATRIBUTLARI or callable(dəyər)                     or isinstance(dəyər, Çağırılan):
+                continue
+            html_adı = ATRIBUT_XƏRİTƏSİ.get(ad, ad)
+            if dəyər is True:
+                hissələr.append(f" {html_adı}")
+            elif dəyər is False or dəyər is None:
+                continue
+            else:
+                mətn = _html_qaç(mətnə(dəyər, icraçı))
+                hissələr.append(f' {html_adı}="{mətn}"')
+        return "".join(hissələr)
+
+    # ── Kolleksiya kimi davranış ──────────────────────────────────────
+
+    def atribut(self, ad: str, standart: Any = None) -> Any:
+        return self.atributlar.get(ad, standart)
+
+    def mətn(self, icraçı=None) -> str:
+        """Bütün mətn uşaqlarını birləşdirir (teqsiz)."""
+        hissələr: list[str] = []
+        for u in self.uşaqlar:
+            if isinstance(u, Element):
+                hissələr.append(u.mətn(icraçı))
+            elif isinstance(u, str):
+                hissələr.append(u)
+            else:
+                hissələr.append(mətnə(u, icraçı))
+        return "".join(hissələr)
+
+    def tap(self, teq: str) -> "Element | None":
+        if self.ad == teq:
+            return self
+        for u in self.uşaqlar:
+            if isinstance(u, Element):
+                nəticə = u.tap(teq)
+                if nəticə is not None:
+                    return nəticə
+        return None
+
+    def __len__(self) -> int:
+        return len(self.uşaqlar)
+
+    def __iter__(self):
+        return iter(self.uşaqlar)
+
+    def __eq__(self, digər: Any) -> bool:
+        if not isinstance(digər, Element):
+            return NotImplemented
+        return (self.ad == digər.ad
+                and self.atributlar == digər.atributlar
+                and self.uşaqlar == digər.uşaqlar)
+
+    def __repr__(self) -> str:
+        return f"<{self.ad or 'parça'} {len(self.uşaqlar)} uşaq>"
+
+
+def _uşaq_html(u: Any, icraçı, girinti: int) -> str:
+    if isinstance(u, Element):
+        return u.HTML(icraçı, girinti)
+    if isinstance(u, str):
+        return _html_qaç(u)
+    if isinstance(u, (list, tuple)):
+        return "".join(_uşaq_html(x, icraçı, girinti) for x in u)
+    if u is None:
+        return ""
+    if u is True:
+        return "doğru"
+    if u is False:
+        return ""
+    return _html_qaç(mətnə(u, icraçı))
+
+
+def _html_qaç(m: str) -> str:
+    """XSS qoruması — bütün mətn məzmunu qaçış edilir (Spes. § 11.8)."""
+    return (m.replace("&", "&amp;").replace("<", "&lt;")
+             .replace(">", "&gt;").replace('"', "&quot;")
+             .replace("'", "&#39;"))
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  Modul
 # ═══════════════════════════════════════════════════════════════════════
 
 @dataclass
 class Modul:
+    """
+    Modul. Bəzi modullar həm də ÇAĞIRILA BİLİR — məsələn `paralel`:
+
+        gözlə paralel(f1(), f2())        ← çağırış
+        gözlə paralel.hamısı([...])      ← üzv
+
+    Bunun üçün `çağırışçı` sahəsi təyin edilir.
+    """
     ad: str
     üzvlər: dict[str, Any] = field(default_factory=dict)
+    çağırışçı: Any = None
 
     def __repr__(self) -> str:
         return f"<modul {self.ad}>"
@@ -500,31 +645,70 @@ class AlqorDiapazon:
 # ═══════════════════════════════════════════════════════════════════════
 
 class AlqorGenerator:
-    """`generator funksiya ... ver x ... son` nəticəsi."""
+    """
+    `generator funksiya ... ver x ... son` nəticəsi.
 
-    def __init__(self, python_generator):
-        self._g = python_generator
+    TƏNBƏLDİR — dəyərlər yalnız istənəndə hesablanır, ona görə sonsuz
+    generatorlar işləyir. Daxilində `korutin.Korutin` (sap əsaslı
+    korutin) və ya adi Python iteratoru ola bilər.
+    """
+
+    __slots__ = ("_mənbə", "_bitdi", "_keş")
+
+    def __init__(self, mənbə):
+        self._mənbə = mənbə
         self._bitdi = False
+        self._keş: list[Any] | None = None
+
+    # ── İterasiya ─────────────────────────────────────────────────────
 
     def __iter__(self):
-        return self._g
+        return self
+
+    def __next__(self) -> Any:
+        if self._bitdi:
+            raise StopIteration
+        try:
+            return next(self._mənbə) if not hasattr(self._mənbə, "növbəti") \
+                else self._mənbə.növbəti()
+        except StopIteration:
+            self._bitdi = True
+            raise
+
+    # ── Alqor API-si ──────────────────────────────────────────────────
 
     def növbəti(self) -> Any:
         try:
-            return next(self._g)
+            return self.__next__()
         except StopIteration:
-            self._bitdi = True
-            raise AlqorXəta("KolleksiyaXətası", "generator bitdi",
+            raise AlqorXəta("KolleksiyaXətası",
+                            "generator bitdi — daha dəyər yoxdur",
                             kod="ALQ-R014")
 
     def bitdi(self) -> bool:
         return self._bitdi
 
+    def bağla(self) -> None:
+        bağla = getattr(self._mənbə, "bağla", None)
+        if callable(bağla):
+            bağla()
+        self._bitdi = True
+
     def siyahıyaÇevir(self) -> list:
-        return list(self._g)
+        """DİQQƏT: sonsuz generatorda heç vaxt bitməz."""
+        return list(self)
+
+    def ilk(self, say: int) -> list:
+        """İlk `say` dəyəri — sonsuz generatorlar üçün təhlükəsiz."""
+        nəticə: list[Any] = []
+        for dəyər in self:
+            if len(nəticə) >= say:
+                break
+            nəticə.append(dəyər)
+        return nəticə
 
     def __repr__(self) -> str:
-        return "<generator>"
+        return f"<generator{' (bitdi)' if self._bitdi else ''}>"
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -577,6 +761,12 @@ def tip_adı(dəyər: Any) -> str:
         return f"modul[{dəyər.ad}]"
     if isinstance(dəyər, AlqorGenerator):
         return "generator"
+    if isinstance(dəyər, Element):
+        return "element"
+    if type(dəyər).__name__ == "Gələcək":
+        return "gələcək"
+    if type(dəyər).__name__ == "LəğvNişanı":
+        return "ləğvNişanı"
     if isinstance(dəyər, Çağırılan):
         return "funksiya"
     return "istənilən"
@@ -625,6 +815,8 @@ def mətnə(dəyər: Any, icraçı=None) -> str:
         return "{" + ", ".join(
             f"{_daxili_mətn(a, icraçı)}: {_daxili_mətn(d, icraçı)}"
             for a, d in dəyər.items()) + "}"
+    if isinstance(dəyər, Element):
+        return dəyər.HTML(icraçı)
     if isinstance(dəyər, Nümunə):
         if icraçı is not None:
             m = dəyər.sinif.metod_tap("mətnƏt")
