@@ -368,6 +368,30 @@ def əmr_söhbət(arqumentlər: list[str]) -> int:
     return söhbət_başlat(rəngli)
 
 
+def əmr_studio(arqumentlər: list[str]) -> int:
+    """Alqor Studio — inkişaf mühiti (`studio/` paketi)."""
+    from studio.server import işə_sal
+    port = 0
+    qovluq = "."
+    atla = False
+    for i, a in enumerate(arqumentlər):
+        if atla:
+            atla = False
+            continue
+        if a == "--port" and i + 1 < len(arqumentlər):
+            try:
+                port = int(arqumentlər[i + 1])
+            except ValueError:
+                çap_xəta(f"port ədəd olmalıdır: {arqumentlər[i + 1]!r}")
+                return 3
+            atla = True
+        elif not a.startswith("-"):
+            qovluq = a
+    başsız = True if {"--başsız", "--bassiz"} & set(arqumentlər) else None
+    sınaq = bool({"--sınaq", "--sinaq"} & set(arqumentlər))
+    return işə_sal(qovluq, port, başsız, sınaq)
+
+
 def əmr_versiya(_: list[str]) -> int:
     print(f"Alqor {VERSIYA}")
     print(f"Etalon implementasiya — Python {sys.version.split()[0]}")
@@ -394,6 +418,10 @@ def əmr_kömək(_: list[str]) -> int:
                          --rejim sərbəst|normal|sərt
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
     sırala <söz>...      Azərbaycan əlifba sırası ilə sıralayır
+    studio [qovluq]      Alqor Studio — redaktor, vidjet paleti, icra
+                         --port N        sabit port
+                         --başsız        pəncərə açmır, ünvanı çap edir
+                         --sınaq         özünü yoxlayıb çıxır
     versiya              Versiya məlumatı
     kömək                Bu mətn
 
@@ -431,6 +459,7 @@ VƏZİYYƏT:
     "tip": əmr_tip, "tiplər": əmr_tip, "tipler": əmr_tip,
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
+    "studio": əmr_studio,
     "versiya": əmr_versiya, "--versiya": əmr_versiya, "-v": əmr_versiya,
     "kömək": əmr_kömək, "komek": əmr_kömək,
     "--kömək": əmr_kömək, "--komek": əmr_kömək, "-k": əmr_kömək,
