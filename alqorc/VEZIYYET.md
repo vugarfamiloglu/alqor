@@ -1,14 +1,14 @@
 # Alqor kompilyatoru — iş vəziyyəti
 
-> Etalon implementasiya, **Python 3.12**. Son yenilənmə: 5 oktyabr 2026
+> Etalon implementasiya, **Python 3.12**. Son yenilənmə: 6 oktyabr 2026
 
 **Mərhələ 1–5 BİTDİ** — dil nüvəsi tamamdır:
 lekser · parser · interpretator · standart kitabxana · REPL ·
 **JSX** · **tənbəl generatorlar** · **asinxron icra** ·
-**statik tip yoxlayıcı**
+**statik tip yoxlayıcı** · **veb server + şablon mühərriki**
 
-**456 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır və tip
-yoxlamasından keçir; 5-i icra olunur (05 `veb`, 06 `pəncərə` modulunu
+**525 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır və tip
+yoxlamasından keçir; 6-sı icra olunur (06 `pəncərə` modulunu
 gözləyir).
 
 ---
@@ -31,12 +31,14 @@ alqorc/
 │   ├── parser.py         rekursiv enmə + prioritet dırmaşması
 │   ├── deyerler.py       icra dəyərləri, Mühit, Sinif, Nümunə, Sadalama
 │   ├── icraci.py         ağac gəzən interpretator
-│   ├── kitabxana.py      standart kitabxana (15 modul, ~280 funksiya)
+│   ├── kitabxana.py      standart kitabxana (16 modul, ~330 funksiya)
 │   ├── sohbet.py         interaktiv rejim (REPL) — 18 meta-əmr
 │   ├── parser_jsx.py     JSX oxuyucusu
 │   ├── korutin.py        Korutin, Gələcək, LəğvNişanı
 │   ├── tipler.py         tip təsviri və uyğunluq qaydaları
-│   └── tipyoxlayici.py   statik tip yoxlayıcı
+│   ├── tipyoxlayici.py   statik tip yoxlayıcı
+│   ├── sablon.py         `.alqorhtml` şablon mühərriki
+│   └── veb.py            HTTP server, marşrutlar, sessiya, ara proqramlar
 └── sinaq/
     ├── test_elifba.py        (31)
     ├── test_menbe.py         (34)
@@ -44,7 +46,8 @@ alqorc/
     ├── test_icraci.py        (150)  parser + interpretator + JSX
     ├── test_sohbet.py        (45)   REPL
     ├── test_korutin.py       (43)   generatorlar + asinxron
-    └── test_tipyoxlayici.py  (83)   tip yoxlayıcı
+    ├── test_tipyoxlayici.py  (83)   tip yoxlayıcı
+    └── test_veb.py           (69)   server + marşrut + şablon
 ```
 
 ## İşə salmaq
@@ -55,12 +58,16 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 456 sınaq + nümunələr
+python sina.py --nümunələr                       # 525 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
 python alqorc.py yoxla ../numuneler
 python alqorc.py hərf "ışıq İmran"
+
+# Veb server
+python alqorc.py işlət ../numuneler/05-veb-server.alqor          # port 8080
+python alqorc.py işlət ../numuneler/05-veb-server.alqor -- sınaq # port açmadan
 ```
 
 ---
@@ -205,6 +212,29 @@ sonra əks daralma** dəstəklənir.
 
 ---
 
+## `veb` modulu — nə işləyir
+
+| Sahə | Vəziyyət |
+|---|---|
+| Marşrutlar | `al` `göndər` `yenilə` `yamaq` `sil` `hamısı` |
+| Naxışlar | `/i/:id` · `/m/:slug?` (ixtiyari) · `/f/*yol` (joker) |
+| Qruplar | `s.qrup("/api", funksiya(q) … son)` |
+| Ara proqramlar | qlobal + marşruta xas; `növbəti(sorğu)` zənciri |
+| Hazır ara proqramlar | `jurnal` `CORS` `sıxma` `təhlükəsizlikBaşlıqları` `sessiya` `sürətLimiti` |
+| Cavablar | `mətn` `html` `json` `boş` `yönləndir` `xəta` `fayl` `yüklə` `şablon` |
+| Sorğu | parametrlər, sorğu sətri, başlıqlar, kukilər, JSON, form, IP |
+| Sessiya | kuki əsaslı, yaddaşda; `al` `qoy` `sil` `təmizlə` `ehtiva` |
+| Statik fayllar | MIME təyini + qovluqdan qaçmanın qarşısının alınması |
+| Şablonlar | `.alqorhtml` — `{{ ifadə }}` `{% əgər %}` `{% hər %}` `{% blok %}` `{% genişlət %}` `{% daxilEt %}` |
+| Şablon filtrləri | `böyüyə` `kiçiyə` `kəs` `uzunluq` `yuvarlaqlaşdır` `pul` `format` `standart` `tərs` `latınla` `URLKodla` `xam` |
+| Təhlükəsizlik | avtomatik HTML qaçışı; yolda `../` rədd edilir |
+| Sınaq | `veb.sınaq.server(s)` — port açmadan sorğu göndərir |
+
+Şablon içindəki `{{ … }}` **həqiqi Alqor ifadəsidir** — eyni lekser,
+parser və interpretator işləyir, ayrı şablon dili yoxdur.
+
+---
+
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
 ### 1. `hər x üçün siyahı içində` söz sırası
@@ -238,12 +268,14 @@ gəlir. Düzgün həll: unifikasiya alqoritmi.
 
 | # | İş | Həcm |
 |---|---|---|
-| 1 | **`veb` modulu** (server) — 05 nümunəsini işlətmək üçün | ~800 sətir |
-| 2 | `pəncərə` modulu (desktop) — 06 nümunəsi üçün | ~600 sətir |
-| 3 | `alqorfmt` (formatter + `--ascii-düzəlt`) | ~400 sətir |
+| 1 | `pəncərə` modulu (desktop) — 06 nümunəsi üçün | ~600 sətir |
+| 2 | `alqorfmt` (formatter + `--ascii-düzəlt`) | ~400 sətir |
+| 3 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
 | 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
-| 5 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
+| 5 | Qalan standart kitabxana modulları (`http`, `verilənlər`, …) | böyük |
 | 6 | Mərhələ 6 — JS/WASM transpilyator | böyük |
-| 7 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
+| 7 | `alqorpm` + `alqorhub` (paket meneceri və reyestr) | böyük |
+| 8 | Alqor Studio (redaktor) | böyük |
+| 9 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
 
 Mühit vəziyyəti (Rust, Zig, WSL): [../MUHIT.md](../MUHIT.md)

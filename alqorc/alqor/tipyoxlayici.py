@@ -407,6 +407,118 @@ def _ləğv_metodları() -> dict[str, T.Tip]:
 #  Modul imzaları
 # ═══════════════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════════
+#  veb modulunun tipləri
+# ═══════════════════════════════════════════════════════════════════════
+
+SERVER = T.Sadə("server")
+SORĞU = T.Sadə("sorğu")
+CAVAB = T.Sadə("cavab")
+QRUP = T.Sadə("qrup")
+SESSİYA = T.Sadə("sessiya")
+MÜŞTƏRİ = T.Sadə("müştəri")
+
+
+def _marşrut_metodları(özü: T.Tip) -> dict[str, T.Tip]:
+    """`al` / `göndər` / … — hamısı `özü` qaytarır (zəncirlənə bilir)."""
+    m, e = T.MƏTN, T.İSTƏNİLƏN
+    nəticə: dict[str, T.Tip] = {}
+    for ad in ("al", "göndər", "yenilə", "yamaq", "sil", "hamısı"):
+        nəticə[ad] = F(m, e, e, qaytarır=özü, standart=1)
+    nəticə["qrup"] = F(m, e, qaytarır=özü)
+    nəticə["ara"] = F(e, qaytarır=özü)
+    return nəticə
+
+
+def _server_metodları() -> dict[str, T.Tip]:
+    m, i, e, h = T.MƏTN, T.TAM, T.İSTƏNİLƏN, T.HEÇ
+    d = _marşrut_metodları(SERVER)
+    d.update({
+        "statik": F(m, m, m, qaytarır=SERVER, standart=1),
+        "şablonQovluğu": F(m, qaytarır=SERVER),
+        "xətaİdarəedicisi": F(e, qaytarır=SERVER),
+        "tapılmadı": F(e, qaytarır=SERVER),
+        "dinlə": F(i, m, qaytarır=h, standart=2),
+        "dayandır": F(qaytarır=h),
+        "marşrutlar": F(qaytarır=T.Siyahı(T.Siyahı(m))),
+        "mətnƏt": F(qaytarır=m),
+    })
+    return d
+
+
+def _sorğu_metodları() -> dict[str, T.Tip]:
+    m, b, e = T.MƏTN, T.MƏNTİQ, T.İSTƏNİLƏN
+    return {
+        "metod": F(qaytarır=m), "yol": F(qaytarır=m),
+        "tamURL": F(qaytarır=m), "IP": F(qaytarır=m),
+        "istifadəçiAgenti": F(qaytarır=m),
+        "parametr": F(m, e, qaytarır=T.ixtiyari(m), standart=1),
+        "parametrlər": F(qaytarır=T.Lüğət(m, m)),
+        "sorğuParametr": F(m, e, qaytarır=T.ixtiyari(m), standart=1),
+        "sorğuParametrHamısı": F(qaytarır=T.Lüğət(m, m)),
+        "başlıq": F(m, e, qaytarır=T.ixtiyari(m), standart=1),
+        "başlıqlar": F(qaytarır=T.Lüğət(m, m)),
+        "kuki": F(m, e, qaytarır=T.ixtiyari(m), standart=1),
+        "gövdə": F(qaytarır=m), "gövdəBayt": F(qaytarır=T.BAYT),
+        "json": F(qaytarır=e), "form": F(qaytarır=T.Lüğət(m, m)),
+        "sessiya": F(qaytarır=SESSİYA),
+        "mətnƏt": F(qaytarır=m),
+    }
+
+
+def _cavab_metodları() -> dict[str, T.Tip]:
+    m, i, b, e = T.MƏTN, T.TAM, T.MƏNTİQ, T.İSTƏNİLƏN
+    return {
+        "kod": F(i, qaytarır=CAVAB),
+        "başlıq": F(m, e, qaytarır=CAVAB),
+        "kuki": F(m, m, qaytarır=CAVAB),
+        "kukiSil": F(m, m, qaytarır=CAVAB, standart=1),
+        "vəziyyət": F(qaytarır=i), "mətnƏt": F(qaytarır=m),
+        "json": F(qaytarır=e), "uzunluq": F(qaytarır=i),
+        "uğurludur": F(qaytarır=b),
+    }
+
+
+def _müştəri_metodları() -> dict[str, T.Tip]:
+    m, e = T.MƏTN, T.İSTƏNİLƏN
+    return {
+        "al": F(m, e, qaytarır=CAVAB, standart=1),
+        "sil": F(m, e, qaytarır=CAVAB, standart=1),
+        "göndər": F(m, e, e, qaytarır=CAVAB, standart=2),
+        "yenilə": F(m, e, e, qaytarır=CAVAB, standart=2),
+        "yamaq": F(m, e, e, qaytarır=CAVAB, standart=2),
+    }
+
+
+def _veb_modulu() -> T.ModulTipi:
+    m, i, e, h = T.MƏTN, T.TAM, T.İSTƏNİLƏN, T.HEÇ
+    sınaq = T.ModulTipi("veb.sınaq", {
+        "server": F(SERVER, qaytarır=MÜŞTƏRİ),
+    })
+    return T.ModulTipi("veb", {
+        "Server": F(qaytarır=SERVER),
+        "mətn": F(e, qaytarır=CAVAB),
+        "html": F(e, qaytarır=CAVAB),
+        "json": F(e, qaytarır=CAVAB),
+        "boş": F(i, qaytarır=CAVAB, standart=1),
+        "yönləndir": F(m, qaytarır=CAVAB),
+        "yönləndirDaimi": F(m, qaytarır=CAVAB),
+        "xəta": F(i, e, qaytarır=CAVAB, standart=1),
+        "fayl": F(m, qaytarır=CAVAB),
+        "yüklə": F(m, m, qaytarır=CAVAB, standart=1),
+        "şablon": F(m, e, qaytarır=CAVAB, standart=1),
+        "şablonQovluğu": F(m, qaytarır=h),
+        "jurnal": F(qaytarır=e),
+        "CORS": F(e, e, qaytarır=e, standart=2),
+        "sıxma": F(i, qaytarır=e, standart=1),
+        "təhlükəsizlikBaşlıqları": F(qaytarır=e),
+        "sessiya": F(e, qaytarır=e, standart=1),
+        "sürətLimiti": F(i, e, qaytarır=e, standart=2),
+        "boşPort": F(i, qaytarır=i, standart=1),
+        "sınaq": sınaq,
+    })
+
+
 def _modullar() -> dict[str, T.ModulTipi]:
     i, o, m, b, h, e = (T.TAM, T.ONLUQ, T.MƏTN, T.MƏNTİQ, T.HEÇ,
                         T.İSTƏNİLƏN)
@@ -581,6 +693,7 @@ def _modullar() -> dict[str, T.ModulTipi]:
     })
 
     return {
+        "veb": _veb_modulu(),
         "riyaziyyat": riyaziyyat, "mətn": mətn_m, "təsadüfi": təsadüfi,
         "vaxt": vaxt, "fayl": fayl, "qovluq": qovluq, "yol": yol,
         "json": json_m, "naxış": naxış, "sistem": sistem,
@@ -2004,6 +2117,25 @@ class TipYoxlayıcı:
                     "base64Kodla": F(qaytarır=T.MƏTN)}
         if t == T.Sadə("ləğvNişanı"):
             return _ləğv_metodları()
+        if t == SERVER:
+            return _server_metodları()
+        if t == SORĞU:
+            return _sorğu_metodları()
+        if t == CAVAB:
+            return _cavab_metodları()
+        if t == QRUP:
+            return _marşrut_metodları(QRUP)
+        if t == SESSİYA:
+            return {
+                "al": F(T.MƏTN, T.İSTƏNİLƏN, qaytarır=T.İSTƏNİLƏN,
+                        standart=1),
+                "qoy": F(T.MƏTN, T.İSTƏNİLƏN, qaytarır=T.HEÇ),
+                "sil": F(T.MƏTN, qaytarır=T.İSTƏNİLƏN),
+                "təmizlə": F(qaytarır=T.HEÇ),
+                "ehtiva": F(T.MƏTN, qaytarır=T.MƏNTİQ),
+            }
+        if t == MÜŞTƏRİ:
+            return _müştəri_metodları()
         return None
 
     def _e_çağırış(self, e: A.Çağırış, ə: Əhatə) -> T.Tip:

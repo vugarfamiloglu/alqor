@@ -35,6 +35,9 @@ class İcraçı:
         self.qlobal = qlobal_mühit(self)
         self.çıxış = çıxış or (lambda s: print(s))
         self.giriş = giriş or input
+        # Əsas skriptin qovluğu — şablonlar və nisbi yollar buna görə
+        # həll olunur, cari iş qovluğuna görə yox
+        self.əsas_qovluq = None
         # Vəziyyət SAP-YERLİDİR: korutinlər və `paralel(...)` ayrı
         # saplarda işləyir, ona görə dərinlik sayğacı, `gecikdir`
         # yığını və cari korutin hər sapda müstəqil olmalıdır.

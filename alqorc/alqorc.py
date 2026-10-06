@@ -257,6 +257,8 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
 
     sys.stdout.flush()
     icraçı = İcraçı()
+    if yol != "-":
+        icraçı.əsas_qovluq = Path(yol).resolve().parent
     try:
         return icraçı.işlət(ağac, proqram_arqumentləri)
     except AlqorXəta as xəta:
