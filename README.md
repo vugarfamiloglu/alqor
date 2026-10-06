@@ -26,7 +26,7 @@ son
 | Mərhələ | **Dil nüvəsi + veb + desktop + vidjetlər + Alqor Studio** |
 | Spesifikasiya | 1.0 (layihə) — 14 bölmə |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **905 keçir** (+ Studio brauzer sınaqları) |
+| Sınaqlar | **932 keçir** (+ Studio brauzer sınaqları) |
 | Tarix | 6 oktyabr 2026 |
 
 **Windows-da bir kliklə** (`alqor` qovluğunda):
@@ -36,6 +36,18 @@ son
 | `Studio-ac.cmd` | **Alqor Studio** — redaktor, vidjet paleti, icra, önbaxış |
 | `Brauzerde-ac.cmd` | 08 nümunəsi brauzerdə (`Brauzerde-ac.cmd 10` — Kitab rəfi) |
 | `Desktop-ac.cmd` | 06 nümunəsi desktop pəncərəsində |
+
+**Layihə ilə işləmək** (`alqor.cmd` / `alqor` repo kökündədir):
+
+```bash
+alqor yeni mənim-saytım --şablon veb    # konsol | veb | desktop | kitabxana
+cd mənim-saytım
+alqor işlət          # işə sal
+alqor sına           # sınaqlar (@sınaq)
+alqor format .       # kodu səliqəyə sal
+alqor sənəd          # sənəd/indeks.html — /// şərhlərindən
+alqor qur            # qurma/mənim-saytım.pyz — tək fayllı paket
+```
 
 **Dil işləyir:**
 

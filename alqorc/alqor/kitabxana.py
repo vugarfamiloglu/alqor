@@ -1406,36 +1406,8 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
     })
 
     # ── test ────────────────────────────────────────────────
-    def t_bərabər(a, b, mesaj=""):
-        if not icraçı._bərabərdir(a, b):
-            raise _xəta("İddiaXətası",
-                        mesaj or f"gözlənilən {mətnə(b, icraçı)}, "
-                                f"alınan {mətnə(a, icraçı)}", "ALQ-R007")
-        return None
-
-    test = Modul("test", {
-        "bərabər": D("bərabər", t_bərabər, 2, 3),
-        "bərabərDeyil": D("bərabərDeyil", lambda a, b, m="": (
-            None if not icraçı._bərabərdir(a, b)
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             m or "dəyərlər bərabərdir",
-                                             "ALQ-R007"))), 2, 3),
-        "doğru": D("doğru", lambda ş, m="": (
-            None if ş is True
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             m or "doğru gözlənilirdi",
-                                             "ALQ-R007"))), 1, 2),
-        "yanlış": D("yanlış", lambda ş, m="": (
-            None if ş is False
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             m or "yanlış gözlənilirdi",
-                                             "ALQ-R007"))), 1, 2),
-        "təxminən": D("təxminən", lambda a, b, dəqiqlik=1e-9: (
-            None if abs(a - b) <= dəqiqlik
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             f"{a} ≉ {b}", "ALQ-R007"))),
-                      2, 3),
-    })
+    from .sinaqci import test_modulu
+    test = test_modulu(icraçı, Modul, D)
 
     # ── paralel ─────────────────────────────────────────────
     def _gələcəklər(k) -> list:
@@ -1924,15 +1896,33 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
     from .parser import Parser
     from .xeta import XətaToplayıcı
 
+    # Nisbi yol İDXAL EDƏN FAYLIN qovluğuna nisbətəndir (prosesin cari
+    # qovluğuna yox): `alqor sına` hansı qovluqdan işə salınsa da
+    # `gətir "../mənbə/əsas.alqor"` eyni faylı tapır.
+    baza = None
+    mənbə = getattr(yer, "mənbə", None) if yer is not None else None
+    if mənbə is not None and getattr(mənbə, "yol", None) is not None:
+        baza = Path(mənbə.yol).resolve().parent
+    elif getattr(icraçı, "əsas_qovluq", None) is not None:
+        baza = Path(icraçı.əsas_qovluq)
     p = Path(yol)
+    if not p.is_absolute() and baza is not None:
+        p = baza / p
     if not p.exists():
         for uzantı in (".alqor", ".alq"):
-            if Path(yol + uzantı).exists():
-                p = Path(yol + uzantı)
+            if Path(str(p) + uzantı).exists():
+                p = Path(str(p) + uzantı)
                 break
     if not p.exists():
         raise AlqorXəta("ArqumentXətası",
                         f'"{yol}" modul faylı tapılmadı', yer, "ALQ-M001")
+    p = p.resolve()
+    açar = str(p)
+    # Keş icraçıya bağlıdır: fayl modulu həmin interpretatorun
+    # mühitində icra olunur, başqa icraçı ilə paylaşılmamalıdır
+    keş = icraçı.__dict__.setdefault("_fayl_modulları", {})
+    if açar in keş:
+        return keş[açar]
 
     x = XətaToplayıcı()
     s = Mənbə.fayldan(p, x)
@@ -1953,5 +1943,5 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
             icraçı._cümlə(c, alt)
 
     modul = Modul(p.stem, dict(alt.adlar))
-    _KEŞ[yol] = modul
+    keş[açar] = modul
     return modul

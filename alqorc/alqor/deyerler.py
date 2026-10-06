@@ -266,9 +266,15 @@ class Daxili(Çağırılan):
                 "ArqumentXətası",
                 f"`{self.ad}` {gözlənilən} arqument gözləyir, {n} verilib",
                 yer, "ALQ-T003")
-        if self.icraçı_lazımdır:
-            return self.f(icraçı, *arqumentlər, **adlı)
-        return self.f(*arqumentlər, **adlı)
+        try:
+            if self.icraçı_lazımdır:
+                return self.f(icraçı, *arqumentlər, **adlı)
+            return self.f(*arqumentlər, **adlı)
+        except AlqorXəta as x:
+            # Kitabxana funksiyasının xətası çağırış yerini göstərsin
+            if x.yer is None and yer is not None:
+                x.yer = yer
+            raise
 
     def __repr__(self) -> str:
         return f"<daxili {self.ad}>"
@@ -282,7 +288,12 @@ class BağlıMetod(Çağırılan):
     f: Callable
 
     def çağır(self, icraçı, arqumentlər, adlı, yer=None):
-        return self.f(self.obyekt, *arqumentlər, **adlı)
+        try:
+            return self.f(self.obyekt, *arqumentlər, **adlı)
+        except AlqorXəta as x:
+            if x.yer is None and yer is not None:
+                x.yer = yer
+            raise
 
     def __repr__(self) -> str:
         return f"<metod {self.ad}>"

@@ -38,7 +38,8 @@ from alqor.xeta import XətaToplayıcı                        # noqa: E402
 BƏLƏDÇİ = Path(__file__).parent.parent.parent / "beledci"
 
 # Yoxlanılan dərsliklər — yenisi əlavə ediləndə bura yazılır
-FAYLLAR = ("02-VEB-DERSLIYI.md", "03-DESKTOP-DERSLIYI.md",
+FAYLLAR = ("00-BASLANGIC.md", "02-VEB-DERSLIYI.md",
+           "03-DESKTOP-DERSLIYI.md",
            "07-VIDJET-DERSLIYI.md")
 
 

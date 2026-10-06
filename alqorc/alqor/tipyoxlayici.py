@@ -809,7 +809,14 @@ def _modullar() -> dict[str, T.ModulTipi]:
         "bərabərDeyil": F(e, e, m, qaytarır=h, standart=1),
         "doğru": F(b, m, qaytarır=h, standart=1),
         "yanlış": F(b, m, qaytarır=h, standart=1),
-        "təxminən": F(e, e, o, qaytarır=h, standart=1),
+        "təxminən": F(e, e, o, m, qaytarır=h, standart=2),
+        "boş": F(e, m, qaytarır=h, standart=1),
+        "boşDeyil": F(e, m, qaytarır=h, standart=1),
+        "ehtiva": F(e, e, m, qaytarır=h, standart=1),
+        "atır": F(e, e, m, qaytarır=e, standart=2),
+        "atmır": F(e, m, qaytarır=e, standart=1),
+        "uyğun": F(m, m, m, qaytarır=h, standart=1),
+        "uğursuz": F(m, qaytarır=h, standart=1),
     })
 
     paralel = T.ModulTipi("paralel", {

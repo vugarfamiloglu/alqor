@@ -51,7 +51,7 @@ funksiya serveriQur() -> istənilən
     son)
 
     s.al("/api/salam/:ad", (sorğu) =>
-        veb.json({{"salam": sorğu.parametrlər["ad"]}}))
+        veb.json({{"salam": sorğu.parametr("ad")}}))
 
     qaytar s
 son

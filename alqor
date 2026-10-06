@@ -1,0 +1,5 @@
+#!/bin/sh
+# Alqor CLI: alqor yeni <ad>, alqor sına, alqor işlət …
+# Bu qovluğu PATH-a əlavə edin: export PATH="$PATH:/yol/alqor"
+export PYTHONIOENCODING=utf-8
+exec python3 "$(dirname "$(readlink -f "$0")")/alqorc/alqorc.py" "$@"

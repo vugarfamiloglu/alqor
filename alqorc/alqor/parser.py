@@ -68,6 +68,18 @@ SINIF_UZV_ACARLARI = (
     "sinif", "struktur", "interfeys", "sadalama", "funksiya",
 )
 
+# Sənəd şərhi ilə elan açar sözü arasında ola bilən sözlər
+SƏNƏD_MODİFİKATORLARI = frozenset({
+    "ixrac et", "ixrac", "et", "açıq", "gizli", "qorunan", "statik",
+    "mücərrəd", "asinxron", "tənbəl", "standart", "son", "əvəz et",
+})
+# Sənədi daşıyan elanlar
+ELAN_AÇARLARI = frozenset({
+    "funksiya", "metod", "sinif", "struktur", "interfeys", "sadalama",
+    "modul", "komponent", "qurucu", "xassə", "sabit", "dəyişən",
+    "dəyişməz", "tip", "obyekt", "qarışıq", "mağaza", "genişlət",
+})
+
 # Blokun bitdiyini bildirən açar sözlər
 BLOK_SONLARI = frozenset({
     "son", "yoxsa", "yoxsa əgər", "hal", "digər hallarda",
@@ -94,6 +106,7 @@ class Parser:
                  toplayıcı: XətaToplayıcı):
         self.t = [x for x in tokenlər if x.növ is not Növ.DIREKTIV]
         self.sənədlər = {}          # mövqe → sənəd mətni
+        self.modul_sənədi: str | None = None
         self._sənədləri_topla(tokenlər)
         self.t = [x for x in self.t if x.növ is not Növ.SENED]
         self.s = mənbə
@@ -101,26 +114,44 @@ class Parser:
         self.i = 0
         self.direktivlər = [x.dəyər for x in tokenlər
                             if x.növ is Növ.DIREKTIV]
-        self.modul_sənədi: str | None = None
         # `alqorfmt` üçün: hər tokenin hansı BLOK DƏRİNLİYİNDƏ istehlak
         # olunduğu (mənbə ofseti → dərinlik). Adi ayırmada söndürülüb.
         self.dərinlik = 0
         self.dərinlik_qeydi: dict[int, int] | None = None
 
     def _sənədləri_topla(self, tokenlər: list[Token]) -> None:
-        """`///` şərhlərini növbəti elanla əlaqələndirmək üçün yığır."""
+        """
+        `///` şərhlərini növbəti elanla, `//!` şərhlərini fayl ilə
+        əlaqələndirir.
+
+        Sənəd həm ilk tokenə, həm də `ixrac et`, görünüş sözləri və
+        annotasiyalardan (`@sınaq`) sonrakı ELAN AÇAR SÖZÜNƏ bağlanır —
+        elan ayrıcıları mövqeni həmin açar sözdən götürür.
+        """
         yığım: list[str] = []
-        for tok in tokenlər:
+        modul: list[str] = []
+        for j, tok in enumerate(tokenlər):
             if tok.növ is Növ.SENED:
-                yığım.append(tok.dəyər)
-            elif tok.növ is Növ.SETIR_SONU:
+                if (tok.xam or "").startswith("//!"):
+                    modul.append(tok.dəyər)
+                else:
+                    yığım.append(tok.dəyər)
+            elif tok.növ in (Növ.SETIR_SONU, Növ.DIREKTIV):
                 continue
-            elif tok.növ is Növ.DIREKTIV:
-                continue
-            else:
-                if yığım:
-                    self.sənədlər[tok.yer.başlanğıc] = "\n".join(yığım)
-                    yığım = []
+            elif yığım:
+                mətn = "\n".join(yığım)
+                yığım = []
+                self.sənədlər[tok.yer.başlanğıc] = mətn
+                for k in range(j, min(j + 60, len(tokenlər))):
+                    t = tokenlər[k]
+                    if t.növ is Növ.ACAR and t.dəyər in ELAN_AÇARLARI:
+                        self.sənədlər.setdefault(t.yer.başlanğıc, mətn)
+                        break
+                    if t.növ is Növ.ACAR and t.dəyər not in \
+                            SƏNƏD_MODİFİKATORLARI:
+                        break
+        if modul:
+            self.modul_sənədi = "\n".join(modul).strip("\n")
 
     # ═══════════════════════════════════════════════════════════════════
     #  Token axını
