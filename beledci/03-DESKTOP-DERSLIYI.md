@@ -1,525 +1,565 @@
 # Alqor Bələdçisi — 4. Desktop Dərsliyi
 
-> Bu dərslikdə quraşdırıcısı olan, Linux-da işləyən desktop tətbiq quracağıq:
-> **Mətn Redaktoru**.
+> Bu dərslikdə sıfırdan **tapşırıq meneceri** qururuq: form, siyahı,
+> süzgəc, təsdiq pəncərəsi, menyu, fayla saxlama. Sonda eyni kodu
+> brauzerdə də açırıq.
+>
+> Yekun proqram: [`numuneler/09-tapsiriqlar.alqor`](../numuneler/09-tapsiriqlar.alqor).
+> Bu səhifədəki hər tam proqram avtomatik sınaqlarla yoxlanılır.
+
+**Lazım olanlar:** Python 3.12+ və Chrome, Edge, Brave və ya Chromium
+brauzerlərindən biri. Başqa heç nə quraşdırmaq lazım deyil.
 
 ---
 
 ## 4.1 Necə işləyir?
 
-Alqor desktop tətbiqləri **yerli pəncərə + veb texnologiyası** modelindən istifadə edir:
+Alqor desktop tətbiqi iki hissədən ibarətdir:
 
 ```
-┌──────────────────────────────────────┐
-│  Yerli pəncərə (GTK)                 │
-│  ┌────────────────────────────────┐  │
-│  │  WebKitGTK görünüşü            │  │
-│  │  ← interfeys (Alqor → HTML)    │  │
-│  └────────────────────────────────┘  │
-│         ↕ birbaşa çağırış            │
-│  Alqor yerli kodu                    │
-│  ← fayl, şəbəkə, proses, hər şey     │
-└──────────────────────────────────────┘
+┌──────────────────────┐   HTML    ┌───────────────────────────┐
+│ Sizin Alqor kodunuz  │ ────────▶ │ Pəncərə (Chrome --app,    │
+│ + yerli server       │ ◀──────── │ ünvan zolağı yoxdur)      │
+│ 127.0.0.1:<port>     │  hadisə   │                           │
+└──────────────────────┘           └───────────────────────────┘
 ```
 
-| | Alqor | Electron |
-|---|---|---|
-| Binar ölçüsü | ~8 MB | ~120 MB |
-| RAM istifadəsi | ~50 MB | ~200 MB |
-| Başlama vaxtı | ~0.2 s | ~2 s |
-| Brauzer motoru | sistemin WebKitGTK-sı | öz Chromium-u |
+1. Komponentin `göstər()` metodu interfeysi təsvir edir.
+2. Alqor onu HTML-ə çevirir və kompüterinizdə yerli server qaldırır
+   (yalnız sizin kompüterinizdən əlçatandır).
+3. Pəncərə həmin səhifəni göstərir. Düymə basılanda hadisə serverə
+   gedir, sizin metodunuz işləyir, ekran yenilənir.
 
-**Ən vacibi:** interfeys kodu veb versiyası ilə **eynidir**.
+Pəncərəni nə açır — **aparıcı** — avtomatik seçilir: `pywebview`
+quraşdırılıbsa o, yoxsa Chrome/Edge/Brave-in tətbiq rejimi, o da yoxsa
+adi brauzer nişanı. Server olmayan mühitdə (CI, sınaq) heç nə açılmır —
+buna **başsız rejim** deyilir.
 
 ---
 
-## 4.2 Layihə yaratmaq
+## 4.2 İlk pəncərə
 
-```bash
-alqor yeni mətn-redaktoru --şablon desktop
-cd mətn-redaktoru
-alqor işlət
-```
+`salam.alqor` faylı yaradın:
 
-Pəncərə açılır. Kodu dəyişdirin — pəncərə avtomatik yenilənir.
-
----
-
-## 4.3 İlk pəncərə
-
-`mənbə/əsas.alqor`:
 ```alqor
+// addım 1 — ilk pəncərə
 gətir pəncərə
 
 funksiya əsas()
-    dəyişən p = yeni pəncərə.Pəncərə("Mətn Redaktoru", 1000, 700)
-
-    p.məzmun(
-        <div sinif="tətbiq">
-            <h1>Salam, dünya!</h1>
-        </div>
-    )
-
+    dəyişən p = yeni pəncərə.Pəncərə("Salam", 360, 200)
+    p.məzmun(<h1>Salam, dünya!</h1>)
     p.göstər()
     pəncərə.işlət()
 son
 ```
 
----
+İşlədin:
 
-## 4.4 Üslub
-
-`statik/üslub.css`:
-```css
-:root {
-    --fon: #ffffff;
-    --mətn: #1a1a1a;
-    --kənar: #d0d0d0;
-    --vurğu: #c0392b;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --fon: #1e1e1e;
-        --mətn: #e8e8e8;
-        --kənar: #3a3a3a;
-    }
-}
-
-body {
-    margin: 0;
-    font-family: system-ui, sans-serif;
-    background: var(--fon);
-    color: var(--mətn);
-}
-
-.redaktor {
-    width: 100%;
-    height: calc(100vh - 40px);
-    border: none;
-    outline: none;
-    padding: 16px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 14px;
-    background: var(--fon);
-    color: var(--mətn);
-    resize: none;
-}
-
-.statusZolağı {
-    height: 24px;
-    padding: 4px 12px;
-    border-top: 1px solid var(--kənar);
-    font-size: 12px;
-    display: flex;
-    justify-content: space-between;
-}
+```powershell
+cd alqor\alqorc
+python alqorc.py işlət salam.alqor
 ```
 
+| Sətir | Nə edir |
+|---|---|
+| `yeni pəncərə.Pəncərə("Salam", 360, 200)` | başlıq, en, hündürlük |
+| `p.məzmun(...)` | pəncərədə nə görünəcək — JSX |
+| `p.göstər()` | pəncərəni açır (proqramı dayandırmır) |
+| `pəncərə.işlət()` | bütün pəncərələr bağlanana qədər gözləyir və hadisələri işləyir |
+
+> `pəncərə.işlət()`-i unutsanız proqram dərhal bitir və pəncərə
+> bağlanır.
+
 ---
 
-## 4.5 Tam redaktor komponenti
+## 4.3 Komponent və vəziyyət
+
+Sabit mətn darıxdırıcıdır. **Komponent** — öz vəziyyəti olan interfeys
+hissəsidir. `vəziyyət` sahəsi dəyişəndə ekran özü yenilənir:
 
 ```alqor
+// addım 2 — sayğac
 gətir pəncərə
-gətir pəncərə.dialoq
-gətir fayl
 
-komponent Redaktor
-    vəziyyət məzmun: mətn = ""
-    vəziyyət faylYolu: mətn? = boş
-    vəziyyət dəyişib: məntiq = yanlış
+komponent Sayğac
+    vəziyyət say: tam = 0
 
-    hesablanan başlıq: mətn
-        dəyişən ad = əgər özü.faylYolu boş deyil onda
-            yol.fayl(özü.faylYolu!)
-        yoxsa
-            "Adsız"
-        son
-        qaytar əgər özü.dəyişib onda "● {ad}" yoxsa ad son
+    göstər()
+        qaytar <div>
+            <h1>{özü.say}</h1>
+            <button klik={() => özü.say += 1}>Artır</button>
+            <button klik={() => özü.say = 0}>Sıfırla</button>
+        </div>
+    son
+son
+
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 300, 200)
+    p.məzmun(<Sayğac />)
+    p.göstər()
+    pəncərə.işlət()
+son
+```
+
+Diqqət edin:
+
+* `klik={…}` — düymə basılanda nə olsun. Burada qısa ox funksiyası
+  (`() => …`) işlənir.
+* `{özü.say}` — JSX daxilində `{…}` ifadədir.
+* `yenilə()`, `göstər()` kimi heç nə çağırmırıq — `özü.say` dəyişdi,
+  ekran yeniləndi.
+
+---
+
+## 4.4 Hazır elementlər: `vidjet`
+
+HTML-i əl ilə yazmaq əvəzinə `vidjet` modulunun 57 hazır elementindən
+istifadə edək — üslubu, rəngləri və qaranlıq rejimi hazırdır:
+
+```alqor
+// addım 3 — form
+gətir pəncərə
+gətir vidjet
+
+sinif Tapşırıq
+    qurucu(açıq xassə ad: mətn,
+           açıq xassə vacib: məntiq,
+           açıq xassə bitib: məntiq)
+son
+
+komponent Menecer
+    vəziyyət tapşırıqlar: siyahı[Tapşırıq] = []
+    vəziyyət yeniAd: mətn = ""
+    vəziyyət vacibdir: məntiq = yanlış
+    vəziyyət xəta: mətn = ""
+
+    metod adYazıldı(dəyər: mətn)
+        özü.yeniAd = dəyər
+        özü.xəta = ""
     son
 
-    hesablanan statistika: mətn
-        dəyişən sətirlər = uzunluq(özü.məzmun.sətirlər())
-        dəyişən sözlər = uzunluq(özü.məzmun.sözlər())
-        dəyişən simvollar = özü.məzmun.uzunluq()
-        qaytar "{sətirlər} sətir · {sözlər} söz · {simvollar} simvol"
+    metod vaciblikDəyişdi(dəyər: məntiq)
+        özü.vacibdir = dəyər
     son
 
-    metod yeni()
-        əgər deyil özü.saxlanmasınıSoruş() onda qaytar son
-        özü.məzmun = ""
-        özü.faylYolu = boş
-        özü.dəyişib = yanlış
-    son
-
-    metod aç()
-        əgər deyil özü.saxlanmasınıSoruş() onda qaytar son
-
-        varsa yol = dialoq.faylAç(
-            başlıq: "Fayl aç",
-            filtrlər: [
-                ("Mətn faylları", ["txt", "md", "alqor"]),
-                ("Bütün fayllar", ["*"])
-            ]
-        ) onda
-            cəhd et
-                özü.məzmun = fayl.oxu(yol)
-                özü.faylYolu = yol
-                özü.dəyişib = yanlış
-            tut (x: Xəta)
-                dialoq.xəta("Xəta", "Fayl oxunmadı: {x.mesaj}")
-            son
+    metod əlavəEt()
+        dəyişən ad = özü.yeniAd.kəs()
+        əgər ad == "" onda
+            özü.xəta = "Tapşırığın adını yazın"
+            qaytar
         son
-    son
-
-    metod saxla() -> məntiq
-        əgər özü.faylYolu boşdur onda
-            qaytar özü.fərqliSaxla()
-        son
-        cəhd et
-            fayl.yaz(özü.faylYolu!, özü.məzmun)
-            özü.dəyişib = yanlış
-            qaytar doğru
-        tut (x: Xəta)
-            dialoq.xəta("Xəta", "Fayl yazılmadı: {x.mesaj}")
-            qaytar yanlış
-        son
-    son
-
-    metod fərqliSaxla() -> məntiq
-        varsa yol = dialoq.faylSaxla(standartAd: "adsız.txt") onda
-            özü.faylYolu = yol
-            qaytar özü.saxla()
-        son
-        qaytar yanlış
-    son
-
-    metod saxlanmasınıSoruş() -> məntiq
-        əgər deyil özü.dəyişib onda qaytar doğru son
-
-        seç dialoq.üçVariant(
-            "Dəyişikliklər saxlanılsın?",
-            "Saxlanmamış dəyişiklikləriniz var.",
-            ["Saxla", "Saxlama", "Ləğv et"]
-        )
-            hal "Saxla" → qaytar özü.saxla()
-            hal "Saxlama" → qaytar doğru
-            digər hallarda → qaytar yanlış
-        son
+        özü.tapşırıqlar = özü.tapşırıqlar + [
+            yeni Tapşırıq(ad, özü.vacibdir, yanlış)]
+        özü.yeniAd = ""
+        özü.vacibdir = yanlış
     son
 
     göstər()
-        qaytar <div sinif="tətbiq">
-            <textarea
-                sinif="redaktor"
-                dəyər={özü.məzmun}
-                dəyişdi={(d) => blok
-                    özü.məzmun = d
-                    özü.dəyişib = doğru
-                son}
-                yerTutucu="Yazmağa başlayın..." />
-
-            <div sinif="statusZolağı">
-                <span>{özü.başlıq}</span>
-                <span>{özü.statistika}</span>
-            </div>
-        </div>
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.başlıq(mətn: "Tapşırıqlar"),
+            vidjet.form(göndərildi: özü.əlavəEt, məzmun: [
+                vidjet.sətir(şaquli: "son", məzmun: [
+                    vidjet.sahə(etiket: "Yeni tapşırıq", ad: "yeniAd",
+                                dəyər: özü.yeniAd, xəta: özü.xəta,
+                                yer: "Nə etmək lazımdır?",
+                                yazıldı: özü.adYazıldı),
+                    vidjet.qeyd(etiket: "Vacib", ad: "vacib",
+                                işarələnmiş: özü.vacibdir,
+                                dəyişdi: özü.vaciblikDəyişdi),
+                    vidjet.düymə(mətn: "Əlavə et", klik: özü.əlavəEt)
+                ])
+            ]),
+            vidjet.siyahı(elementlər:
+                özü.tapşırıqlar.çevir((t) => t.ad))
+        ])
     son
 son
-```
 
----
-
-## 4.6 Menyu
-
-```alqor
 funksiya əsas()
-    dəyişən p = yeni pəncərə.Pəncərə("Mətn Redaktoru", 1000, 700)
-    dəyişən r = yeni Redaktor()
-
-    p.menyu([
-        pəncərə.menyu("Fayl", [
-            pəncərə.element("Yeni", qısayol: "Ctrl+N", klik: r.yeni),
-            pəncərə.element("Aç...", qısayol: "Ctrl+O", klik: r.aç),
-            pəncərə.ayırıcı(),
-            pəncərə.element("Saxla", qısayol: "Ctrl+S", klik: r.saxla),
-            pəncərə.element("Fərqli saxla...", qısayol: "Ctrl+Shift+S",
-                            klik: r.fərqliSaxla),
-            pəncərə.ayırıcı(),
-            pəncərə.element("Çıxış", qısayol: "Ctrl+Q", klik: () => p.bağla())
-        ]),
-
-        pəncərə.menyu("Redaktə", [
-            pəncərə.element("Geri al", qısayol: "Ctrl+Z"),
-            pəncərə.element("İrəli al", qısayol: "Ctrl+Shift+Z"),
-            pəncərə.ayırıcı(),
-            pəncərə.element("Kəs", qısayol: "Ctrl+X"),
-            pəncərə.element("Kopyala", qısayol: "Ctrl+C"),
-            pəncərə.element("Yapışdır", qısayol: "Ctrl+V"),
-            pəncərə.ayırıcı(),
-            pəncərə.element("Tap...", qısayol: "Ctrl+F", klik: tapDialoqu)
-        ]),
-
-        pəncərə.menyu("Görünüş", [
-            pəncərə.seçimElement("Qaranlıq mövzu", seçilib: yanlış,
-                                 klik: (s) => p.mövzu(əgər s onda "qaranlıq"
-                                                      yoxsa "işıqlı" son)),
-            pəncərə.element("Tam ekran", qısayol: "F11",
-                            klik: () => p.tamEkran(doğru))
-        ]),
-
-        pəncərə.menyu("Kömək", [
-            pəncərə.element("Haqqında", klik: funksiya()
-                dialoq.məlumat("Mətn Redaktoru",
-                               "Versiya 1.0.0\nAlqor dilində yazılıb")
-            son)
-        ])
-    ])
-
-    // Bağlanmazdan əvvəl soruş
-    p.hadisə("bağlanır", funksiya(h)
-        əgər deyil r.saxlanmasınıSoruş() onda
-            h.ləğvEt()
-        son
-    son)
-
-    p.məzmun(<Redaktor />)
+    dəyişən p = yeni pəncərə.Pəncərə("Tapşırıqlar", 560, 640)
+    p.məzmun(<Menecer />)
     p.göstər()
     pəncərə.işlət()
 son
 ```
 
+Burada üç vacib qayda var:
+
+**1. Vidjetin parametrləri adlıdır.** `vidjet.sahə(etiket: "…", ad: "…")`
+— sıranı yadda saxlamaq lazım deyil. Bütün parametrlər: spesifikasiya
+§ 14.7.
+
+**2. Hadisə idarəedicisi dəyəri alır.**
+
+| Hadisə | Nə vaxt | İdarəedici alır |
+|---|---|---|
+| `yazıldı` | hər hərfdə | sahənin mətni |
+| `dəyişdi` | sahədən çıxanda / qutucuq dəyişəndə | mətn; qutucuq üçün `doğru`/`yanlış` |
+| `klik` | basılanda | düymənin dəyəri (varsa) |
+| `göndərildi` | formda Enter basılanda | heç nə |
+
+**3. Sahənin dəyəri vəziyyətdən gəlir.** `dəyər: özü.yeniAd` və
+`özü.yeniAd = ""` — əlavə etdikdən sonra sahə özü təmizlənir.
+
+> **Niyə `yeniAd`, `ad` yox?** `yeni` Alqor-da açar sözdür
+> (`yeni Tapşırıq(...)`), ona görə dəyişən adı ola bilməz. Eyni ilə
+> `seç`, `hal`, `son`, `tip` deyil, `sinif`. Kompilyator belə hallarda
+> `ALQ-L010` xətası verir və başqa ad seçməyi təklif edir.
+
 ---
 
-## 4.7 Dialoqlar
+## 4.5 Siyahını cədvəldə göstərmək
+
+Sadə siyahı əvəzinə cədvəl və vəziyyət nişanı qoyaq. Sətrə klik
+tapşırığı bitmiş/aktiv edir:
 
 ```alqor
-gətir pəncərə.dialoq
-
-dialoq.məlumat("Başlıq", "Mesaj")
-dialoq.xəbərdarlıq("Diqqət", "Nəsə düz deyil")
-dialoq.xəta("Xəta", "Əməliyyat alınmadı")
-
-dəyişən təsdiq = dialoq.təsdiqlə("Silinsin?", "Geri qaytarıla bilməz")
-dəyişən variant = dialoq.üçVariant("Başlıq", "Mesaj", ["Hə", "Yox", "Ləğv"])
-
-dəyişən yol = dialoq.faylAç(filtrlər: [("Şəkillər", ["png", "jpg"])])
-dəyişən yollar = dialoq.faylAçÇoxlu()
-dəyişən saxla = dialoq.faylSaxla(standartAd: "sənəd.txt")
-dəyişən qovluq = dialoq.qovluqSeç()
-dəyişən rəng = dialoq.rəngSeç()
-dəyişən mətn = dialoq.mətnSoruş("Ad", "Faylın adı:", standart: "yeni.txt")
+// parça — Menecer komponentinə əlavə edin
+metod sətirSeçildi(dəyər: mətn)
+    // Cədvəl basılan sətrin indeksini (0-dan, mətn kimi) verir
+    dəyişən t = özü.tapşırıqlar[tamƏt(dəyər, 0)]
+    t.bitib = deyil t.bitib
+    özü.tapşırıqlar = özü.tapşırıqlar      // ekranı yenilə
+son
 ```
 
----
-
-## 4.8 Sistem treyi və bildirişlər
+`göstər()`-dəki `vidjet.siyahı(...)` sətrini bununla əvəz edin:
 
 ```alqor
-dəyişən trey = pəncərə.trey("statik/ikon.png")
-trey.məsləhət("Mətn Redaktoru")
-trey.menyu([
-    pəncərə.element("Göstər", klik: () => p.göstər()),
-    pəncərə.element("Gizlət", klik: () => p.gizlət()),
-    pəncərə.ayırıcı(),
-    pəncərə.element("Çıxış", klik: () => pəncərə.dayandır())
-])
-
-// Bildiriş
-pəncərə.bildiriş("Saxlanıldı", "Fayl uğurla yazıldı")
-```
-
----
-
-## 4.9 Qlobal qısayollar
-
-```alqor
-pəncərə.qlobalQısayol("Ctrl+Alt+N", funksiya()
-    p.göstər()
-    r.yeni()
-son)
-```
-
----
-
-## 4.10 Konfiqurasiya saxlamaq
-
-```alqor
-gətir konfiq
-
-dəyişən k = konfiq.istifadəçi("mətn-redaktoru")
-// Linux-da: ~/.config/mətn-redaktoru/konfiq.toml
-
-k.qoy("mövzu", "qaranlıq")
-k.qoy("şriftÖlçüsü", 14)
-k.qoy("sonFayllar", ["a.txt", "b.txt"])
-k.saxla()
-
-dəyişən mövzu = k.al("mövzu", "işıqlı")
-dəyişən ölçü = k.alTam("şriftÖlçüsü", 12)
-```
-
----
-
-## 4.11 Yerli sistemə tam giriş
-
-Veb tətbiqlərindən fərqli olaraq, desktop tətbiqində **hər şeyə** çıxış var:
-
-```alqor
-gətir fayl
-gətir sistem
-gətir proses
-
-// Fayl sistemi
-dəyişən fayllar = qovluq.siyahı(qovluq.ev())
-
-// Xarici proses
-proses.başlat("xdg-open", [yol])          // faylı sistem proqramı ilə aç
-dəyişən çıxış = sistem.əmr("git status")
-
-// Mühit
-yaz(sistem.istifadəçi())
-yaz(sistem.platforma())
-
-// Buferə kopyalamaq
-pəncərə.panoyaYaz("mətn")
-dəyişən m = pəncərə.panodanOxu()
-
-// Faylı izləmək
-qovluq.izlə("/home/v/sənədlər", funksiya(hadisə, yol)
-    yaz("{hadisə}: {yol}")
-son)
-```
-
----
-
-## 4.12 Quraşdırıcı yaratmaq
-
-`layihe.alqor`:
-```toml
-[paket]
-ad = "metn-redaktoru"
-versiya = "1.0.0"
-təsvir = "Sadə və sürətli mətn redaktoru"
-müəllif = ["Vüqar Qənbərov <vuqar@nümunə.az>"]
-lisenziya = "MIT"
-
-[desktop]
-pəncərə_başlıq = "Mətn Redaktoru"
-en = 1000
-hündürlük = 700
-ikon = "statik/ikon.png"
-
-[paketləmə.deb]
-bölmə = "editors"
-memarlıq = "amd64"
-asılılıqlar = ["libwebkit2gtk-4.1-0", "libgtk-3-0"]
-masaüstü_faylı = doğru
-menyu_kateqoriya = "Utility;TextEditor"
-
-[paketləmə.appimage]
-kateqoriya = "Utility"
-
-[paketləmə.flatpak]
-id = "az.numune.MetnRedaktoru"
-```
-
-### Paketləmə
-```bash
-alqor paketlə --hədəf deb
-alqor paketlə --hədəf appimage
-alqor paketlə --hədəf flatpak
-alqor paketlə --hamısı
-```
-
-Nəticə:
-```
-qurma/paket/
-├── metn-redaktoru_1.0.0_amd64.deb         (9.1 MB)
-├── MetnRedaktoru-1.0.0-x86_64.AppImage    (11.3 MB)
-└── az.numune.MetnRedaktoru.flatpak        (10.7 MB)
-```
-
-### Quraşdırma
-```bash
-# Debian / Ubuntu
-sudo apt install ./metn-redaktoru_1.0.0_amd64.deb
-
-# AppImage — quraşdırmaq lazım deyil
-chmod +x MetnRedaktoru-1.0.0-x86_64.AppImage
-./MetnRedaktoru-1.0.0-x86_64.AppImage
-
-# Flatpak
-flatpak install az.numune.MetnRedaktoru.flatpak
-```
-
-Quraşdırıldıqdan sonra proqram sistem menyusunda görünür.
-
----
-
-## 4.13 Windows üçün çarpaz-kompilyasiya
-
-```bash
-alqor paketlə --hədəf windows-nsis
-```
-Nəticə: `qurma/paket/MetnRedaktoru-1.0.0-setup.exe`
-
-> Windows-da WebView2 istifadə olunur (Windows 10/11-də hazır var).
-
----
-
-## 4.14 Avtomatik yeniləmə
-
-```alqor
-gətir yeniləmə
-
-asinxron funksiya yeniləməYoxla()
-    cəhd et
-        dəyişən y = gözlə yeniləmə.yoxla("https://nümunə.az/yenilik.json")
-
-        əgər deyil y.vardır onda qaytar son
-
-        əgər dialoq.təsdiqlə(
-            "Yenilik var",
-            "Versiya {y.versiya} mövcuddur. İndi yüklənsin?"
-        ) onda
-            dəyişən irəli = pəncərə.irəliləyişDialoqu("Yüklənir...")
-            gözlə y.yüklə((faiz) => irəli.yenilə(faiz))
-            irəli.bağla()
-
-            əgər dialoq.təsdiqlə("Hazırdır", "Proqram yenidən başladılsın?") onda
-                yeniləmə.quraşdırVəYenidənBaşlat()
-            son
-        son
-    tut (x: Xəta)
-        jurnal.xəbərdarlıq("Yeniləmə yoxlanmadı: {x.mesaj}")
+// parça
+göstər()
+    qaytar əgər uzunluq(özü.tapşırıqlar) == 0 onda
+        vidjet.boşBaxış(başlıq: "Tapşırıq yoxdur",
+                        mətn: "Yuxarıdan yenisini əlavə edin")
+    yoxsa
+        vidjet.cədvəl(
+            sütunlar: ["Tapşırıq", "Vəziyyət"],
+            sətirlər: özü.tapşırıqlar.çevir((t) => [
+                əgər t.vacib onda "★ {t.ad}" yoxsa t.ad son,
+                əgər t.bitib onda
+                    vidjet.nişan(mətn: "bitib", növ: "uğur")
+                yoxsa
+                    vidjet.nişan(mətn: "aktiv")
+                son
+            ]),
+            sətirKlik: özü.sətirSeçildi)
     son
 son
 ```
 
----
+İki yeni şey:
 
-## 4.15 Eyni koddan üç tətbiq
-
-```
-mətn-redaktoru/
-├── mənbə/
-│   ├── ortaq/
-│   │   └── redaktor.alqor      ← komponent (interfeys + məntiq)
-│   ├── desktop.alqor           ← pəncərə.Pəncərə(...)
-│   ├── veb.alqor               ← ön.quraşdır(...)
-│   └── konsol.alqor            ← terminal versiyası
-```
-
-```bash
-alqor qur --giriş mənbə/desktop.alqor --hədəf linux-x64
-alqor qur --giriş mənbə/veb.alqor --hədəf veb
-alqor qur --giriş mənbə/konsol.alqor --hədəf linux-x64
-```
-
-**Bir interfeys kodu — üç platforma.**
+* **`əgər … onda … yoxsa … son` ifadədir** — dəyər qaytarır, ona görə
+  cədvəlin xanasına birbaşa yazılır.
+* **`özü.tapşırıqlar = özü.tapşırıqlar`** — `t.bitib` obyektin içində
+  dəyişdi, amma `vəziyyət` sahəsinin özü yox. Sahəni yenidən mənimsətmək
+  ekrana "yenilən" deyir.
 
 ---
 
-**Növbəti:** [5. Köçürmə Bələdçisi](04-KOCURME-BELEDCISI.md)
+## 4.6 Süzgəc: hesablanan xassə və nişanlar
+
+"Hamısı / Aktiv / Bitmiş" nişanları əlavə edək. Göstəriləcək siyahı
+**hesablanan xassədir** — hər dəfə vəziyyətdən hesablanır:
+
+```alqor
+// parça
+vəziyyət süzgəc: mətn = "Hamısı"
+
+hesablanan görünənlər: siyahı[Tapşırıq]
+    seç özü.süzgəc
+        hal "Aktiv" → qaytar özü.tapşırıqlar.filtr((t) => deyil t.bitib)
+        hal "Bitmiş" → qaytar özü.tapşırıqlar.filtr((t) => t.bitib)
+        digər hallarda → qaytar özü.tapşırıqlar
+    son
+son
+
+hesablanan bitmişSayı: tam
+    qaytar özü.tapşırıqlar.filtr((t) => t.bitib).uzunluq()
+son
+
+metod süzgəcSeçildi(dəyər: mətn)
+    özü.süzgəc = dəyər
+son
+```
+
+```alqor
+// parça — göstər() içində
+vidjet.nişanlar(elementlər: ["Hamısı", "Aktiv", "Bitmiş"],
+                cari: özü.süzgəc, klik: özü.süzgəcSeçildi)
+```
+
+İndi cədvəldə `özü.tapşırıqlar` yerinə `özü.görünənlər` yazın. Diqqət:
+`sətirSeçildi` də indeksi **görünən** siyahıda axtarmalıdır —
+`özü.görünənlər[tamƏt(dəyər, 0)]`.
+
+Tərəqqi zolağı da əlavə edək:
+
+```alqor
+// parça — göstər() içində
+vidjet.tərəqqi(dəyər: özü.bitmişSayı,
+               maksimum: maksimum(1, uzunluq(özü.tapşırıqlar)),
+               növ: "uğur")
+```
+
+---
+
+## 4.7 Təsdiq pəncərəsi: `modal`
+
+Bitmişləri silməzdən əvvəl soruşaq. Modal həmişə `göstər()`-də yazılır,
+amma yalnız `görünür: doğru` olanda görünür:
+
+```alqor
+// parça
+vəziyyət soruşulur: məntiq = yanlış
+
+metod bitmişləriSil()
+    özü.tapşırıqlar = özü.tapşırıqlar.filtr((t) => deyil t.bitib)
+    özü.soruşulur = yanlış
+son
+
+göstər()
+    qaytar vidjet.sütun(məzmun: [
+        vidjet.düymə(mətn: "Bitmişləri sil", növ: "təhlükə",
+                     söndürülmüş: özü.bitmişSayı == 0,
+                     klik: () => özü.soruşulur = doğru),
+        vidjet.modal(başlıq: "Bitmiş tapşırıqlar silinsin?",
+                     görünür: özü.soruşulur,
+                     bağlandı: () => özü.soruşulur = yanlış,
+                     məzmun: [vidjet.mətn(
+                         məzmun: "{özü.bitmişSayı} tapşırıq silinəcək.")],
+                     altlıq: [
+                         vidjet.düymə(mətn: "Ləğv et", növ: "ikinci",
+                                      klik: () => özü.soruşulur = yanlış),
+                         vidjet.düymə(mətn: "Sil", növ: "təhlükə",
+                                      klik: özü.bitmişləriSil)
+                     ])
+    ])
+son
+```
+
+`bağlandı:` verildikdə modalın küncündə ✕ düyməsi görünür.
+
+---
+
+## 4.8 Menyu və qısayollar
+
+Menyu pəncərəyə aiddir, komponentə yox. Menyudan komponentin metodunu
+çağırmaq üçün komponent nümunəsini **özümüz yaradırıq**:
+
+```alqor
+// parça — əsas() funksiyası
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("Tapşırıqlar", 560, 640)
+    dəyişən menecer = yeni Menecer()
+    p.məzmun(menecer)                // <Menecer /> əvəzinə
+    p.menyu([
+        pəncərə.menyu("Fayl", [
+            pəncərə.element("Aç…", qısayol: "Ctrl+O",
+                            klik: () => menecer.aç()),
+            pəncərə.element("Saxla…", qısayol: "Ctrl+S",
+                            klik: () => menecer.saxla()),
+            pəncərə.ayırıcı(),
+            pəncərə.element("Çıxış", qısayol: "Ctrl+Q",
+                            klik: () => p.bağla())
+        ])
+    ])
+    p.mərkəzə().göstər()
+    pəncərə.işlət()
+son
+```
+
+Qısayollar pəncərə fokusda olanda işləyir. `pəncərə.element`-in
+`söndürülmüş: doğru` və `işarələnmiş: doğru` parametrləri də var.
+
+---
+
+## 4.9 Fayla saxlamaq: dialoqlar və JSON
+
+```alqor
+// parça — faylın başına
+gətir pəncərə.dialoq
+gətir json
+```
+
+```alqor
+// parça — Menecer daxilində
+metod saxla()
+    dəyişən yol = dialoq.faylSaxla(standartAd: "tapşırıqlar.json",
+                                   süzgəclər: {"JSON": "*.json"})
+    əgər yol boşdur onda
+        qaytar                   // istifadəçi "Ləğv et" basdı
+    son
+    json.faylYaz(yol, özü.tapşırıqlar.çevir(lüğətə))
+    pəncərə.bildiriş("Saxlanıldı", yol)
+son
+
+metod aç()
+    dəyişən yol = dialoq.faylAç(süzgəclər: {"JSON": "*.json"})
+    əgər yol boşdur onda
+        qaytar
+    son
+    cəhd et
+        özü.tapşırıqlar = json.faylOxu(yol).çevir(lüğətdən)
+    tut x
+        dialoq.xəta("Fayl oxunmadı", x.mesaj)
+    son
+son
+```
+
+`lüğətə` və `lüğətdən` — obyekti JSON-a uyğun lüğətə və geri çevirən
+iki kiçik funksiya:
+
+```alqor
+// parça — faylın səviyyəsində
+funksiya lüğətə(t: Tapşırıq) -> lüğət[mətn, istənilən]
+    qaytar {"ad": t.ad, "vacib": t.vacib, "bitib": t.bitib}
+son
+
+funksiya lüğətdən(l: lüğət[mətn, istənilən]) -> Tapşırıq
+    qaytar yeni Tapşırıq(l["ad"], l["vacib"] == doğru, l["bitib"] == doğru)
+son
+```
+
+Bütün dialoqlar:
+
+| Funksiya | Qaytarır |
+|---|---|
+| `dialoq.məlumat(başlıq, mesaj)` / `xəbərdarlıq` / `xəta` | — |
+| `dialoq.təsdiqlə(başlıq, mesaj)` | `doğru` / `yanlış` |
+| `dialoq.soruş(başlıq, mesaj, standart)` | mətn və ya `boş` |
+| `dialoq.faylAç(süzgəclər?)` / `faylAçHamısı` | yol / yolların siyahısı |
+| `dialoq.faylSaxla(standartAd?, süzgəclər?)` | yol və ya `boş` |
+| `dialoq.qovluqSeç()` / `dialoq.rəngSeç()` | yol / `"#rrggbb"` |
+
+> **Linux:** dialoqlar üçün `python3-tk` paketi lazımdır
+> (`sudo apt install python3-tk`). Windows və macOS-da Python ilə gəlir.
+
+---
+
+## 4.10 Üslub və tema
+
+Rənglər CSS dəyişənləridir. Pəncərəyə öz üslubunuzu əlavə edin:
+
+```alqor
+// parça
+p.üslub(x":root{--v-vurgu:#7c3aed;--v-radius:12px}")
+```
+
+`x"…"` — **xam mətn**: adi mətndə `{…}` interpolyasiyadır, CSS-in
+fiqurlu mötərizələri isə olduğu kimi qalmalıdır. Qaranlıq rejim
+əməliyyat sisteminin ayarına avtomatik uyğunlaşır. Bütün dəyişənlər:
+spesifikasiya § 14.4.
+
+---
+
+## 4.11 Sınaq yazmaq
+
+Pəncərə açmadan düymə basmaq, sahəyə yazmaq və nəticəni yoxlamaq olar.
+Bu, həm avtomatik sınaqlar, həm də CI üçündür:
+
+```alqor
+// parça — yoxlama funksiyası
+funksiya yoxla()
+    dəyişən p = yeni pəncərə.Pəncərə("Tapşırıqlar")
+    p.məzmun(<Menecer />)
+    dəyişən s = pəncərə.sınaq.aç(p)
+
+    s.klik("Əlavə et")
+    iddia s.ehtiva("Tapşırığın adını yazın")
+
+    s.hadisə("yazıldı", "yeniAd", "Süd al")
+    s.klik("Əlavə et")
+    s.klik("Süd al")                       // cədvəl sətri
+    iddia s.ehtiva("bitib")
+
+    // Dialoqun cavabını əvvəlcədən veririk
+    pəncərə.sınaq.cavablar(["/tmp/t.json"])
+    s.klik("Saxla…")
+    iddia pəncərə.sınaq.jurnal()[0][0] == "faylSaxla"
+son
+```
+
+| Metod | Nə edir |
+|---|---|
+| `s.klik(mətn)` | düymə, menyu elementi, cədvəl sətri — mətni, `ad`-ı və ya `kimlik`-i ilə |
+| `s.yaz(ad, dəyər)` | sahəyə yazır (`dəyişdi`); qutucuğa `doğru`/`yanlış` |
+| `s.hadisə(ad, nişan, dəyər)` | istənilən hadisə: `"yazıldı"`, `"ikiKlik"`… |
+| `s.ehtiva(mətn)` | ekranda belə mətn varmı |
+| `s.HTML()` / `s.mətn()` | ekranın HTML-i / mətni |
+
+---
+
+## 4.12 Eyni kod — vebdə
+
+Komponent heç nə bilmir harada işlədiyini. Onu veb serverə qoşaq:
+
+```alqor
+// parça
+gətir veb
+
+funksiya vebServeri()
+    dəyişən s = yeni veb.Server()
+    s.komponent("/", Menecer, başlıq: "Tapşırıqlar")
+    s.dinlə(8082)
+son
+```
+
+Brauzerdə `http://127.0.0.1:8082` açın — eyni interfeys, eyni
+davranış. Hər brauzer (sessiya) öz tapşırıq siyahısını alır. Menyu və
+fayl dialoqları desktopa xasdır; vebdə onların əvəzinə düymələr
+işlədilir.
+
+Hədəfi əmr sətrindən seçmək üçün:
+
+```alqor
+// parça
+funksiya əsas(arqumentlər: siyahı[mətn])
+    əgər "veb" içindədir arqumentlər onda
+        vebServeri()
+    yoxsa
+        desktop()
+    son
+son
+```
+
+```powershell
+python alqorc.py işlət tapşırıqlar.alqor            # desktop
+python alqorc.py işlət tapşırıqlar.alqor -- veb     # veb
+```
+
+---
+
+## 4.13 Yekun proqram
+
+Bütün hissələr bir yerdə: [`numuneler/09-tapsiriqlar.alqor`](../numuneler/09-tapsiriqlar.alqor).
+
+```powershell
+python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alqor
+python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alqor -- veb
+python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alqor -- sınaq
+```
+
+Və ya Windows-da `Desktop-ac.cmd`-ə iki dəfə klik (06 nümunəsini açır).
+
+---
+
+## 4.14 Tez-tez rast gəlinən xətalar
+
+| Xəta | Səbəb | Həll |
+|---|---|---|
+| `ALQ-L010 'yeni' açar sözdür` | dəyişən adı açar sözdür (`yeni`, `seç`, `son`, `tip`…) | başqa ad: `yeniAd`, `seçildi` |
+| Ekran yenilənmir | obyektin içi dəyişdi, `vəziyyət` sahəsi yox | `özü.siyahı = özü.siyahı` |
+| CSS mətnində `ALQ-P005` (kömək: "adi mətndə `{…}` interpolyasiyadır") | adi mətndə `{…}` interpolyasiyadır | xam mətn: `x"…"` |
+| Pəncərə dərhal bağlanır | `pəncərə.işlət()` çağırılmayıb | `p.göstər()`-dən sonra əlavə edin |
+| `ALQ-T053 göstər() metodu yoxdur` | `komponent`-də `göstər()` yazılmayıb | — |
+| `` `növ` sahəsi `qırmızı` yoxdur `` | vidjet növü səhvdir | xəta mesajı icazəli dəyərləri sadalayır |
+| Linux-da dialoq açılmır | `tkinter` yoxdur | `sudo apt install python3-tk` |
+
+---
+
+## 4.15 Paketləmə (planlaşdırılır)
+
+`alqor paketlə --hədəf deb | appimage | windows-nsis` əmrləri
+(spesifikasiya § 12.3) hələ hazırlanır. Hazırda tətbiq Python ilə
+`alqorc.py işlət` vasitəsilə işlədilir.
