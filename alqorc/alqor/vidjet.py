@@ -589,11 +589,12 @@ def başlıq(icraçı, mətn: Any = "", səviyyə: Any = 1,
 
 
 def mətn(icraçı, məzmun: Any = "", sönük: Any = False,
-         ölçü: Any = None, qalın: Any = False) -> Element:
+         ölçü: Any = "orta", qalın: Any = False) -> Element:
+    ö = _növü_yoxla(_m(ölçü, icraçı, "orta"), ÖLÇÜLƏR, "mətn ölçüsü")
     return _E("p", {
         "class": _sinif(f"{P}mətn", f"{P}mətn--sönük" if sönük else None,
                         f"{P}mətn--qalın" if qalın else None,
-                        f"{P}mətn--{_m(ölçü, icraçı)}" if ölçü else None),
+                        f"{P}mətn--{ö}" if ö != "orta" else None),
     }, _m(məzmun, icraçı))
 
 
@@ -658,13 +659,15 @@ def cədvəl(icraçı, sütunlar: Any = None, sətirlər: Any = None,
     `sütunlar` — başlıqlar: `["Ad", "Yaş"]` və ya
     `[["ad", "Ad"], ["yaş", "Yaş"]]` (açar → başlıq).
     `sətirlər` — siyahı siyahısı, lüğət siyahısı və ya nümunə siyahısı.
+    `sətirKlik` — basılan sətrin indeksini (0-dan, mətn kimi) alır:
+    `metod seçildi(dəyər: mətn)` → `özü.sətirlər[tamƏt(dəyər, 0)]`.
     """
     sütun_cütləri = _seçimlər(sütunlar, icraçı)
     baş = _E("thead", {}, _E("tr", {}, [
         _E("th", {}, e) for _, e in sütun_cütləri]))
 
     gövdə_sətirləri: list = []
-    for sətir in _uşaqlar(sətirlər):
+    for indeks, sətir in enumerate(_uşaqlar(sətirlər)):
         hücrələr: list = []
         if isinstance(sətir, (list, tuple)):
             dəyərlər = list(sətir)
@@ -676,6 +679,8 @@ def cədvəl(icraçı, sütunlar: Any = None, sətirlər: Any = None,
                                else _m(d, icraçı)))
         gövdə_sətirləri.append(_E("tr", {
             "class": f"{P}sətir--basılan" if sətirKlik else None,
+            # Hansı sətrin basıldığını idarəedici `value`-dan öyrənir
+            "value": str(indeks) if sətirKlik else None,
             "klik": sətirKlik,
         }, hücrələr))
 

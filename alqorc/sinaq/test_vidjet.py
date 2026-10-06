@@ -533,6 +533,13 @@ son
         h = HTML('vidjet.cədvəl(sütunlar: ["A"], sətirlər: [["x"]],'
                  ' sətirKlik: () => 1)')
         self.assertIn("v-sətir--basılan", h)
+        # Basılan sətrin indeksi idarəediciyə ötürülür
+        self.assertIn('value="0"', h)
+
+    def test_mətn_ölçüsü_yoxlanılır(self):
+        self.assertIn("v-mətn--böyük",
+                      HTML('vidjet.mətn(məzmun: "a", ölçü: "böyük")'))
+        self.assertNotIn("v-mətn--orta", HTML('vidjet.mətn(məzmun: "a")'))
 
     def test_siyahı(self):
         h = HTML('vidjet.siyahı(elementlər: ["bir", "iki"])')
