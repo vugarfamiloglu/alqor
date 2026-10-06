@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **57 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**872 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**905 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -46,7 +46,8 @@ alqorc/
 │   │                     brauzer nüvəsi (DOM yamağı + hadisə növbəsi)
 │   ├── vidjet.py         57 hazır interfeys elementi + IDE kataloqu
 │   ├── vidjet_arayis.py  spesifikasiya § 14.7-ni koddan qurur
-│   └── konsol.py         rəng, sual-cavab, irəliləyiş, arqumentlər
+│   ├── konsol.py         rəng, sual-cavab, irəliləyiş, arqumentlər
+│   └── alqorfmt.py       formatlayıcı (§ 13.3) — `alqorfmt.py` / `format`
 ├── studio/               Alqor Studio — IDE (README.md-yə baxın)
 └── sinaq/
     ├── test_elifba.py        (31)
@@ -61,7 +62,8 @@ alqorc/
     ├── test_vidjet.py        (129)  vidjetlər + kataloq + § 14 sinxronu
     ├── test_konsol.py        (25)   konsol + zəncir + açar söz etiketi
     ├── test_studio.py        (78)   IDE: skelet, API, təhlükəsizlik, UI
-    └── test_beledci.py       (3)    dərsliklərdəki bütün kod işləyir
+    ├── test_beledci.py       (3)    dərsliklərdəki bütün kod işləyir
+    └── test_alqorfmt.py      (32)   formatlayıcı + doğrulama + CLI
 ```
 
 ## İşə salmaq
@@ -408,7 +410,7 @@ tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
 | # | İş | Həcm |
 |---|---|---|
 | ✅ | Spesifikasiya § 14, § 12–13 uzlaşması, 3 dərslik, Alqor Studio | — |
-| 2 | `alqorfmt` (formatter + `--ascii-düzəlt`) — Studio-da Ctrl+Shift+F hazırdır | ~400 sətir |
+| ✅ | `alqorfmt` — parserdən girinti, doğrulama zəmanəti, Studio-da Ctrl+Shift+F | — |
 | 3 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
 | 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
 | 5 | Qalan standart kitabxana modulları (`http`, `verilənlər`, …) | böyük |

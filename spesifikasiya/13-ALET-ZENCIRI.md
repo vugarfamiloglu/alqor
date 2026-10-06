@@ -79,7 +79,9 @@ Azərbaycan hərfləri yazmaq çətin olanda.
 | `tokenlər <fayl>` | ✅ diaqnostika üçün |
 | `hərf <mətn>`, `sırala <söz>…` | ✅ az-AZ hərf qaydaları |
 | `versiya`, `kömək` | ✅ |
-| `format`, `yeni`, `qur`, `sına`, `sənəd`, `təmizlə` | planlaşdırılır |
+| `format` (`alqorfmt`) | ✅ § 13.3 |
+| `studio` | ✅ Alqor Studio (§ 13.9) |
+| `yeni`, `qur`, `sına`, `sənəd`, `təmizlə` | planlaşdırılır |
 | `paketlə`, `yerləşdir` | planlaşdırılır |
 
 ### `alqor qur` seçimləri
@@ -127,6 +129,47 @@ alqorfmt --homoqlif-düzəlt .     # gizli simvolları düzəlt
 | Faylın sonu | bir boş sətir |
 | Sondakı vergül | çoxsətirli siyahılarda var |
 | Açar sözlər | kanonik Azərbaycan formasında |
+
+### Təhlükəsizlik zəmanəti
+
+Formatlayıcı **proqramın mənasını dəyişə bilməz**. Format edilmiş mətn
+yenidən leksə və ayrılır; token axını (ASCII açar sözlərin kanonik
+forması istisna), JSX məzmunu və sintaksis ağacı (mövqelər nəzərə
+alınmadan) orijinalla eyni olmalıdır. Fərq çıxarsa fayl **toxunulmaz
+qalır** və xəta bildirilir. Sintaksis xətası olan fayl format edilmir.
+
+### Girinti alqoritmi
+
+Girinti açar söz sayğacından deyil, **parserdən** gəlir: parser hər
+tokenin neçə blok gövdəsinin içində olduğunu qeyd edir. Mötərizə
+içindəki çoxsətirli bloklar (arqument kimi verilən `funksiya`, siyahıdakı
+`əgər … yoxsa … son`) eyni mötərizədəki qonşu sətrə nisbətən
+girintilənir. Davam sətirlərinin əl ilə hizalanması qorunur, amma
+açan sətirdən ən azı bir pillə dərin olmalıdır.
+
+Çoxsətirli mətn (`"""…"""`, `x"""…"""`) və JSX daxili yalnız bütöv
+sürüşdürülür — dəyəri dəyişmir. Sətir sonu şərhlərinin hizalanması
+qorunur; yalnız şərhdən ibarət sətir növbəti kod sətrinin girintisini
+alır.
+
+### Etalon implementasiyada vəziyyət
+
+| Qayda | Vəziyyət |
+|---|---|
+| Girinti, operator/vergül boşluqları, mötərizə daxili | ✅ |
+| ASCII → kanonik açar söz (standart; `--ascii-saxla` söndürür) | ✅ |
+| `--homoqlif-düzəlt` (bayraqsız homoqlifli fayl rədd edilir) | ✅ |
+| Boş sətirlər (ən çox 2), sətir sonu boşluqları, `LF`, BOM, NFC, tab | ✅ |
+| `--yoxla` (kod 1 — format lazımdır), `--fərq` | ✅ |
+| 100 simvoldan uzun sətirləri bölmək | planlaşdırılır — hazırda toxunulmur |
+| Çoxsətirli siyahılara sondakı vergül | planlaşdırılır |
+| `layihe.alqor` → `[format]` | planlaşdırılır |
+
+Çıxış kodları: `0` — uğurlu / format lazım deyil, `1` — `--yoxla`
+rejimində format lazımdır, `2` — format edilə bilməyən fayl var
+(sintaksis xətası), `3` — yanlış istifadə.
+
+Alqor Studio-da **Ctrl+Shift+F** eyni formatlayıcını çağırır.
 
 Konfiqurasiya — `layihe.alqor`:
 ```toml
