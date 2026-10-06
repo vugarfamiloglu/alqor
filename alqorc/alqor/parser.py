@@ -102,6 +102,10 @@ class Parser:
         self.direktivlər = [x.dəyər for x in tokenlər
                             if x.növ is Növ.DIREKTIV]
         self.modul_sənədi: str | None = None
+        # `alqorfmt` üçün: hər tokenin hansı BLOK DƏRİNLİYİNDƏ istehlak
+        # olunduğu (mənbə ofseti → dərinlik). Adi ayırmada söndürülüb.
+        self.dərinlik = 0
+        self.dərinlik_qeydi: dict[int, int] | None = None
 
     def _sənədləri_topla(self, tokenlər: list[Token]) -> None:
         """`///` şərhlərini növbəti elanla əlaqələndirmək üçün yığır."""
@@ -128,6 +132,10 @@ class Parser:
 
     def _al(self) -> Token:
         tok = self.t[self.i]
+        if (self.dərinlik_qeydi is not None
+                and tok.növ is not Növ.SETIR_SONU):
+            # Sətir sonu növbəti sətrin ilk tokeni ilə eyni ofsetdədir
+            self.dərinlik_qeydi.setdefault(tok.yer.başlanğıc, self.dərinlik)
         if self.i < len(self.t) - 1:
             self.i += 1
         return tok
@@ -397,16 +405,21 @@ class Parser:
         dayanlar = set(dayan_acarları) | BLOK_SONLARI
         gövdə: list[A.Cümlə] = []
         self._ayırıcı_atla()
-        while not self._sonudur() and not self._bax().acardır(*dayanlar):
-            if self.x.dolubmu():
-                break
-            try:
-                c = self._cümlə()
-                if c is not None:
-                    gövdə.append(c)
-            except ParserXətası:
-                self._bərpa()
-            self._ayırıcı_atla()
+        self.dərinlik += 1
+        try:
+            while (not self._sonudur()
+                   and not self._bax().acardır(*dayanlar)):
+                if self.x.dolubmu():
+                    break
+                try:
+                    c = self._cümlə()
+                    if c is not None:
+                        gövdə.append(c)
+                except ParserXətası:
+                    self._bərpa()
+                self._ayırıcı_atla()
+        finally:
+            self.dərinlik -= 1
         return gövdə
 
     def _cümlə(self) -> A.Cümlə | None:
@@ -658,6 +671,7 @@ class Parser:
         hallar: list[A.Hal] = []
         digər: list[A.Cümlə] | None = None
 
+        self.dərinlik += 1
         while True:
             self._ayırıcı_atla()
             if self._acar("hal"):
@@ -673,6 +687,7 @@ class Parser:
                     digər = self._blok("hal", "digər hallarda")
                 continue
             break
+        self.dərinlik -= 1
 
         self._son_tələb("seç")
         if not hallar and digər is None:
@@ -1392,6 +1407,13 @@ class Parser:
         return A.QurucuElanı(yer, parametrlər, gövdə, ad, m["görünüş"])
 
     def _sinif_gövdəsi(self) -> list[A.Cümlə]:
+        self.dərinlik += 1
+        try:
+            return self._sinif_üzvləri()
+        finally:
+            self.dərinlik -= 1
+
+    def _sinif_üzvləri(self) -> list[A.Cümlə]:
         üzvlər: list[A.Cümlə] = []
         self._ayırıcı_atla()
         while not self._sonudur() and not self._acar("son"):
@@ -1523,6 +1545,7 @@ class Parser:
 
         üzvlər: list[A.Cümlə] = []
         self._ayırıcı_atla()
+        self.dərinlik += 1
         while not self._sonudur() and not self._acar("son"):
             try:
                 if self._acar("metod"):
@@ -1552,6 +1575,7 @@ class Parser:
                 self._bərpa()
             self._ayırıcı_atla()
 
+        self.dərinlik -= 1
         self._son_tələb("interfeys")
         return A.InterfeysElanı(yer, ad, üzvlər, bazalar, generiklər,
                                 m["görünüş"], False, self._sənəd(yer))
@@ -1566,9 +1590,13 @@ class Parser:
         üzvlər: list[A.Cümlə] = []
         self._ayırıcı_atla()
 
+        self.dərinlik += 1
         while not self._sonudur() and not self._acar("son"):
             if self._elan_başlanğıcıdır() or self._op("@"):
+                # Variantlardan sonrakı üzvlər eyni dərinlikdədir
+                self.dərinlik -= 1
                 üzvlər = self._sinif_gövdəsi()
+                self.dərinlik += 1
                 break
             try:
                 v_yer = self._bax().yer
@@ -1592,6 +1620,7 @@ class Parser:
                 self._bərpa()
             self._ayırıcı_atla()
 
+        self.dərinlik -= 1
         self._son_tələb("sadalama")
         return A.SadalamaElanı(yer, ad, variantlar, üzvlər, əsas_tip,
                                generiklər, m["görünüş"], False,
@@ -2084,7 +2113,12 @@ class Parser:
         onu atlamaq birmənalıdır.
         """
         self._ayırıcı_atla()
-        return self._ifadə()
+        # Budaq gövdədir: `alqorfmt` onu bir pillə içəri girintiləyir
+        self.dərinlik += 1
+        try:
+            return self._ifadə()
+        finally:
+            self.dərinlik -= 1
 
     @staticmethod
     def _seç_ifadəsinə(seç: A.Seç) -> A.İfadə:

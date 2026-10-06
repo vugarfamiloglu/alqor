@@ -326,6 +326,81 @@ def əmr_yoxla(arqumentlər: list[str]) -> int:
     return 2
 
 
+def əmr_format(arqumentlər: list[str]) -> int:
+    """
+    `alqorfmt` — spesifikasiya § 13.3.
+
+        format <fayl|qovluq>...      faylları yerində format edir
+        --yoxla                      dəyişmir; lazımdırsa kod 1 (CI)
+        --fərq                       dəyişmir; fərqi göstərir
+        --ascii-saxla                ASCII açar sözlərə toxunmur
+        --homoqlif-düzəlt            gizli oxşar simvolları düzəldir
+    """
+    from alqor.alqorfmt import FormatXətası, faylları_tap, formatla
+
+    bayraqlar = {a for a in arqumentlər if a.startswith("--")}
+    naməlum = bayraqlar - {"--yoxla", "--fərq", "--ferq", "--ascii-saxla",
+                           "--ascii-düzəlt", "--ascii-duzelt",
+                           "--homoqlif-düzəlt", "--homoqlif-duzelt"}
+    if naməlum:
+        çap_xəta(f"naməlum seçim: {', '.join(sorted(naməlum))}")
+        return 3
+    yollar_arq = [a for a in arqumentlər if not a.startswith("--")]
+    if not yollar_arq:
+        çap_xəta("`format` əmri üçün fayl və ya qovluq lazımdır "
+                 "(cari qovluq üçün: .)")
+        return 3
+    fayllar = faylları_tap(yollar_arq)
+    if not fayllar:
+        çap_xəta("format ediləcək .alqor faylı tapılmadı")
+        return 4
+
+    yoxla = "--yoxla" in bayraqlar
+    fərq = bool(bayraqlar & {"--fərq", "--ferq"})
+    ascii_düzəlt = "--ascii-saxla" not in bayraqlar
+    homoqlif = bool(bayraqlar & {"--homoqlif-düzəlt", "--homoqlif-duzelt"})
+
+    dəyişən = xətalı = 0
+    for yol in fayllar:
+        try:
+            köhnə = yol.read_bytes().decode("utf-8")
+        except (OSError, UnicodeDecodeError) as x:
+            print(f"✖ {yol}: oxunmadı ({x})", file=sys.stderr)
+            xətalı += 1
+            continue
+        try:
+            n = formatla(köhnə, yol.name, ascii_düzəlt=ascii_düzəlt,
+                         homoqlif_düzəlt=homoqlif)
+        except FormatXətası as x:
+            print(f"✖ {yol}: {x}", file=sys.stderr)
+            xətalı += 1
+            continue
+        if not n.dəyişdi:
+            continue
+        dəyişən += 1
+        if fərq:
+            print(n.fərq(köhnə, str(yol)), end="")
+        elif yoxla:
+            print(f"• {yol}: format lazımdır")
+        else:
+            yol.write_bytes(n.mətn.encode("utf-8"))
+            əlavə = (f" ({n.ascii_düzəlişləri} ASCII açar söz)"
+                     if n.ascii_düzəlişləri else "")
+            print(f"✓ {yol}{əlavə}")
+
+    toplam = len(fayllar)
+    if yoxla or fərq:
+        if dəyişən:
+            print(f"{toplam} fayldan {dəyişən}-i format edilməlidir")
+        else:
+            print(f"✓ {toplam} fayl artıq formatdadır")
+    else:
+        print(f"{toplam} fayl yoxlanıldı, {dəyişən} format edildi")
+    if xətalı:
+        return 2
+    return 1 if (yoxla and dəyişən) else 0
+
+
 def əmr_hərf(arqumentlər: list[str]) -> int:
     if not arqumentlər:
         çap_xəta("`hərf` əmri üçün mətn lazımdır")
@@ -414,6 +489,9 @@ def əmr_kömək(_: list[str]) -> int:
                          --ətraflı / -e  əlavə məlumat
     söhbət               İnteraktiv rejim (REPL)
     yoxla <fayl|qovluq>  Leksik, sintaktik VƏ TİP xətalarını yoxlayır
+    format <fayl|qovluq> Kodu format edir (alqorfmt): girinti, boşluqlar,
+                         ASCII açar sözlər → `əgər`
+                         --yoxla  --fərq  --ascii-saxla  --homoqlif-düzəlt
     tip <fayl|qovluq>    Yalnız tip yoxlaması
                          --rejim sərbəst|normal|sərt
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
@@ -457,6 +535,7 @@ VƏZİYYƏT:
     "yoxla": əmr_yoxla,
     "söhbət": əmr_söhbət, "sohbet": əmr_söhbət, "repl": əmr_söhbət,
     "tip": əmr_tip, "tiplər": əmr_tip, "tipler": əmr_tip,
+    "format": əmr_format, "formatla": əmr_format, "fmt": əmr_format,
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
     "studio": əmr_studio,

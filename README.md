@@ -26,7 +26,7 @@ son
 | Mərhələ | **Dil nüvəsi + veb + desktop + vidjetlər + Alqor Studio** |
 | Spesifikasiya | 1.0 (layihə) — 14 bölmə |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **872 keçir** (+ Studio brauzer sınaqları) |
+| Sınaqlar | **905 keçir** (+ Studio brauzer sınaqları) |
 | Tarix | 6 oktyabr 2026 |
 
 **Windows-da bir kliklə** (`alqor` qovluğunda):
@@ -49,6 +49,7 @@ python alqorc.py işlət ../numuneler/08-vidjetler.alqor    # 57 vidjet
 python alqorc.py işlət ../numuneler/09-tapsiriqlar.alqor  # tapşırıq meneceri
 python alqorc.py işlət ../numuneler/10-kitab-refi/esas.alqor  # veb sayt
 python alqorc.py studio ..                                # Alqor Studio
+python alqorfmt.py ..                                     # formatlayıcı
 python sina.py --nümunələr
 ```
 

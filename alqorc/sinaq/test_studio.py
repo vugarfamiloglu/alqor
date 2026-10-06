@@ -329,10 +329,17 @@ class Diaqnostika(ServerSınağı):
         self.assertEqual(
             mətn, 'dəyişən eger_deyil = 1\nəgər özü onda yaz("eger") son\n')
 
-    def test_formatlayıcı_qarmağı(self):
-        kod, d = self.api("/api/formatla", {"mətn": "yaz(1)\n"})
-        self.assertEqual(kod, 501)
-        self.assertIn("alqorfmt", d["xəta"])
+    def test_formatlayıcı(self):
+        kod, d = self.api("/api/formatla",
+                          {"mətn": "eger a onda\nyaz(1,2)\n  son\n"})
+        self.assertEqual(kod, 200)
+        self.assertEqual(d["mətn"], "əgər a onda\n    yaz(1, 2)\nson\n")
+        self.assertTrue(d["dəyişdi"])
+
+    def test_formatlayıcı_sintaksis_xətası(self):
+        kod, d = self.api("/api/formatla", {"mətn": "əgər a onda\n"})
+        self.assertEqual(kod, 422)
+        self.assertIn("sintaksis", d["xəta"])
 
 
 # ═══════════════════════════════════════════════════════════════════════

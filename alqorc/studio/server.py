@@ -21,7 +21,6 @@ TƏHLÜKƏSİZLİK
 
 from __future__ import annotations
 import hmac
-import importlib
 import json
 import queue
 import secrets
@@ -259,7 +258,7 @@ class Studio:
             "ad": self.layihə.ad, "kök": str(self.layihə.kök),
             "versiya": VERSIYA, "alqorVersiya": ALQOR_VERSIYA,
             "şablonlar": sablonlar.siyahı(),
-            "formatlayıcı": _formatlayıcı() is not None,
+            "formatlayıcı": True,
             "tipRejimi": self.tip_rejimi(),
             "platforma": sys.platform,
         }
@@ -372,12 +371,16 @@ class Studio:
         return {"mətn": mətn, "say": say}
 
     def api_formatla(self, s: dict) -> dict:
-        f = _formatlayıcı()
-        if f is None:
-            raise ApiXətası("Formatlayıcı (`alqorfmt`) hələ yoxdur — "
-                            "hazır olanda bu düymə avtomatik işləyəcək",
-                            501)
-        return {"mətn": f(self._mətn(s, "mətn"))}
+        from alqor.alqorfmt import FormatXətası, formatla
+        try:
+            n = formatla(self._mətn(s, "mətn"), "redaktor.alqor",
+                         homoqlif_düzəlt=True)
+        except FormatXətası as x:
+            # Sintaksis xətası olan fayl formatlanmır — redaktor olduğu
+            # kimi qalır, istifadəçi səbəbi görür
+            raise ApiXətası(f"Format edilmədi: {x}", 422)
+        return {"mətn": n.mətn, "dəyişdi": n.dəyişdi,
+                "ascii": n.ascii_düzəlişləri}
 
     # ── İcra ──────────────────────────────────────────────────────────
 
@@ -426,23 +429,6 @@ class Studio:
     def api_bağla(self, _: dict) -> dict:
         self.bağlanma = time.monotonic()
         return {"ok": True}
-
-
-def _formatlayıcı() -> Callable[[str], str] | None:
-    """
-    Formatlayıcı hələ yoxdur (VEZIYYET.md, növbəti addım 2). Hazır
-    olanda bu adlardan biri ilə `formatla(mətn) -> mətn` funksiyası
-    ixrac etsə, Studio onu avtomatik götürəcək (Ctrl+Shift+F).
-    """
-    for ad in ("alqor.formatlayici", "alqor.alqorfmt", "alqor.fmt"):
-        try:
-            modul = importlib.import_module(ad)
-        except ImportError:
-            continue
-        f = getattr(modul, "formatla", None)
-        if callable(f):
-            return f
-    return None
 
 
 # ═══════════════════════════════════════════════════════════════════════
