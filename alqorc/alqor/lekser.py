@@ -311,7 +311,11 @@ class Lekser:
         self.i = sətir_sonu
 
         if sənəd or modul_sənədi:
-            hədəf.append(Token(Növ.SENED, məzmun.strip(),
+            # Yalnız bir aparıcı boşluq atılır — sənəddəki kod
+            # nümunələrinin girintisi qorunmalıdır
+            if məzmun.startswith(" "):
+                məzmun = məzmun[1:]
+            hədəf.append(Token(Növ.SENED, məzmun.rstrip(),
                                self.s.yer(baş, self.i - baş),
                                xam=self.m[baş:self.i]))
             return

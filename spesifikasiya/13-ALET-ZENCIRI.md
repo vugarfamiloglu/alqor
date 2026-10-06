@@ -81,7 +81,24 @@ Azərbaycan hərfləri yazmaq çətin olanda.
 | `versiya`, `kömək` | ✅ |
 | `format` (`alqorfmt`) | ✅ § 13.3 |
 | `studio` | ✅ Alqor Studio (§ 13.9) |
-| `yeni`, `qur`, `sına`, `sənəd`, `təmizlə` | planlaşdırılır |
+| `yeni <ad> [--şablon konsol\|veb\|desktop\|kitabxana]` | ✅ hər şablonun işləyən sınaqları var |
+| `işlət` (fayl olmadan — layihənin giriş nöqtəsi) | ✅ |
+| `sına [yol] [--filtr] [--sənəd] [--ətraflı]` | ✅ § 13.5 |
+| `sənəd [yol] [--format html\|markdown] [--çıxış]` | ✅ § 13.6 |
+| `qur [--tip]` | ✅ `qurma/<ad>.pyz` — aşağıya baxın |
+| `təmizlə` | ✅ yalnız layihə daxilindəki `qurma/` |
+
+Repo kökündəki `alqor.cmd` (Windows) və `alqor` (Linux/macOS) bu
+əmrləri `alqor yeni …` kimi çağırmağa imkan verir.
+
+**`qur` etalon implementasiyada.** Maşın koduna kompilyator hələ
+yoxdur. `alqor qur` Python *zipapp* yaradır: `qurma/<ad>.pyz` faylının
+içində icra mühiti və layihənin faylları (mənbə, şablon, statik) var;
+`sınaq/`, `sənəd/`, `qurma/` daxil edilmir. İlk işə salınmada layihə
+faylları keş qovluğuna açılır (`ALQOR_KES` ilə dəyişdirilir).
+`python ad.pyz` (Windows) və ya `./ad.pyz` (Linux/macOS) ilə işləyir.
+`--tip` — paketdən əvvəl tip yoxlaması. Aşağıdakı `--hədəf` seçimləri
+yerli kompilyatorla gələcək.
 | `paketlə`, `yerləşdir` | planlaşdırılır |
 
 ### `alqor qur` seçimləri
@@ -248,6 +265,24 @@ alqortest --təkrar 100           # flaky test axtarışı
 
 ---
 
+### Etalon implementasiyada vəziyyət
+
+`alqor sına` (və ya `alqortest`): yol verilməsə layihənin `sınaq/`
+qovluğu; qovluqda `sınaq/`, `sinaq/`, `test/` altındakı və adı
+`_sınaq.alqor` ilə bitən fayllar. Hər fayl ayrı interpretatorda işləyir.
+
+| Xüsusiyyət | Vəziyyət |
+|---|---|
+| `@sınaq`, `@sınaq("ad")`, `@sınaqVerilənlər([...])` | ✅ |
+| `@sınaqQrupu("ad") modul …` + `@əvvəl` / `@sonra` | ✅ |
+| `@atla("səbəb")` | ✅ |
+| `--filtr söz`, `--sənəd`, `--ətraflı` (uğursuz sınağın `yaz` çıxışı) | ✅ |
+| Uğursuz təsdiqin yeri (`fayl:sətir:sütun`) | ✅ |
+| Çıxış kodu: 0 — hamısı uğurlu, 1 — uğursuz/xəta var, 4 — sınaq yoxdur | ✅ |
+| `--örtük`, `--izlə`, `--paralel`, `--təkrar`, `test.saxta` | planlaşdırılır |
+
+---
+
 ## 13.6 `alqordoc` — sənəd generatoru
 
 ```bash
@@ -282,7 +317,23 @@ ixrac et funksiya dairəSahəsi(radius: onluq) -> onluq
 son
 ```
 
-Sənəddəki nümunə kodlar **test kimi də işlədilir** (`alqortest --sənəd`).
+Sənəddəki nümunə kodlar **test kimi də işlədilir** (`alqor sına --sənəd`):
+hər ```` ```alqor ```` bloku faylın adları əlçatan olan ayrıca proqram kimi
+icra olunur.
+
+**Qaydalar.** `///` sənədi elanın üstündə yazılır və `ixrac et`,
+görünüş sözləri, annotasiyalar (`@sınaq`) aradan keçir. `//!` faylın
+sənədidir. Faylda `ixrac et` varsa yalnız ixrac olunanlar, yoxdursa
+`gizli` olmayan bütün yuxarı səviyyəli elanlar sənədləşdirilir; sinif
+üzvləri də daxildir. İmza mənbədən olduğu kimi götürülür. Sənəd
+mətnində Markdown alt çoxluğu: başlıq (`#`), siyahı, `kod`, **qalın**,
+kod bloku.
+
+| Seçim | Vəziyyət |
+|---|---|
+| HTML (standart, tək fayl, açıq/qaranlıq), `--format markdown` | ✅ |
+| `--çıxış q` | ✅ (standart `sənəd/`) |
+| `--server` (canlı önizləmə) | planlaşdırılır |
 
 ---
 

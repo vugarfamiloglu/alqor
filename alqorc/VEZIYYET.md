@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **57 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**905 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**932 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -47,7 +47,11 @@ alqorc/
 │   ├── vidjet.py         57 hazır interfeys elementi + IDE kataloqu
 │   ├── vidjet_arayis.py  spesifikasiya § 14.7-ni koddan qurur
 │   ├── konsol.py         rəng, sual-cavab, irəliləyiş, arqumentlər
-│   └── alqorfmt.py       formatlayıcı (§ 13.3) — `alqorfmt.py` / `format`
+│   ├── alqorfmt.py       formatlayıcı (§ 13.3) — `alqorfmt.py` / `format`
+│   ├── layihe.py         `layihe.alqor` parseri + `yeni` şablonları
+│   ├── sinaqci.py        `test` modulu + `sına` işlədicisi
+│   ├── senedci.py        `sənəd` — HTML/Markdown API sənədi
+│   └── qurucu.py         `qur` — tək fayllı `.pyz` paket
 ├── studio/               Alqor Studio — IDE (README.md-yə baxın)
 └── sinaq/
     ├── test_elifba.py        (31)
@@ -63,7 +67,8 @@ alqorc/
     ├── test_konsol.py        (25)   konsol + zəncir + açar söz etiketi
     ├── test_studio.py        (78)   IDE: skelet, API, təhlükəsizlik, UI
     ├── test_beledci.py       (3)    dərsliklərdəki bütün kod işləyir
-    └── test_alqorfmt.py      (32)   formatlayıcı + doğrulama + CLI
+    ├── test_alqorfmt.py      (32)   formatlayıcı + doğrulama + CLI
+    └── test_layihe.py        (27)   manifest, yeni, sına, sənəd, qur
 ```
 
 ## İşə salmaq
@@ -368,6 +373,11 @@ kodu düzəltdik (və ya spesifikasiyanı, əgər o səhv idisə).
 | 35 | Sınaq sürücüsü qutucuğa `"doğru"` mətni göndərirdi; cədvəl sətrini tapa bilmirdi | brauzer kimi `məntiq`; başlanğıc uyğunluğu |
 | 36 | `cədvəl(sətirKlik:)` hansı sətrin basıldığını ötürmürdü | sətir indeksi |
 | 37 | Spesifikasiya `veb.ön`, `p.ölçü`, `faylAçÇoxlu`, WebKitGTK təsvir edirdi | § 12 həqiqi API ilə; olmayanlar "planlaşdırılır" |
+| 38 | `gətir "./x.alqor"` prosesin cari qovluğuna nisbətən axtarılırdı | idxal edən fayla nisbətən; keş icraçıya bağlı |
+| 39 | `ixrac et` olan elanın `///` sənədi itirdi; `//!` ilk `///` ilə birləşirdi; sənəddəki kodun girintisi silinirdi | sənəd elan açar sözünə bağlanır |
+| 40 | `@annotasiya modul …` səssizcə atılırdı | `ModulElanı.annotasiyalar` |
+| 41 | Kitabxana funksiyasının xətası yersiz çap olunurdu | çağırışın yeri qoşulur |
+| 42 | `işlət f.alqor -- --tip` tip yoxlamasını işə salırdı | `--`-dan sonrası proqramındır |
 
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
@@ -411,7 +421,7 @@ tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
 |---|---|---|
 | ✅ | Spesifikasiya § 14, § 12–13 uzlaşması, 3 dərslik, Alqor Studio | — |
 | ✅ | `alqorfmt` — parserdən girinti, doğrulama zəmanəti, Studio-da Ctrl+Shift+F | — |
-| 3 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
+| ✅ | `yeni` (4 şablon) / `sına` / `sənəd` / `qur` (`.pyz`) / `təmizlə` | — |
 | 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
 | 5 | Qalan standart kitabxana modulları (`http`, `verilənlər`, …) | böyük |
 | 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
