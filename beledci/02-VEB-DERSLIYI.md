@@ -1,583 +1,539 @@
 # Alqor Bələdçisi — 3. Veb Dərsliyi
 
-> Bu dərslikdə sıfırdan tam işlək veb tətbiq quracağıq: **Qeyd Dəftəri**.
-> Verilənlər bazası, autentifikasiya, API və canlı interfeys — hamısı Alqor-da.
+> Bu dərslikdə **Kitab rəfi** saytını qururuq: səhifələr və şablonlar,
+> form, giriş/çıxış, JSON API, statik fayllar və brauzerdə canlı
+> axtarış.
+>
+> Yekun proqram: [`numuneler/10-kitab-refi/`](../numuneler/10-kitab-refi/esas.alqor).
+> Bu səhifədəki hər tam proqram və şablon avtomatik sınaqlarla
+> yoxlanılır.
+
+**Lazım olan:** Python 3.12+. Veb server Alqor-un içindədir —
+əlavə heç nə quraşdırılmır.
 
 ---
 
-## 3.1 Layihəni yaratmaq
+## 3.1 İlk server
 
-```bash
-alqor yeni qeyd-dəftəri --şablon veb
-cd qeyd-dəftəri
-alqor veb inkişaf
-```
-
-Brauzerdə `http://localhost:8080` açılır və **kod dəyişdikcə avtomatik yenilənir**.
-
-### Yaranan quruluş
-```
-qeyd-dəftəri/
-├── layihe.alqor
-├── mənbə/
-│   ├── server.alqor       ← server kodu
-│   ├── müştəri.alqor      ← brauzer kodu
-│   └── ortaq/
-│       └── model.alqor    ← hər ikisində işləyən kod
-├── şablon/
-│   └── əsas.alqorhtml
-└── statik/
-    └── üslub.css
-```
-
----
-
-## 3.2 İlk server
-
-`mənbə/server.alqor`:
 ```alqor
+// addım 1 — salam
+gətir veb
+
+funksiya əsas()
+    dəyişən s = yeni veb.Server()
+    s.al("/", (sorğu) => veb.mətn("Salam, dünya!"))
+    s.dinlə(8080)
+son
+```
+
+```powershell
+python alqorc.py işlət salam.alqor
+```
+
+Brauzerdə `http://127.0.0.1:8080` açın. Dayandırmaq: `Ctrl+C`.
+
+| Sətir | Nə edir |
+|---|---|
+| `yeni veb.Server()` | server yaradır |
+| `s.al("/", …)` | `GET /` sorğusu gələndə funksiyanı çağırır |
+| `veb.mətn(…)` | cavab: düz mətn |
+| `s.dinlə(8080)` | portu açır və sorğuları gözləyir |
+
+Metodlar HTTP metodlarına uyğundur: `al` (GET), `göndər` (POST),
+`yenilə` (PUT), `yamaq` (PATCH), `sil` (DELETE), `hamısı` (istənilən).
+
+---
+
+## 3.2 Marşrutlar və parametrlər
+
+```alqor
+// addım 2 — parametrlər
 gətir veb
 
 funksiya əsas()
     dəyişən s = yeni veb.Server()
 
-    s.al("/", funksiya(sorğu)
-        qaytar veb.mətn("Salam, dünya!")
+    // /salam/Aysel → "Salam, Aysel!"
+    s.al("/salam/:ad", (sorğu) =>
+        veb.mətn("Salam, {sorğu.parametr("ad")}!"))
+
+    // /axtar?söz=kür&səhifə=2
+    s.al("/axtar", funksiya(sorğu)
+        dəyişən söz = sorğu.sorğuParametr("söz", "")
+        dəyişən səhifə = tamƏt(sorğu.sorğuParametr("səhifə", "1"), 1)
+        qaytar veb.json({"söz": söz, "səhifə": səhifə})
     son)
 
-    yaz("Server: http://localhost:8080")
     s.dinlə(8080)
 son
 ```
 
-```bash
-alqor işlət
-```
+| Naxış | Uyğun gəlir | Parametr |
+|---|---|---|
+| `/kitab/:nömrə` | `/kitab/7` | `nömrə` = `"7"` |
+| `/səhifə/:ad?` | `/səhifə` və `/səhifə/haqqında` | ixtiyari |
+| `/fayl/*yol` | `/fayl/a/b/c.txt` | `yol` = `"a/b/c.txt"` |
+
+Parametr həmişə **mətndir** — ədəd lazımdırsa `tamƏt(…, standart)`.
+
+Cavab növləri:
+
+| Funksiya | Cavab |
+|---|---|
+| `veb.mətn(m)` | `text/plain` |
+| `veb.html(h)` | `text/html` — mətn və ya JSX |
+| `veb.json(d)` | `application/json` |
+| `veb.şablon(fayl, verilənlər)` | şablondan HTML (§ 3.3) |
+| `veb.yönləndir(ünvan)` | 302 |
+| `veb.xəta(kod, mesaj)` | xəta səhifəsi |
+| `veb.boş()` | 204 |
+| `veb.fayl(yol)` / `veb.yüklə(yol)` | fayl / endirmə |
+
+Hər cavabın kodu dəyişdirilə bilər: `veb.json(…).kod(201)`,
+başlıq əlavə edilə bilər: `.başlıq("X-Ad", "dəyər")`.
 
 ---
 
-## 3.3 HTML qaytarmaq
+## 3.3 Şablonlar: `.alqorhtml`
 
-```alqor
-s.al("/", funksiya(sorğu)
-    qaytar veb.html("""
-        <!DOCTYPE html>
-        <html lang="az">
-        <head><meta charset="UTF-8"><title>Qeyd Dəftəri</title></head>
-        <body>
-            <h1>Qeyd Dəftərim</h1>
-        </body>
-        </html>
-    """)
-son)
+HTML-i koda yazmaq əvəzinə şablon faylı işlədək. Layihənin quruluşu:
+
+```
+kitab-rəfi/
+├── esas.alqor
+├── sablonlar/
+│   ├── esas.alqorhtml       ← ümumi çərçivə
+│   └── siyahi.alqorhtml     ← kitab siyahısı
+└── statik/
+    └── üslub.css
 ```
 
----
+**Ümumi çərçivə** — hər səhifədə təkrarlanan hissə:
 
-## 3.4 Şablonlar
-
-`şablon/əsas.alqorhtml`:
-```html
+```alqorhtml
+<!-- fayl: sablonlar/esas.alqorhtml -->
 <!DOCTYPE html>
 <html lang="az">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ başlıq }}</title>
+    <title>{% blok başlıq %}Kitab rəfi{% son %}</title>
     <link rel="stylesheet" href="/statik/üslub.css">
 </head>
 <body>
-    <h1>{{ başlıq }}</h1>
-
-    <form method="GÖNDƏR" action="/qeyd">
-        <input name="mətn" placeholder="Yeni qeyd..." required>
-        <button type="submit">Əlavə et</button>
-    </form>
-
-    <ul class="qeydlər">
-    {% hər q üçün qeydlər içində %}
-        <li>
-            <span>{{ q.mətn }}</span>
-            <small>{{ q.tarix | format("DD.MM.YYYY HH:mm") }}</small>
-            <a href="/sil/{{ q.id }}">Sil</a>
-        </li>
-    {% yoxsa %}
-        <li class="boş">Hələ qeyd yoxdur</li>
-    {% son %}
-    </ul>
+    <nav><a href="/">Kitab rəfi</a></nav>
+    <main>{% blok məzmun %}{% son %}</main>
+    <footer>{{ kitabSayı }} kitab</footer>
 </body>
 </html>
 ```
 
-`server.alqor`:
-```alqor
-s.al("/", funksiya(sorğu)
-    qaytar veb.şablon("əsas.alqorhtml", {
-        "başlıq": "Qeyd Dəftərim",
-        "qeydlər": qeydlər
-    })
-son)
+**Səhifə** — çərçivəni genişləndirir və `məzmun` blokunu doldurur:
+
+```alqorhtml
+<!-- fayl: sablonlar/siyahi.alqorhtml -->
+{% genişlət "esas.alqorhtml" %}
+
+{% blok məzmun %}
+<h1>Kitablar</h1>
+<ul>
+    {% hər k üçün kitablar içində %}
+        <li><a href="/kitab/{{ k.nömrə }}">{{ k.ad }}</a>
+            — {{ k.müəllif }}, {{ k.il }}</li>
+    {% yoxsa %}
+        <li>Rəf boşdur.</li>
+    {% son %}
+</ul>
+{% son %}
 ```
 
-> **Təhlükəsizlik:** `{{ }}` içindəki hər şey avtomatik HTML-qaçış edilir.
-> Yəni istifadəçi `<script>` yazsa belə, kod kimi işləməyəcək.
+**Kod:**
+
+```alqor
+// addım 3 — şablon
+gətir veb
+
+sinif Kitab
+    qurucu(açıq xassə nömrə: tam, açıq xassə ad: mətn,
+           açıq xassə müəllif: mətn, açıq xassə il: tam)
+son
+
+dəyişən kitablar = [
+    yeni Kitab(1, "Əli və Nino", "Qurban Səid", 1937),
+    yeni Kitab(2, "Dəli Kür", "İsmayıl Şıxlı", 1967)
+]
+
+funksiya əsas()
+    dəyişən s = yeni veb.Server()
+    s.şablonQovluğu("sablonlar")
+    s.al("/", (sorğu) => veb.şablon("siyahi.alqorhtml", {
+        "kitablar": kitablar,
+        "kitabSayı": uzunluq(kitablar)
+    }))
+    s.dinlə(8080)
+son
+```
+
+Şablon sintaksisi:
+
+| Yazılış | Mənası |
+|---|---|
+| `{{ ifadə }}` | dəyər — **HTML qaçışı avtomatikdir** (XSS-dən qoruyur) |
+| `{{ ifadə \| filtr }}` | filtrlə: `böyüyə`, `kiçiyə`, `kəs(20)`, `uzunluq`, `pul`, `standart("—")`, `format`… |
+| `{{ ifadə \| xam }}` | qaçışsız — yalnız etibar etdiyiniz HTML üçün |
+| `{% əgər şərt %} … {% yoxsa %} … {% son %}` | şərt |
+| `{% hər x üçün s içində %} … {% yoxsa %} … {% son %}` | dövr; `yoxsa` — siyahı boşdursa |
+| `{% genişlət "f" %}` + `{% blok ad %} … {% son %}` | miras |
+| `{% daxilEt "f" %}` | başqa şablonu daxil edir |
+| `{# şərh #}` | şərh |
+
+`{{ }}` daxilindəki ifadə **həqiqi Alqor ifadəsidir**: `{{ k.ad.böyüyə() }}`,
+`{{ uzunluq(kitablar) > 0 }}`. Lüğətin açarı nöqtə ilə yox, `["ad"]` və
+ya `.al("ad", "")` ilə alınır.
+
+Dövr daxilində `_indeks`, `_sayı`, `_ilkdir`, `_sondur` dəyişənləri
+əlçatandır.
 
 ---
 
-## 3.5 Model və verilənlər bazası
+## 3.4 Statik fayllar
 
-`mənbə/ortaq/model.alqor`:
 ```alqor
-ixrac et sinif Qeyd
-    xassə id: tam = 0
-    xassə mətn: mətn = ""
-    xassə tarix: Zaman = vaxt.indi()
-    xassə bitib: məntiq = yanlış
+// parça
+s.statik("/statik", "statik")
+```
 
-    metod qısaMətn() -> mətn
-        əgər özü.mətn.uzunluq() > 50 onda
-            qaytar özü.mətn.dilim(0, 50) + "..."
-        son
-        qaytar özü.mətn
-    son
-son
+`/statik/üslub.css` → `statik/üslub.css` faylı. MIME tipi avtomatik
+təyin olunur. `../` ilə qovluqdan çıxmaq cəhdləri rədd edilir.
 
-ixrac et funksiya yoxla(q: Qeyd) -> siyahı[mətn]
+Yollar (`"sablonlar"`, `"statik"`) **proqram faylının qovluğuna**
+nisbətəndir — proqramı hansı qovluqdan işə salmağınızdan asılı deyil.
+
+---
+
+## 3.5 Form qəbul etmək
+
+```alqorhtml
+<!-- fayl: sablonlar/yeni.alqorhtml -->
+{% genişlət "esas.alqorhtml" %}
+
+{% blok məzmun %}
+<h1>Yeni kitab</h1>
+{% əgər xətalar %}
+    <ul class="xətalar">
+        {% hər x üçün xətalar içində %}<li>{{ x }}</li>{% son %}
+    </ul>
+{% son %}
+<form method="post" action="/yeni">
+    <label>Ad <input name="ad" value="{{ forma.al("ad", "") }}"></label>
+    <label>Müəllif <input name="müəllif" value="{{ forma.al("müəllif", "") }}"></label>
+    <label>İl <input name="il" value="{{ forma.al("il", "") }}"></label>
+    <button>Əlavə et</button>
+</form>
+{% son %}
+```
+
+```alqor
+// parça
+funksiya yoxlaKitab(d: lüğət[mətn, istənilən]) -> siyahı[mətn]
     dəyişən xətalar: siyahı[mətn] = []
-    əgər q.mətn.kəs() == "" onda
-        xətalar.əlavə("Qeyd boş ola bilməz")
+    əgər mətnƏt(d.al("ad", "")).kəs() == "" onda
+        xətalar.əlavə("Ad boş ola bilməz")
     son
-    əgər q.mətn.uzunluq() > 1000 onda
-        xətalar.əlavə("Qeyd 1000 simvoldan uzun ola bilməz")
+    dəyişən il = tamƏt(mətnƏt(d.al("il", "")), -1)
+    əgər il < 0 və ya il > 2100 onda
+        xətalar.əlavə("İl 0 ilə 2100 arasında ədəd olmalıdır")
     son
     qaytar xətalar
 son
+
+// serverQur() içində:
+s.al("/yeni", (sorğu) => veb.şablon("yeni.alqorhtml",
+    {"forma": {}, "xətalar": [], "kitabSayı": uzunluq(kitablar)}))
+
+s.göndər("/yeni", funksiya(sorğu)
+    dəyişən f = sorğu.form()
+    dəyişən xətalar = yoxlaKitab(f)
+    əgər uzunluq(xətalar) > 0 onda
+        // Form yenidən göstərilir — yazılanlar itmir
+        qaytar veb.şablon("yeni.alqorhtml", {"forma": f,
+            "xətalar": xətalar, "kitabSayı": uzunluq(kitablar)}).kod(422)
+    son
+    dəyişən k = yeni Kitab(uzunluq(kitablar) + 1, f["ad"],
+                           f["müəllif"], tamƏt(f["il"], 0))
+    kitablar = kitablar + [k]
+    qaytar veb.yönləndir("/kitab/{k.nömrə}")
+son)
 ```
 
-> Bu fayl **həm serverdə, həm brauzerdə** işləyir. Validasiya bir dəfə yazılır,
-> iki yerdə işləyir: brauzerdə dərhal cavab üçün, serverdə təhlükəsizlik üçün.
+Üç qayda:
 
-### SQLite ilə
-```alqor
-gətir verilənlər
+1. **Uğurlu POST-dan sonra yönləndirin** (`veb.yönləndir`). Yoxsa
+   istifadəçi səhifəni yeniləyəndə form ikinci dəfə göndərilir.
+2. **Xəta olanda formu yazılanlarla qaytarın** və 422 kodu verin.
+3. **Brauzerə güvənməyin** — yoxlamanı həmişə serverdə edin.
 
-dəyişən b: verilənlər.Bağlantı
-
-asinxron funksiya bazanıHazırla()
-    b = gözlə verilənlər.bağlan("sqlite://./qeydlər.db")
-    gözlə b.icra("""
-        CREATE TABLE IF NOT EXISTS qeydlər (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            mətn TEXT NOT NULL,
-            tarix TEXT NOT NULL,
-            bitib INTEGER DEFAULT 0
-        )
-    """)
-son
-
-asinxron funksiya qeydləriAl() -> siyahı[Qeyd]
-    dəyişən sətirlər = gözlə b.sorğu("SELECT * FROM qeydlər ORDER BY tarix DESC")
-    qaytar sətirlər.çevir(funksiya(s)
-        dəyişən q = yeni Qeyd()
-        q.id = s["id"]
-        q.mətn = s["mətn"]
-        q.tarix = vaxt.ISO(s["tarix"])
-        q.bitib = s["bitib"] == 1
-        qaytar q
-    son)
-son
-
-asinxron funksiya qeydƏlavə(mətn: mətn)
-    gözlə b.icra(
-        "INSERT INTO qeydlər (mətn, tarix) VALUES ($1, $2)",
-        mətn, vaxt.indi().ISO()
-    )
-son
-```
-
-> **Diqqət:** Həmişə `$1`, `$2` parametrləri istifadə edin.
-> Mətni birbaşa SQL-ə birləşdirmək SQL inyeksiyasına yol açır —
-> `alqorlint` bunu xəta kimi göstərir.
+`sorğu.form()` — `application/x-www-form-urlencoded` və
+`multipart/form-data` gövdəsini lüğətə çevirir.
 
 ---
 
-## 3.6 Forma qəbul etmək
+## 3.6 Sessiya: giriş və çıxış
+
+Sessiya — bir brauzerə aid, sorğular arasında yadda qalan məlumat:
 
 ```alqor
-s.göndər("/qeyd", asinxron funksiya(sorğu)
-    dəyişən f = sorğu.form()
-    dəyişən q = yeni Qeyd()
-    q.mətn = f["mətn"] ?? ""
+// parça
+s.ara(veb.sessiya())          // sessiyanı aktivləşdirir
 
-    dəyişən xətalar = model.yoxla(q)
-    əgər deyil boşdur(xətalar) onda
-        qaytar veb.şablon("əsas.alqorhtml", {
-            "başlıq": "Qeyd Dəftərim",
-            "qeydlər": gözlə qeydləriAl(),
-            "xətalar": xətalar
-        }).kod(400)
+s.göndər("/giriş", funksiya(sorğu)
+    dəyişən parol = sistem.mühit("KITAB_PAROL") ?? "alqor"
+    əgər sorğu.form().al("parol", "") == parol onda
+        sorğu.sessiya().qoy("admin", doğru)
+        qaytar veb.yönləndir("/")
     son
+    qaytar veb.xəta(401, "Parol yanlışdır")
+son)
 
-    gözlə qeydƏlavə(q.mətn)
+s.göndər("/çıxış", funksiya(sorğu)
+    sorğu.sessiya().təmizlə()
     qaytar veb.yönləndir("/")
 son)
+
+funksiya adminDir(sorğu: istənilən) -> məntiq
+    qaytar sorğu.sessiya().al("admin", yanlış) == doğru
+son
 ```
+
+Sessiya metodları: `al(ad, standart)`, `qoy(ad, dəyər)`, `sil(ad)`,
+`ehtiva(ad)`, `təmizlə()`. Məlumat serverin yaddaşındadır, brauzerdə
+yalnız təsadüfi açar (`HttpOnly` kuki) saxlanılır.
+
+> **Parolu koda yazmayın.** Mühit dəyişənindən oxuyun:
+> `$env:KITAB_PAROL = "…"` (PowerShell) və ya `export KITAB_PAROL=…`.
 
 ---
 
-## 3.7 REST API
+## 3.7 JSON API
 
 ```alqor
+// parça — serverQur() içində
 s.qrup("/api", funksiya(q)
+    q.al("/kitablar", (sorğu) => veb.json(
+        kitablar.çevir((k) => {"nömrə": k.nömrə, "ad": k.ad})))
 
-    q.al("/qeyd", asinxron funksiya(sorğu)
-        qaytar veb.json(gözlə qeydləriAl())
-    son)
-
-    q.al("/qeyd/:id", asinxron funksiya(sorğu)
-        dəyişən id = tamƏt(sorğu.parametr("id"))
-        dəyişən q = gözlə qeydTap(id)
-        əgər q boşdur onda
-            qaytar veb.json({"xəta": "Tapılmadı"}).kod(404)
+    q.al("/kitablar/:nömrə", funksiya(sorğu)
+        dəyişən n = tamƏt(sorğu.parametr("nömrə"), 0)
+        hər k üçün kitablar içində
+            əgər k.nömrə == n onda
+                qaytar veb.json({"nömrə": k.nömrə, "ad": k.ad})
+            son
         son
-        qaytar veb.json(q)
+        qaytar veb.json({"xəta": "tapılmadı"}).kod(404)
     son)
 
-    q.göndər("/qeyd", asinxron funksiya(sorğu)
-        dəyişən v = sorğu.json()
-        dəyişən q = yeni Qeyd()
-        q.mətn = v["mətn"] ?? ""
-
-        dəyişən xətalar = model.yoxla(q)
-        əgər deyil boşdur(xətalar) onda
+    q.göndər("/kitablar", yalnızAdmin, funksiya(sorğu)
+        dəyişən d = sorğu.json()
+        dəyişən xətalar = yoxlaKitab(d)
+        əgər uzunluq(xətalar) > 0 onda
             qaytar veb.json({"xətalar": xətalar}).kod(422)
         son
-
-        gözlə qeydƏlavə(q.mətn)
-        qaytar veb.json(q).kod(201)
-    son)
-
-    q.sil("/qeyd/:id", asinxron funksiya(sorğu)
-        gözlə qeydSil(tamƏt(sorğu.parametr("id")))
-        qaytar veb.boş(204)
+        // … əlavə et …
+        qaytar veb.json({"nömrə": 3}).kod(201)
     son)
 son)
 ```
 
-Yoxlama:
-```bash
-curl http://localhost:8080/api/qeyd
-curl -X POST http://localhost:8080/api/qeyd -d '{"mətn":"Süd al"}'
-```
+`s.qrup(prefiks, f)` marşrutları bir prefiks altında toplayır. Status
+kodları REST qaydası ilə: 200 oxundu · 201 yaradıldı · 204 silindi,
+gövdə yoxdur · 401 giriş lazımdır · 404 tapılmadı · 422 verilənlər
+yanlışdır.
 
 ---
 
 ## 3.8 Ara proqramlar
 
+Ara proqram hər sorğudan əvvəl (və sonra) işləyən funksiyadır:
+
 ```alqor
+// parça
+s.ara(veb.jurnal())                     // hər sorğunu konsola yazır
+s.ara(veb.təhlükəsizlikBaşlıqları())    // X-Frame-Options və s.
+s.ara(veb.CORS(["https://sayt.az"]))    // başqa domendən API
+s.ara(veb.sıxma())                      // gzip
+s.ara(veb.sürətLimiti(100, "1dəq"))     // IP başına limit
+
+// Öz ara proqramınız: (sorğu, növbəti) → cavab
+dəyişən yalnızAdmin = funksiya(sorğu, növbəti)
+    əgər deyil adminDir(sorğu) onda
+        qaytar veb.json({"xəta": "giriş tələb olunur"}).kod(401)
+    son
+    qaytar növbəti(sorğu)               // zəncirdə növbəti
+son
+```
+
+`s.ara(f)` hər marşruta, marşruta ikinci arqument kimi verilən isə
+yalnız ona tətbiq olunur: `q.göndər("/kitablar", yalnızAdmin, f)`.
+
+---
+
+## 3.9 Canlı səhifə: komponent + vidjet
+
+Axtarış sahəsinə yazdıqca nəticələrin dəyişməsini istəyirik — JavaScript
+yazmadan. Desktop dərsliyindəki kimi komponent yazırıq və serverə
+qoşuruq:
+
+```alqor
+// addım 4 — canlı axtarış
+gətir veb
+gətir vidjet
+
+dəyişən kitablar = [
+    {"ad": "Əli və Nino", "müəllif": "Qurban Səid"},
+    {"ad": "Dəli Kür", "müəllif": "İsmayıl Şıxlı"},
+    {"ad": "Ölülər", "müəllif": "Cəlil Məmmədquluzadə"}
+]
+
+komponent Axtarış
+    vəziyyət söz: mətn = ""
+
+    metod yazıldı(dəyər: mətn)
+        özü.söz = dəyər
+    son
+
+    göstər()
+        dəyişən s = özü.söz.kiçiyə()
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.başlıq(mətn: "Axtarış"),
+            vidjet.axtarış(ad: "söz", dəyər: özü.söz,
+                           yazıldı: özü.yazıldı),
+            vidjet.cədvəl(
+                sütunlar: [["ad", "Ad"], ["müəllif", "Müəllif"]],
+                sətirlər: kitablar.filtr((k) =>
+                    s içindədir mətnƏt(k["ad"]).kiçiyə()),
+                boşMətn: "Heç nə tapılmadı")
+        ])
+    son
+son
+
 funksiya əsas()
     dəyişən s = yeni veb.Server()
-
-    s.ara(veb.jurnal())                       // sorğuları logla
-    s.ara(veb.sıxma())                        // gzip
-    s.ara(veb.CORS(mənbələr: ["*"]))
-    s.ara(veb.sürətLimiti(100, "1dəq"))       // dəqiqədə 100 sorğu
-    s.ara(veb.təhlükəsizlikBaşlıqları())
-    s.ara(veb.sessiya(gizli: sistem.mühit("SESSIYA_AÇARI")))
-    s.ara(veb.CSRF())
-
-    s.statik("/statik", "statik/")
-
-    // ... marşrutlar
-
+    s.komponent("/axtar", Axtarış, başlıq: "Axtarış")
     s.dinlə(8080)
 son
 ```
 
-### Öz ara proqramınız
-```alqor
-s.ara(asinxron funksiya(sorğu, növbəti)
-    dəyişən başlanğıc = vaxt.möhürMs()
-    dəyişən cavab = gözlə növbəti(sorğu)
-    dəyişən müddət = vaxt.möhürMs() - başlanğıc
-    jurnal.info("{sorğu.metod()} {sorğu.yol()} — {cavab.kod()} — {müddət}ms")
-    qaytar cavab
-son)
-```
+Necə işləyir: Alqor səhifəni HTML kimi verir və kiçik bir skript qoşur.
+Hər hərfdə skript hadisəni serverə göndərir, serverdə `yazıldı`
+işləyir, `göstər()` yeni HTML qaytarır, skript isə səhifəni
+**yamaqla** yeniləyir — sahədəki fokus və mətn itmir. Hər brauzer öz
+`Axtarış` nümunəsini alır.
+
+Hadisələr başqa saytlardan göndərilə bilməz (`Origin` yoxlanılır,
+kuki `SameSite=Strict`). Ətraflı: spesifikasiya § 14.2.2.
 
 ---
 
-## 3.9 Autentifikasiya
+## 3.10 Sınaq yazmaq
+
+Port açmadan sorğu göndərmək olar:
 
 ```alqor
-gətir veb.auth
-gətir şifrə
+// parça
+funksiya yoxla()
+    dəyişən m = veb.sınaq.server(serverQur())
 
-s.göndər("/qeydiyyat", asinxron funksiya(sorğu)
-    dəyişən f = sorğu.form()
+    dəyişən c = m.al("/")
+    iddia c.vəziyyət() == 200
+    iddia "Dəli Kür" içindədir c.mətnƏt()
 
-    əgər gözlə istifadəçiVar(f["email"]) onda
-        qaytar veb.json({"xəta": "Bu email artıq qeydiyyatdadır"}).kod(409)
-    son
+    // Form göndərmək
+    dəyişən FORM = {"Content-Type": "application/x-www-form-urlencoded"}
+    c = m.göndər("/giriş", "parol=alqor", FORM)
+    iddia c.vəziyyət() == 302
 
-    gözlə b.icra(
-        "INSERT INTO istifadəçilər (email, parol_heş) VALUES ($1, $2)",
-        f["email"], şifrə.parolHeş(f["parol"])
-    )
-    qaytar veb.yönləndir("/giriş")
-son)
-
-s.göndər("/giriş", asinxron funksiya(sorğu)
-    dəyişən f = sorğu.form()
-    dəyişən i = gözlə istifadəçiTap(f["email"])
-
-    əgər i boşdur və ya deyil şifrə.parolYoxla(f["parol"], i.parolHeş) onda
-        qaytar veb.şablon("giriş.alqorhtml", {
-            "xəta": "Email və ya parol yanlışdır"
-        }).kod(401)
-    son
-
-    sorğu.sessiya().qoy("istifadəçiId", i.id)
-    qaytar veb.yönləndir("/")
-son)
-
-s.göndər("/çıxış", funksiya(sorğu)
-    sorğu.sessiya().təmizlə()
-    qaytar veb.yönləndir("/giriş")
-son)
-
-// Qoruyucu
-funksiya girişTələbOlunur(sorğu, növbəti)
-    əgər sorğu.sessiya().al("istifadəçiId") boşdur onda
-        qaytar veb.yönləndir("/giriş")
-    son
-    qaytar növbəti(sorğu)
-son
-
-s.al("/panel", [girişTələbOlunur], panelSəhifəsi)
-```
-
-> Parollar heç vaxt düz mətnlə saxlanmır. `şifrə.parolHeş()` Argon2id istifadə edir.
-
----
-
-## 3.10 Brauzer tərəfi (interaktiv interfeys)
-
-`mənbə/müştəri.alqor`:
-```alqor
-gətir veb.ön
-gətir "./ortaq/model.alqor" kimi model
-
-komponent QeydSiyahısı
-    vəziyyət qeydlər: siyahı[model.Qeyd] = []
-    vəziyyət yeniMətn: mətn = ""
-    vəziyyət yüklənir: məntiq = doğru
-    vəziyyət xəta: mətn? = boş
-
-    asinxron metod quraşdırıldı()
-        gözlə özü.yüklə()
-    son
-
-    asinxron metod yüklə()
-        özü.yüklənir = doğru
-        cəhd et
-            dəyişən c = gözlə http.al("/api/qeyd")
-            özü.qeydlər = c.json()
-        tut (x: Xəta)
-            özü.xəta = "Qeydlər yüklənmədi"
-        nəhayət
-            özü.yüklənir = yanlış
-        son
-    son
-
-    asinxron metod əlavəEt()
-        dəyişən q = yeni model.Qeyd()
-        q.mətn = özü.yeniMətn
-
-        dəyişən xətalar = model.yoxla(q)      // brauzerdə dərhal yoxlama
-        əgər deyil boşdur(xətalar) onda
-            özü.xəta = xətalar[0]
-            qaytar
-        son
-
-        gözlə http.göndər("/api/qeyd", gövdə: {"mətn": özü.yeniMətn})
-        özü.yeniMətn = ""
-        özü.xəta = boş
-        gözlə özü.yüklə()
-    son
-
-    asinxron metod sil(id: tam)
-        gözlə http.sil("/api/qeyd/{id}")
-        gözlə özü.yüklə()
-    son
-
-    göstər()
-        qaytar <div sinif="qeyd-siyahı">
-            <h1>Qeyd Dəftərim</h1>
-
-            {əgər özü.xəta boş deyil onda
-                <div sinif="xəta">{özü.xəta}</div>
-            son}
-
-            <div sinif="forma">
-                <input
-                    dəyər={özü.yeniMətn}
-                    dəyişdi={(d) => özü.yeniMətn = d}
-                    yerTutucu="Yeni qeyd..."
-                    düyməBasıldı={(h) => əgər h.açar == "Enter" onda özü.əlavəEt() son} />
-                <button klik={özü.əlavəEt}>Əlavə et</button>
-            </div>
-
-            {əgər özü.yüklənir onda
-                <p>Yüklənir...</p>
-            yoxsa
-                <ul>
-                    {özü.qeydlər.çevir((q) =>
-                        <li açar={q.id}>
-                            <span>{q.mətn}</span>
-                            <button klik={() => özü.sil(q.id)}>Sil</button>
-                        </li>
-                    )}
-                </ul>
-            son}
-        </div>
-    son
-son
-
-ön.quraşdır(QeydSiyahısı, "#kök")
-```
-
----
-
-## 3.11 Real vaxt yeniləmə (WebSocket)
-
-### Server
-```alqor
-s.soket("/canlı", funksiya(soket)
-    soket.hadisə("qoşuldu", funksiya()
-        soket.otağaQoşul("qeydlər")
-    son)
-son)
-
-// Qeyd əlavə olunanda hamıya bildir
-asinxron funksiya qeydƏlavə(mətn: mətn)
-    gözlə b.icra("INSERT INTO qeydlər (mətn, tarix) VALUES ($1, $2)", mətn, ...)
-    s.otağaYayımla("qeydlər", {"hadisə": "yeni", "mətn": mətn})
+    // JSON göndərmək — lüğət avtomatik JSON olur
+    c = m.göndər("/api/kitablar", {"ad": "Leyli və Məcnun", "il": 1536})
+    iddia c.vəziyyət() == 201
+    iddia c.json()["nömrə"] > 0
 son
 ```
 
-### Brauzer
+Sınaq müştərisi kukiləri yadda saxlayır — giriş etdikdən sonrakı
+sorğular admin kimi gedir. Metodlar: `al`, `göndər`, `yenilə`,
+`yamaq`, `sil`; cavab: `vəziyyət()`, `mətnƏt()`, `json()`,
+`başlıq(ad)`.
+
+---
+
+## 3.11 Xətalar
+
 ```alqor
-dəyişən soket = veb.soketBağlan("/canlı")
-soket.hadisə("mesaj", funksiya(m)
-    özü.yüklə()                 // yeni qeyd gəldi, siyahını yenilə
+// parça
+s.tapılmadı((sorğu) => veb.html("<h1>Səhifə tapılmadı</h1>").kod(404))
+
+s.xətaİdarəedicisi(funksiya(sorğu, x)
+    jurnal.xəta(x.mesaj)
+    qaytar veb.html("<h1>Bağışlayın, xəta baş verdi</h1>").kod(500)
 son)
 ```
 
----
-
-## 3.12 Testlər
-
-`sınaq/api_sınaq.alqor`:
-```alqor
-gətir test
-gətir veb.sınaq
-
-@sınaq
-asinxron funksiya qeydSiyahısıBoşdur()
-    dəyişən s = veb.sınaq.server(əsasServer())
-    dəyişən c = gözlə s.al("/api/qeyd")
-
-    test.bərabər(c.kod(), 200)
-    test.bərabər(c.json(), [])
-son
-
-@sınaq
-asinxron funksiya qeydƏlavəEdilir()
-    dəyişən s = veb.sınaq.server(əsasServer())
-    dəyişən c = gözlə s.göndər("/api/qeyd", gövdə: {"mətn": "Test"})
-
-    test.bərabər(c.kod(), 201)
-    test.bərabər(c.json()["mətn"], "Test")
-son
-
-@sınaq
-asinxron funksiya boşQeydRəddEdilir()
-    dəyişən s = veb.sınaq.server(əsasServer())
-    dəyişən c = gözlə s.göndər("/api/qeyd", gövdə: {"mətn": ""})
-
-    test.bərabər(c.kod(), 422)
-son
-```
-
-```bash
-alqortest --örtük
-```
+İnkişaf zamanı Alqor xəta mesajını və yerini səhifədə göstərir.
 
 ---
 
-## 3.13 Buraxılış və yerləşdirmə
+## 3.12 Yekun proqram və işə salma
 
-```bash
-alqor qur --hədəf veb --buraxılış
-```
+Bütün hissələr bir yerdə: [`numuneler/10-kitab-refi/esas.alqor`](../numuneler/10-kitab-refi/esas.alqor).
 
-Nəticə:
-```
-qurma/veb/
-├── server                 # 8.2 MB statik Linux binarı
-├── public/
-│   ├── index.html
-│   ├── tətbiq.js          # 42 KB (kiçildilmiş)
-│   └── statik/
-└── Dockerfile
+```powershell
+cd alqor\alqorc
+python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alqor            # :8083
+python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alqor -- sınaq   # 16 yoxlama
 ```
 
-### Serverə atmaq
-```bash
-scp -r qurma/veb/ istifadəçi@server:/opt/qeyd-dəftəri/
-ssh istifadəçi@server
-cd /opt/qeyd-dəftəri && ./server
+Windows-da: `.\Brauzerde-ac.cmd 10`.
+
+**Linux serverdə daimi işlətmək** (systemd):
+
+```ini
+# /etc/systemd/system/kitab-refi.service
+[Unit]
+Description=Kitab rəfi
+After=network.target
+
+[Service]
+WorkingDirectory=/srv/alqor/alqorc
+ExecStart=/usr/bin/python3 alqorc.py işlət /srv/kitab-refi/esas.alqor
+Environment=PYTHONIOENCODING=utf-8
+Environment=KITAB_PAROL=…
+Restart=on-failure
+User=www-data
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-### systemd xidməti
-```bash
-alqor yerləşdir --növ systemd
-```
-Yaranır: `/etc/systemd/system/qeyd-dəftəri.service`
-```bash
-sudo systemctl enable --now qeyd-dəftəri
-```
-
-### Docker
-```bash
-alqor yerləşdir --növ docker
-docker run -p 8080:8080 qeyd-dəftəri:1.0.0
-```
-
-### Statik hostinq (yalnız ön tərəf)
-```bash
-alqor qur --hədəf veb --yalnız-ön
-# qurma/veb/public/ qovluğunu Netlify, Vercel və ya GitHub Pages-ə atın
-```
-
-> **Vacib:** Serverin Alqor bilməsinə **ehtiyac yoxdur**. Çıxış adi ELF binarı
-> və adi HTML/JS fayllarıdır. İstənilən hostinq, istənilən server işlədir.
+İnternetə açarkən qarşısına HTTPS üçün nginx və ya Caddy qoyun —
+Alqor serveri `127.0.0.1`-də qalsın.
 
 ---
 
-## 3.14 Performans məsləhətləri
+## 3.13 Tez-tez rast gəlinən xətalar
 
-| Məsləhət | Niyə |
-|---|---|
-| `alqor qur --buraxılış` | Optimallaşdırma + kiçiltmə |
-| `s.ara(veb.sıxma())` | gzip/brotli |
-| `s.ara(veb.keş())` | Statik fayllar üçün keş başlıqları |
-| Verilənlər bazasında indeks | Sorğu sürəti |
-| `paralel.hamısı()` | Müstəqil sorğuları paralel işlət |
-| `@yaddaşla` | Təkrarlanan hesablamaları keşlə |
-| WASM backend | Ağır hesablamalar üçün |
+| Xəta | Səbəb | Həll |
+|---|---|---|
+| `forma.ad` — `lüğət` tipində `ad` üzvü yoxdur | lüğət açarı nöqtə ilə alınmır | `forma.al("ad", "")` |
+| `"... şablonu tapılmadı"` | şablon qovluğu təyin edilməyib | `s.şablonQovluğu("sablonlar")` |
+| Form ikinci dəfə göndərilir | POST-dan sonra HTML qaytarılıb | `veb.yönləndir(…)` |
+| `{{ … }}` ayrılmadı | şablon ifadəsi Alqor sintaksisindədir | xəta mesajı fayl və sətri göstərir |
+| `{:8080 dinlənilə bilmədi — Port məşğuldurmu?}` | port artıq istifadədədir | başqa port və ya `veb.boşPort()` |
+| Sessiya işləmir | `veb.sessiya()` ara proqramı qoşulmayıb | `s.ara(veb.sessiya())` |
 
 ---
 
-**Növbəti:** [4. Desktop Dərsliyi](03-DESKTOP-DERSLIYI.md)
+## 3.14 Planlaşdırılır
+
+* `verilənlər` modulu (SQLite) — hazırda məlumat yaddaşda saxlanılır
+  və ya `json.faylYaz` ilə fayla yazılır.
+* WebSocket — canlı səhifələr üçün indi `s.komponent` işlədilir.
+* `alqor yeni --şablon veb` — layihə skeleti.
