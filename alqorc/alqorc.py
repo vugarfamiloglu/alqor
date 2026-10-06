@@ -677,6 +677,15 @@ def əmr_söhbət(arqumentlər: list[str]) -> int:
     return söhbət_başlat(rəngli)
 
 
+def əmr_ls(arqumentlər: list[str]) -> int:
+    """`ls [--stdio]` — Dil Serveri (LSP), stdin/stdout üzərindən."""
+    from alqor.alqorls import işə_sal
+    if sys.stdin.isatty() and "--stdio" not in arqumentlər:
+        print("alqorls — Alqor Dil Serveri (LSP). Redaktor tərəfindən "
+              "işə salınır:\n    alqor ls --stdio", file=sys.stderr)
+    return işə_sal()
+
+
 def əmr_studio(arqumentlər: list[str]) -> int:
     """Alqor Studio — inkişaf mühiti (`studio/` paketi)."""
     from studio.server import işə_sal
@@ -736,6 +745,7 @@ def əmr_kömək(_: list[str]) -> int:
                          --rejim sərbəst|normal|sərt
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
     sırala <söz>...      Azərbaycan əlifba sırası ilə sıralayır
+    ls                   Dil serveri (LSP) — VS Code, Neovim, Helix üçün
     studio [qovluq]      Alqor Studio — redaktor, vidjet paleti, icra
                          --port N        sabit port
                          --başsız        pəncərə açmır, ünvanı çap edir
@@ -784,6 +794,7 @@ VƏZİYYƏT:
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
     "studio": əmr_studio,
+    "ls": əmr_ls, "lsp": əmr_ls,
     "versiya": əmr_versiya, "--versiya": əmr_versiya, "-v": əmr_versiya,
     "kömək": əmr_kömək, "komek": əmr_kömək,
     "--kömək": əmr_kömək, "--komek": əmr_kömək, "-k": əmr_kömək,

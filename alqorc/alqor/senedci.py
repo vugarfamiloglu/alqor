@@ -68,7 +68,12 @@ def _imza(c, mətn: str, tokenlər: list) -> str:
     """Elanın başlığı: başlanğıc tokenindən sətir sonuna qədər."""
     b = c.yer.başlanğıc
     i = 0
-    while i < len(tokenlər) and tokenlər[i].yer.başlanğıc < b:
+    # SETIR_SONU tokeni sıfır enlidir və növbəti sətrin başlanğıcında
+    # dayana bilər (`son` sətrindən sonra) — onu imzanın sonu saymırıq
+    while i < len(tokenlər) and (
+            tokenlər[i].yer.başlanğıc < b
+            or (tokenlər[i].növ is Növ.SETIR_SONU
+                and tokenlər[i].yer.başlanğıc == b)):
         i += 1
     dərinlik = 0
     son = b
