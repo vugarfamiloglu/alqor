@@ -6,3 +6,7 @@
 *.alq       text eol=lf
 *.ebnf      text eol=lf
 *.toml      text eol=lf
+
+# Windows skriptləri CRLF olmalıdır (cmd.exe LF ilə səhv işləyir)
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
