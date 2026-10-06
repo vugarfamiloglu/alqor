@@ -796,6 +796,254 @@ son
         self.assertEqual(sətirlər, ["gizli"])
 
 
+# ═══════════════════════════════════════════════════════════════════════
+#  Komponent qoşması — vidjet hadisələri vebdə
+# ═══════════════════════════════════════════════════════════════════════
+
+class KomponentSınağı(unittest.TestCase):
+    """`s.komponent(yol, Sinif)` — hər sessiyaya öz nümunəsi."""
+
+    KOMPONENT = """gətir vidjet
+
+komponent Sayğac
+    vəziyyət n: tam = 0
+    vəziyyət ad: mətn = ""
+
+    metod artır()
+        özü.n += 1
+    son
+
+    metod adDəyişdi(dəyər: mətn)
+        özü.ad = dəyər
+    son
+
+    göstər()
+        qaytar vidjet.sütun(məzmun: [
+            vidjet.düymə(mətn: "Say {özü.n}", klik: özü.artır),
+            vidjet.sahə(ad: "ad", dəyişdi: özü.adDəyişdi),
+            vidjet.mətn(məzmun: "Ad: {özü.ad}")
+        ])
+    son
+son
+
+// HTML-dən `data-a-<hadisə>` açarını çıxarır
+funksiya açar(h: mətn, hadisə: mətn) -> mətn
+    qaytar h.böl("data-a-" + hadisə + "=\\"")[1].böl("\\"")[0]
+son
+
+funksiya JSON(id: mətn) -> lüğət[mətn, istənilən]
+    qaytar {"k": 0, "id": id, "dəyər": boş}
+son
+
+funksiya server() -> istənilən
+    dəyişən s = yeni veb.Server()
+    s.komponent("/", Sayğac, başlıq: "Sayğac")
+    qaytar s
+son
+"""
+
+    def _işlət(self, gövdə: str) -> list[str]:
+        return çıxış(BAŞLIQ + self.KOMPONENT + gövdə)
+
+    def test_səhifə_vidjet_üslubu_və_skript_ilə(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən c = veb.sınaq.server(server()).al("/")
+    dəyişən h = c.mətnƏt()
+    yaz(c.vəziyyət())
+    yaz("<title>Sayğac</title>" içindədir h)
+    yaz(x".v-düymə{" içindədir h)
+    yaz("/_alqor/hadise" içindədir h)
+    yaz("data-a-klik=" içindədir h)
+    yaz("Say 0" içindədir h)
+    yaz("SameSite=Strict" içindədir c.başlıq("Set-Cookie"))
+son
+""")
+        self.assertEqual(s, ["200"] + ["doğru"] * 6)
+
+    def test_klik_vəziyyəti_dəyişir(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    dəyişən h = m.al("/").mətnƏt()
+    hər i üçün 1..3 içində
+        dəyişən c = m.göndər("/_alqor/hadise", JSON(açar(h, "klik")))
+        h = c.json()["html"]
+        yaz(c.vəziyyət(), "Say {i}" içindədir h)
+    son
+son
+""")
+        self.assertEqual(s, ["200 doğru"] * 3)
+
+    def test_dəyər_hadisəyə_ötürülür(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    dəyişən h = m.al("/").mətnƏt()
+    dəyişən j = {"k": 0, "id": açar(h, "deyisdi"), "dəyər": "Aysel"}
+    dəyişən c = m.göndər("/_alqor/hadise", j)
+    yaz("Ad: Aysel" içindədir c.json()["html"])
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_sessiyalar_bir_birindən_ayrıdır(self):
+        """Bir istifadəçinin klikləri digərinin sayğacını dəyişmir."""
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən sv = server()
+    dəyişən a = veb.sınaq.server(sv)
+    dəyişən b = veb.sınaq.server(sv)
+    dəyişən ha = a.al("/").mətnƏt()
+    b.al("/")
+    a.göndər("/_alqor/hadise", JSON(açar(ha, "klik")))
+    yaz("Say 1" içindədir a.al("/").mətnƏt())
+    yaz("Say 0" içindədir b.al("/").mətnƏt())
+son
+""")
+        self.assertEqual(s, ["doğru", "doğru"])
+
+    def test_kənar_saytdan_hadisə_rədd_edilir(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    dəyişən h = m.al("/").mətnƏt()
+    dəyişən c = m.göndər("/_alqor/hadise", JSON(açar(h, "klik")),
+                         {"Origin": "https://pis-sayt.example"})
+    yaz(c.vəziyyət())
+    yaz("Say 0" içindədir m.al("/").mətnƏt())
+son
+""")
+        self.assertEqual(s, ["403", "doğru"])
+
+    def test_JSON_olmayan_gövdə_rədd_edilir(self):
+        """`text/plain` CORS ön-yoxlamasından yan keçir — qəbul edilmir."""
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    m.al("/")
+    dəyişən c = m.göndər("/_alqor/hadise", x\"\"\"{"k":0,"id":"n1h1"}\"\"\",
+                         {"Content-Type": "text/plain"})
+    yaz(c.vəziyyət())
+son
+""")
+        self.assertEqual(s, ["415"])
+
+    def test_sessiyasız_hadisə_yenidən_yükləmə_istəyir(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən c = veb.sınaq.server(server()).göndər(
+        "/_alqor/hadise", JSON("n1h1"))
+    yaz(c.json()["yenidən"])
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_olmayan_komponent_nömrəsi(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    m.al("/")
+    yaz(m.göndər("/_alqor/hadise", {"k": 7, "id": "x"}).vəziyyət())
+    yaz(m.göndər("/_alqor/hadise", {"k": "a", "id": "x"}).vəziyyət())
+son
+""")
+        self.assertEqual(s, ["404", "400"])
+
+    def test_funksiya_mənbəyi(self):
+        """`() => yeni Sinif(...)` — qurucu arqumentləri ötürmək üçün."""
+        s = self._işlət("""
+komponent Salam
+    qurucu(xassə kimə: mətn)
+    göstər()
+        qaytar vidjet.başlıq(mətn: "Salam, {özü.kimə}")
+    son
+son
+
+funksiya əsas()
+    dəyişən s = yeni veb.Server()
+    s.komponent("/a", () => yeni Salam("Aysel"))
+    s.komponent("/b", () => <Salam kimə="Rəşad" />)
+    dəyişən m = veb.sınaq.server(s)
+    yaz("Salam, Aysel" içindədir m.al("/a").mətnƏt())
+    yaz("Salam, Rəşad" içindədir m.al("/b").mətnƏt())
+son
+""")
+        self.assertEqual(s, ["doğru", "doğru"])
+
+    def test_ara_proqramlar_komponentə_də_tətbiq_olunur(self):
+        """Giriş yoxlayan ara proqram komponent səhifəsini də qoruyur."""
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən s = server()
+    s.ara(funksiya(sorğu, növbəti)
+        əgər sorğu.başlıq("X-Açar") != "gizli" onda
+            qaytar veb.xəta(401, "giriş lazımdır")
+        son
+        qaytar növbəti(sorğu)
+    son)
+    dəyişən m = veb.sınaq.server(s)
+    yaz(m.al("/").vəziyyət())
+    yaz(m.al("/", {"X-Açar": "gizli"}).vəziyyət())
+son
+""")
+        self.assertEqual(s, ["401", "200"])
+
+    def test_təkrar_yol_və_pis_yol_xətadır(self):
+        from test_icraci import xəta_tipi
+        self.assertEqual(xəta_tipi(BAŞLIQ + self.KOMPONENT + """
+funksiya əsas()
+    server().komponent("/", Sayğac)
+son
+"""), "ArqumentXətası")
+        self.assertEqual(xəta_tipi(BAŞLIQ + self.KOMPONENT + """
+funksiya əsas()
+    yeni veb.Server().komponent("səhv", Sayğac)
+son
+"""), "ArqumentXətası")
+
+    def test_sessiya_sayı_məhduddur(self):
+        """Kukisiz botlar yaddaşı doldura bilməz."""
+        import alqor.veb as V
+        köhnə = V.MAKS_KOMPONENT_SESSİYASI
+        V.MAKS_KOMPONENT_SESSİYASI = 5
+        try:
+            s = self._işlət("""
+funksiya əsas()
+    dəyişən sv = server()
+    hər i üçün 1..20 içində
+        veb.sınaq.server(sv).al("/")
+    son
+    yaz("hazır")
+son
+""")
+        finally:
+            V.MAKS_KOMPONENT_SESSİYASI = köhnə
+        self.assertEqual(s, ["hazır"])
+
+    def test_qoşma_sessiyaları_atır(self):
+        """Python səviyyəsində: hədd keçiləndə ən köhnə sessiya gedir."""
+        import alqor.veb as V
+        class Saxta(V._KomponentQoşması):
+            __slots__ = ()
+
+            def _nümunə_yarat(self, icraçı):
+                return object()
+
+        q = Saxta(0, "/", None, "A", "")
+        köhnə = V.MAKS_KOMPONENT_SESSİYASI
+        V.MAKS_KOMPONENT_SESSİYASI = 3
+        try:
+            for i in range(10):
+                q.sessiya(f"açar{i:020d}", None, yarat=True)
+        finally:
+            V.MAKS_KOMPONENT_SESSİYASI = köhnə
+        self.assertEqual(q.sessiya_sayı(), 3)
+        self.assertIsNone(q.sessiya(f"açar{0:020d}", None, yarat=False))
+        self.assertIsNotNone(
+            q.sessiya(f"açar{9:020d}", None, yarat=False))
+
+
 class NümunəSınağı(unittest.TestCase):
     def test_05_veb_serveri_işləyir(self):
         yol = (Path(__file__).parent.parent.parent / "numuneler"

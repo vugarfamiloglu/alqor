@@ -877,6 +877,8 @@ _SERVER: dict[str, Callable] = {
     "ara": lambda i, s, a: s.ara(a),
     "statik": lambda i, s, p, q, indeks="": s.statik(p, q, indeks),
     "şablonQovluğu": lambda i, s, q: s.şablonQovluğu(q),
+    "komponent": lambda i, s, y, m, başlıq="Alqor", üslub=None:
+        s.komponent(y, m, başlıq, üslub),
     "xətaİdarəedicisi": lambda i, s, f: s.xətaİdarəedicisi(f),
     "tapılmadı": lambda i, s, f: s.tapılmadı(f),
     "dinlə": lambda i, s, port=8080, host="127.0.0.1": s.dinlə(

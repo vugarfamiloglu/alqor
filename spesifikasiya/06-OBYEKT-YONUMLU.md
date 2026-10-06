@@ -139,6 +139,45 @@ sinif İnsan
 son
 ```
 
+#### 6.3.1 Qısa qurucudan sonra başqa üzvlər — girinti qaydası
+
+Qısa qurucunun (ən azı bir `xassə` parametri olan) arxasınca başqa üzv
+gələndə iki qeyri-müəyyənlik yaranır:
+
+* `göstər()` — komponentin metodu, yoxsa qurucu gövdəsində çağırış?
+* `son` — qurucunu, yoxsa sinfi bağlayır?
+
+Hər ikisini **girinti** həll edir — oxucunun gözü ilə gördüyü kimi:
+
+| Qurucudan sonrakı ilk sətir | Mənası |
+|---|---|
+| qurucudan **dərin** girintili | qurucunun gövdəsi (tam forma, `son` mütləqdir) |
+| qurucu ilə **eyni** sütunda `son` | qurucunun `son`-u — gövdə boşdur |
+| qurucu ilə **eyni** sütunda başqa söz | gövdə yoxdur; bu, sinfin növbəti üzvüdür |
+| qurucudan **solda** (`son`, fayl sonu) | gövdə yoxdur; sinif bitir |
+
+```alqor
+komponent Salam
+    qurucu(xassə kimə: mətn)     // qısa — `son` lazım deyil
+    göstər()                     // eyni sütun → komponentin metodu
+        qaytar <h1>Salam, {özü.kimə}</h1>
+    son
+son
+
+sinif Nöqtə
+    qurucu(açıq xassə x: onluq, açıq xassə y: onluq)
+    son                          // eyni sütun → qurucunun (boş) `son`-u
+    metod uzunluq() -> onluq
+        qaytar riyaziyyat.kök(özü.x ** 2 + özü.y ** 2)
+    son
+son
+```
+
+Qayda yalnız qısa qurucuya aiddir; Alqor başqa yerdə girintiyə əhəmiyyət
+vermir. `xassə` parametri olmayan qurucu həmişə tam formadır. `alqorfmt`
+girintini kanonik vəziyyətə gətirdiyi üçün format edilmiş kodda qeyri-
+müəyyənlik yaranmır.
+
 ### Dağıdıcı
 ```alqor
 sinif Fayl

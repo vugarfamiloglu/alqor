@@ -415,7 +415,8 @@ class Pəncərə:
             '<meta name="viewport" content="width=device-width,'
             'initial-scale=1">'
             f"<title>{qaç(self._başlıq)}</title>"
-            f"<style>{ÜSLUB}{self._üslub}</style></head><body>"
+            f"<style>{ÜSLUB}{_vidjet_üslubu()}{self._üslub}</style>"
+            "</head><body>"
             f"{menyu_blok}"
             f'<main id="alqor-kök">{kök}</main>'
             f"<script>{SKRIPT}</script></body></html>")
@@ -441,6 +442,16 @@ class Pəncərə:
             return {"bağlı": True}
         return {"html": self.kök_HTML(), "menyu": self.menyu_HTML(),
                 "başlıq": self._başlıq}
+
+
+def _vidjet_üslubu() -> str:
+    """
+    `vidjet` elementlərinin CSS-i. Hər pəncərəyə qoşulur: vidjet
+    istifadə edilməsə də zərəri yoxdur (sinifləri `v-` prefikslidir),
+    istifadə edildikdə isə üslubsuz düymə və sahələr görünməz.
+    """
+    from .vidjet import ÜSLUB as V
+    return V
 
 
 def _siyahıya(d: Any) -> list:
@@ -515,24 +526,123 @@ input,select,textarea{font:inherit;padding:6px 8px;
  white-space:pre-wrap;color:#c0392b}
 """
 
-SKRIPT = r"""
-(function(){
- const HADISƏLƏR=[["click","klik"],["dblclick","ikiklik"],
-  ["change","deyisdi"],["input","yazildi"],["submit","gonderildi"],
-  ["focusin","fokus"],["focusout","fokusgetdi"],
-  ["keydown","duymebasma"],["keyup","duymeburaxma"],
-  ["mouseover","sicanustde"],["mouseout","sicancixdi"],
-  ["dragstart","suruklendi"],["drop","buraxildi"],
-  ["pointerdown","basildi"],["scroll","surusdu"]];
- const DƏYƏRLİ={deyisdi:1,yazildi:1};
+# ── Brauzer nüvəsi: `pəncərə` və `veb` üçün ORTAQ ──────────────────────
+#
+# İki problem həll olunur:
+#
+# 1. YAMAQ, ƏVƏZLƏMƏ YOX. Hər hadisədən sonra kökü `innerHTML` ilə
+#    əvəzləmək yazılan sahənin fokusunu və dəyərini itirirdi — `yazıldı`
+#    hadisəli axtarış sahəsinə "rəşad" yazmaq mümkün deyildi. `yamaq()`
+#    mövcud DOM-u yeni HTML-ə uyğunlaşdırır: düyünlər yerində qalır,
+#    fokusdakı sahənin dəyərinə toxunulmur, `<details>`-in açıq/qapalı
+#    vəziyyəti istifadəçiyə məxsusdur.
+#
+# 2. NÖVBƏ, ATMA YOX. Sorğu gedərkən gələn hadisələr əvvəllər atılırdı —
+#    sürətlə yazılan hərflər serverə çatmırdı. İndi növbəyə düşürlər.
+#    Hadisə açarı (`data-a-*`) GÖNDƏRMƏ anında elementdən oxunur: yamaq
+#    düyünü saxladığı üçün element yeni nəslin açarını daşıyır. Dəyər
+#    hadisələri (`dəyişdi`, `yazıldı`) eyni element üçün birləşdirilir
+#    və dəyər də göndərmə anında oxunur — server sonuncu mətni alır.
+#
+# `alqorBağla(göndər)` — `göndər(id, dəyər)` vəd (Promise) qaytarır.
+
+def _nüvə_skripti() -> str:
+    cədvəl = _json.dumps([list(d) for d in HADİSƏLƏR.values()],
+                         separators=(",", ":"))
+    dəyərli = _json.dumps({HADİSƏLƏR[a][1]: 1 for a in sorted(DƏYƏRLİ)},
+                          separators=(",", ":"))
+    return (f"const HADISƏLƏR={cədvəl},DƏYƏRLİ={dəyərli};" + r"""
+function yamaq(kök,html){
+ const ş=document.createElement("template");ş.innerHTML=html;
+ uşaqlar(kök,ş.content);
+}
+function uyğundur(a,b){
+ if(a.nodeType!==b.nodeType)return false;
+ if(a.nodeType!==1)return true;
+ return a.tagName===b.tagName&&a.getAttribute("type")===b.getAttribute("type");
+}
+function uşaqlar(k,y){
+ const yn=Array.from(y.childNodes);
+ for(let i=0;i<yn.length;i++){
+  const a=k.childNodes[i],b=yn[i];
+  if(!a){k.appendChild(document.importNode(b,true));continue}
+  if(!uyğundur(a,b)){k.replaceChild(document.importNode(b,true),a);continue}
+  if(a.nodeType===1)element(a,b);
+  else if(a.data!==b.data)a.data=b.data;
+ }
+ while(k.childNodes.length>yn.length)k.removeChild(k.lastChild);
+}
+function element(a,b){
+ const fokus=a===document.activeElement,teq=a.tagName;
+ for(const at of Array.from(a.attributes))
+  if(!b.hasAttribute(at.name)&&!(teq==="DETAILS"&&at.name==="open"))
+   a.removeAttribute(at.name);
+ for(const at of Array.from(b.attributes))
+  if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value);
+ if(teq==="INPUT"){
+  const t=a.type;
+  if(t==="checkbox"||t==="radio")a.checked=b.hasAttribute("checked");
+  else if(t!=="file"&&!fokus){
+   const d=b.getAttribute("value")||"";if(a.value!==d)a.value=d}
+  return;
+ }
+ if(teq==="TEXTAREA"){
+  if(!fokus&&a.value!==b.value)a.value=b.value;return}
+ uşaqlar(a,b);
+ if(teq==="SELECT"&&!fokus){
+  const s=b.querySelector("option[selected]");if(s)a.value=s.value}
+}
+function alqorBağla(göndər){
+ const növbə=[];let gedir=false;
+ async function boşalt(){
+  if(gedir)return;gedir=true;
+  try{
+   while(növbə.length){
+    const h=növbə.shift();
+    if(!h.t.isConnected)continue;      // element artıq yoxdur
+    const id=h.t.getAttribute("data-a-"+h.ad);
+    if(!id)continue;
+    let d=h.d;
+    if(DƏYƏRLİ[h.ad])d=h.s.type==="checkbox"?h.s.checked:h.s.value;
+    try{await göndər(id,d)}catch(x){növbə.length=0}
+   }
+  }finally{gedir=false}
+ }
+ for(const [DOM,ad] of HADISƏLƏR){
+  document.addEventListener(DOM,function(h){
+   const t=h.target.closest?h.target.closest("[data-a-"+ad+"]"):null;
+   if(!t)return;
+   if(DOM==="click"||DOM==="submit")h.preventDefault();
+   const s=h.target;
+   if(DƏYƏRLİ[ad]){
+    // Eyni sahə üçün gözləyən hadisə varsa, o, son dəyəri götürəcək
+    if(növbə.some(x=>x.t===t&&x.ad===ad))return;
+    növbə.push({t:t,ad:ad,s:s});
+   }else{
+    let d;
+    if(DOM==="keydown"||DOM==="keyup")d=h.key;
+    else{
+     // Bir idarəedici bir çox düyməyə bağlı ola bilər (nişanlar,
+     // səhifələmə) — hansının basıldığı `value` ilə bilinir
+     const v=t.getAttribute("value");if(v!==null)d=v}
+    növbə.push({t:t,ad:ad,s:s,d:d});
+   }
+   boşalt();
+  },true);
+ }
+}
+""")
+
+
+NÜVƏ_SKRİPTİ = _nüvə_skripti()
+
+SKRIPT = "(function(){" + NÜVƏ_SKRİPTİ + r"""
  const kök=document.getElementById("alqor-kök");
  const menyu=document.getElementById("alqor-menyu");
- let gedir=false, bağlı=false;
+ let bağlı=false;
 
  async function göndər(id,dəyər){
   if(bağlı) return;
-  if(gedir) return;                 // bir anda bir hadisə
-  gedir=true;
   try{
    const c=await fetch("/_alqor/hadise",{method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -542,33 +652,13 @@ SKRIPT = r"""
    if(n.bağlı){bağlı=true;window.close();
     document.body.innerHTML='<p style="padding:16px">'+
      "Pəncərə bağlandı.</p>";return}
-   if(n.html!==undefined) kök.innerHTML=n.html;
+   if(n.html!==undefined) yamaq(kök,n.html);
    if(n.menyu!==undefined&&menyu){menyu.innerHTML=n.menyu;
     menyu.hidden=!n.menyu}
    if(n.başlıq) document.title=n.başlıq;
   }catch(x){ /* server dayandı — pəncərə bağlanır */ }
-  finally{gedir=false}
  }
-
- for(const [DOM,ad] of HADISƏLƏR){
-  document.addEventListener(DOM,function(h){
-   const t=h.target.closest?h.target.closest("[data-a-"+ad+"]"):null;
-   if(!t) return;
-   if(DOM==="click"||DOM==="submit") h.preventDefault();
-   let d;
-   if(DƏYƏRLİ[ad]){
-    const s=h.target;
-    d=s.type==="checkbox"?s.checked:s.value;
-   } else if(DOM==="keydown"||DOM==="keyup"){ d=h.key }
-   else {
-    // Bir idarəedici bir çox düyməyə bağlı ola bilər (nişanlar,
-    // səhifələmə) — hansının basıldığı `value` ilə bilinir
-    const v=t.getAttribute("value");
-    if(v!==null) d=v;
-   }
-   göndər(t.getAttribute("data-a-"+ad),d);
-  },true);
- }
+ alqorBağla(göndər);
 
  // Menyu qısayolları
  document.addEventListener("keydown",function(h){
@@ -577,7 +667,7 @@ SKRIPT = r"""
   if(h.metaKey)hissələr.push("meta");
   if(h.altKey)hissələr.push("alt");
   if(h.shiftKey)hissələr.push("shift");
-  const a=h.key.length===1?h.key.toLowerCase():h.key.toLowerCase();
+  const a=h.key.toLowerCase();
   if(["control","meta","alt","shift"].includes(a)) return;
   hissələr.push(a);
   const naxış=hissələr.join("+");
@@ -820,6 +910,12 @@ def _İdarəedici_yarat(t: Tətbiq):
 
         def do_GET(self) -> None:
             yol = self._yol()
+            # GET-də `Origin` olmur; yalnız `Host` yoxlanılır
+            host = (self.headers.get("Host") or "").strip().lower()
+            if host not in (f"127.0.0.1:{t._port}",
+                            f"localhost:{t._port}"):
+                self._göndər(b"forbidden", "text/plain", 403)
+                return
             if yol in ("/", "/index.html"):
                 p = self._pəncərə()
                 if p is None:
@@ -839,6 +935,9 @@ def _İdarəedici_yarat(t: Tətbiq):
 
         def do_POST(self) -> None:
             yol = self._yol()
+            if kənar_sorğudur(self.headers, t._port):
+                self._göndər(b"forbidden", "text/plain", 403)
+                return
             p = self._pəncərə()
             if p is None:
                 self._JSON({"bağlı": True})
@@ -871,6 +970,38 @@ def _İdarəedici_yarat(t: Tətbiq):
             self._JSON(nəticə)
 
     return İdarəedici
+
+
+def kənar_sorğudur(başlıqlar: Any, port: int | None = None) -> bool:
+    """
+    Sorğu başqa saytdan gəlirmi? Hadisə son nöqtələri bunu yoxlayır.
+
+    Yerli server `127.0.0.1`-də dinləyir, amma istifadəçinin brauzerində
+    açıq olan İSTƏNİLƏN sayt ora sorğu göndərə bilər. `text/plain`
+    gövdəli POST "sadə sorğu"dur — CORS ön-yoxlaması olmadan çatır və
+    "Sil" düyməsinin idarəedicisini işə sala bilərdi. Ona görə:
+
+    * `Origin` başlığı varsa, `Host` ilə eyni mənbəni göstərməlidir.
+      Brauzerlər POST sorğularında `Origin`-i həmişə göndərir və onu
+      skript dəyişə bilmir.
+    * `port` verilibsə (desktop), `Host` yalnız `127.0.0.1:port` və ya
+      `localhost:port` ola bilər — DNS rebinding hücumuna qarşı: kənar
+      domen bizim IP-yə yönəldilsə də `Host` başlığı o domen olaraq
+      qalır.
+
+    `Origin` olmayan sorğular (urllib, curl, sınaqlar) brauzerdən
+    gəlmir — onlar CSRF vektoru deyil.
+    """
+    host = (başlıqlar.get("Host") or "").strip().lower()
+    if port is not None:
+        if host not in (f"127.0.0.1:{port}", f"localhost:{port}"):
+            return True
+    mənbə = (başlıqlar.get("Origin") or "").strip().lower()
+    if not mənbə:
+        return False
+    if mənbə == "null":
+        return True
+    return mənbə not in (f"http://{host}", f"https://{host}")
 
 
 def _xəta_mətni(x: BaseException) -> str:

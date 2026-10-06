@@ -104,6 +104,9 @@ class Cavab:
         """
         if dəyər is _YOXDUR:
             açar = str(ad).lower()
+            if açar == "set-cookie" and self.kukilər:
+                # Kukilər ayrıca saxlanılır (hər biri ayrı başlıqdır)
+                return ", ".join(self.kukilər)
             for k, v in self.başlıqlar.items():
                 if k.lower() == açar:
                     return v
@@ -462,6 +465,7 @@ class Server:
         self._yeni_sessiyalar: dict[int, str] = {}
         self._http: ThreadingHTTPServer | None = None
         self._inkişaf = True
+        self._komponentlər: list[_KomponentQoşması] = []
 
     # ── Marşrutlar ────────────────────────────────────────────────────
 
@@ -496,6 +500,35 @@ class Server:
 
     def şablonQovluğu(self, qovluq: str) -> "Server":
         şablon_qovluğunu_təyin_et(self._icraçı, qovluq)
+        return self
+
+    def komponent(self, yol: str, mənbə: Any, başlıq: Any = "Alqor",
+                  üslub: Any = None) -> "Server":
+        """
+        Komponenti `yol`-a qoşur — vidjet hadisələri vebdə də işləyir.
+
+            s.komponent("/", Panel, başlıq: "Heyət paneli")
+            s.komponent("/say", () => yeni Sayğac(10))
+
+        `mənbə` komponent sinfi və ya nümunə qaytaran funksiyadır. Hər
+        brauzer sessiyası öz nümunəsini alır: bir istifadəçinin
+        `vəziyyət` dəyişikliyi digərinə görünmür.
+        """
+        yol = str(yol)
+        if not yol.startswith("/"):
+            raise AlqorXəta(
+                "ArqumentXətası",
+                f"komponent yolu `/` ilə başlamalıdır: `{yol}`",
+                kod="ALQ-R013")
+        if any(q.yol == yol for q in self._komponentlər):
+            raise AlqorXəta(
+                "ArqumentXətası",
+                f"`{yol}` yoluna artıq komponent qoşulub",
+                kod="ALQ-R013")
+        self._komponentlər.append(_KomponentQoşması(
+            len(self._komponentlər), yol, mənbə,
+            mətnə(başlıq, self._icraçı),
+            mətnə(üslub, self._icraçı) if üslub is not None else ""))
         return self
 
     def xətaİdarəedicisi(self, f: Any) -> "Server":
@@ -545,7 +578,13 @@ class Server:
         if statik is not None:
             return statik
 
-        # 2. Marşrutlar
+        # 2. Komponentlər
+        if self._komponentlər:
+            k = self._komponent_cavabı(sorğu)
+            if k is not None:
+                return k
+
+        # 3. Marşrutlar
         yol_var = False
         for m in self._marşrutlar:
             parametrlər = m.uyğundur(sorğu._metod, sorğu._yol)
@@ -564,11 +603,11 @@ class Server:
                 self._icraçı._çağır(m.idarəedici, [sorğu], {}, None),
                 self._icraçı)
 
-        # 3. Metod uyğun gəlmir
+        # 4. Metod uyğun gəlmir
         if yol_var:
             return Cavab("405 Metod icazəli deyil".encode("utf-8"), 405)
 
-        # 4. Tapılmadı
+        # 5. Tapılmadı
         if self._tapılmadı is not None:
             return _cavaba_çevir(
                 self._icraçı._çağır(self._tapılmadı, [sorğu], {}, None),
@@ -595,6 +634,84 @@ class Server:
             "</body></html>")
         return Cavab(html.encode("utf-8"), 404,
                      "text/html; charset=utf-8")
+
+    # ── Komponentlər ──────────────────────────────────────────────────
+
+    def _komponent_cavabı(self, sorğu: Sorğu) -> Cavab | None:
+        if sorğu._metod == "POST" and sorğu._yol == HADİSƏ_YOLU:
+            return self._komponent_hadisəsi(sorğu)
+        if sorğu._metod not in ("GET", "HEAD"):
+            return None
+        for q in self._komponentlər:
+            if q.yol == sorğu._yol:
+                return self._komponent_səhifəsi(q, sorğu)
+        return None
+
+    def _komponent_səhifəsi(self, q: "_KomponentQoşması",
+                            sorğu: Sorğu) -> Cavab:
+        from .pencere import qaç
+        from .vidjet import ƏSAS_ÜSLUB, ÜSLUB as VİDJET_ÜSLUBU
+
+        açar = sorğu.kuki(KOMPONENT_KUKİSİ)
+        yeni_açar = None
+        if not açar or not KOMPONENT_AÇARI.fullmatch(açar):
+            açar = yeni_açar = secrets.token_urlsafe(24)
+        ss = q.sessiya(açar, self._icraçı, yarat=True)
+        assert ss is not None
+        with ss.qıfıl:
+            kök = ss.göstər(self._icraçı)
+        html = (
+            "<!DOCTYPE html>\n"
+            '<html lang="az"><head><meta charset="UTF-8">'
+            '<meta name="viewport" content="width=device-width,'
+            'initial-scale=1">'
+            f"<title>{qaç(q.başlıq)}</title>"
+            f"<style>{ƏSAS_ÜSLUB}{VİDJET_ÜSLUBU}{q.üslub}</style>"
+            "</head><body>"
+            f'<main id="alqor-kök" class="v-gövdə" '
+            f'data-a-komponent="{q.nömrə}">{kök}</main>'
+            f"<script>{VEB_SKRİPTİ}</script></body></html>")
+        c = Cavab(html.encode("utf-8"), 200, "text/html; charset=utf-8")
+        c.başlıq("Cache-Control", "no-store")
+        if yeni_açar:
+            # `Strict`: kuki başqa saytdan başlanan sorğuya qoşulmur
+            c.kuki(KOMPONENT_KUKİSİ, yeni_açar, eyniSayt="Strict")
+        return c
+
+    def _komponent_hadisəsi(self, sorğu: Sorğu) -> Cavab:
+        from .pencere import kənar_sorğudur
+
+        başlıqlar = {"Host": sorğu.başlıq("host") or "",
+                     "Origin": sorğu.başlıq("origin") or ""}
+        if kənar_sorğudur(başlıqlar):
+            return Cavab(b"403 Forbidden", 403)
+        tip = (sorğu.başlıq("content-type") or "").lower()
+        if not tip.startswith("application/json"):
+            # JSON tələbi kənar saytı CORS ön-yoxlamasına məcbur edir
+            return Cavab(b"415 Unsupported Media Type", 415)
+        try:
+            v = _json.loads(sorğu._gövdə or b"{}")
+            nömrə = int(v.get("k"))
+            açar_id = str(v.get("id") or "")
+        except (ValueError, TypeError, AttributeError):
+            return Cavab(b"400 Bad Request", 400)
+        if not 0 <= nömrə < len(self._komponentlər):
+            return Cavab(b"404 Not Found", 404)
+        q = self._komponentlər[nömrə]
+        açar = sorğu.kuki(KOMPONENT_KUKİSİ)
+        ss = (q.sessiya(açar, self._icraçı, yarat=False)
+              if açar and KOMPONENT_AÇARI.fullmatch(açar) else None)
+        if ss is None:
+            # Sessiya köhnəlib (server yenidən başladı, vaxtı bitdi) —
+            # brauzer səhifəni yenidən yükləyir
+            return _json_cavab({"yenidən": True}, self._icraçı)
+        with ss.qıfıl:
+            nəticə = ss.hadisəni_işlət(self._icraçı, açar_id,
+                                       v.get("dəyər"))
+        c = Cavab(_json.dumps(nəticə, ensure_ascii=False).encode("utf-8"),
+                  200, "application/json; charset=utf-8")
+        c.başlıq("Cache-Control", "no-store")
+        return c
 
     def _statik_cavab(self, sorğu: Sorğu) -> Cavab | None:
         if sorğu._metod not in ("GET", "HEAD"):
@@ -774,6 +891,154 @@ class Server:
 
     def __repr__(self) -> str:
         return f"<server {len(self._marşrutlar)} marşrut>"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Komponent qoşması — vidjet hadisələri vebdə
+# ═══════════════════════════════════════════════════════════════════════
+
+KOMPONENT_KUKİSİ = "alqor_komponent"
+KOMPONENT_AÇARI = re.compile(r"[A-Za-z0-9_-]{16,64}")
+HADİSƏ_YOLU = "/_alqor/hadise"
+# Bir qoşma üçün yaddaşda saxlanılan sessiya sayı və ömrü. Hədd
+# keçiləndə ən köhnə sessiya atılır — kukisiz botlar yaddaşı doldura
+# bilməsin.
+MAKS_KOMPONENT_SESSİYASI = 1000
+KOMPONENT_ÖMRÜ = 2 * 3600                # saniyə, son fəaliyyətdən
+
+
+class _KomponentSessiyası:
+    """Bir brauzer sessiyasının komponent nümunəsi və hadisə reyestri."""
+
+    __slots__ = ("nümunə", "reyestr", "qıfıl", "son_istifadə")
+
+    def __init__(self, nümunə: Nümunə):
+        from .pencere import Reyestr
+        self.nümunə = nümunə
+        self.reyestr = Reyestr()
+        # Bir sessiyanın hadisələri ardıcıl işləyir: iki sürətli klik
+        # `vəziyyət`-i yarışa salmasın
+        self.qıfıl = threading.Lock()
+        self.son_istifadə = time.monotonic()
+
+    def göstər(self, icraçı) -> str:
+        from .pencere import HTML_ə
+        n = self.nümunə
+        göstər = n.sinif.metod_tap("göstər")
+        if göstər is None:
+            raise AlqorXəta(
+                "TipXətası",
+                f"`{n.sinif.ad}` komponentində `göstər()` metodu yoxdur",
+                kod="ALQ-T053")
+        n._keş.clear()
+        ağac = icraçı.funksiya_çağır(göstər.bağla(n), [], {}, None)
+        self.reyestr.sıfırla()
+        return HTML_ə(ağac, self.reyestr, icraçı)
+
+    def hadisəni_işlət(self, icraçı, açar: str, dəyər: Any) -> dict:
+        self.son_istifadə = time.monotonic()
+        idarəedici = self.reyestr.al(açar)
+        if idarəedici is None:
+            # Köhnə nəsildən gələn hadisə — yalnız HTML yenilənir
+            return {"html": self.göstər(icraçı), "köhnə": True}
+        arqumentlər = [] if dəyər is None else [dəyər]
+        try:
+            icraçı._çağır(idarəedici, arqumentlər, {}, None)
+        except TypeError:
+            icraçı._çağır(idarəedici, [], {}, None)
+        return {"html": self.göstər(icraçı)}
+
+
+class _KomponentQoşması:
+    """`s.komponent(yol, mənbə)` — bir yol, çox sessiya."""
+
+    __slots__ = ("nömrə", "yol", "mənbə", "başlıq", "üslub",
+                 "_sessiyalar", "_qıfıl")
+
+    def __init__(self, nömrə: int, yol: str, mənbə: Any, başlıq: str,
+                 üslub: str):
+        self.nömrə = nömrə
+        self.yol = yol
+        self.mənbə = mənbə
+        self.başlıq = başlıq
+        self.üslub = üslub
+        self._sessiyalar: dict[str, _KomponentSessiyası] = {}
+        self._qıfıl = threading.Lock()
+
+    def _nümunə_yarat(self, icraçı) -> Nümunə:
+        from .deyerler import Sinif
+        m = self.mənbə
+        if isinstance(m, Sinif):
+            n = icraçı.nümunə_yarat(m, None, [], {}, None)
+        else:
+            n = icraçı._çağır(m, [], {}, None)
+            if isinstance(n, Element) and n.komponent is not None:
+                n = n.komponent                 # `() => <Panel />`
+        if not isinstance(n, Nümunə) or \
+                n.sinif.metod_tap("göstər") is None:
+            raise AlqorXəta(
+                "TipXətası",
+                f"`{self.yol}` üçün komponent gözlənilirdi — "
+                "`göstər()` metodu olan sinif və ya onun nümunəsini "
+                "qaytaran funksiya verin", kod="ALQ-T053")
+        return n
+
+    def sessiya(self, açar: str, icraçı,
+                yarat: bool) -> _KomponentSessiyası | None:
+        indi = time.monotonic()
+        with self._qıfıl:
+            ss = self._sessiyalar.get(açar)
+            if ss is not None and indi - ss.son_istifadə > KOMPONENT_ÖMRÜ:
+                del self._sessiyalar[açar]
+                ss = None
+            if ss is not None:
+                ss.son_istifadə = indi
+                # Lüğətin sonuna keçir — ən yeni istifadə edilən
+                self._sessiyalar[açar] = self._sessiyalar.pop(açar)
+                return ss
+            if not yarat:
+                return None
+        # Nümunə qıfılsız yaradılır: istifadəçi kodu uzun işləyə bilər
+        ss = _KomponentSessiyası(self._nümunə_yarat(icraçı))
+        with self._qıfıl:
+            while len(self._sessiyalar) >= MAKS_KOMPONENT_SESSİYASI:
+                self._sessiyalar.pop(next(iter(self._sessiyalar)))
+            self._sessiyalar[açar] = ss
+        return ss
+
+    def sessiya_sayı(self) -> int:
+        return len(self._sessiyalar)
+
+
+def _veb_skripti() -> str:
+    """
+    Brauzer tərəfi: `pəncərə` modulunun ortaq nüvəsi (DOM yamağı +
+    hadisə növbəsi) üstündə. Fərq yalnız göndərmədədir: komponent
+    nömrəsi gövdəyə qoşulur, köhnəlmiş sessiyada səhifə yenidən
+    yüklənir.
+    """
+    from .pencere import NÜVƏ_SKRİPTİ
+    return (
+        "(function(){" + NÜVƏ_SKRİPTİ +
+        'const kök=document.getElementById("alqor-kök");'
+        "const k=+kök.dataset.aKomponent;"
+        "async function göndər(id,d){"
+        f' const c=await fetch("{HADİSƏ_YOLU}",{{method:"POST",'
+        '  credentials:"same-origin",'
+        '  headers:{"Content-Type":"application/json"},'
+        "  body:JSON.stringify({k:k,id:id,dəyər:d===undefined?null:d})});"
+        " if(!c.ok){kök.insertAdjacentHTML(\"afterbegin\","
+        "  '<p class=\"v-xəbərdarlıq v-xəbərdarlıq--təhlükə\">'+"
+        "  'Server xətası: '+c.status+'</p>');return}"
+        " const n=await c.json();"
+        " if(n.yenidən){location.reload();return}"
+        " if(n.html!==undefined)yamaq(kök,n.html);"
+        "}"
+        "alqorBağla(göndər);"
+        "})();")
+
+
+VEB_SKRİPTİ = _veb_skripti()
 
 
 def _qaç(m: str) -> str:
