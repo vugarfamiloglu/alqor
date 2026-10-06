@@ -96,6 +96,123 @@ def _token_çap(t, ətraflı: bool, girinti: int) -> None:
                     _token_çap(alt, ətraflı, girinti + 8)
 
 
+def _rejim_tap(arqumentlər: list[str]) -> str:
+    """
+    Tip rejimi: əmr sətri → `layihe.alqor` → standart (`normal`).
+    """
+    for bayraq in ("--rejim", "--rejim=", "-r"):
+        for i, a in enumerate(arqumentlər):
+            if a == bayraq and i + 1 < len(arqumentlər):
+                return arqumentlər[i + 1]
+            if a.startswith("--rejim="):
+                return a.split("=", 1)[1]
+
+    layihə = Path("layihe.alqor")
+    if not layihə.exists():
+        layihə = Path("..") / "layihe.alqor"
+    if layihə.exists():
+        try:
+            mətn = layihə.read_text(encoding="utf-8")
+        except OSError:
+            return "normal"
+        tip_bölməsi = False
+        for sətir in mətn.splitlines():
+            s = sətir.strip()
+            if s.startswith("["):
+                tip_bölməsi = s == "[tip]"
+                continue
+            if tip_bölməsi and s.startswith("rejim"):
+                hissə = s.split("=", 1)
+                if len(hissə) == 2:
+                    return hissə[1].strip().strip('"\'')
+    return "normal"
+
+
+def _tipləri_yoxla(ağac, mənbə, rejim: str):
+    """Tip yoxlayıcısını işlədir, diaqnostika toplayıcısını qaytarır."""
+    from alqor.tipyoxlayici import tipləri_yoxla
+    t = XətaToplayıcı()
+    try:
+        tipləri_yoxla(ağac, t, rejim)
+    except Exception as x:                      # noqa: BLE001
+        # Tip yoxlayıcısının öz xətası proqramı dayandırmamalıdır
+        print(f"⚠ tip yoxlayıcısı daxili xəta verdi: "
+              f"{type(x).__name__}: {x}", file=sys.stderr)
+    return t
+
+
+def əmr_tip(arqumentlər: list[str]) -> int:
+    """Yalnız tip yoxlaması."""
+    from alqor.lekser import Lekser
+    from alqor.parser import Parser
+
+    if not arqumentlər:
+        çap_xəta("`tip` əmri üçün fayl adı lazımdır")
+        return 3
+
+    rejim = _rejim_tap(arqumentlər)
+    yollar = _faylları_topla(arqumentlər)
+    if not yollar:
+        çap_xəta("yoxlanacaq fayl tapılmadı")
+        return 4
+
+    ümumi_xəta = ümumi_xəbərdarlıq = 0
+    for yol in yollar:
+        x = XətaToplayıcı()
+        s = Mənbə.fayldan(yol, x)
+        if s is None:
+            x.çap()
+            ümumi_xəta += 1
+            continue
+        ağac = Parser(Lekser(s, x).leksə(), s, x).ayır()
+        if not x.uğurludur():
+            print(f"── {yol} " + "─" * max(0, 52 - len(yol)))
+            x.çap()
+            ümumi_xəta += 1
+            continue
+        t = _tipləri_yoxla(ağac, s, rejim)
+        if t.siyahı:
+            print(f"── {yol} " + "─" * max(0, 52 - len(yol)))
+            t.çap()
+            print()
+        ümumi_xəta += len(t.xətalar)
+        ümumi_xəbərdarlıq += len(t.xəbərdarlıqlar)
+
+    print(f"Rejim: {rejim}  ·  {len(yollar)} fayl")
+    if ümumi_xəta == 0:
+        print(f"✓ tip xətası yoxdur"
+              + (f" ({ümumi_xəbərdarlıq} xəbərdarlıq)"
+                 if ümumi_xəbərdarlıq else ""))
+        return 0
+    print(f"✖ {ümumi_xəta} tip xətası, {ümumi_xəbərdarlıq} xəbərdarlıq")
+    return 2
+
+
+#  Dəyər qəbul edən bayraqlar — onların dəyəri fayl adı sayılmamalıdır
+DƏYƏRLİ_BAYRAQLAR = ("--rejim", "-r", "--hədəf", "--çıxış", "--format")
+
+
+def _faylları_topla(arqumentlər: list[str]) -> list[str]:
+    yollar: list[str] = []
+    atla = False
+    for a in arqumentlər:
+        if atla:
+            atla = False
+            continue
+        if a in DƏYƏRLİ_BAYRAQLAR:
+            atla = True
+            continue
+        if a.startswith("-"):
+            continue
+        p = Path(a)
+        if p.is_dir():
+            yollar.extend(str(q) for q in sorted(p.rglob("*.alqor")))
+            yollar.extend(str(q) for q in sorted(p.rglob("*.alq")))
+        else:
+            yollar.append(a)
+    return yollar
+
+
 def əmr_işlət(arqumentlər: list[str]) -> int:
     """Proqramı leksə → ayır → icra et."""
     from alqor.deyerler import AlqorXəta
@@ -128,6 +245,15 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
         return 2
     if x.xəbərdarlıqlar:
         x.çap()
+
+    # Tədrici tiplər: `işlət` standart olaraq tip yoxlamır.
+    # `--tip` bayrağı ilə yoxlanır, xəta varsa icra dayandırılır.
+    if "--tip" in arqumentlər or "--tip-yoxla" in arqumentlər:
+        t = _tipləri_yoxla(ağac, s, _rejim_tap(arqumentlər))
+        if t.siyahı:
+            t.çap()
+        if not t.uğurludur():
+            return 2
 
     sys.stdout.flush()
     icraçı = İcraçı()
@@ -166,26 +292,23 @@ def əmr_yoxla(arqumentlər: list[str]) -> int:
         return 3
 
     ümumi_xəta = 0
-    yollar: list[str] = []
-    for a in arqumentlər:
-        if a.startswith("-"):
-            continue
-        p = Path(a)
-        if p.is_dir():
-            yollar.extend(str(q) for q in sorted(p.rglob("*.alqor")))
-            yollar.extend(str(q) for q in sorted(p.rglob("*.alq")))
-        else:
-            yollar.append(a)
+    yollar = _faylları_topla(arqumentlər)
 
     if not yollar:
         çap_xəta("yoxlanacaq fayl tapılmadı")
         return 4
 
+    rejim = _rejim_tap(arqumentlər)
     for yol in yollar:
         x = XətaToplayıcı()
         s = Mənbə.fayldan(yol, x)
+        ağac = None
         if s is not None:
-            Parser(Lekser(s, x).leksə(), s, x).ayır()
+            ağac = Parser(Lekser(s, x).leksə(), s, x).ayır()
+        # Leksik/sintaktik xəta yoxdursa, tipləri də yoxlayırıq
+        if ağac is not None and x.uğurludur():
+            for d in _tipləri_yoxla(ağac, s, rejim).siyahı:
+                x.əlavə(d)
         if x.siyahı:
             print(f"── {yol} " + "─" * max(0, 56 - len(yol)))
             x.çap()
@@ -259,11 +382,14 @@ def əmr_kömək(_: list[str]) -> int:
 
 ƏMRLƏR:
     işlət <fayl>         Proqramı icra edir
+                         --tip           icradan əvvəl tipləri yoxlayır
                          -- arq1 arq2    proqrama arqument ötürür
     tokenlər <fayl>      Faylı leksə edib tokenləri göstərir
                          --ətraflı / -e  əlavə məlumat
     söhbət               İnteraktiv rejim (REPL)
-    yoxla <fayl|qovluq>  Leksik və sintaktik xətaları yoxlayır
+    yoxla <fayl|qovluq>  Leksik, sintaktik VƏ TİP xətalarını yoxlayır
+    tip <fayl|qovluq>    Yalnız tip yoxlaması
+                         --rejim sərbəst|normal|sərt
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
     sırala <söz>...      Azərbaycan əlifba sırası ilə sıralayır
     versiya              Versiya məlumatı
@@ -276,6 +402,11 @@ NÜMUNƏLƏR:
     python alqorc.py yoxla ../numuneler
     python alqorc.py hərf "ışıq İmran"
     python alqorc.py sırala zəfər ağac çay ışıq ilk
+
+TİP REJİMLƏRİ (`layihe.alqor` → [tip] rejim, və ya --rejim):
+    sərbəst    yalnız açıq yazılmış tiplər yoxlanılır
+    normal     çıxarma + yoxlama (standart)
+    sərt       açıq funksiya imzaları məcburi, naməlum üzvlər xətadır
 
 MÜHİT DƏYİŞƏNLƏRİ:
     ALQOR_RENG=həmişə|heçvaxt|avto     rəngli çıxış
@@ -295,6 +426,7 @@ VƏZİYYƏT:
     "tokenlər": əmr_tokenlər, "tokenler": əmr_tokenlər,
     "yoxla": əmr_yoxla,
     "söhbət": əmr_söhbət, "sohbet": əmr_söhbət, "repl": əmr_söhbət,
+    "tip": əmr_tip, "tiplər": əmr_tip, "tipler": əmr_tip,
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
     "versiya": əmr_versiya, "--versiya": əmr_versiya, "-v": əmr_versiya,

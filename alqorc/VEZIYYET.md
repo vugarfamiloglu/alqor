@@ -2,11 +2,14 @@
 
 > Etalon implementasiya, **Python 3.12**. Son yenilənmə: 5 oktyabr 2026
 
-**Mərhələ 1–4 BİTDİ** (lekser, parser, interpretator, standart kitabxana)
-**+ `alqor söhbət` (REPL) tam hazırdır.**
+**Mərhələ 1–5 BİTDİ** — dil nüvəsi tamamdır:
+lekser · parser · interpretator · standart kitabxana · REPL ·
+**JSX** · **tənbəl generatorlar** · **asinxron icra** ·
+**statik tip yoxlayıcı**
 
-**304 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır, 5-i icra olunur
-(05 veb modulunu, 06 JSX-i gözləyir).
+**456 sınaq keçir.** 7 nümunə proqramın hamısı ayrılır və tip
+yoxlamasından keçir; 5-i icra olunur (05 `veb`, 06 `pəncərə` modulunu
+gözləyir).
 
 ---
 
@@ -28,14 +31,20 @@ alqorc/
 │   ├── parser.py         rekursiv enmə + prioritet dırmaşması
 │   ├── deyerler.py       icra dəyərləri, Mühit, Sinif, Nümunə, Sadalama
 │   ├── icraci.py         ağac gəzən interpretator
-│   ├── kitabxana.py      standart kitabxana (13 modul, ~250 funksiya)
-│   └── sohbet.py         interaktiv rejim (REPL) — 18 meta-əmr
+│   ├── kitabxana.py      standart kitabxana (15 modul, ~280 funksiya)
+│   ├── sohbet.py         interaktiv rejim (REPL) — 18 meta-əmr
+│   ├── parser_jsx.py     JSX oxuyucusu
+│   ├── korutin.py        Korutin, Gələcək, LəğvNişanı
+│   ├── tipler.py         tip təsviri və uyğunluq qaydaları
+│   └── tipyoxlayici.py   statik tip yoxlayıcı
 └── sinaq/
-    ├── test_elifba.py    (31)
-    ├── test_menbe.py     (34)
-    ├── test_lekser.py    (70)
-    ├── test_icraci.py    (124)  parser + interpretator
-    └── test_sohbet.py    (45)   REPL
+    ├── test_elifba.py        (31)
+    ├── test_menbe.py         (34)
+    ├── test_lekser.py        (70)
+    ├── test_icraci.py        (150)  parser + interpretator + JSX
+    ├── test_sohbet.py        (45)   REPL
+    ├── test_korutin.py       (43)   generatorlar + asinxron
+    └── test_tipyoxlayici.py  (83)   tip yoxlayıcı
 ```
 
 ## İşə salmaq
@@ -44,7 +53,9 @@ alqorc/
 cd alqorc
 
 python alqorc.py söhbət                          # interaktiv rejim
-python sina.py --nümunələr                       # 304 sınaq + nümunələr
+python alqorc.py tip ../numuneler                # tip yoxlaması
+python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
+python sina.py --nümunələr                       # 456 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -84,8 +95,10 @@ python alqorc.py hərf "ışıq İmran"
 | `generator` / `ver` | ⚠ sadələşdirilmiş (tənbəl deyil) |
 | `asinxron` / `gözlə` | ⚠ sinxron icra olunur |
 | **REPL** (`söhbət`) — çoxsətirli, 18 meta-əmr, tarixçə, tamamlama | ✅ |
-| JSX interfeys sintaksisi | ✖ Mərhələ 2b |
-| Tip yoxlayıcı (statik) | ✖ Mərhələ 5 |
+| **JSX** — atributlar, komponentlər, parça, HTML qaçışı | ✅ |
+| **Tənbəl generatorlar** — sonsuz generatorlar işləyir | ✅ |
+| **Asinxron** — `Gələcək`, `paralel`, `sap`, `LəğvNişanı` | ✅ |
+| **Statik tip yoxlayıcı** — 3 rejim, axın daralması, 25 xəta kodu | ✅ |
 
 ---
 
@@ -146,43 +159,78 @@ kiçiyə("I")    → "ı"         (Python standartı: "i"     ✖)
 
 ---
 
-## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
+## Tip yoxlayıcı — dizayn qərarları
 
-### 1. JSX mətn məzmunu kontekstsiz leksə oluna bilmir ❗
+**Əsas prinsip:** yanlış xəbərdarlıq verən yoxlayıcı heç yoxlayıcıdan
+pisdir. Ona görə `istənilən` və naməlum tiplər bütün yoxlamaları keçir —
+yalnız ƏMİN OLDUĞUMUZ halda xəta bildirilir.
+
+7 nümunə proqramda **0 yanlış xəbərdarlıq** (yalnız `veb`/`pəncərə`
+modullarının yoxluğu bildirilir — bu, doğrudur).
+
+| Rejim | Davranış |
+|---|---|
+| `sərbəst` | Yalnız açıq yazılmış tiplər yoxlanılır |
+| `normal` | Çıxarma + yoxlama (standart) |
+| `sərt` | Açıq funksiya imzaları məcburi, naməlum üzvlər xətadır |
+
+Rejim `layihe.alqor` → `[tip] rejim`, və ya `--rejim` bayrağı ilə.
+
+**Tutulan 25 xəta kodu:** ALQ-T001 (tip uyğunsuzluğu), T002 (naməlum
+tip), T003/T004 (arqument sayı/tipi), T005 (qaytarma), T006 (naməlum
+üzv + ASCII təklifi), T007 (şərt `məntiq` olmalıdır), T008 (operator),
+T009 (indeks/iterasiya), T012 (`boş` mənimsətmə), T013 (yoxlanmamış
+ixtiyari), T014 (çevrilmə), T015 (lazımsız yoxlama), T020 (sabit),
+T022 (təyin edilməmiş + oxşar ad təklifi), T023 (təkrar elan),
+T024 (istifadəsiz), T025 (çatılmayan kod), T026 (kölgələmə),
+T031 (`seç` tamlığı), T040 (qaytarma yolu), T052 (mücərrəd),
+T053 (komponent), T080 (sərt rejim), P008/P009 (dövr), P013 (`gözlə`),
+M001/M002 (modul).
+
+**Axın əsaslı daralma:**
 
 ```alqor
-<button klik={özü.azalt}>-</button>
+əgər x tipidir mətn onda
+    yaz(x.böyüyə())           // x burada `mətn`
+
+əgər a boşdur onda qaytar son
+yaz(a.böyüyə())               // a burada ixtiyari deyil
+
+varsa d = tap() onda
+    yaz(d.böyüyə())           // d burada açılmış
 ```
-JSX mətn uşağında istənilən simvol qanunidir, amma lekser kontekstsizdir.
 
-**Həll yolu (Mərhələ 2b):** parser `<` görəndə mənbə mətnini birbaşa
-oxuyur (onun `Mənbə` obyektinə girişi var), JSX elementini xam skan edir,
-daxildəki `{ifadə}` üçün həmin ofsetdən yeni `Lekser` qurur, sonra
-token indeksini elementin sonuna sürüşdürür. Lekser rejimlərinə ehtiyac
-qalmır.
+`deyil (...)`, `və`, `və ya`, `== boş`, `!= boş`, və **çıxan budaqdan
+sonra əks daralma** dəstəklənir.
 
-### 2. `hər x üçün siyahı içində` söz sırası
+---
+
+## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
+
+### 1. `hər x üçün siyahı içində` söz sırası
 
 Qrammatik cəhətdən tam təbii deyil (təbii forma "siyahıdakı hər x üçün",
-amma `-dakı` şəkilçisi açar söz ola bilmir — problem №1 ilə eyni səbəb).
-Lekser və parser hazırda yalnız bu formanı dəstəkləyir. Alternativ
-`siyahı içində hər x üçün` da əlavə edilə bilər.
+amma `-dakı` şəkilçisi açar söz ola bilmir — `gətir ...dan` ilə eyni
+səbəb). Lekser və parser hazırda yalnız bu formanı dəstəkləyir.
+Alternativ `siyahı içində hər x üçün` da əlavə edilə bilər.
 
-### 3. Tənbəl generatorlar
-
-`ver` hazırda bütün dəyərləri əvvəlcədən yığır — sonsuz generatorlar
-(`fibonaççi()`) işləmir. Düzgün həll: Python `yield`-i ilə korutin, və ya
-icraçının davamlılıq (continuation) üslubunda yazılması.
-
-### 4. `asinxron` / `gözlə`
-
-Sintaksis ayrılır, amma `gözlə` sinxron icra edir. Hadisə dövrü
-Mərhələ 3b-də.
-
-### 5. `5.` yazılışı
+### 2. `5.` yazılışı
 
 Spesifikasiya § 1.9.2 bunu xəta adlandırır, lekser isə `TAM(5)` + `OP(.)`
 buraxır (çünki `5.mətnƏt()` işləməlidir). Spesifikasiya düzəldilməlidir.
+
+### 3. Tip yoxlayıcısının əhatəsi
+
+Standart kitabxananın ~280 funksiyasından təxminən 200-ü imzalıdır.
+Qalanlar `?` (naməlum) qaytarır — bu, YANLIŞ XƏBƏRDARLIQ vermir, sadəcə
+həmin yerlərdə yoxlama aparılmır. `sərt` rejimdə naməlum üzvlər xəta
+sayılır, ona görə həmin rejim hələ tam istifadəyə hazır deyil.
+
+### 4. Generiklər tam yoxlanılmır
+
+`funksiya ilk[T](s: siyahı[T]) -> T?` ayrılır və `T` generik parametr
+kimi tanınır, amma tip arqumentləri çıxarılmır — `T` hər şeyə uyğun
+gəlir. Düzgün həll: unifikasiya alqoritmi.
 
 ---
 
@@ -190,11 +238,12 @@ buraxır (çünki `5.mətnƏt()` işləməlidir). Spesifikasiya düzəldilməlid
 
 | # | İş | Həcm |
 |---|---|---|
-| 1 | **Mərhələ 5 — tip yoxlayıcı** (tədrici tiplər, axın daralması) | ~1200 sətir |
-| 2 | Mərhələ 2b — JSX (yuxarıdaki yanaşma ilə) | ~400 sətir |
-| 3 | Tənbəl generatorlar + hadisə dövrü | ~500 sətir |
-| 4 | `veb` modulu (server) — 05 nümunəsini işlətmək üçün | ~800 sətir |
-| 5 | Mərhələ 6 — JS transpilyator | böyük |
-| 6 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
+| 1 | **`veb` modulu** (server) — 05 nümunəsini işlətmək üçün | ~800 sətir |
+| 2 | `pəncərə` modulu (desktop) — 06 nümunəsi üçün | ~600 sətir |
+| 3 | `alqorfmt` (formatter + `--ascii-düzəlt`) | ~400 sətir |
+| 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
+| 5 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
+| 6 | Mərhələ 6 — JS/WASM transpilyator | böyük |
+| 7 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
 
 Mühit vəziyyəti (Rust, Zig, WSL): [../MUHIT.md](../MUHIT.md)

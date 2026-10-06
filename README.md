@@ -23,10 +23,10 @@ son
 
 | | |
 |---|---|
-| Mərhələ | **1–3 hazırdır: lekser, parser, interpretator** |
+| Mərhələ | **Dil nüvəsi tamamdır** (1–5) |
 | Spesifikasiya | 1.0 (layihə) |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **304 keçir** |
+| Sınaqlar | **456 keçir** |
 | Tarix | 5 oktyabr 2026 |
 
 **Dil işləyir:**
@@ -197,7 +197,9 @@ Dairə: sahə = 19.63, perimetr = 15.71
 | **3. İnterpretator** | `işlət` işləyir — siniflər, miras, qapanmalar, xətalar | ✅ **Hazır** |
 | **4. Standart kitabxana** | 13 modul, ~250 funksiya | ✅ **Hazır** |
 | **4b. REPL** (`alqor söhbət`) | Çoxsətirli giriş, 18 meta-əmr, tarixçə, tamamlama | ✅ **Hazır** |
-| 5. Tip yoxlayıcı | Tədrici tiplər, statik yoxlama | ⬜ |
+| **5. Tip yoxlayıcı** | Tədrici tiplər, 3 rejim, axın daralması, 25 xəta kodu | ✅ **Hazır** |
+| **5b. JSX** | Atributlar, komponentlər, parça, HTML qaçışı | ✅ **Hazır** |
+| **5c. Korutinlər** | Tənbəl generatorlar + asinxron `paralel` | ✅ **Hazır** |
 | 6. Veb backend | JS/WASM çıxışı + `veb` freymvorku | ⬜ |
 | 7. Native + paketləmə | ELF, `.deb`, `.AppImage` | ⬜ |
 | 8. Desktop UI | WebKitGTK pəncərələr | ⬜ |
@@ -236,22 +238,48 @@ PROQRAMLASDIRMA DILI/
 │   ├── 04-KOCURME-BELEDCISI.md
 │   ├── 05-XETA-LUGETI.md
 │   └── 06-TEZ-ARAYIS.md
-└── numuneler/                ← nümunə proqramlar
+├── numuneler/                ← nümunə proqramlar
+├── MUHIT.md                  ← Rust / Zig / WSL vəziyyəti
+└── alqorc/                   ← etalon kompilyator (Python)
+    ├── alqorc.py             CLI: işlət / söhbət / tip / yoxla / tokenlər
+    ├── sina.py               sınaq işlədicisi
+    ├── VEZIYYET.md           iş vəziyyəti + qərarlar + açıq məsələlər
+    ├── alqor/
+    │   ├── elifba.py         az-AZ hərf qaydaları, əlifba sırası
+    │   ├── homoqlif.py       oxşar simvolların aşkarlanması
+    │   ├── acar_sozler.py    açar sözlər + tip adları + aliaslar
+    │   ├── token.py          Token, Yer, operator cədvəli
+    │   ├── xeta.py           Diaqnostika, çərçivəli hesabat
+    │   ├── menbe.py          UTF-8 → NFC → LF → mövqe xəritəsi
+    │   ├── lekser.py         lekser (kontekst yığını + JSX skanı)
+    │   ├── aac.py            abstrakt sintaksis ağacı
+    │   ├── parser.py         rekursiv enmə + prioritet dırmaşması
+    │   ├── parser_jsx.py     JSX oxuyucusu
+    │   ├── tipler.py         tip təsviri və uyğunluq qaydaları
+    │   ├── tipyoxlayici.py   statik tip yoxlayıcı
+    │   ├── deyerler.py       icra dəyərləri, Mühit, Sinif, Element
+    │   ├── korutin.py        Korutin, Gələcək, LəğvNişanı
+    │   ├── icraci.py         ağac gəzən interpretator
+    │   ├── kitabxana.py      standart kitabxana (15 modul)
+    │   └── sohbet.py         interaktiv rejim (REPL)
+    └── sinaq/                456 sınaq
 ```
 
 ---
 
-## Növbəti addım — Mərhələ 2 (parser)
+## Növbəti addım
 
-Lekser bitdi. Növbəti: AAC (abstrakt sintaksis ağacı) və parser.
+Dil nüvəsi tamamdır. Növbəti ən faydalı işlər:
 
-| # | Fayl | Məzmun |
+| # | İş | Nə açır |
 |---|---|---|
-| 1 | `alqorc/alqor/aac.py` | Ağac qovşaqları |
-| 2 | `alqorc/alqor/parser.py` | Rekursiv enmə + Pratt (19 səviyyəli prioritet) |
-| 3 | `alqorc/alqor/parser_jsx.py` | Lekser rejimləri ilə JSX |
-
-Sonra: interpretator → standart kitabxana → tip yoxlayıcı → backend-lər.
+| 1 | **`veb` modulu** (server) | `05-veb-server.alqor` işləyir, spesifikasiyanın 11-ci bölməsi canlanır |
+| 2 | **`pəncərə` modulu** (desktop) | `06-desktop.alqor` işləyir |
+| 3 | **`alqorfmt`** | `--ascii-düzəlt` — klaviatura həllinin üçüncü qatı |
+| 4 | **`alqorls`** (LSP) | VS Code / Neovim dəstəyi |
+| 5 | `alqor yeni` / `qur` / `sına` / `sənəd` | alət zəncirinin qalanı |
+| 6 | JS/WASM transpilyator | brauzer hədəfi |
+| 7 | Rust-a köçürmə | istehsal kompilyatoru |
 
 ### İnkişaf mühiti — [MUHIT.md](MUHIT.md)
 
