@@ -29,3 +29,6 @@ Cargo.lock
 # ─── Sistem ───────────────────────────────────────────────
 Thumbs.db
 desktop.ini
+
+# Claude Code iş ağacları (yerli, paralel agentlər)
+.claude/worktrees/
