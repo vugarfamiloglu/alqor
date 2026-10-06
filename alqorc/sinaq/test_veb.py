@@ -617,6 +617,32 @@ class ŞablonMirasıSınağı(unittest.TestCase):
         ş = şablonu_yüklə(fayl, self.qovluq, keşlə=False)
         return ş.göstər(İcraçı(), verilənlər)
 
+    def test_uşaq_blokundakı_xəta_öz_faylını_göstərir(self):
+        """Əvvəllər valideynin adı (`əsas.alqorhtml`) yazılırdı."""
+        (self.qovluq / "pis.alqorhtml").write_text(
+            '{% genişlət "əsas.alqorhtml" %}\n'
+            "{% blok məzmun %}\n<p>{{ yoxdur.ad }}</p>{% son %}",
+            encoding="utf-8")
+        with self.assertRaises(ŞablonXətası) as k:
+            self._göstər("pis.alqorhtml", {})
+        self.assertEqual(k.exception.fayl, "pis.alqorhtml")
+        self.assertEqual(k.exception.sətir, 3)
+
+    def test_blok_adı_ilə_eyni_ifadə(self):
+        """`{% blok məzmun %}` və `{{ məzmun }}` keşdə toqquşurdu."""
+        (self.qovluq / "eyni.alqorhtml").write_text(
+            '{% genişlət "əsas.alqorhtml" %}'
+            "{% blok məzmun %}[{{ məzmun }}]{% son %}",
+            encoding="utf-8")
+        self.assertIn("[mətn]",
+                      self._göstər("eyni.alqorhtml", {"məzmun": "mətn"}))
+
+    def test_artıq_token_xətadır(self):
+        (self.qovluq / "artıq.alqorhtml").write_text(
+            "{{ a b }}", encoding="utf-8")
+        with self.assertRaises(ŞablonXətası):
+            self._göstər("artıq.alqorhtml", {"a": 1, "b": 2})
+
     def test_miras(self):
         nəticə = self._göstər("alt.alqorhtml", {"başlıq": "Salam"})
         self.assertIn("<h1>Salam</h1>", nəticə)
@@ -1042,6 +1068,36 @@ son
         self.assertIsNone(q.sessiya(f"açar{0:020d}", None, yarat=False))
         self.assertIsNotNone(
             q.sessiya(f"açar{9:020d}", None, yarat=False))
+
+
+class KitabRəfiSınağı(unittest.TestCase):
+    """10 — veb dərsliyinin yekun proqramı (bələdçi § 3)."""
+
+    def test_10_kitab_refi(self):
+        from alqor.icraci import İcraçı
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.tipyoxlayici import TipYoxlayıcı
+        from alqor.xeta import XətaToplayıcı
+
+        yol = (Path(__file__).parent.parent.parent / "numuneler"
+               / "10-kitab-refi" / "esas.alqor")
+        x = XətaToplayıcı()
+        m = Mənbə.fayldan(yol, x)
+        ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+        t = XətaToplayıcı()
+        TipYoxlayıcı(t).yoxla(ağac)
+        self.assertTrue(t.uğurludur(), t.hesabat(False))
+
+        sətirlər: list[str] = []
+        i = İcraçı(çıxış=sətirlər.append, giriş=lambda: "")
+        i.əsas_qovluq = yol.parent
+        self.assertEqual(i.işlət(ağac, ["sınaq"]), 0)
+        self.assertEqual(len(sətirlər), 16, sətirlər)
+        for s in sətirlər:
+            self.assertTrue(s.endswith("doğru"), s)
 
 
 class NümunəSınağı(unittest.TestCase):

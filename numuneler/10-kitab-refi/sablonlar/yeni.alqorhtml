@@ -1,0 +1,19 @@
+{% genişlət "esas.alqorhtml" %}
+
+{% blok başlıq %}Yeni kitab — Kitab rəfi{% son %}
+
+{% blok məzmun %}
+<h1>Yeni kitab</h1>
+{% əgər xətalar %}
+    <ul class="xətalar">
+        {% hər x üçün xətalar içində %}<li>{{ x }}</li>{% son %}
+    </ul>
+{% son %}
+<form method="post" action="/yeni">
+    <label>Ad <input name="ad" value="{{ forma.al("ad", "") }}"></label>
+    <label>Müəllif <input name="müəllif" value="{{ forma.al("müəllif", "") }}"></label>
+    <label>İl <input name="il" value="{{ forma.al("il", "") }}"></label>
+    <label>Qeyd <textarea name="qeyd">{{ forma.al("qeyd", "") }}</textarea></label>
+    <button>Əlavə et</button>
+</form>
+{% son %}

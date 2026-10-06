@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% blok başlıq %}Kitab rəfi{% son %}</title>
+    <link rel="stylesheet" href="/statik/üslub.css">
+</head>
+<body>
+    <nav>
+        <a href="/">Kitab rəfi</a>
+        <a href="/axtar">Axtarış</a>
+        {% əgər admin %}
+            <a href="/yeni">+ Yeni kitab</a>
+            <form method="post" action="/çıxış"><button>Çıxış</button></form>
+        {% yoxsa %}
+            <a href="/giriş">Giriş</a>
+        {% son %}
+    </nav>
+    <main>
+        {% blok məzmun %}{% son %}
+    </main>
+    <footer>{{ kitabSayı }} kitab · Alqor ilə yazılıb</footer>
+</body>
+</html>
