@@ -2013,10 +2013,24 @@ class Parser:
             else:
                 alt = Parser(list(p.tokenlər) + [
                     Token(Növ.FAYL_SONU, None, yer)], self.s, self.x)
+                əvvəl = len(self.x.siyahı)
                 try:
                     ifadə = alt._ifadə()
+                    qalan = alt._bax()
+                    if qalan.növ is not Növ.FAYL_SONU:
+                        alt._xəta("ALQ-P001", "Gözlənilməyən token",
+                                  f"`{alt._göstər(qalan)}` burada "
+                                  "gözlənilmirdi",
+                                  "`{…}` daxilində tək ifadə olmalıdır")
                 except ParserXətası:
                     ifadə = A.Literal(yer, "", "mətn")
+                # CSS, JSON, regex kimi mətnlərdə `{` interpolyasiya
+                # sayılır — ən çox rast gəlinən çaşqınlıq
+                for d in self.x.siyahı[əvvəl:]:
+                    d.köməklər.append(
+                        "adi mətndə `{…}` interpolyasiyadır; fiqurlu "
+                        'mötərizə lazımdırsa xam mətn yazın: x"…" '
+                        'və ya x"""…"""')
                 parçalar.append(A.KodHissəsi(ifadə, p.format))
         return A.ŞablonMətn(yer, parçalar)
 

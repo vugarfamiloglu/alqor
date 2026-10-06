@@ -197,6 +197,14 @@ tut x əgər x.mesaj != ""
     yaz("mühafizə ilə")
 son"""), ["tutuldu: sıfıra bölmək olmaz", "mühafizə ilə"])
 
+    def test_interpolyasiyada_artıq_token_və_məsləhət(self):
+        _, x = ayır('dəyişən a = 1\nyaz("{a 2}")')
+        self.assertFalse(x.uğurludur())
+        _, x = ayır('yaz(":root{--v-vurgu:#7c3aed}")')
+        self.assertFalse(x.uğurludur())
+        self.assertTrue(any('x"' in k for d in x.siyahı
+                            for k in d.köməklər))
+
     def test_çox_xəta_bir_keçiddə(self):
         _, x = ayır("dəyişən a = $\ndəyişən b = $\ndəyişən c = $")
         self.assertGreaterEqual(len(x.xətalar), 3)
