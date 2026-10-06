@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="az" data-tema="qaranlıq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alqor Studio</title>
+<link rel="icon" href="/statik/ikon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/statik/studio.css">
+</head>
+<body>
+
+<header class="üst-sətir">
+  <div class="loqo" title="Alqor Studio"><img src="/statik/ikon.svg" alt=""><b>Alqor</b> Studio</div>
+  <div class="layihə-adı" id="layihe-adi"></div>
+  <div class="alətlər">
+    <button id="dym-yeni" title="Yeni fayl (Alt+N)">＋ Fayl</button>
+    <button id="dym-saxla" title="Saxla (Ctrl+S)">Saxla</button>
+    <span class="ayırıcı-xətt"></span>
+    <button id="dym-islet" class="vurğulu" title="İşlət (F5)">▶ İşlət</button>
+    <button id="dym-dayandir" title="Dayandır (Shift+F5)" disabled>■ Dayandır</button>
+    <button id="dym-onbaxis" title="Komponentin canlı önbaxışı (F6)">◧ Önbaxış</button>
+    <span class="ayırıcı-xətt"></span>
+    <button id="dym-ascii" title="Fayldakı bütün ASCII açar sözləri düzəlt (eger → əgər)">eger→əgər</button>
+    <button id="dym-formatla" title="Formatla (Ctrl+Shift+F)">Formatla</button>
+  </div>
+  <div class="sağ-alətlər">
+    <label class="keçid" title="ASCII açar sözləri yazarkən avtomatik çevir: eger → əgər">
+      <input type="checkbox" id="ayar-ascii" checked><span>ASCII→az</span></label>
+    <label class="keçid" title="; tərkibi: ;e → ə, ;s → ş, ;I → İ, ;; → ;">
+      <input type="checkbox" id="ayar-terkib" checked><span>;e→ə</span></label>
+    <button id="dym-tema" title="Açıq / qaranlıq tema">◐</button>
+  </div>
+</header>
+
+<main class="iş-sahəsi" id="is-sahesi">
+  <aside class="yan-panel" id="yan-panel">
+    <nav class="panel-nişanları" role="tablist">
+      <button class="aktiv" data-panel="layihe" role="tab">Layihə</button>
+      <button data-panel="palet" role="tab">Elementlər</button>
+    </nav>
+
+    <section class="panel" id="panel-layihe">
+      <div class="panel-alətləri">
+        <button id="dym-yeni-fayl" title="Yeni fayl">＋ fayl</button>
+        <button id="dym-yeni-qovluq" title="Yeni qovluq">＋ qovluq</button>
+        <button id="dym-agac-yenile" title="Yenilə">⟳</button>
+      </div>
+      <div class="ağac" id="agac" role="tree"></div>
+    </section>
+
+    <section class="panel" id="panel-palet" hidden>
+      <input type="search" id="palet-axtar" placeholder="Element axtar… (sahə, düymə, cədvəl)"
+             autocomplete="off" spellcheck="false">
+      <p class="ipucu-mətni">Bir klik — kursora qoyur · <b>iki klik</b> — işləməsi üçün
+        lazım olan bütün kodu yazır · redaktora sürükləmək də olar</p>
+      <div class="palet" id="palet"></div>
+      <h4 class="alt-başlıq">Fayldakı elementlər</h4>
+      <p class="ipucu-mətni">İki klik — çatışmayan vəziyyət və idarəedicini yazır</p>
+      <div class="elementlər" id="elementler"></div>
+    </section>
+  </aside>
+  <div class="bölücü şaquli" data-bolucu="yan"></div>
+
+  <section class="mərkəz">
+    <div class="tablar" id="tablar" role="tablist"></div>
+    <div class="axtarış-sətri" id="axtaris" hidden>
+      <input id="axtar-sorgu" placeholder="Axtar" spellcheck="false">
+      <label title="Böyük/kiçik hərf fərqi"><input type="checkbox" id="axtar-herf">Aa</label>
+      <label title="Müntəzəm ifadə"><input type="checkbox" id="axtar-regex">.*</label>
+      <span id="axtar-say" class="say"></span>
+      <button id="axtar-evvel" title="Əvvəlki (Shift+Enter)">↑</button>
+      <button id="axtar-sonra" title="Növbəti (Enter)">↓</button>
+      <span class="əvəzlə-hissə">
+        <input id="evezle-metn" placeholder="Əvəzlə" spellcheck="false">
+        <button id="evezle-bir">Əvəzlə</button>
+        <button id="evezle-hamisi">Hamısını</button>
+      </span>
+      <button id="axtar-bagla" title="Bağla (Esc)">✕</button>
+    </div>
+    <div class="redaktor-qabı" id="redaktor-qabi">
+      <div id="redaktor"></div>
+      <div class="xoş-gəldin" id="xos-geldin">
+        <div class="xoş-qutu">
+          <h1><img src="/statik/ikon.svg" alt=""> Alqor Studio</h1>
+          <p class="sönük">Azərbaycan dilində proqramlaşdırma — redaktor, hazır elementlər,
+            icra və canlı önbaxış bir yerdə.</p>
+          <h3>Yeni layihə</h3>
+          <div class="şablonlar" id="sablonlar"></div>
+          <h3>Layihədəki fayllar</h3>
+          <div class="son-fayllar" id="son-fayllar"></div>
+          <h3>Qısayollar</h3>
+          <dl class="qısayollar">
+            <dt>Ctrl+S</dt><dd>saxla</dd><dt>F5</dt><dd>işlət</dd>
+            <dt>F6</dt><dd>önbaxış</dd><dt>Ctrl+F / Ctrl+H</dt><dd>axtar / əvəzlə</dd>
+            <dt>Ctrl+/</dt><dd>şərh</dd><dt>F8</dt><dd>növbəti problem</dd>
+            <dt>;e ;i ;s ;c ;g ;o ;u</dt><dd>ə ı ş ç ğ ö ü</dd>
+            <dt>Alt+N / Alt+W</dt><dd>yeni fayl / nişanı bağla</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <div class="hərf-paneli" id="herf-paneli" title="Azərbaycan hərfləri"></div>
+    <div class="bölücü üfüqi" data-bolucu="alt"></div>
+    <section class="alt-panel" id="alt-panel">
+      <nav class="panel-nişanları alt-nişanlar">
+        <button class="aktiv" data-alt="cixis">Çıxış</button>
+        <button data-alt="problemler">Problemlər <span id="problem-sayi" class="say"></span></button>
+        <span class="boşluq"></span>
+        <button id="cixis-temizle" title="Çıxışı təmizlə">Təmizlə</button>
+      </nav>
+      <div class="alt-məzmun" id="alt-cixis">
+        <pre class="çıxış" id="cixis" aria-live="polite"></pre>
+        <form class="giriş-sətri" id="giris-formu" autocomplete="off">
+          <span class="sönük">giriş ›</span>
+          <input id="giris" placeholder="Proqrama mətn göndər (oxu)…" spellcheck="false" disabled>
+        </form>
+      </div>
+      <div class="alt-məzmun" id="alt-problemler" hidden>
+        <ul class="problemlər" id="problemler"></ul>
+      </div>
+    </section>
+  </section>
+
+  <div class="bölücü şaquli" data-bolucu="onbaxis" id="onbaxis-bolucu" hidden></div>
+  <aside class="önbaxış-panel" id="onbaxis-panel" hidden>
+    <div class="önbaxış-başlığı">
+      <b>Önbaxış</b>
+      <select id="onbaxis-komponent" title="Komponent"></select>
+      <span class="boşluq"></span>
+      <button id="onbaxis-yenile" title="Yenilə">⟳</button>
+      <button id="onbaxis-bagla" title="Bağla">✕</button>
+    </div>
+    <div class="önbaxış-məzmun">
+      <!-- Önbaxış başqa portdadır (başqa mənşə) — Studio-ya çata bilmir -->
+      <iframe id="onbaxis-cercive" title="Komponent önbaxışı"></iframe>
+      <pre class="önbaxış-xəta" id="onbaxis-xeta" hidden></pre>
+    </div>
+  </aside>
+</main>
+
+<footer class="status-sətri">
+  <span id="st-kursor">Sətir 1, Sütun 1</span>
+  <span>UTF-8</span>
+  <span>LF</span>
+  <span id="st-ascii" title="ASCII yazılmış açar sözlər (ALQ-L020)">ASCII: 0</span>
+  <span id="st-diaq"></span>
+  <span id="st-rejim"></span>
+  <span class="boşluq"></span>
+  <span id="st-mesaj"></span>
+</footer>
+
+<div class="bildirişlər" id="bildirisler" aria-live="polite"></div>
+
+<dialog class="dialoq" id="dialoq">
+  <form method="dialog">
+    <h3 id="dialoq-basliq"></h3>
+    <p id="dialoq-metn" class="sönük"></p>
+    <input id="dialoq-giris" spellcheck="false">
+    <div class="dialoq-düymələri">
+      <button value="ləğv" id="dialoq-legv">Ləğv et</button>
+      <button value="tamam" id="dialoq-tamam" class="vurğulu">Tamam</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/statik/dil.js"></script>
+<script src="/statik/redaktor.js"></script>
+<script src="/statik/studio.js"></script>
+</body>
+</html>
