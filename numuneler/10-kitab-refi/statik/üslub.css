@@ -1,0 +1,26 @@
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;
+ color:#1b1b1f;background:#fafafa}
+nav{display:flex;gap:16px;align-items:center;padding:12px 24px;
+ background:#fff;border-bottom:1px solid #e4e4e7}
+nav a{color:#0b6bcb;text-decoration:none}
+nav a:first-child{font-weight:700;color:#1b1b1f;margin-right:auto}
+nav form{margin:0}
+nav button{font:inherit;border:0;background:none;color:#0b6bcb;cursor:pointer}
+main{max-width:720px;margin:0 auto;padding:24px}
+.kitablar{list-style:none;padding:0}
+.kitablar li{padding:10px 0;border-bottom:1px solid #eee}
+.müəllif{color:#71717a;margin-left:8px}
+form label{display:block;margin-bottom:12px}
+input,textarea{display:block;width:100%;font:inherit;padding:8px;
+ border:1px solid #d4d4d8;border-radius:6px}
+main button{font:inherit;padding:8px 16px;border:0;border-radius:6px;
+ background:#0b6bcb;color:#fff;cursor:pointer}
+.xətalar{color:#c0392b}
+footer{text-align:center;color:#a1a1aa;padding:24px}
+@media (prefers-color-scheme:dark){
+ body{background:#18181b;color:#f4f4f5}
+ nav{background:#1f1f23;border-color:#3f3f46}
+ nav a:first-child{color:#f4f4f5}
+ .kitablar li{border-color:#3f3f46}
+ input,textarea{background:#27272a;color:inherit;border-color:#52525b}}

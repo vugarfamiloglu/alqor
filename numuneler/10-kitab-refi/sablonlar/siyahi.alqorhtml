@@ -1,0 +1,15 @@
+{% genişlət "esas.alqorhtml" %}
+
+{% blok məzmun %}
+<h1>Kitablar</h1>
+<ul class="kitablar">
+    {% hər k üçün kitablar içində %}
+        <li>
+            <a href="/kitab/{{ k.nömrə }}">{{ k.ad }}</a>
+            <span class="müəllif">{{ k.müəllif }}, {{ k.il }}</span>
+        </li>
+    {% yoxsa %}
+        <li class="boş">Rəf boşdur.</li>
+    {% son %}
+</ul>
+{% son %}

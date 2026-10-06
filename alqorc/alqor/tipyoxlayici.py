@@ -475,7 +475,9 @@ def _cavab_metodları() -> dict[str, T.Tip]:
     m, i, b, e = T.MƏTN, T.TAM, T.MƏNTİQ, T.İSTƏNİLƏN
     return {
         "kod": F(i, qaytarır=CAVAB),
-        "başlıq": F(m, e, qaytarır=CAVAB),
+        # Bir arqumentlə oxuyur (`mətn?`), ikiylə təyin edib cavabı
+        # qaytarır — nəticə arqument sayından asılıdır
+        "başlıq": F(m, e, qaytarır=e, standart=1),
         "kuki": F(m, m, qaytarır=CAVAB),
         "kukiSil": F(m, m, qaytarır=CAVAB, standart=1),
         "vəziyyət": F(qaytarır=i), "mətnƏt": F(qaytarır=m),
