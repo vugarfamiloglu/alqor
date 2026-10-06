@@ -1010,5 +1010,50 @@ class NümunəSınağı(unittest.TestCase):
             self.assertIn(gözlənilən, hamısı)
 
 
+class SpesifikasiyaSınağı(unittest.TestCase):
+    """§ 14 sənədi kodla uyğun qalmalıdır."""
+
+    def test_hər_parametrin_izahı_var(self):
+        from alqor import vidjet_arayis as A
+        yox = [(m.ad, p) for m in V.KATALOQ
+               for p, _ in A.parametrlər(m.ad) if not A.izah(m.ad, p)]
+        self.assertEqual(yox, [], "vidjet_arayis.İZAHLAR-a əlavə edin")
+
+    def test_arayış_köhnəlməyib(self):
+        from alqor import vidjet_arayis as A
+        self.assertEqual(
+            A.sənəddəki_arayış(), A.arayış(),
+            "spesifikasiya/14-VIDJETLER.md köhnədir: "
+            "python -m alqor.vidjet_arayis --yaz")
+
+    def test_sənəddəki_nümunələr_ayrılır(self):
+        """`alqor` bloklarının hamısı sintaktik cəhətdən düzgündür."""
+        import re
+        from alqor import vidjet_arayis as A
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.xeta import XətaToplayıcı
+
+        mətn = A.SƏNƏD.read_text(encoding="utf-8")
+        bloklar = re.findall(r"```alqor\n(.*?)```", mətn, re.S)
+        self.assertGreater(len(bloklar), 60)
+        for b in bloklar:
+            # Komponent gövdəsinə aid parçalar (skelet) sinfə bükülür
+            kod = b
+            if b.lstrip().startswith(("vəziyyət", "metod")):
+                kod = "komponent K\n" + "".join(
+                    f"    {s}\n" for s in b.split("\n")) + "son\n"
+            elif b.lstrip().startswith("s.al("):
+                kod = "funksiya f(s, verilənlər)\n" + b + "son\n"
+            elif b.lstrip().startswith(("p.üslub", "// Desktop")):
+                continue                # sərbəst parçalar
+            x = XətaToplayıcı()
+            m = Mənbə.mətndən(kod, "s14.alqor", x)
+            Parser(Lekser(m, x).leksə(), m, x).ayır()
+            self.assertTrue(x.uğurludur(),
+                            f"ayrılmır:\n{b}\n{x.hesabat(False)}")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
