@@ -1597,6 +1597,47 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
         }),
     })
 
+    # ── vidjet ────────────────────────────────────────────────────────
+    from . import vidjet as _v
+
+    def _vidjetlər() -> dict:
+        """
+        Hər vidjet `icraçı`-ya bağlanır. Arqumentlər adlıdır
+        (`vidjet.düymə(mətn: "A")`), ona görə maksimum sayı
+        funksiyanın imzasından götürülür.
+        """
+        import inspect
+        üzvlər: dict = {}
+        for ad in _v.VİDJETLƏR:
+            funksiya = getattr(_v, ad)
+            parametrlər = list(
+                inspect.signature(funksiya).parameters.values())[1:]
+            məcburi = sum(1 for p in parametrlər
+                          if p.default is inspect.Parameter.empty)
+            üzvlər[ad] = D(ad, _bağla(funksiya, icraçı),
+                           məcburi, len(parametrlər))
+        return üzvlər
+
+    vidjet = Modul("vidjet", {
+        **_vidjetlər(),
+        # ── IDE kataloqu ──
+        "kataloq": D("kataloq", lambda kateqoriya=None: _v.kataloq(
+            icraçı, kateqoriya), 0, 1),
+        "kateqoriyalar": D("kateqoriyalar",
+                           lambda: _v.kateqoriyalar(icraçı)),
+        "skelet": D("skelet", lambda ad, dəyişən="": _v.skelet(
+            icraçı, ad, dəyişən), 1, 2),
+        "nümunə": D("nümunə", lambda ad, dəyişən="": _v.nümunə(
+            icraçı, ad, dəyişən), 1, 2),
+        # ── Üslub ──
+        "üslub": D("üslub", lambda: _v.üslub(icraçı)),
+        "üslublar": D("üslublar", lambda: _v.üslublar(icraçı)),
+        "səhifə": D("səhifə", lambda başlıq="Alqor", məzmun=None,
+                    dil="az", əlavəÜslub=None: _v.səhifə(
+                        icraçı, başlıq, məzmun, dil, əlavəÜslub),
+                    0, 4),
+    })
+
     # ── pəncərə ───────────────────────────────────────────────────────
     from . import pencere as _p
 
@@ -1672,6 +1713,7 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
     return {
         "veb": veb,
         "pəncərə": pəncərə_m,
+        "vidjet": vidjet,
         "paralel": paralel, "sap": sap,
         "riyaziyyat": riyaziyyat, "mətn": mətn_modulu,
         "təsadüfi": təsadüfi, "vaxt": vaxt, "fayl": fayl,
@@ -1682,6 +1724,16 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
 
 
 # ── Modul köməkçiləri ──────────────────────────────────────────────────
+
+def _bağla(funksiya, icraçı):
+    """
+    `vidjet.*` funksiyalarının birinci parametri `icraçı`-dır; onu
+    qabaqcadan bağlayıb qalan parametrləri Alqor tərəfinə açıq
+    saxlayır. `functools.partial` adlı arqumentləri də saxlayır.
+    """
+    import functools
+    return functools.partial(funksiya, icraçı)
+
 
 class _Naxış:
     def __init__(self, derlənmiş):

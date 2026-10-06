@@ -1992,31 +1992,52 @@ class Parser:
         budaqlar: list[tuple[A.İfadə, A.İfadə]] = []
         şərt = self._ifadə()
         self._tələb_acar("onda")
-        budaqlar.append((şərt, self._ifadə()))
+        budaqlar.append((şərt, self._budaq_ifadəsi()))
 
         yoxsa = None
         while True:
+            self._ayırıcı_atla()
             if self._acar("yoxsa əgər"):
                 self._al()
                 ş = self._ifadə()
                 self._tələb_acar("onda")
-                budaqlar.append((ş, self._ifadə()))
+                budaqlar.append((ş, self._budaq_ifadəsi()))
                 continue
             if self._acar("yoxsa"):
                 self._al()
+                self._ayırıcı_atla()
                 if self._acar("əgər"):
                     self._al()
                     ş = self._ifadə()
                     self._tələb_acar("onda")
-                    budaqlar.append((ş, self._ifadə()))
+                    budaqlar.append((ş, self._budaq_ifadəsi()))
                     continue
-                yoxsa = self._ifadə()
+                yoxsa = self._budaq_ifadəsi()
             break
 
+        self._ayırıcı_atla()
         self._tələb_acar("son")
         if self._acar("əgər"):
             self._al()
         return A.ŞərtIfadəsi(yer, budaqlar, yoxsa)
+
+    def _budaq_ifadəsi(self) -> A.İfadə:
+        """
+        Şərt ifadəsinin budağı — birsətirli də, çoxsətirli də.
+
+            əgər a onda b yoxsa c son          // birsətirli
+            əgər a onda                         // çoxsətirli
+                b
+            yoxsa
+                c
+            son
+
+        `əgər` lekserdə blok açdığı üçün çoxsətirli formada gövdədən
+        əvvəl SETIR_SONU gəlir; konstruksiya `son` ilə bağlandığından
+        onu atlamaq birmənalıdır.
+        """
+        self._ayırıcı_atla()
+        return self._ifadə()
 
     @staticmethod
     def _seç_ifadəsinə(seç: A.Seç) -> A.İfadə:

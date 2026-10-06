@@ -1,0 +1,274 @@
+// Nümunə 8 — Hazır vidjetlər: eyni kod həm desktopda, həm vebdə
+//
+//   alqor işlət 08-vidjetler.alqor            desktop pəncərəsi
+//   alqor işlət 08-vidjetler.alqor -- veb     veb server (8081)
+//   alqor işlət 08-vidjetler.alqor -- sınaq   heç nə açmadan yoxlayır
+
+gətir vidjet
+gətir pəncərə
+gətir veb
+
+sinif İşçi
+    qurucu(açıq xassə ad: mətn,
+           açıq xassə vəzifə: mətn,
+           açıq xassə əmək: tam)
+son
+
+komponent Panel
+    vəziyyət nişan: mətn = "Heyət"
+    vəziyyət axtarış: mətn = ""
+    vəziyyət səhifə: tam = 1
+    vəziyyət bildirişlər: məntiq = doğru
+    vəziyyət səs: tam = 60
+    vəziyyət silinəcək: mətn = ""
+
+    vəziyyət heyət: siyahı[İşçi] = [
+        yeni İşçi("Aysel Məmmədova", "Mühəndis", 2800),
+        yeni İşçi("Rəşad Əliyev", "Dizayner", 2200),
+        yeni İşçi("Nurlan Həsənov", "Analitik", 2500)
+    ]
+
+    hesablanan süzülmüş: siyahı[İşçi]
+        əgər özü.axtarış.kəs() == "" onda
+            qaytar özü.heyət
+        son
+        dəyişən s = özü.axtarış.kiçiyə()
+        qaytar özü.heyət.filtr((i) => s içindədir i.ad.kiçiyə())
+    son
+
+    hesablanan cəmiƏmək: tam
+        qaytar özü.heyət.çevir((i) => i.əmək).cəm()
+    son
+
+    metod nişanSeçildi(dəyər: mətn)
+        özü.nişan = dəyər
+    son
+
+    metod axtar(dəyər: mətn)
+        özü.axtarış = dəyər
+    son
+
+    metod səhifəSeçildi(dəyər: mətn)
+        özü.səhifə = tamƏt(dəyər, 1)
+    son
+
+    metod bildirişDəyişdi(_dəyər: istənilən)
+        özü.bildirişlər = deyil özü.bildirişlər
+    son
+
+    metod səsDəyişdi(dəyər: mətn)
+        özü.səs = tamƏt(dəyər, 0)
+    son
+
+    metod silməkİstə()
+        özü.silinəcək = "Aysel Məmmədova"
+    son
+
+    metod silməniLəğvEt()
+        özü.silinəcək = ""
+    son
+
+    metod sil()
+        özü.heyət = özü.heyət.filtr((i) => i.ad != özü.silinəcək)
+        özü.silinəcək = ""
+    son
+
+    göstər()
+        qaytar vidjet.sütun(boşluq: 0, məzmun: [
+            vidjet.naviqasiya(başlıq: "Heyət paneli", sağ: [
+                vidjet.avatar(ad: "Admin İstifadəçi", ölçü: "kiçik")
+            ]),
+
+            vidjet.qutu(boşluq: 20, məzmun: [
+                vidjet.nişanlar(elementlər: ["Heyət", "Ayarlar"],
+                                cari: özü.nişan,
+                                klik: özü.nişanSeçildi),
+
+                əgər özü.nişan == "Heyət" onda
+                    özü.heyətiGöstər()
+                yoxsa
+                    özü.ayarlarıGöstər()
+                son
+            ])
+        ])
+    son
+
+    metod heyətiGöstər() -> istənilən
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.tor(sütunlar: 3, boşluq: 12, məzmun: [
+                vidjet.statistika(etiket: "İşçi sayı",
+                                  dəyər: "{uzunluq(özü.heyət)}"),
+                vidjet.statistika(etiket: "Cəmi əmək",
+                                  dəyər: "{özü.cəmiƏmək} ₼",
+                                  dəyişmə: 8),
+                vidjet.statistika(etiket: "Orta əmək",
+                                  dəyər: "{özü.ortaƏmək()} ₼")
+            ]),
+
+            vidjet.axtarış(yazıldı: özü.axtar),
+
+            əgər uzunluq(özü.süzülmüş) == 0 onda
+                vidjet.boşBaxış(başlıq: "Nəticə yoxdur",
+                                mətn: "Axtarış sözünü dəyişin")
+            yoxsa
+                vidjet.cədvəl(
+                    sütunlar: [["ad", "Ad"], ["vəzifə", "Vəzifə"],
+                               ["əmək", "Əmək haqqı"]],
+                    sətirlər: özü.süzülmüş)
+            son,
+
+            vidjet.sətir(düzləndir: "ara", məzmun: [
+                vidjet.səhifələmə(səhifə: özü.səhifə, cəmi: 7,
+                                  klik: özü.səhifəSeçildi),
+                vidjet.düymə(mətn: "İşçini sil", növ: "təhlükə",
+                             klik: özü.silməkİstə)
+            ]),
+
+            vidjet.modal(başlıq: "Silinsin?",
+                         görünür: özü.silinəcək != "",
+                         bağlandı: özü.silməniLəğvEt,
+                         məzmun: [
+                             vidjet.mətn(
+                                 məzmun: "{özü.silinəcək} siyahıdan "
+                                         + "çıxarılacaq.")
+                         ],
+                         altlıq: [
+                             vidjet.düymə(mətn: "Ləğv et", növ: "ikinci",
+                                          klik: özü.silməniLəğvEt),
+                             vidjet.düymə(mətn: "Sil", növ: "təhlükə",
+                                          klik: özü.sil)
+                         ])
+        ])
+    son
+
+    metod ortaƏmək() -> tam
+        əgər uzunluq(özü.heyət) == 0 onda
+            qaytar 0
+        son
+        qaytar özü.cəmiƏmək ~/ uzunluq(özü.heyət)
+    son
+
+    metod ayarlarıGöstər() -> istənilən
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.panel(başlıq: "Bildirişlər", məzmun: [
+                vidjet.açar(etiket: "E-poçt bildirişləri",
+                            ad: "bildirişlər",
+                            yanıq: özü.bildirişlər,
+                            dəyişdi: özü.bildirişDəyişdi),
+                vidjet.sürüşdürücü(etiket: "Səs səviyyəsi", ad: "səs",
+                                   dəyər: özü.səs,
+                                   dəyişdi: özü.səsDəyişdi)
+            ]),
+
+            vidjet.panel(başlıq: "Hesab", məzmun: [
+                vidjet.təsvirSiyahısı(cütlər: {
+                    "Plan": "Komanda",
+                    "Yaradılıb": "2026-01-15",
+                    "Vəziyyət": "Aktiv"
+                })
+            ]),
+
+            vidjet.xəbərdarlıq(
+                başlıq: "Diqqət",
+                mətn: "Dəyişikliklər dərhal qüvvəyə minir",
+                növ: "xəbərdarlıq"),
+
+            vidjet.yığcam(başlıq: "Təcrübi imkanlar", məzmun: [
+                vidjet.qeyd(etiket: "Yeni redaktoru sına", ad: "təcrübə")
+            ])
+        ])
+    son
+son
+
+// ═══════════════════════════════════════════════════════════════
+//  Üç hədəf, bir komponent
+// ═══════════════════════════════════════════════════════════════
+
+funksiya desktop()
+    dəyişən p = yeni pəncərə.Pəncərə("Heyət paneli", 900, 700)
+    p.məzmun(<Panel />)
+    p.mərkəzə()
+    p.göstər()
+    yaz("Pəncərə açıldı: {p.ünvan()}")
+    pəncərə.işlət()
+son
+
+funksiya vebServeri()
+    dəyişən s = yeni veb.Server()
+    dəyişən panel = yeni Panel()
+
+    s.al("/", funksiya(sorğu)
+        qaytar veb.html(vidjet.səhifə(başlıq: "Heyət paneli",
+                                      məzmun: [panel.göstər()]))
+    son)
+
+    yaz("Veb server: http://127.0.0.1:8081")
+    s.dinlə(8081)
+son
+
+funksiya yoxla()
+    dəyişən p = yeni pəncərə.Pəncərə("Heyət paneli", 900, 700)
+    p.məzmun(<Panel />)
+    dəyişən s = pəncərə.sınaq.aç(p)
+
+    yaz("── Heyət nişanı ──")
+    yaz("İşçi sayı    : {"3" içindədir s.HTML()}")
+    yaz("Cədvəl var   : {"Aysel Məmmədova" içindədir s.HTML()}")
+
+    s.yaz("axtarış", "rəşad")
+    yaz("Axtarışdan   : {s.ehtiva("Rəşad Əliyev")}, "
+        + "Aysel gizlidir: {deyil s.ehtiva("Aysel")}")
+
+    s.yaz("axtarış", "zzz")
+    yaz("Boş baxış    : {s.ehtiva("Nəticə yoxdur")}")
+
+    s.yaz("axtarış", "")
+    s.klik("6")
+    yaz("Səhifə 6     : {s.ehtiva("v-səhifə-düyməsi--seçili")}")
+
+    yaz("")
+    yaz("── Silmə dialoqu ──")
+    s.klik("İşçini sil")
+    yaz("Modal açıq   : {s.ehtiva("Silinsin?")}")
+    s.klik("Sil")
+    yaz("İşçi silindi : {deyil s.ehtiva("Aysel Məmmədova")}")
+    yaz("Qalan say    : {"2" içindədir s.HTML()}")
+
+    yaz("")
+    yaz("── Ayarlar nişanı ──")
+    s.klik("Ayarlar")
+    yaz("Açar var     : {s.ehtiva("v-açar")}")
+    yaz("Təsvir var   : {s.ehtiva("Komanda")}")
+    s.klik("E-poçt bildirişləri")
+    yaz("Açar söndü   : {deyil s.ehtiva("checked")}")
+
+    yaz("")
+    yaz("── Vebdə eyni komponent ──")
+    dəyişən server = yeni veb.Server()
+    dəyişən panel = yeni Panel()
+    server.al("/", (sorğu) => veb.html(
+        vidjet.səhifə(başlıq: "Heyət", məzmun: [panel.göstər()])))
+    dəyişən c = veb.sınaq.server(server).al("/")
+    yaz("Vəziyyət     : {c.vəziyyət()}")
+    yaz("DOCTYPE      : {"<!DOCTYPE html>" içindədir c.mətnƏt()}")
+    yaz("Üslub daxil  : {".v-düymə" içindədir c.mətnƏt()}")
+    yaz("Cədvəl       : {"Aysel Məmmədova" içindədir c.mətnƏt()}")
+
+    yaz("")
+    yaz("── IDE kataloqu ──")
+    yaz("Vidjet sayı  : {uzunluq(vidjet.kataloq())}")
+    yaz("Form vidjeti : {uzunluq(vidjet.kataloq("form"))}")
+    yaz("")
+    yaz("`sahə` üçün iki klik bu kodu yazır:")
+    yaz(vidjet.skelet("sahə", "istifadəçiAdı"))
+son
+
+funksiya əsas(arqumentlər: siyahı[mətn])
+    əgər "sınaq" içindədir arqumentlər onda
+        yoxla()
+    yoxsa əgər "veb" içindədir arqumentlər onda
+        vebServeri()
+    yoxsa
+        desktop()
+    son
+son
