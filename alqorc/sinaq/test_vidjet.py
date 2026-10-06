@@ -110,6 +110,36 @@ class KataloqSınağı(unittest.TestCase):
                             f"`{m.ad}` skeleti ayrılmır:\n{gövdə}\n"
                             + x.hesabat(False))
 
+    def test_skeletlərdəki_tiplər_mövcuddur(self):
+        """
+        Skelet yalnız ayrılmamalı, tip yoxlamasından da keçməlidir:
+        IDE onu redaktora yazır, `tamEn` kimi naməlum tip istifadəçiyə
+        dərhal xəta göstərərdi (ALQ-T002).
+        """
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.tipyoxlayici import TipYoxlayıcı
+        from alqor.xeta import XətaToplayıcı
+
+        for m in V.KATALOQ:
+            if not m.skelet and not m.vəziyyət:
+                continue
+            gövdə = V.skelet(None, m.ad, "sınaqAdı")
+            kod = ("komponent K\n"
+                   + "".join(f"    {s}\n" if s.strip() else "\n"
+                             for s in gövdə.split("\n"))
+                   + "\n    göstər()\n        qaytar <p>a</p>\n    son\n"
+                     "son\n")
+            x = XətaToplayıcı()
+            mənbə = Mənbə.mətndən(kod, "skelet.alqor", x)
+            ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
+            t = XətaToplayıcı()
+            TipYoxlayıcı(t).yoxla(ağac)
+            naməlum = [d for d in t.siyahı if d.kod == "ALQ-T002"]
+            self.assertEqual(naməlum, [],
+                             f"`{m.ad}` skeletində naməlum tip:\n{gövdə}")
+
     def test_kataloq_dildən_oxunur(self):
         sətirlər = çıxış(BAŞLIQ + '''
 funksiya əsas()
