@@ -9,7 +9,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 
 from alqor.sablon import Şablon, ŞablonXətası, html_qaç   # noqa: E402
-from alqor.veb import _naxışı_çevir, _müddəti_saniyəyə    # noqa: E402
+from alqor.veb import (_naxışı_çevir, _müddəti_saniyəyə,  # noqa: E402
+                       yol_təhlükəlidir)
 from test_icraci import çıxış                             # noqa: E402
 
 # Hər sınaqda işlənən minimal serverin başlığı
@@ -67,6 +68,39 @@ class MüddətAyırma(unittest.TestCase):
         self.assertEqual(_müddəti_saniyəyə("1saat"), 3600)
         self.assertEqual(_müddəti_saniyəyə(45), 45)
         self.assertEqual(_müddəti_saniyəyə("naməlum"), 60.0)
+
+
+class YolYoxlaması(unittest.TestCase):
+    """`yol_təhlükəlidir` — marşrutlardan əvvəl işləyən süzgəc."""
+
+    def test_adi_yollar_keçir(self):
+        for yol in ("/", "/salam", "/api/tapşırıq/1", "/statik/a.css",
+                    "/istifadəçi/Əli", "/f/a/b/c",
+                    "/qovluq/",            # son kəsik normaldır
+                    "/a/.gizli",           # nöqtə ilə başlayan ad
+                    "/a/...",              # üç nöqtə adi fayl adıdır
+                    "/a/b..c"):
+            self.assertFalse(yol_təhlükəlidir(yol), yol)
+
+    def test_qovluqdan_qaçmaq_rədd_edilir(self):
+        for yol in ("/statik/../gizli.txt", "/../gizli",
+                    "/a/b/../../../etc/passwd", "/..", "/."):
+            self.assertTrue(yol_təhlükəlidir(yol), yol)
+
+    def test_tərs_kəsik_rədd_edilir(self):
+        self.assertTrue(yol_təhlükəlidir("/statik/..\\gizli.txt"))
+        self.assertTrue(yol_təhlükəlidir("/a\\b"))
+
+    def test_boş_daxili_seqment_rədd_edilir(self):
+        """`....//` kimi fəndlər normallaşdırılmamış yol deməkdir."""
+        self.assertTrue(yol_təhlükəlidir("/statik/....//gizli.txt"))
+        self.assertTrue(yol_təhlükəlidir("/a//b"))
+
+    def test_nul_baytı_rədd_edilir(self):
+        self.assertTrue(yol_təhlükəlidir("/statik/a.css\x00.png"))
+
+    def test_boş_yol_rədd_edilir(self):
+        self.assertTrue(yol_təhlükəlidir(""))
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -692,6 +726,49 @@ funksiya əsas()
 son
 """)
         self.assertEqual(sətirlər, ["404"])
+
+    def test_simvolik_keçid_kənara_aparmır(self):
+        """
+        Statik qovluqdakı simvolik keçid kökdən kənara işarə edirsə
+        fayl verilmir. Yol yoxlaması bunu tutmur — `resolve()` tutur.
+        """
+        keçid = self.qovluq / "statik" / "açıq.txt"
+        try:
+            keçid.symlink_to(self.qovluq / "gizli.txt")
+        except (OSError, NotImplementedError):
+            self.skipTest("simvolik keçid yaradıla bilmir")
+        sətirlər = self._işlət(self.QUR + """
+funksiya əsas()
+    dəyişən c = müştəri().al("/statik/açıq.txt")
+    yaz(c.vəziyyət())
+    yaz("gizli" içindədir c.mətnƏt())
+son
+""")
+        self.assertEqual(sətirlər[0], "403")
+        self.assertEqual(sətirlər[1], "yanlış")
+
+    def test_qonşu_qovluq_adı_köklə_qarışmır(self):
+        """
+        `statik-gizli` mətn kimi `statik` ilə başlayır, amma onun
+        içində deyil. `startswith` ilə müqayisə burada sınardı.
+        """
+        (self.qovluq / "statik-gizli").mkdir()
+        (self.qovluq / "statik-gizli" / "a.txt").write_text(
+            "gizli", encoding="utf-8")
+        keçid = self.qovluq / "statik" / "qonşu"
+        try:
+            keçid.symlink_to(self.qovluq / "statik-gizli")
+        except (OSError, NotImplementedError):
+            self.skipTest("simvolik keçid yaradıla bilmir")
+        sətirlər = self._işlət(self.QUR + """
+funksiya əsas()
+    dəyişən c = müştəri().al("/statik/qonşu/a.txt")
+    yaz(c.vəziyyət())
+    yaz("gizli" içindədir c.mətnƏt())
+son
+""")
+        self.assertEqual(sətirlər[0], "403")
+        self.assertEqual(sətirlər[1], "yanlış")
 
     def test_şablon_cavabı(self):
         sətirlər = self._işlət("""
