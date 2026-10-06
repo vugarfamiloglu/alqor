@@ -641,6 +641,9 @@ class Tətbiq:
         self._prosslər: list[subprocess.Popen] = []
         self._bitdi = threading.Event()
         self._işləyir = False
+        # `dayandır()` iki sapdan gələ bilər: tətbiqin öz sapı və
+        # çağıran kod. Serveri yalnız bir dəfə bağlamalıyıq.
+        self._qıfıl = threading.Lock()
         # Sınaq rejimində dialoq cavabları buradan götürülür
         self.dialoq_cavabları: list[Any] = []
         self.dialoq_jurnalı: list[tuple[str, str]] = []
@@ -679,15 +682,16 @@ class Tətbiq:
     # ── Server ────────────────────────────────────────────────────────
 
     def _serveri_qaldır(self) -> None:
-        if self._server is not None:
-            return
-        from http.server import ThreadingHTTPServer
-        self._server = ThreadingHTTPServer(
-            ("127.0.0.1", 0), _İdarəedici_yarat(self))
-        self._port = self._server.server_address[1]
-        sap = threading.Thread(target=self._server.serve_forever,
-                               daemon=True, name="alqor-pəncərə")
-        sap.start()
+        with self._qıfıl:
+            if self._server is not None:
+                return
+            from http.server import ThreadingHTTPServer
+            self._server = ThreadingHTTPServer(
+                ("127.0.0.1", 0), _İdarəedici_yarat(self))
+            self._port = self._server.server_address[1]
+            sap = threading.Thread(target=self._server.serve_forever,
+                                   daemon=True, name="alqor-pəncərə")
+            sap.start()
 
     def dayandır(self) -> None:
         for p in list(self.pəncərələr):
@@ -700,10 +704,13 @@ class Tətbiq:
             except Exception:                   # noqa: BLE001
                 pass
         self._prosslər.clear()
-        if self._server is not None:
-            self._server.shutdown()
-            self._server.server_close()
-            self._server = None
+        # Serveri qıfılın altında ƏLDƏN alırıq: iki sap da `is not
+        # None`-u keçib `server_close()`-u iki dəfə çağıra bilər.
+        with self._qıfıl:
+            server, self._server = self._server, None
+        if server is not None:
+            server.shutdown()
+            server.server_close()
         self._bitdi.set()
 
     # ── Əsas dövr ─────────────────────────────────────────────────────

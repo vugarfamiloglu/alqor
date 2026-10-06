@@ -512,6 +512,9 @@ class Server:
     # ── Sorğunun idarə olunması ───────────────────────────────────────
 
     def _idarə_et(self, sorğu: Sorğu) -> Cavab:
+        # Pozulmuş yol ara proqramlara da çatmır
+        if yol_təhlükəlidir(sorğu._yol):
+            return Cavab("400 Yol etibarsızdır".encode("utf-8"), 400)
         zəncir = list(self._ara_proqramlar)
 
         def nüvə(s: Sorğu) -> Cavab:
@@ -605,13 +608,16 @@ class Server:
                 nisbi = indeks
             if not nisbi:
                 continue
-            # Yol qaçışının qarşısını alırıq
-            hədəf = (qovluq / nisbi).resolve()
+            # Yol qaçışının qarşısını alırıq. `startswith` yaramaz:
+            # `/veb-gizli` mətn kimi `/veb` ilə başlayır, amma onun
+            # içində DEYİL. `is_relative_to` həqiqi seqment müqayisəsi
+            # aparır. Simvolik keçidlər `resolve()` ilə açılır.
             try:
+                hədəf = (qovluq / nisbi).resolve()
                 kök = qovluq.resolve()
             except OSError:
                 continue
-            if not str(hədəf).startswith(str(kök)):
+            if hədəf != kök and not hədəf.is_relative_to(kök):
                 return Cavab(b"403 Forbidden", 403)
             if hədəf.is_dir() and indeks:
                 hədəf = hədəf / indeks
@@ -785,6 +791,34 @@ def _yolu_düzəlt(xam: str) -> str:
         return xam.encode("latin-1").decode("utf-8")
     except (UnicodeEncodeError, UnicodeDecodeError):
         return xam
+
+
+def yol_təhlükəlidir(yol: str) -> bool:
+    """
+    Sorğu yolu normallaşdırılmış formadadırmı?
+
+    Marşrutlar və statik fayllar oxunmadan ƏVVƏL yoxlanılır. Bir yol
+    normallaşdırılmış sayılmır — deməli rədd edilir — əgər onda:
+
+    * NUL baytı var (fayl sistemi API-lərini çaşdırır),
+    * tərs kəsik var (Windows-da qovluq ayırıcısıdır: `..\\gizli`),
+    * `.` və ya `..` adlı seqment var (qovluqdan qaçmaq),
+    * boş daxili seqment var (`//` — `....//` kimi fəndlər `..`-ni
+      kəsən serverləri aldatmaq üçün yazılır; biz kəsmirik, amma
+      belə yolu da qəbul etmirik).
+
+    Rədd cavabı sorğu yolunu ƏKS ETDİRMİR — hücumçunun mətni
+    cavabda görünməməlidir.
+    """
+    if not yol or "\x00" in yol or "\\" in yol:
+        return True
+    seqmentlər = yol.split("/")
+    for i, s in enumerate(seqmentlər):
+        if s in (".", ".."):
+            return True
+        if not s and 0 < i < len(seqmentlər) - 1:
+            return True
+    return False
 
 
 # ═══════════════════════════════════════════════════════════════════════
