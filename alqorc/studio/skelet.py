@@ -82,7 +82,11 @@ def məlumat(ad: str) -> V.Məlumat:
     for m in V.KATALOQ:
         if m.ad == ad:
             return m
-    yaxın = [m.ad for m in V.KATALOQ if ad and ad.lower() in m.ad.lower()]
+    from alqor.elifba import latınla
+    sadə = latınla(ad).lower()
+    yaxın = [m.ad for m in V.KATALOQ
+             if sadə and (sadə in latınla(m.ad).lower()
+                          or latınla(m.ad).lower() in sadə)]
     əlavə = f" Oxşarlar: {', '.join(yaxın[:5])}" if yaxın else ""
     raise SkeletXətası(f"`{ad}` vidjeti yoxdur.{əlavə}")
 
@@ -171,8 +175,37 @@ def _hissələrə_böl(kod: str) -> tuple[list[tuple[str, str]],
     return vəziyyətlər, metodlar
 
 
-def _sözü_dəyiş(mətn: str, köhnə: str, yeni: str) -> str:
-    return re.sub(rf"(?<!\w){re.escape(köhnə)}(?!\w)", yeni, mətn)
+def _sabit_adları_nömrələ(skelet: str, çağırış: str, vəziyyətlər: list[str],
+                          metodlar: list[str], ad: str,
+                          mövcud: set[str]) -> tuple[str, str]:
+    """
+    Kataloqdakı sabit adlar mövcud üzvlə toqquşursa nömrələnir. Kök
+    birlikdə dəyişir: `şifrə` + `şifrəDəyişdi` → `şifrə2` +
+    `şifrə2Dəyişdi` (`şifrəDəyişdi2` yox).
+    """
+    təyin = vəziyyətlər + metodlar
+    tutulmuş = set(mövcud)
+    görülmüş: set[str] = set()
+    for a in təyin:
+        if ad in a or a in görülmüş:
+            continue
+        # Kök — bu adın başlandığı vəziyyət adı (yoxdursa özü)
+        kök = next((v for v in vəziyyətlər if a.startswith(v)), a)
+        ailə = [b for b in təyin if b.startswith(kök) and ad not in b]
+        görülmüş.update(ailə)
+        if not any(b in tutulmuş for b in ailə):
+            continue
+        n = 2
+        while any(kök + str(n) + b[len(kök):] in tutulmuş for b in ailə):
+            n += 1
+        yeni = f"{kök}{n}"
+        tutulmuş.update(yeni + b[len(kök):] for b in ailə)
+        sonluqlar = "|".join(re.escape(b[len(kök):]) for b in ailə)
+        naxış = re.compile(
+            rf"(?<!\w){re.escape(kök)}(?=(?:{sonluqlar})(?!\w))")
+        skelet = naxış.sub(yeni, skelet)
+        çağırış = naxış.sub(yeni, çağırış)
+    return skelet, çağırış
 
 
 def hazırla(m: V.Məlumat, ad: str, mövcud: set[str],
@@ -187,18 +220,9 @@ def hazırla(m: V.Məlumat, ad: str, mövcud: set[str],
 
     vəziyyətlər, metodlar = _hissələrə_böl(skelet)
     if adları_dəyiş:
-        təyin = [a for a, _ in vəziyyətlər] + [a for a, _ in metodlar]
-        tutulmuş = set(mövcud) | set(təyin)
-        for a in təyin:
-            if ad in a or a not in mövcud:
-                continue
-            n = 2
-            while f"{a}{n}" in tutulmuş:
-                n += 1
-            yeni = f"{a}{n}"
-            tutulmuş.add(yeni)
-            skelet = _sözü_dəyiş(skelet, a, yeni)
-            çağırış = _sözü_dəyiş(çağırış, a, yeni)
+        skelet, çağırış = _sabit_adları_nömrələ(
+            skelet, çağırış, [a for a, _ in vəziyyətlər],
+            [a for a, _ in metodlar], ad, mövcud)
         vəziyyətlər, metodlar = _hissələrə_böl(skelet)
 
     # Nümunədə istifadə olunmayan idarəedicini uyğun hadisəyə bağla

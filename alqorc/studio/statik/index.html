@@ -51,12 +51,15 @@
     <section class="panel" id="panel-palet" hidden>
       <input type="search" id="palet-axtar" placeholder="Element axtar… (sahə, düymə, cədvəl)"
              autocomplete="off" spellcheck="false">
+      <details class="fayl-elementləri" id="fayl-elementleri" open>
+        <summary>Fayldakı elementlər <span class="say" id="element-sayi"></span></summary>
+        <p class="ipucu-mətni">⚡ — yarımçıq: <b>iki klik</b> çatışmayan vəziyyət və
+          idarəedicini yazır</p>
+        <div class="elementlər" id="elementler"></div>
+      </details>
       <p class="ipucu-mətni">Bir klik — kursora qoyur · <b>iki klik</b> — işləməsi üçün
         lazım olan bütün kodu yazır · redaktora sürükləmək də olar</p>
       <div class="palet" id="palet"></div>
-      <h4 class="alt-başlıq">Fayldakı elementlər</h4>
-      <p class="ipucu-mətni">İki klik — çatışmayan vəziyyət və idarəedicini yazır</p>
-      <div class="elementlər" id="elementler"></div>
     </section>
   </aside>
   <div class="bölücü şaquli" data-bolucu="yan"></div>

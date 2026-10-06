@@ -653,6 +653,9 @@ async function vidjetiTamamla(kursor) {
 
 function elementləriÇək(siyahı) {
   siyahı = siyahı || [];
+  const yarımçıq = siyahı.filter((e) => e.çatışmır.length).length;
+  $("#element-sayi").textContent = siyahı.length
+    ? `(${siyahı.length}${yarımçıq ? `, ${yarımçıq} yarımçıq` : ""})` : "";
   $("#elementler").innerHTML = siyahı.length ? siyahı.map((e, i) => {
     const tam = !e.çatışmır.length;
     return `<div class="fayl-elementi ${tam ? "tam" : "yarımçıq"}" data-i="${i}" ` +

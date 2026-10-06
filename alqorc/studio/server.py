@@ -149,12 +149,15 @@ class Studio:
     def önbaxışı_dayandır(self) -> None:
         with self._önbaxış_kilidi:
             p, self._önbaxış = self._önbaxış, None
-        if p is not None and p.poll() is None:
+        if p is None:
+            return
+        if p.poll() is None:
             p.terminate()
             try:
                 p.wait(timeout=2)
             except subprocess.TimeoutExpired:
                 p.kill()
+                p.wait(timeout=2)
 
     def önbaxışı_başlat(self, fayl: Path, komponent: str | None) -> dict:
         self.önbaxışı_dayandır()
@@ -177,12 +180,14 @@ class Studio:
                 if i == 0:
                     növbə.put(sətir.decode("utf-8", "replace"))
             növbə.put("")
+            p.stdout.close()           # proses bitdi — boru da bağlanır
 
         def stderr_oxu() -> None:
             assert p.stderr is not None
-            for parça in iter(lambda: p.stderr.read(4096), b""):
+            for parça in iter(lambda: p.stderr.read1(4096), b""):
                 if len(xəta_parçaları) < 256:
                     xəta_parçaları.append(parça)
+            p.stderr.close()
 
         threading.Thread(target=stdout_oxu, daemon=True).start()
         threading.Thread(target=stderr_oxu, daemon=True).start()
@@ -466,6 +471,8 @@ def _İdarəedici_yarat(studio: Studio):
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("X-Frame-Options", "DENY")
             self.send_header("Referrer-Policy", "no-referrer")
+            if self.close_connection:
+                self.send_header("Connection", "close")
             for a, d in (başlıqlar or {}).items():
                 self.send_header(a, d)
             self.end_headers()
@@ -544,6 +551,9 @@ def _İdarəedici_yarat(studio: Studio):
         # ── POST ──────────────────────────────────────────────────────
 
         def do_POST(self) -> None:
+            # Gövdə oxunmadan rədd edilən sorğudan sonra əlaqə bağlanır —
+            # oxunmamış baytlar növbəti sorğu kimi ayrılmasın
+            self.close_connection = True
             if not self._host_yoxla():
                 return
             yol, sorğu = self._yol_və_sorğu()
@@ -563,8 +573,10 @@ def _İdarəedici_yarat(studio: Studio):
             if not 0 <= uzunluq <= MAKS_GÖVDƏ:
                 self._xəta("sorğu gövdəsi çox böyükdür", 413)
                 return
+            xam = self.rfile.read(uzunluq)
+            self.close_connection = False
             try:
-                gövdə = json.loads(self.rfile.read(uzunluq) or b"{}")
+                gövdə = json.loads(xam or b"{}")
             except ValueError:
                 self._xəta("JSON yanlışdır", 400)
                 return

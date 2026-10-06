@@ -113,6 +113,13 @@ class İş:
         kod = self.proses.wait()
         for s in self._saplar:
             s.join(timeout=5)
+        for axın in (self.proses.stdin, self.proses.stdout,
+                     self.proses.stderr):
+            try:
+                if axın:
+                    axın.close()
+            except OSError:
+                pass
         self.kod = kod
         müddət = time.monotonic() - self.başlanğıc
         self._əlavə("bitdi", "", kod=kod, müddət=round(müddət, 3))
