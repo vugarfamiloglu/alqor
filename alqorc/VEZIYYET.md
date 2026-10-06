@@ -6,10 +6,13 @@
 lekser · parser · interpretator · standart kitabxana · REPL ·
 **JSX** · **tənbəl generatorlar** · **asinxron icra** ·
 **statik tip yoxlayıcı** · **veb server + şablon** · **desktop** ·
-**57 hazır vidjet**
+**57 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
+**Alqor Studio (IDE)**
 
-**723 sınaq keçir.** 8 nümunə proqramın **hamısı** ayrılır, tip
-yoxlamasından keçir və icra olunur.
+**872 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
+keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
+avtomatik icra olunur (`test_beledci.py`).
 
 ---
 
@@ -39,8 +42,12 @@ alqorc/
 │   ├── tipyoxlayici.py   statik tip yoxlayıcı
 │   ├── sablon.py         `.alqorhtml` şablon mühərriki
 │   ├── veb.py            HTTP server, marşrutlar, sessiya, ara proqramlar
-│   ├── pencere.py        desktop: pəncərə, menyu, dialoq, hadisə dövrü
-│   └── vidjet.py         57 hazır interfeys elementi + IDE kataloqu
+│   ├── pencere.py        desktop: pəncərə, menyu, dialoq, hadisə dövrü;
+│   │                     brauzer nüvəsi (DOM yamağı + hadisə növbəsi)
+│   ├── vidjet.py         57 hazır interfeys elementi + IDE kataloqu
+│   ├── vidjet_arayis.py  spesifikasiya § 14.7-ni koddan qurur
+│   └── konsol.py         rəng, sual-cavab, irəliləyiş, arqumentlər
+├── studio/               Alqor Studio — IDE (README.md-yə baxın)
 └── sinaq/
     ├── test_elifba.py        (31)
     ├── test_menbe.py         (34)
@@ -50,8 +57,11 @@ alqorc/
     ├── test_korutin.py       (43)   generatorlar + asinxron
     ├── test_tipyoxlayici.py  (83)   tip yoxlayıcı
     ├── test_veb.py           (69)   server + marşrut + şablon
-    ├── test_pencere.py       (75)   pəncərə + menyu + dialoq + komponent
-    └── test_vidjet.py        (123)  vidjetlər + kataloq + iki hədəf
+    ├── test_pencere.py       (84)   pəncərə + menyu + dialoq + CSRF
+    ├── test_vidjet.py        (129)  vidjetlər + kataloq + § 14 sinxronu
+    ├── test_konsol.py        (25)   konsol + zəncir + açar söz etiketi
+    ├── test_studio.py        (78)   IDE: skelet, API, təhlükəsizlik, UI
+    └── test_beledci.py       (3)    dərsliklərdəki bütün kod işləyir
 ```
 
 ## İşə salmaq
@@ -119,6 +129,11 @@ python alqorc.py işlət ../numuneler/08-vidjetler.alqor -- sınaq  # başsız
 | **Tənbəl generatorlar** — sonsuz generatorlar işləyir | ✅ |
 | **Asinxron** — `Gələcək`, `paralel`, `sap`, `LəğvNişanı` | ✅ |
 | **Statik tip yoxlayıcı** — 3 rejim, axın daralması, 25 xəta kodu | ✅ |
+| Aparıcı nöqtə ilə çoxsətirli zəncir (`.metod()` yeni sətirdə) | ✅ |
+| Açar söz adlı arqument etiketi (`standart:`, `sinif:`) | ✅ |
+| Ox funksiyasında mənimsətmə (`() => özü.say += 1`) | ✅ |
+| `tut x` — istənilən xətanı bağlayır | ✅ |
+| Qısa qurucudan sonra üzvlər (girinti qaydası, § 6.3.1) | ✅ |
 
 ---
 
@@ -329,6 +344,29 @@ nümunənin və hər skeletin həqiqətən ayrıldığını yoxlayır.
 
 ---
 
+### Spesifikasiya § 12–14 və bələdçi yazılarkən tapılanlar (düzəldilib)
+
+Sənəd yazmaq üçün hər nümunəni işlətdik — kod sənədlə uyğun gəlmədikdə
+kodu düzəltdik (və ya spesifikasiyanı, əgər o səhv idisə).
+
+| # | Problem | Həll |
+|---|---|---|
+| 23 | **Vebdə vidjet hadisələri işləmirdi** — düymə görünür, `klik` səssizcə atılırdı | `s.komponent(yol, Sinif)` — sessiya başına nümunə |
+| 24 | **Yazarkən fokus və hərflər itirdi** (desktop və veb) — kök `innerHTML` ilə əvəzlənir, sorğu gedərkən hadisələr atılırdı | DOM yamağı + hadisə növbəsi; gözləyən sahəyə yamaq toxunmur |
+| 25 | Desktopda vidjetlər üslubsuz idi | `pəncərə` vidjet CSS-ini qoşur |
+| 26 | **CSRF** — istənilən sayt `text/plain` POST ilə yerli serverdə düymə basa bilərdi; DNS rebinding | `Origin` + `Host` yoxlaması; vebdə JSON + `SameSite=Strict` |
+| 27 | Statik fayl: `str.startswith` qonşu qovluğu (`statik-gizli`) keçirirdi; 404 hücum yolunu əks etdirirdi | `is_relative_to`; `..`, `\`, `//`, NUL 400 alır |
+| 28 | IDE skeletləri `tamEn` tipi yazırdı (toplu ad dəyişikliyi) | düzəldildi; skeletlər tip yoxlamasından keçir |
+| 29 | Qısa qurucudan sonra `göstər()` gövdəyə düşür, `son` sinfi bağlayırdı | girinti qaydası (§ 6.3.1) |
+| 30 | JSX `{…}`, mətn `"{…}"` və şablon `{{ … }}` artıq tokenləri səssizcə atırdı | xəta + CSS üçün xam mətn məsləhəti |
+| 31 | `sistem.arqumentlər()` `["işlət", "fayl.alqor", …]` qaytarırdı | proqramın öz arqumentləri |
+| 32 | `konsol.soruş` `input()`-u birbaşa çağırırdı — sınaqda işləmirdi | icraçının giriş axını |
+| 33 | `tut x` — `x` gövdənin ilk cümləsi sayılırdı | istənilən xətanı bağlayır |
+| 34 | Şablonda uşaq blokun xətası valideynin faylı ilə bildirilirdi; blok və ifadə keşi toqquşurdu | qovşaq faylı daşıyır; iki keş |
+| 35 | Sınaq sürücüsü qutucuğa `"doğru"` mətni göndərirdi; cədvəl sətrini tapa bilmirdi | brauzer kimi `məntiq`; başlanğıc uyğunluğu |
+| 36 | `cədvəl(sətirKlik:)` hansı sətrin basıldığını ötürmürdü | sətir indeksi |
+| 37 | Spesifikasiya `veb.ön`, `p.ölçü`, `faylAçÇoxlu`, WebKitGTK təsvir edirdi | § 12 həqiqi API ilə; olmayanlar "planlaşdırılır" |
+
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
 ### 1. `hər x üçün siyahı içində` söz sırası
@@ -358,19 +396,26 @@ gəlir. Düzgün həll: unifikasiya alqoritmi.
 
 ---
 
+### 5. Modul tipləri annotasiyada
+
+`funksiya f() -> pəncərə.Pəncərə` — tip yoxlayıcısı modul daxilindəki
+tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
+
+---
+
 ## Növbəti addımlar
 
 | # | İş | Həcm |
 |---|---|---|
-| 1 | Spesifikasiya § 14 (`vidjet`) + bələdçi dərsləri | sənəd |
-| 2 | `alqorfmt` (formatter + `--ascii-düzəlt`) | ~400 sətir |
+| ✅ | Spesifikasiya § 14, § 12–13 uzlaşması, 3 dərslik, Alqor Studio | — |
+| 2 | `alqorfmt` (formatter + `--ascii-düzəlt`) — Studio-da Ctrl+Shift+F hazırdır | ~400 sətir |
 | 3 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
 | 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
 | 5 | Qalan standart kitabxana modulları (`http`, `verilənlər`, …) | böyük |
 | 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
 | 7 | Mərhələ 6 — JS/WASM transpilyator | böyük |
 | 8 | `alqorpm` + `alqorhub` (paket meneceri və reyestr) | böyük |
-| 9 | **Alqor Studio** (redaktor) — vidjet paleti + iki klikdə kod | böyük |
+| 9 | Alqor Studio: avtomatik tamamlama (alqorls-dan), vizual dizayner | orta |
 | 10 | Rust-a köçürmə (istehsal kompilyatoru) | çox böyük |
 
 ### `vidjet` və Alqor Studio — tələb
