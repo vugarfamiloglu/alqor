@@ -35,6 +35,7 @@ class İcraçı:
         self.qlobal = qlobal_mühit(self)
         self.çıxış = çıxış or (lambda s: print(s))
         self.giriş = giriş or input
+        self.proqram_arqumentləri: list[str] = []
         # Əsas skriptin qovluğu — şablonlar və nisbi yollar buna görə
         # həll olunur, cari iş qovluğuna görə yox
         self.əsas_qovluq = None
@@ -53,6 +54,8 @@ class İcraçı:
     def işlət(self, ağac: A.Proqram, arqumentlər: list[str] | None = None
               ) -> int:
         m = self.qlobal
+        # `sistem.arqumentlər()` və `konsol.arqumentlər()` buradan oxuyur
+        self.proqram_arqumentləri = list(arqumentlər or [])
         try:
             # 1. Elanları qeydiyyata al (funksiya/sinif irəli istinad etsin)
             self._elanları_qaldır(ağac.gövdə, m)

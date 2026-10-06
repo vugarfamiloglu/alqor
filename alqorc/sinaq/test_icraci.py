@@ -159,6 +159,31 @@ yaz(<S k={2} />)"""), ["<p>5</p>"])
 son
 yeni A(1)"""), ["qurulur 1"])
 
+    # ── Ox funksiyasında mənimsətmə ───────────────────────────────────
+
+    def test_lambda_gövdəsində_mənimsətmə(self):
+        self.assertEqual(çıxış("""sinif A
+    xassə n: tam = 0
+son
+dəyişən a = yeni A()
+dəyişən artır = () => a.n += 2
+dəyişən sıfırla = () => a.n = 0
+dəyişən bir = () => a.n++
+artır()
+artır()
+yaz(a.n)
+sıfırla()
+bir()
+yaz(a.n)
+yaz(artır())"""), ["4", "1", "boş"])
+
+    def test_JSX_ifadəsində_artıq_token_xətadır(self):
+        """Əvvəllər `{a 2}`-dən `2` səssizcə atılırdı."""
+        _, x = ayır("dəyişən a = 1\nyaz(<p>{a 2}</p>)")
+        self.assertFalse(x.uğurludur())
+        _, x = ayır("yaz(<b klik={() => x}>{1 + 2}</b>)")
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+
     def test_çox_xəta_bir_keçiddə(self):
         _, x = ayır("dəyişən a = $\ndəyişən b = $\ndəyişən c = $")
         self.assertGreaterEqual(len(x.xətalar), 3)

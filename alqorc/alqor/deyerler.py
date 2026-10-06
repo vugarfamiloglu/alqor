@@ -773,6 +773,11 @@ def tip_adı(dəyər: Any) -> str:
         return "ləğvNişanı"
     if isinstance(dəyər, Çağırılan):
         return "funksiya"
+    # Kitabxana obyektləri öz tip adını bildirə bilər (bax:
+    # `kitabxana.daxili_metod` — `ALQOR_METODLARI` protokolu)
+    ad = getattr(type(dəyər), "ALQOR_TİP_ADI", None)
+    if ad:
+        return ad
     return "istənilən"
 
 

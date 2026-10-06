@@ -38,12 +38,20 @@ funksiya əsas()
         yaz("Ətraflı rejim")
     son
 
+    dəyişən ədədlər = arq.siyahı("ədədlər").çevir((x) => onluqƏt(x, 0))
     seç arq.dəyər("əməliyyat")
-        hal "topla" → yaz(cəm(arq.siyahı("ədədlər")))
-        hal "çıx" → ...
+        hal "topla" → yaz(ədədlər.cəm())
+        hal "çıx" → yaz(ədədlər[0] - ədədlər[1..].cəm())
+        digər hallarda → yaz("Naməlum əməliyyat")
     son
 son
 ```
+
+Təhlilçi proqramın **öz** arqumentlərini oxuyur (`alqor işlət f.alqor
+-- topla 2 3` → `["topla", "2", "3"]`; `sistem.arqumentlər()` də eynidir).
+`--` sonrakı hər şeyi mövqeli sayır; `--format=json` və `-f json` eynidir.
+`--kömək` köməyi çap edib proqramı 0 kodu ilə, səhv arqument isə xəta
+və istifadə qaydasını stderr-ə çap edib **3** kodu ilə bitirir (§ 13.16).
 
 Avtomatik yaradılan kömək:
 ```
@@ -69,178 +77,264 @@ SEÇİMLƏR:
 ```alqor
 gətir konsol
 
-konsol.qırmızı("Xəta!")
-konsol.yaşıl("Uğurlu")
-konsol.sarı("Xəbərdarlıq")
-konsol.mavi("Məlumat")
-konsol.qalın("Vacib")
-konsol.altXətt("Vurğulanmış")
-konsol.rəng("mətn", ön: "qırmızı", arxa: "ağ")
+yaz(konsol.qırmızı("Xəta!"))
+yaz(konsol.yaşıl("Uğurlu"), konsol.sarı("Xəbərdarlıq"))
+yaz(konsol.mavi("Məlumat"), konsol.boz("İkinci dərəcəli"))
+yaz(konsol.qalın("Vacib"), konsol.altXətt("Vurğulanmış"))
+yaz(konsol.rəng("mətn", ön: "qırmızı", arxa: "ağ", qalın: doğru))
 
 konsol.təmizlə()
-konsol.kursor(5, 10)
-konsol.ölçü() -> kortej[tam, tam]
+konsol.kursor(5, 10)                    // sətir, sütun
+dəyişən (en, hündürlük) = konsol.ölçü()
+əgər konsol.terminaldır() onda ... son  // çıxış boruya gedirmi?
 ```
+
+Rəng funksiyaları **mətn qaytarır** (çap etmir) — birləşdirilə bilər.
+Rənglər: `qara` `qırmızı` `yaşıl` `sarı` `mavi` `bənövşəyi` `firuzəyi`
+`ağ` `boz`. `NO_COLOR` mühit dəyişəni təyin olunubsa rəng kodları
+buraxılır; Windows 10+ konsolunda ANSI avtomatik aktivləşir.
 
 ### İnteraktiv elementlər
 ```alqor
-dəyişən ad = konsol.soruş("Adınız: ")
-dəyişən parol = konsol.parolSoruş("Parol: ")
-dəyişən razı = konsol.təsdiqlə("Davam edilsin?")
-dəyişən seçim = konsol.seç("Rəng seçin:", ["Qırmızı", "Yaşıl", "Mavi"])
-dəyişən çoxlu = konsol.çoxSeç("Nə lazımdır?", ["A", "B", "C"])
+dəyişən ad = konsol.soruş("Adınız: ", standart: "Qonaq")
+dəyişən parol = konsol.parolSoruş("Parol: ")      // simvollar görünmür
+dəyişən razı = konsol.təsdiqlə("Davam edilsin?", standart: doğru)
+dəyişən rəng = konsol.seç("Rəng seçin:", ["Qırmızı", "Yaşıl", "Mavi"])
+dəyişən lazım = konsol.çoxSeç("Nə lazımdır?", ["A", "B", "C"])
+```
 
-// İrəliləyiş göstəricisi
+| Funksiya | Davranış |
+|---|---|
+| `soruş(sual?, standart?)` | boş cavabda `standart` |
+| `parolSoruş(sual?)` | terminalda əks-səda yoxdur |
+| `təsdiqlə(sual, standart?)` | `hə`/`bəli`/`h` → `doğru`, `yox`/`xeyr` → `yanlış`; başqa cavabda təkrar soruşur |
+| `seç(sual, seçimlər)` | nömrəli siyahı; nömrə və ya ad ilə seçilir, **elementi** qaytarır |
+| `çoxSeç(sual, seçimlər)` | `1,3` və ya `1 3`; elementlərin siyahısı (boş ola bilər) |
+
+Hamısı `oxu()` kimi proqramın giriş axınını işlədir — sınaqda cavablar
+əvvəlcədən verilə bilər. Giriş bitibsə `GirişÇıxışXətası` (ALQ-R009).
+
+```alqor
+// İrəliləyiş zolağı
 dəyişən p = konsol.irəliləyiş(100, "Yüklənir")
 hər i üçün 1..100 içində
-    p.yenilə(i)
     emal(i)
+    p.artır()                    // və ya p.yenilə(i)
 son
-p.bitir()
+p.bitir("Hazırdır ✓")
+// Yüklənir ████████████░░░░░░░░░░░░░░░░  45% (45/100)
 
 // Fırlanan göstərici
 dəyişən f = konsol.fırlanan("İşlənir...")
 gözlə uzunƏməliyyat()
+f.mətnDəyiş("Yazılır...")
 f.dayandır("Bitdi ✓")
 
 // Cədvəl
 konsol.cədvəl(
     ["Ad", "Yaş", "Şəhər"],
-    [["Aysel", "24", "Bakı"], ["Rəşad", "31", "Gəncə"]]
+    [["Aysel", 24, "Bakı"], ["Rəşad", 31, "Gəncə"]]
 )
+// Ad    │ Yaş │ Şəhər
+// ──────┼─────┼──────
+// Aysel │ 24  │ Bakı
 ```
+
+`irəliləyiş` və `fırlanan` terminalda eyni sətri yeniləyir. Çıxış fayla
+və ya boruya yönəldilibsə animasiya olmur, yalnız yekun sətir yazılır.
 
 ---
 
-## 12.2 Desktop tətbiqləri
+## 12.2 Desktop tətbiqləri (`pəncərə` modulu)
 
-### Arxitektura
-Alqor desktop tətbiqləri **WebKitGTK** əsaslı yerli pəncərədə işləyir:
-- İnterfeys: Alqor komponentləri → HTML/CSS (brauzerdəki ilə **eyni kod**)
-- Məntiq: yerli kod (tam sistem girişi: fayl, şəbəkə, proses)
-- Nəticə: tək fayllı binar, Electron-dan **~10 dəfə kiçik**
+### 12.2.1 Arxitektura — yerli server + yerli pəncərə
 
-### Ən sadə pəncərə
+İnterfeys komponentlərin `göstər()` metodunun qaytardığı JSX-dir; JSX
+HTML-ə çevrilir (`veb` modulu ilə **eyni kod**). Desktop tətbiqi üçün
+ayrı düzülüş mühərriki yoxdur: HTML-i `127.0.0.1`-də təsadüfi portda
+qalxan yerli server verir, onu isə yerli pəncərə göstərir (Tauri modeli).
+Məntiq yerli koddur — fayl, şəbəkə, proses tam əlçatandır.
+
+**Aparıcı** (pəncərəni açan) bu sıra ilə seçilir:
+
+| # | Aparıcı | Şərt |
+|---|---|---|
+| 1 | `pywebview` | quraşdırılıbsa — həqiqi yerli pəncərə (WebKitGTK / WebView2) |
+| 2 | Chrome / Edge / Brave / Chromium `--app=` | **standart** — çərçivəsiz tətbiq pəncərəsi, asılılıq yoxdur |
+| 3 | sistem brauzeri | son çarə — adi nişanda |
+| 4 | başsız | `ALQOR_BASSIZ=1`, `--başsız` bayrağı, ekransız Linux (`DISPLAY`/`WAYLAND_DISPLAY` yoxdur), CI |
+
+Seçilmiş aparıcı `pəncərə.aparıcı()` ilə oxunur; `pəncərə.başsızdır()`
+başsız rejimi bildirir.
+
+**Hadisələr əsas sapda işləyir.** Brauzer hadisəni `/_alqor/hadise`-yə
+göndərir; server sapı işi növbəyə qoyub cavab gözləyir, növbəni isə
+`pəncərə.işlət()` — əsas sap — boşaldır. Nəticə: idarəedicilər
+arasında vəziyyət yarışı olmur, `dialoq.*` isə tkinter-in tələb etdiyi
+kimi əsas sapdan çağırılır.
+
+**Təhlükəsizlik.** Yerli server yalnız `127.0.0.1`-də dinləyir,
+`Host` başlığı `127.0.0.1:<port>` və ya `localhost:<port>` olmalıdır
+(DNS rebinding), hadisə sorğusunda `Origin` varsa öz mənbəyi olmalıdır
+(başqa saytın göndərdiyi sorğu 403 alır).
+
+### 12.2.2 Ən sadə pəncərə
+
 ```alqor
 gətir pəncərə
 
-funksiya əsas()
-    dəyişən p = yeni pəncərə.Pəncərə("Mənim Proqramım", 800, 600)
+komponent Sayğac
+    vəziyyət say: tam = 0
 
-    p.məzmun(
-        <div sinif="əsas">
-            <h1>Salam, dünya!</h1>
-            <button klik={() => yaz("Basıldı")}>Bas mənə</button>
+    göstər()
+        qaytar <div>
+            <h1>{özü.say}</h1>
+            <button klik={() => özü.say += 1}>Artır</button>
         </div>
-    )
+    son
+son
 
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 320, 240)
+    p.məzmun(<Sayğac />)
     p.göstər()
-    pəncərə.işlət()
+    pəncərə.işlət()           // bütün pəncərələr bağlanana qədər
 son
 ```
 
-### Pəncərə xassələri
-```alqor
-p.başlıq("Yeni başlıq")
-p.ölçü(1024, 768)
-p.minimumÖlçü(400, 300)
-p.maksimumÖlçü(1920, 1080)
-p.mərkəzə()
-p.tamEkran(doğru)
-p.maksimumlaşdır()
-p.minimumlaşdır()
-p.dəyişdirilə(yanlış)
-p.həmişəÜstdə(doğru)
-p.şəffaflıq(0.95)
-p.çərçivəsiz(doğru)
-p.ikon("statik/ikon.png")
-p.mövzu("qaranlıq")              // işıqlı | qaranlıq | sistem
-p.bağla()
+`p.məzmun(...)` üç formada verilir:
 
-// Hadisələr
-p.hadisə("bağlanır", funksiya(h)
-    əgər dəyişiklikVar onda
-        h.ləğvEt()               // bağlanmanı dayandır
-        saxlaməyiSoruş()
-    son
-son)
-p.hadisə("ölçüDəyişdi", (en, hündürlük) => ...)
-p.hadisə("fokus", ...)
-```
+| Forma | Davranış |
+|---|---|
+| `<Komponent />` | `vəziyyət` dəyişəndə `göstər()` yenidən çağırılır |
+| `() => <p>{x}</p>` | hər hadisədən sonra funksiya yenidən çağırılır |
+| `<h1>Salam</h1>` | sabit məzmun |
 
-### Yerli dialoqlar
+Hazır elementlər üçün `vidjet` modulu: § 14.
+
+### 12.2.3 `pəncərə.Pəncərə` metodları
+
+`yeni pəncərə.Pəncərə(başlıq = "Alqor", en = 800, hündürlük = 600)`
+
+| Metod | İzah |
+|---|---|
+| `başlıq()` / `başlıq(mətn)` | oxuyur / təyin edir |
+| `məzmun(d)` | məzmun (yuxarıdakı üç forma) |
+| `menyu([…])` | menyu sətri (§ 12.2.5) |
+| `üslub(CSS)` | əlavə CSS — standart və vidjet üslubundan sonra |
+| `ölç(en, hündürlük)` | ölçü |
+| `mərkəzə()` | ekranın ortasında açılır |
+| `ölçüsüSabit()` | ölçü dəyişdirilə bilmir |
+| `bağlananda(f)` | pəncərə bağlanarkən çağırılır |
+| `göstər()` | pəncərəni açır; blok etmir |
+| `bağla()` | bağlayır |
+| `açıqdır()` | `məntiq` |
+| `yenilə()` | məzmunu yenidən göstərməyə məcbur edir |
+| `gözlə()` | bu pəncərə bağlanana qədər gözləyir |
+| `ünvan()` | yerli serverin ünvanı (`http://127.0.0.1:…`) |
+| `HTML()` / `səhifə()` | kökün HTML-i / tam sənəd — sınaq üçün |
+
+Metodlar (`göstər`, `bağla`, `gözlə` istisna) `özü`-nü qaytarır —
+zəncirlənir: `p.ölç(900, 700).mərkəzə().göstər()`.
+
+Modul funksiyaları: `pəncərə.işlət()`, `pəncərə.dayandır()`,
+`pəncərə.pəncərələr()`, `pəncərə.aparıcı()`, `pəncərə.başsızdır()`,
+`pəncərə.bildiriş(başlıq, mesaj?)`.
+
+### 12.2.4 Yerli dialoqlar
+
 ```alqor
-gətir pəncərə.dialoq
+gətir pəncərə.dialoq       // alt modul — `dialoq.*` kimi əlçatandır
 
 dialoq.məlumat("Başlıq", "Mesaj")
 dialoq.xəbərdarlıq("Diqqət", "Nəsə düz deyil")
 dialoq.xəta("Xəta", "Əməliyyat alınmadı")
-dəyişən təsdiq = dialoq.təsdiqlə("Silinsin?", "Bu geri qaytarıla bilməz")
+dəyişən bəli = dialoq.təsdiqlə("Silinsin?", "Bu geri qaytarıla bilməz")
+dəyişən ad = dialoq.soruş("Ad", "Adınızı yazın", "Qonaq")
 
 dəyişən yol = dialoq.faylAç(
-    başlıq: "Fayl seçin",
-    filtrlər: [("Mətn faylları", ["txt", "md"]), ("Hamısı", ["*"])]
-)
-dəyişən yollar = dialoq.faylAçÇoxlu()
-dəyişən saxla = dialoq.faylSaxla(standartAd: "sənəd.txt")
+    süzgəclər: {"Mətn faylları": ["*.txt", "*.md"], "Hamısı": "*.*"})
+dəyişən yollar = dialoq.faylAçHamısı()
+dəyişən hara = dialoq.faylSaxla(standartAd: "sənəd.txt")
 dəyişən qovluq = dialoq.qovluqSeç()
-dəyişən rəng = dialoq.rəngSeç()
+dəyişən rəng = dialoq.rəngSeç("#3366cc")
 ```
 
-### Menyu
+| Funksiya | Qaytarır |
+|---|---|
+| `məlumat` / `xəbərdarlıq` / `xəta` `(başlıq, mesaj?)` | `heç` |
+| `təsdiqlə(başlıq, mesaj?)` | `məntiq` |
+| `soruş(başlıq, mesaj?, standart?)` | `mətn?` — ləğv edilsə `boş` |
+| `faylAç(süzgəclər?, qovluq?)` | `mətn?` |
+| `faylAçHamısı(süzgəclər?, qovluq?)` | `siyahı[mətn]` |
+| `faylSaxla(standartAd?, süzgəclər?, qovluq?)` | `mətn?` |
+| `qovluqSeç(qovluq?)` | `mətn?` |
+| `rəngSeç(standart?)` | `mətn?` — `"#rrggbb"` |
+
+`süzgəclər` — `{ad: naxış}` və ya `[[ad, naxış], …]`; naxış mətn və ya
+mətn siyahısıdır.
+
+Dialoqlar Python-un `tkinter` modulu ilə açılır. `tkinter` yoxdursa
+(Linux-da `python3-tk` paketi) və ya başsız rejimdə cavablar
+`pəncərə.sınaq.cavablar([…])` növbəsindən götürülür — dialoqlu kod da
+sınanır (§ 12.2.7).
+
+### 12.2.5 Menyu
+
 ```alqor
 p.menyu([
     pəncərə.menyu("Fayl", [
-        pəncərə.element("Yeni", qısayol: "Ctrl+N", klik: yeniFayl),
-        pəncərə.element("Aç...", qısayol: "Ctrl+O", klik: faylAç),
-        pəncərə.element("Saxla", qısayol: "Ctrl+S", klik: saxla),
+        pəncərə.element("Yeni", qısayol: "Ctrl+N", klik: özü.yeniFayl),
+        pəncərə.element("Saxla", qısayol: "Ctrl+S", klik: özü.saxla),
         pəncərə.ayırıcı(),
         pəncərə.element("Çıxış", qısayol: "Ctrl+Q", klik: () => p.bağla())
     ]),
-    pəncərə.menyu("Redaktə", [
-        pəncərə.element("Geri al", qısayol: "Ctrl+Z"),
-        pəncərə.element("İrəli al", qısayol: "Ctrl+Shift+Z")
-    ]),
-    pəncərə.menyu("Kömək", [
-        pəncərə.element("Haqqında", klik: haqqında)
+    pəncərə.menyu("Görünüş", [
+        pəncərə.element("Qaranlıq rejim", işarələnmiş: doğru,
+                        klik: özü.rejimiDəyiş),
+        pəncərə.element("Tam ekran", söndürülmüş: doğru)
     ])
 ])
 ```
 
-### Sistem treyi
+`pəncərə.element(ad, qısayol?, klik?, söndürülmüş?, işarələnmiş?)`.
+`klik` verilməyən element sönük göstərilir. Qısayollar pəncərə fokusda
+olanda işləyir; yazılış rejistrdən asılı deyil (`Ctrl+Shift+S` =
+`ctrl+shift+s`).
+
+### 12.2.6 Sistem bildirişləri
+
 ```alqor
-dəyişən trey = pəncərə.trey("statik/ikon.png")
-trey.məsləhət("Proqram işləyir")
-trey.menyu([
-    pəncərə.element("Göstər", klik: () => p.göstər()),
-    pəncərə.element("Çıxış", klik: () => pəncərə.dayandır())
-])
-trey.hadisə("klik", () => p.göstər())
+pəncərə.bildiriş("Yükləmə bitdi", "3 fayl saxlanıldı")
 ```
 
-### Sistem bildirişləri
+Linux: `notify-send`; macOS: AppleScript; Windows: PowerShell toast.
+Heç biri mümkün olmasa səssizcə ötürülür.
+
+### 12.2.7 Sınaq — pəncərə açmadan
+
 ```alqor
-pəncərə.bildiriş("Başlıq", "Mesaj", ikon: "statik/ikon.png")
+pəncərə.sınaq.cavablar([doğru, "/tmp/a.txt"])   // dialoq cavabları
+dəyişən s = pəncərə.sınaq.aç(p)
+s.klik("Artır")                  // düymə mətni, `ad`, `kimlik` və ya etiket
+s.yaz("ad", "Aysel")             // sahəyə yazır (`dəyişdi` hadisəsi)
+s.hadisə("ikiKlik", "Sil")       // istənilən hadisə
+iddia s.ehtiva("Aysel")
+iddia pəncərə.sınaq.jurnal()[0][0] == "təsdiqlə"
 ```
 
-### Qlobal qısayollar
-```alqor
-pəncərə.qlobalQısayol("Ctrl+Shift+A", funksiya()
-    p.göstər()
-son)
-```
+### 12.2.8 Planlaşdırılan (v1.x)
 
-### Yerli sistemə giriş
-```alqor
-// Desktop tətbiqində bütün standart kitabxana əlçatandır
-gətir fayl
-gətir sistem
-gətir proses
+Aşağıdakılar spesifikasiyanın hədəfidir, etalon implementasiyada hələ
+yoxdur:
 
-dəyişən m = fayl.oxu("/etc/hostname")
-sistem.əmr("notify-send 'Salam'")
-proses.başlat("firefox", ["https://alqor.az"])
-```
+| Xüsusiyyət | Qeyd |
+|---|---|
+| `p.tamEkran()`, `p.maksimumlaşdır()`, `p.minimumlaşdır()`, `p.həmişəÜstdə()`, `p.şəffaflıq()`, `p.ikon()` | pywebview aparıcısı tələb olunur |
+| `p.minimumÖlçü()`, `p.maksimumÖlçü()` | |
+| `p.hadisə("bağlanır", h => h.ləğvEt())` | hazırda `bağlananda(f)` bağlanmanı dayandıra bilmir |
+| Sistem treyi (`pəncərə.trey`) | |
+| Qlobal qısayollar (`pəncərə.qlobalQısayol`) | |
 
 ---
 
@@ -303,41 +397,77 @@ son
 
 ## 12.4 Eyni kod, üç hədəf
 
+Komponent bir dəfə yazılır; hədəfi yalnız onu "quraşdıran" bir neçə
+sətir müəyyən edir.
+
 ```alqor
-// ortaq/interfeys.alqor
+// interfeys.alqor
+gətir vidjet
+
 komponent TapşırıqSiyahısı
-    vəziyyət tapşırıqlar: siyahı[Tapşırıq] = []
+    vəziyyət tapşırıqlar: siyahı[mətn] = ["Süd al", "Hesabatı yaz"]
+    vəziyyət yeniTapşırıq: mətn = ""
+
+    metod yazıldı(dəyər: mətn)
+        özü.yeniTapşırıq = dəyər
+    son
+
+    metod əlavəEt()
+        əgər özü.yeniTapşırıq.kəs() != "" onda
+            özü.tapşırıqlar = özü.tapşırıqlar + [özü.yeniTapşırıq]
+            özü.yeniTapşırıq = ""
+        son
+    son
 
     göstər()
-        qaytar <div sinif="siyahı">
-            {özü.tapşırıqlar.çevir((t) =>
-                <div sinif="tapşırıq">{t.mətn}</div>
-            )}
-        </div>
+        qaytar vidjet.sütun(məzmun: [
+            vidjet.siyahı(elementlər: özü.tapşırıqlar),
+            vidjet.sətir(məzmun: [
+                vidjet.sahə(ad: "yeniTapşırıq", dəyər: özü.yeniTapşırıq,
+                            yazıldı: özü.yazıldı),
+                vidjet.düymə(mətn: "Əlavə et", klik: özü.əlavəEt)
+            ])
+        ])
     son
 son
 ```
 
 ```alqor
-// veb.alqor
-gətir veb.ön
-ön.quraşdır(TapşırıqSiyahısı, "#kök")
-```
-
-```alqor
-// desktop.alqor
-gətir pəncərə
-dəyişən p = yeni pəncərə.Pəncərə("Tapşırıqlar", 600, 800)
+// desktop
+dəyişən p = yeni pəncərə.Pəncərə("Tapşırıqlar", 400, 500)
 p.məzmun(<TapşırıqSiyahısı />)
 p.göstər()
+pəncərə.işlət()
 ```
 
 ```alqor
-// konsol.alqor
-hər t üçün tapşırıqlar içində
-    yaz("• {t.mətn}")
+// veb — hər brauzer sessiyası öz siyahısını alır (§ 14.2.2)
+dəyişən s = yeni veb.Server()
+s.komponent("/", TapşırıqSiyahısı, başlıq: "Tapşırıqlar")
+s.dinlə(8080)
+```
+
+```alqor
+// konsol — eyni sinif, interfeyssiz
+dəyişən t = yeni TapşırıqSiyahısı()
+hər x üçün t.tapşırıqlar içində
+    yaz("• {x}")
 son
 ```
+
+Hədəf əmr sətrindən seçilə bilər (bax: `numuneler/08-vidjetler.alqor`):
+
+```alqor
+funksiya əsas(arqumentlər: siyahı[mətn])
+    əgər "veb" içindədir arqumentlər onda
+        vebServeri()
+    yoxsa
+        desktop()
+    son
+son
+```
+
+Brauzerdə serversiz işləyən (JS/WASM) hədəf — Mərhələ 6, planlaşdırılır.
 
 ---
 
