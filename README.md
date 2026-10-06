@@ -23,10 +23,10 @@ son
 
 | | |
 |---|---|
-| Mərhələ | **Dil nüvəsi + veb + desktop** (1–5) |
+| Mərhələ | **Dil nüvəsi + veb + desktop + vidjetlər** |
 | Spesifikasiya | 1.0 (layihə) |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **600 keçir** |
+| Sınaqlar | **723 keçir** |
 | Tarix | 6 oktyabr 2026 |
 
 **Dil işləyir:**
@@ -37,6 +37,7 @@ python alqorc.py söhbət                              # interaktiv rejim
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py işlət ../numuneler/05-veb-server.alqor   # veb server
 python alqorc.py işlət ../numuneler/06-desktop.alqor      # desktop
+python alqorc.py işlət ../numuneler/08-vidjetler.alqor    # 57 vidjet
 python sina.py --nümunələr
 ```
 
@@ -266,8 +267,9 @@ PROQRAMLASDIRMA DILI/
     │   ├── veb.py            HTTP server, marşrutlar, sessiya
     │   ├── sablon.py         `.alqorhtml` şablon mühərriki
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
+    │   ├── vidjet.py         57 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                600 sınaq
+    └── sinaq/                723 sınaq
 ```
 
 ---

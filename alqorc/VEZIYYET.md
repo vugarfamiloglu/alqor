@@ -5,9 +5,10 @@
 **Mərhələ 1–5 BİTDİ** — dil nüvəsi tamamdır:
 lekser · parser · interpretator · standart kitabxana · REPL ·
 **JSX** · **tənbəl generatorlar** · **asinxron icra** ·
-**statik tip yoxlayıcı** · **veb server + şablon** · **desktop**
+**statik tip yoxlayıcı** · **veb server + şablon** · **desktop** ·
+**57 hazır vidjet**
 
-**600 sınaq keçir.** 7 nümunə proqramın **hamısı** ayrılır, tip
+**723 sınaq keçir.** 8 nümunə proqramın **hamısı** ayrılır, tip
 yoxlamasından keçir və icra olunur.
 
 ---
@@ -38,7 +39,8 @@ alqorc/
 │   ├── tipyoxlayici.py   statik tip yoxlayıcı
 │   ├── sablon.py         `.alqorhtml` şablon mühərriki
 │   ├── veb.py            HTTP server, marşrutlar, sessiya, ara proqramlar
-│   └── pencere.py        desktop: pəncərə, menyu, dialoq, hadisə dövrü
+│   ├── pencere.py        desktop: pəncərə, menyu, dialoq, hadisə dövrü
+│   └── vidjet.py         57 hazır interfeys elementi + IDE kataloqu
 └── sinaq/
     ├── test_elifba.py        (31)
     ├── test_menbe.py         (34)
@@ -48,7 +50,8 @@ alqorc/
     ├── test_korutin.py       (43)   generatorlar + asinxron
     ├── test_tipyoxlayici.py  (83)   tip yoxlayıcı
     ├── test_veb.py           (69)   server + marşrut + şablon
-    └── test_pencere.py       (75)   pəncərə + menyu + dialoq + komponent
+    ├── test_pencere.py       (75)   pəncərə + menyu + dialoq + komponent
+    └── test_vidjet.py        (123)  vidjetlər + kataloq + iki hədəf
 ```
 
 ## İşə salmaq
@@ -59,7 +62,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 600 sınaq + nümunələr
+python sina.py --nümunələr                       # 723 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -73,6 +76,11 @@ python alqorc.py işlət ../numuneler/05-veb-server.alqor -- sınaq # port açma
 # Desktop tətbiq
 python alqorc.py işlət ../numuneler/06-desktop.alqor             # pəncərə açır
 python alqorc.py işlət ../numuneler/06-desktop.alqor -- sınaq    # başsız
+
+# Hazır vidjetlər — eyni kod hər üç hədəfdə
+python alqorc.py işlət ../numuneler/08-vidjetler.alqor           # desktop
+python alqorc.py işlət ../numuneler/08-vidjetler.alqor -- veb    # veb :8081
+python alqorc.py işlət ../numuneler/08-vidjetler.alqor -- sınaq  # başsız
 ```
 
 ---
@@ -278,6 +286,49 @@ növbəsindən cavab götürülür — buna görə dialoqlu kod da sınanıla bi
 
 ---
 
+## `vidjet` modulu — hazır elementlər
+
+**Bir mənbə, iki hədəf.** Hər vidjet `Element` (JSX ağacı) qaytarır;
+həmin ağacı `veb` brauzerə HTML kimi, `pəncərə` isə desktop
+pəncərəsinə göstərir. Form, cədvəl, tərəqqi çubuğu — hamısı hər iki
+hədəfdə eyni kodla işləyir.
+
+| Kateqoriya | Vidjetlər |
+|---|---|
+| **form** (21) | `düymə` `ikonDüymə` `düyməQrupu` `əlaqə` `sahə` `parol` `ədəd` `axtarış` `çoxsətirli` `seçim` `qeyd` `açar` `radioQrupu` `sürüşdürücü` `tarix` `vaxt` `rəng` `faylSahəsi` `form` `sahəDəsti` `etiket` |
+| **göstərmə** (14) | `başlıq` `mətn` `nişan` `xəbərdarlıq` `kart` `cədvəl` `siyahı` `təsvirSiyahısı` `kod` `sitat` `şəkil` `avatar` `ayırıcı` `boşBaxış` |
+| **vəziyyət** (5) | `tərəqqi` `halqaTərəqqi` `fırlanan` `skeletYüklənmə` `statistika` |
+| **düzülüş** (7) | `qutu` `sətir` `sütun` `tor` `boşluq` `panel` `bölmə` |
+| **naviqasiya** (6) | `naviqasiya` `nişanlar` `yığcam` `səhifələmə` `addımlar` `çörəkQırıntıları` |
+| **üst qat** (4) | `modal` `yanPanel` `ipucu` `bildirişQutusu` |
+
+Üslub: `vidjet.üslub()` CSS mətni, `vidjet.üslublar()` `<style>`
+elementi, `vidjet.səhifə(...)` tam HTML sənədi. Desktopda `pəncərə`
+üslubu özü əlavə edir. Açıq/qaranlıq rejim CSS dəyişənləri ilə.
+
+### IDE kataloqu — iki klikdə kod
+
+`vidjet.kataloq()` hər elementin adını, kateqoriyasını, hadisələrini,
+istifadə nümunəsini və **kod skeletini** qaytarır. Alqor Studio bunu
+oxuyacaq: paletdən element əlavə edilir, üzərinə iki dəfə
+klikləndikdə `vidjet.skelet(ad, dəyişənAdı)` qaytardığı kod redaktora
+yazılır və element dərhal işləyir.
+
+```
+vidjet.skelet("sahə", "istifadəçiAdı")
+→ vəziyyət istifadəçiAdı: mətn = ""
+→
+→ metod istifadəçiAdıDəyişdi(dəyər: mətn)
+→     özü.istifadəçiAdı = dəyər
+→ son
+```
+
+Kataloq **tək həqiqət mənbəyidir**: modulun ixrac etdiyi vidjetlərin
+siyahısı, tip imzaları və sınaqlar hamısı ondan qurulur. Sınaqlar hər
+nümunənin və hər skeletin həqiqətən ayrıldığını yoxlayır.
+
+---
+
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
 ### 1. `hər x üçün siyahı içində` söz sırası
@@ -311,7 +362,7 @@ gəlir. Düzgün həll: unifikasiya alqoritmi.
 
 | # | İş | Həcm |
 |---|---|---|
-| 1 | **`vidjet`** — hazır UI elementləri (veb + desktop, tək mənbə) | ~900 sətir |
+| 1 | Spesifikasiya § 14 (`vidjet`) + bələdçi dərsləri | sənəd |
 | 2 | `alqorfmt` (formatter + `--ascii-düzəlt`) | ~400 sətir |
 | 3 | `alqor yeni` / `qur` / `sına` / `sənəd` əmrləri | ~500 sətir |
 | 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |

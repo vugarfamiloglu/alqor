@@ -560,6 +560,12 @@ SKRIPT = r"""
     const s=h.target;
     d=s.type==="checkbox"?s.checked:s.value;
    } else if(DOM==="keydown"||DOM==="keyup"){ d=h.key }
+   else {
+    // Bir idarəedici bir çox düyməyə bağlı ola bilər (nişanlar,
+    // səhifələmə) — hansının basıldığı `value` ilə bilinir
+    const v=t.getAttribute("value");
+    if(v!==null) d=v;
+   }
    göndər(t.getAttribute("data-a-"+ad),d);
   },true);
  }
@@ -1291,6 +1297,16 @@ class Sürücü:
         açar = self._açar_tap("klik", hədəf)
         if açar is None:
             açar = self._menyuda_tap(hədəf)
+        if açar is not None and dəyər is None:
+            # Elementin `value` atributu idarəediciyə ötürülür
+            dəyər = _teq_atributu(
+                _teqi_tap(self._HTML + self.p.menyu_HTML(),
+                          "data-a-klik", açar), "value") or None
+        if açar is None:
+            # Qeyd qutusu və açar: brauzerdə klik `change` doğurur
+            açar, çevrilmiş = self._qeydi_tap(hədəf)
+            if açar is not None and dəyər is None:
+                dəyər = çevrilmiş
         if açar is None:
             raise AlqorXəta(
                 "ArqumentXətası",
@@ -1354,6 +1370,21 @@ class Sürücü:
             return None
         return _atribut_tap(self.p.menyu_HTML(), "data-a-klik", hədəf)
 
+    def _qeydi_tap(self, hədəf: str | None) -> tuple[str | None, Any]:
+        """
+        `dəyişdi` idarəedicisi olan qeyd qutusunu tapır və klikdən
+        sonrakı dəyərini hesablayır (işarəli ↔ işarəsiz).
+        """
+        for şəkilçi in ("deyisdi", "yazildi"):
+            açar = self._açar_tap(şəkilçi, hədəf)
+            if açar is None:
+                continue
+            teq = _teqi_tap(self._HTML, f"data-a-{şəkilçi}", açar)
+            if 'type="checkbox"' in teq or 'type="radio"' in teq:
+                return açar, " checked" not in teq
+            return açar, None
+        return None, None
+
 
 def _teqsiz(HTML: str) -> str:
     """Teqləri atır, mətni boşluqla ayırır."""
@@ -1412,6 +1443,16 @@ def _atribut_tap(HTML: str, atribut: str,
             if _uyğundur(hədəf, _teq_atributu(teq, atr_adı)):
                 return açar
     return None
+
+
+def _teqi_tap(HTML: str, atribut: str, açar: str) -> str:
+    """Verilmiş açarı daşıyan teqin mətnini qaytarır."""
+    i = HTML.find(f'{atribut}="{açar}"')
+    if i < 0:
+        return ""
+    baş = HTML.rfind("<", 0, i)
+    son = HTML.find(">", i)
+    return HTML[baş:son + 1] if baş >= 0 and son > 0 else ""
 
 
 def _uyğundur(hədəf: str, mətn: str) -> bool:

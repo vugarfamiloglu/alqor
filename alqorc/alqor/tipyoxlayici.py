@@ -494,6 +494,42 @@ def _müştəri_metodları() -> dict[str, T.Tip]:
     }
 
 
+def _vidjet_modulu() -> T.ModulTipi:
+    """
+    57 vidjetin imzası `vidjet` modulunun Python funksiyalarından
+    çıxarılır. Beləliklə parametr adları heç vaxt bir-birindən
+    aralanmır: yeni vidjet əlavə edildikdə tip imzası da hazırdır.
+    """
+    import inspect
+
+    from . import vidjet as _v
+
+    m, e = T.MƏTN, T.İSTƏNİLƏN
+    üzvlər: dict[str, T.Tip] = {}
+    for ad in _v.VİDJETLƏR:
+        imza = inspect.signature(getattr(_v, ad))
+        # Birinci parametr `icraçı`-dır, Alqor tərəfində görünmür
+        parametrlər = list(imza.parameters.values())[1:]
+        üzvlər[ad] = T.FunksiyaTipi(tuple(
+            T.Parametr(p.name, e,
+                       standartı_var=(p.default is not
+                                      inspect.Parameter.empty))
+            for p in parametrlər), T.ELEMENT)
+
+    üzvlər.update({
+        # IDE kataloqu
+        "kataloq": F(m, qaytarır=T.Siyahı(T.Lüğət(m, e)), standart=1),
+        "kateqoriyalar": F(qaytarır=T.Siyahı(m)),
+        "skelet": F(m, m, qaytarır=m, standart=1),
+        "nümunə": F(m, m, qaytarır=m, standart=1),
+        # Üslub
+        "üslub": F(qaytarır=m),
+        "üslublar": F(qaytarır=T.ELEMENT),
+        "səhifə": F(m, e, m, m, qaytarır=T.ELEMENT, standart=4),
+    })
+    return T.ModulTipi("vidjet", üzvlər)
+
+
 def _pəncərə_metodları() -> dict[str, T.Tip]:
     m, i, b, e, h = (T.MƏTN, T.TAM, T.MƏNTİQ, T.İSTƏNİLƏN, T.HEÇ)
     return {
@@ -780,6 +816,7 @@ def _modullar() -> dict[str, T.ModulTipi]:
     return {
         "veb": _veb_modulu(),
         "pəncərə": _pəncərə_modulu(),
+        "vidjet": _vidjet_modulu(),
         "riyaziyyat": riyaziyyat, "mətn": mətn_m, "təsadüfi": təsadüfi,
         "vaxt": vaxt, "fayl": fayl, "qovluq": qovluq, "yol": yol,
         "json": json_m, "naxış": naxış, "sistem": sistem,

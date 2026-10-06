@@ -831,6 +831,12 @@ def c_mətn(icraçı, dəyər: Any) -> Cavab:
 def c_html(icraçı, dəyər: Any) -> Cavab:
     gövdə = (dəyər.HTML(icraçı) if isinstance(dəyər, Element)
              else mətnə(dəyər, icraçı))
+    # Tam sənəd verilirsə DOCTYPE lazımdır — onsuz brauzer «quirks»
+    # rejiminə düşür və CSS fərqli hesablanır.
+    kəsik = gövdə.lstrip()
+    if kəsik[:5].lower() == "<html" and not kəsik[:9].lower().startswith(
+            "<!doctype"):
+        gövdə = "<!DOCTYPE html>" + chr(10) + gövdə
     return Cavab(gövdə.encode("utf-8"), 200,
                  "text/html; charset=utf-8")
 
