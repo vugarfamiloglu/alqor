@@ -892,6 +892,12 @@ class Parser:
                     while self._qəbul_op("|"):
                         tiplər.append(self._tip())
                 self._tələb_op(")", "`tut` bəndi")
+            elif (self._bax().növ is Növ.AD
+                  and (self._bax(1).növ in (Növ.SETIR_SONU, Növ.FAYL_SONU)
+                       or self._acar("əgər", irəli=1))):
+                # `tut x` — istənilən xətanı `x`-ə bağlayır. Əvvəllər `x`
+                # səssizcə gövdənin ilk cümləsi sayılırdı.
+                ad = self._al().dəyər
             mühafizə = None
             if self._qəbul_acar("əgər"):
                 mühafizə = self._ifadə()

@@ -304,11 +304,20 @@ class Pəncərə:
             p.məzmun(<Sayğac />)           komponent — vəziyyət dəyişəndə
                                            özü yenidən göstərilir
             p.məzmun(() => <p>{x}</p>)     funksiya — hər dəfə çağırılır
+            p.məzmun(menecer)              komponent NÜMUNƏSİ — menyudan
+                                           `menecer.saxla()` çağırmaq üçün
         """
         self._məzmun = dəyər
         self._komponent = None
         if isinstance(dəyər, Element) and dəyər.komponent is not None:
             self._komponent = dəyər.komponent
+        elif isinstance(dəyər, Nümunə):
+            if dəyər.sinif.metod_tap("göstər") is None:
+                raise AlqorXəta(
+                    "TipXətası",
+                    f"`{dəyər.sinif.ad}` komponent deyil — `göstər()` "
+                    "metodu yoxdur", kod="ALQ-T053")
+            self._komponent = dəyər
         return self
 
     def menyu(self, menyular: Any) -> "Pəncərə":
@@ -552,6 +561,10 @@ def _nüvə_skripti() -> str:
     dəyərli = _json.dumps({HADİSƏLƏR[a][1]: 1 for a in sorted(DƏYƏRLİ)},
                           separators=(",", ":"))
     return (f"const HADISƏLƏR={cədvəl},DƏYƏRLİ={dəyərli};" + r"""
+// Göndərilməmiş dəyər hadisəsi olan sahələr: yamaq onların dəyərinə
+// toxunmur — yoxsa serverin köhnə cavabı istifadəçinin yeni seçimini
+// (məs. işarələnmiş qutucuğu) geri qaytarardı
+const gözləyən=new Set();
 function yamaq(kök,html){
  const ş=document.createElement("template");ş.innerHTML=html;
  uşaqlar(kök,ş.content);
@@ -573,7 +586,7 @@ function uşaqlar(k,y){
  while(k.childNodes.length>yn.length)k.removeChild(k.lastChild);
 }
 function element(a,b){
- const fokus=a===document.activeElement,teq=a.tagName;
+ const fokus=a===document.activeElement||gözləyən.has(a),teq=a.tagName;
  for(const at of Array.from(a.attributes))
   if(!b.hasAttribute(at.name)&&!(teq==="DETAILS"&&at.name==="open"))
    a.removeAttribute(at.name);
@@ -581,7 +594,8 @@ function element(a,b){
   if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value);
  if(teq==="INPUT"){
   const t=a.type;
-  if(t==="checkbox"||t==="radio")a.checked=b.hasAttribute("checked");
+  if(t==="checkbox"||t==="radio"){
+   if(!gözləyən.has(a))a.checked=b.hasAttribute("checked")}
   else if(t!=="file"&&!fokus){
    const d=b.getAttribute("value")||"";if(a.value!==d)a.value=d}
   return;
@@ -599,12 +613,13 @@ function alqorBağla(göndər){
   try{
    while(növbə.length){
     const h=növbə.shift();
+    if(DƏYƏRLİ[h.ad])gözləyən.delete(h.s);
     if(!h.t.isConnected)continue;      // element artıq yoxdur
     const id=h.t.getAttribute("data-a-"+h.ad);
     if(!id)continue;
     let d=h.d;
     if(DƏYƏRLİ[h.ad])d=h.s.type==="checkbox"?h.s.checked:h.s.value;
-    try{await göndər(id,d)}catch(x){növbə.length=0}
+    try{await göndər(id,d)}catch(x){növbə.length=0;gözləyən.clear()}
    }
   }finally{gedir=false}
  }
@@ -617,6 +632,7 @@ function alqorBağla(göndər){
    if(DƏYƏRLİ[ad]){
     // Eyni sahə üçün gözləyən hadisə varsa, o, son dəyəri götürəcək
     if(növbə.some(x=>x.t===t&&x.ad===ad))return;
+    gözləyən.add(s);
     növbə.push({t:t,ad:ad,s:s});
    }else{
     let d;
@@ -1463,7 +1479,9 @@ class Sürücü:
             raise AlqorXəta(
                 "ArqumentXətası",
                 f'"{hədəf}" sahəsi tapılmadı', kod="ALQ-R013")
-        self._işlət(açar, mətnə(dəyər, self.i))
+        # Brauzer kimi: qutucuq/açar `məntiq`, qalan sahələr mətn göndərir
+        self._işlət(açar, dəyər if isinstance(dəyər, bool)
+                    else mətnə(dəyər, self.i))
         return self
 
     def hadisə(self, ad: Any, nişan: Any = None,
@@ -1552,6 +1570,10 @@ def _atribut_tap(HTML: str, atribut: str,
     naxış = f'{atribut}="'
     yer = 0
     ilk: str | None = None
+    # İkinci dərəcəli uyğunluq: mətni hədəflə BAŞLAYAN element (cədvəl
+    # sətri "Süd al  bitib"). Yalnız dəqiq uyğunluq tapılmasa işlənir —
+    # "Sil" "Bitmişləri sil" düyməsini deyil, "Sil"-i tapsın.
+    başlanğıc: str | None = None
     while True:
         i = HTML.find(naxış, yer)
         if i < 0:
@@ -1574,13 +1596,27 @@ def _atribut_tap(HTML: str, atribut: str,
         bağlayıcı = f"</{ad}>"
         mətn_sonu = HTML.find(bağlayıcı, teq_sonu)
         içi = HTML[teq_sonu + 1:mətn_sonu] if mətn_sonu > 0 else ""
-        if _uyğundur(hədəf, _teqsiz(içi)):
+        mətn = _teqsiz(içi)
+        if _uyğundur(hədəf, mətn):
             return açar
         # Menyu adı, kimlik, başlıq, sahə adı və dəyəri də nişan sayılır
         for atr_adı in ("data-a-ad", "id", "title", "name", "value"):
             if _uyğundur(hədəf, _teq_atributu(teq, atr_adı)):
                 return açar
-    return None
+        if başlanğıc is None and _başlayır(mətn, hədəf):
+            başlanğıc = açar
+    return başlanğıc
+
+
+def _başlayır(mətn: str, hədəf: str) -> bool:
+    """Söz sərhədində: "Süd al bitib" "Süd al" ilə başlayır, "Südlü" yox."""
+    if not mətn or not hədəf:
+        return False
+    for m, h in ((mətn, hədəf),
+                 (latınla(mətn).lower(), latınla(hədəf).lower())):
+        if m.startswith(h) and (len(m) == len(h) or m[len(h)] == " "):
+            return True
+    return False
 
 
 def _teqi_tap(HTML: str, atribut: str, açar: str) -> str:
