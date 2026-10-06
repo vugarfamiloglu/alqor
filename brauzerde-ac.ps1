@@ -5,12 +5,13 @@
 #     .\brauzerde-ac.ps1                 # 08 — vidjetlər (veb, :8081)
 #     .\brauzerde-ac.ps1 -Numune 05      # 05 — veb server (:8080)
 #     .\brauzerde-ac.ps1 -Numune 06      # 06 — desktop pəncərəsi
+#     .\brauzerde-ac.ps1 -Numune studio  # Alqor Studio (IDE)
 #     .\brauzerde-ac.ps1 -Yenile:$false  # git-dən yeniləməmək
 #
 # Pəncərəni bağlayanda server də dayanır.
 
 param(
-    [ValidateSet("05", "06", "08")]
+    [ValidateSet("05", "06", "08", "09", "10", "studio")]
     [string]$Numune = "08",
     [bool]$Yenile = $true
 )
@@ -75,11 +76,20 @@ if ($Yenile -and (Get-Command git -ErrorAction SilentlyContinue)) {
     } finally { Pop-Location; $ErrorActionPreference = "Stop" }
 }
 
+# ── Alqor Studio — öz pəncərəsini açır ────────────────────────────────
+if ($Numune -eq "studio") {
+    Yaz "→ Alqor Studio açılır… (pəncərəni bağlayanda bitir)" "Cyan"
+    & $Python @PyArg (Join-Path $Kok "alqorc\alqorc.py") studio $Kok
+    exit $LASTEXITCODE
+}
+
 # ── 3. Nümunə və port ──────────────────────────────────────────────────
 $Numuneler = @{
     "05" = @{ Fayl = "05-veb-server.alqor"; Arq = @();        Port = 8080 }
     "06" = @{ Fayl = "06-desktop.alqor";    Arq = @();        Port = 0 }
     "08" = @{ Fayl = "08-vidjetler.alqor";  Arq = @("--", "veb"); Port = 8081 }
+    "09" = @{ Fayl = "09-tapsiriqlar.alqor"; Arq = @();       Port = 0 }
+    "10" = @{ Fayl = "10-kitab-refi\esas.alqor"; Arq = @();   Port = 8083 }
 }
 $N = $Numuneler[$Numune]
 $Fayl = Join-Path $Kok "numuneler\$($N.Fayl)"
