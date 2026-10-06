@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **57 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**932 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**968 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -48,6 +48,8 @@ alqorc/
 │   ├── vidjet_arayis.py  spesifikasiya § 14.7-ni koddan qurur
 │   ├── konsol.py         rəng, sual-cavab, irəliləyiş, arqumentlər
 │   ├── alqorfmt.py       formatlayıcı (§ 13.3) — `alqorfmt.py` / `format`
+│   ├── alqorls.py        LSP serveri (§ 13.8) — `alqor ls --stdio`
+│   ├── qrammatika.py     VS Code TextMate qrammatikası (açar sözlərdən)
 │   ├── layihe.py         `layihe.alqor` parseri + `yeni` şablonları
 │   ├── sinaqci.py        `test` modulu + `sına` işlədicisi
 │   ├── senedci.py        `sənəd` — HTML/Markdown API sənədi
@@ -68,6 +70,7 @@ alqorc/
     ├── test_studio.py        (78)   IDE: skelet, API, təhlükəsizlik, UI
     ├── test_beledci.py       (3)    dərsliklərdəki bütün kod işləyir
     ├── test_alqorfmt.py      (32)   formatlayıcı + doğrulama + CLI
+    ├── test_alqorls.py       (36)   LSP: protokol, naviqasiya, tamamlama, qrammatika
     └── test_layihe.py        (27)   manifest, yeni, sına, sənəd, qur
 ```
 
@@ -79,7 +82,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 723 sınaq + nümunələr
+python sina.py --nümunələr                       # 968 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -422,7 +425,7 @@ tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
 | ✅ | Spesifikasiya § 14, § 12–13 uzlaşması, 3 dərslik, Alqor Studio | — |
 | ✅ | `alqorfmt` — parserdən girinti, doğrulama zəmanəti, Studio-da Ctrl+Shift+F | — |
 | ✅ | `yeni` (4 şablon) / `sına` / `sənəd` / `qur` (`.pyz`) / `təmizlə` | — |
-| 4 | `alqorls` (LSP serveri → VS Code) | ~700 sətir |
+| ✅ | `alqorls` (LSP) + VS Code genişlənməsi, TextMate qrammatikası | — |
 | 5 | Qalan standart kitabxana modulları (`http`, `verilənlər`, …) | böyük |
 | 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
 | 7 | Mərhələ 6 — JS/WASM transpilyator | böyük |

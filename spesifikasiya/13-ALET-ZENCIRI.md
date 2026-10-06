@@ -81,6 +81,7 @@ Azərbaycan hərfləri yazmaq çətin olanda.
 | `versiya`, `kömək` | ✅ |
 | `format` (`alqorfmt`) | ✅ § 13.3 |
 | `studio` | ✅ Alqor Studio (§ 13.9) |
+| `ls [--stdio]` | ✅ LSP serveri (§ 13.8) |
 | `yeni <ad> [--şablon konsol\|veb\|desktop\|kitabxana]` | ✅ hər şablonun işləyən sınaqları var |
 | `işlət` (fayl olmadan — layihənin giriş nöqtəsi) | ✅ |
 | `sına [yol] [--filtr] [--sənəd] [--ətraflı]` | ✅ § 13.5 |
@@ -416,10 +417,44 @@ alqor> [1, 2, 3].cem()
 
 ## 13.8 `alqorls` — LSP serveri
 
-Dəstəklənən redaktorlar: **Alqor Studio**, VS Code, Neovim, Zed, Helix, Emacs, Sublime.
+```bash
+alqor ls --stdio         # redaktor özü işə salır (JSON-RPC, stdin/stdout)
+```
 
-| Xüsusiyyət | Dəstək |
+Asılılıqsız, LSP 3.17 alt çoxluğu (`alqorc/alqor/alqorls.py`). Analiz
+`alqor yoxla` ilə eynidir: mənbə → lekser → parser → tip yoxlayıcısı.
+Tip yoxlayıcısı **qeyd rejimində** işləyir — hər ad istifadəsinin hansı
+elana bağlandığını və hər `a.b` ifadəsinin tipini yadda saxlayır.
+
+| Xüsusiyyət | Vəziyyət |
 |---|---|
+| Diaqnostika (yazarkən) — leksik, sintaksis, tip; `ALQ-*` kodu ilə | ✅ |
+| Avtotamamlama: `x.` → modul / sinif / mətn / siyahı üzvləri | ✅ |
+| Avtotamamlama: açar sözlər, şablonlar (`funksiya …`, `əgər …`), adlar, `gətir` → modullar | ✅ |
+| Hover: imza, tip, `///` sənəd şərhi, vidjet izahı | ✅ |
+| İmza köməyi (`f(` → parametrlər, aktiv parametr) | ✅ |
+| Təyinata get — dəyişən, funksiya, sinif, metod, qısa qurucunun sahəsi | ✅ |
+| İstinadları tap, ad dəyişdirmə (açar söz / yanlış ad / daxili ad rədd edilir) | ✅ cari faylda |
+| Sənəd sxemi (sinif → qurucu, metod, xassə) | ✅ |
+| Formatlama (`alqorfmt`) | ✅ |
+| Sürətli düzəlişlər: `eger` → `əgər`, "bəlkə: `uzunluq`", hamısını düzəlt | ✅ |
+| Yarımçıq kod: xətalı sətirlər boşluqla əvəz olunub yenidən analiz edilir — hover/tamamlama işləməyə davam edir | ✅ |
+| Layihə üzrə (fayllar arası) istinad və ad dəyişmə | ⏳ |
+| Kod linzaları, semantik rənglər, DAP | ⏳ |
+
+Redaktorlar:
+
+| Redaktor | Necə |
+|---|---|
+| **VS Code** | `redaktor/vscode/` — qrammatika + LSP müştərisi (`npx @vscode/vsce package`) |
+| Neovim, Helix | `alqor ls --stdio` — nümunə konfiqurasiya `redaktor/vscode/README.md`-də |
+| Alqor Studio | öz analizi (`/api/yoxla`); tamamlama `alqorls`-a keçiriləcək ⏳ |
+
+TextMate qrammatikası və `language-configuration.json` açar söz
+siyahısından yaradılır (`python -m alqor.qrammatika --yaz`); sınaq
+onların köhnəlmədiyini yoxlayır.
+
+---|---|
 | Sintaksis vurğulama | ✓ |
 | Avtotamamlama | ✓ (kontekstli, sənədlə) |
 | Təyinata get | ✓ |

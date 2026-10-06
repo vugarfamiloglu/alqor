@@ -1,0 +1,92 @@
+{
+  "comments": {
+    "lineComment": "//",
+    "blockComment": [
+      "/*",
+      "*/"
+    ]
+  },
+  "brackets": [
+    [
+      "{",
+      "}"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "(",
+      ")"
+    ]
+  ],
+  "autoClosingPairs": [
+    {
+      "open": "{",
+      "close": "}"
+    },
+    {
+      "open": "[",
+      "close": "]"
+    },
+    {
+      "open": "(",
+      "close": ")"
+    },
+    {
+      "open": "\"",
+      "close": "\"",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    },
+    {
+      "open": "`",
+      "close": "`",
+      "notIn": [
+        "string",
+        "comment"
+      ]
+    }
+  ],
+  "surroundingPairs": [
+    [
+      "{",
+      "}"
+    ],
+    [
+      "[",
+      "]"
+    ],
+    [
+      "(",
+      ")"
+    ],
+    [
+      "\"",
+      "\""
+    ],
+    [
+      "`",
+      "`"
+    ]
+  ],
+  "wordPattern": {
+    "pattern": "[\\p{L}_][\\p{L}\\p{N}_]*|-?\\d+(?:\\.\\d+)?",
+    "flags": "u"
+  },
+  "indentationRules": {
+    "increaseIndentPattern": {
+      "pattern": "^\\s*(?:(?:generator|asinxron|ixrac\\s+et|qorunan|statik|tenbel|tənbəl|gizli|aciq|açıq|evez|əvəz|son)\\s+)*(?:diger\\s+hallarda|digər\\s+hallarda|ne\\s+qeder\\s+ki|nə\\s+qədər\\s+ki|baslangic|başlanğıc|interfeys|komponent|funksiya|sadalama|struktur|tekrarla|təkrarla|cehd\\s+et|cəhd\\s+et|nehayet|nəhayət|hemise|həmişə|magaza|mağaza|obyekt|qurucu|bitis|bitiş|metod|modul|sinif|yoxsa|eger|əgər|hal|her|hər|sec|seç|tut)(?![\\p{L}\\p{N}_])(?!.*(?:→|=>|\\bson\\s*$|\\bqaytar\\b))(?!.*\\bmücərrəd\\b)(?!.*\\bxassə(?![\\p{L}\\p{N}_])).*$|^\\s*(?:oxu|yaz)\\s*$",
+      "flags": "u"
+    },
+    "decreaseIndentPattern": {
+      "pattern": "^\\s*(?:nehayet|nəhayət|yoxsa|son|tut)(?![\\p{L}\\p{N}_])",
+      "flags": "u"
+    }
+  },
+  "folding": {
+    "offSide": false
+  }
+}

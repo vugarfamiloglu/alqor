@@ -298,7 +298,7 @@ PROQRAMLASDIRMA DILI/
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
     │   ├── vidjet.py         57 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                723 sınaq
+    └── sinaq/                968 sınaq
 ```
 
 ---
@@ -312,7 +312,7 @@ Dil nüvəsi tamamdır. Növbəti ən faydalı işlər:
 | 1 | **`veb` modulu** (server) | `05-veb-server.alqor` işləyir, spesifikasiyanın 11-ci bölməsi canlanır |
 | 2 | **`pəncərə` modulu** (desktop) | `06-desktop.alqor` işləyir |
 | 3 | **`alqorfmt`** | `--ascii-düzəlt` — klaviatura həllinin üçüncü qatı |
-| 4 | **`alqorls`** (LSP) | VS Code / Neovim dəstəyi |
+| ✅ | **`alqorls`** (LSP) + VS Code genişlənməsi (`redaktor/vscode/`) | VS Code / Neovim / Helix dəstəyi |
 | 5 | `alqor yeni` / `qur` / `sına` / `sənəd` | alət zəncirinin qalanı |
 | 6 | JS/WASM transpilyator | brauzer hədəfi |
 | 7 | Rust-a köçürmə | istehsal kompilyatoru |

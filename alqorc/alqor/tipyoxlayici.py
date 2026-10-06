@@ -37,6 +37,10 @@ from .xeta import XətaToplayıcı
 
 REJİMLƏR = ("sərbəst", "normal", "sərt")
 
+# Qeyd rejimində `Əhatə.elan` bütün elanları bura yazır (sapa bağlı
+# deyil — `alqorls` analizi ardıcıl aparır)
+_QEYD_SİYAHISI: list | None = None
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Əhatə dairəsi
@@ -82,6 +86,8 @@ class Əhatə:
 
     def elan(self, b: Bağlama) -> None:
         self.adlar[b.ad] = b
+        if _QEYD_SİYAHISI is not None and b.yer is not None:
+            _QEYD_SİYAHISI.append(b)
 
     def funksiya_əhatəsi(self) -> "Əhatə | None":
         ə: Əhatə | None = self
@@ -859,6 +865,15 @@ class TipYoxlayıcı:
         self.siniflər: dict[str, T.SinifTipi] = {}
         self.sadalamalar: dict[str, T.SadalamaTipi] = {}
         self._cari_sinif: T.SinifTipi | None = None
+        # `alqorls` üçün qeyd rejimi (standart olaraq söndürülüb):
+        #   istinadlar — ad istifadəsi → elan (təyinata get, istinadlar)
+        #   ifadə_tipləri — ad/üzv ifadəsi → tip (hover, tamamlama)
+        #   bağlamalar — bütün elanlar (sənəd sxemi, tamamlama)
+        self.qeyd = False
+        self.istinadlar: list[tuple[A.Ad, Bağlama]] = []
+        self.ifadə_tipləri: list[tuple[Any, T.Tip, T.Tip | None]] = []
+        self.bağlamalar: list[Bağlama] = []
+        self._son_obyekt_tipi: T.Tip | None = None
         for ad, tip in _daxili_adlar().items():
             self.qlobal.elan(Bağlama(ad, tip, True, None, True, "daxili"))
 
@@ -1850,7 +1865,12 @@ class TipYoxlayıcı:
         işləyici = _İFADƏLƏR.get(type(e))
         if işləyici is None:
             return T.NAMƏLUM
-        return işləyici(self, e, ə)
+        tip = işləyici(self, e, ə)
+        if self.qeyd and isinstance(e, (A.Ad, A.Üzv)):
+            obyekt = self._son_obyekt_tipi if isinstance(e, A.Üzv) \
+                else None
+            self.ifadə_tipləri.append((e, tip, obyekt))
+        return tip
 
     def _e_literal(self, e: A.Literal, ə: Əhatə) -> T.Tip:
         return {
@@ -1876,6 +1896,8 @@ class TipYoxlayıcı:
                 *self._oxşar_adlar(e.ad, ə))
             return T.NAMƏLUM
         b.istifadə_olunub = True
+        if self.qeyd:
+            self.istinadlar.append((e, b))
         return b.tip
 
     def _oxşar_adlar(self, ad: str, ə: Əhatə) -> list[str]:
@@ -2139,6 +2161,7 @@ class TipYoxlayıcı:
                     "yoxlama: `əgər x boş deyil onda ... son`",
                     "standart dəyər: `x ?? standart`")
         obyekt = T.açılmış(obyekt)
+        self._son_obyekt_tipi = obyekt
         tip = self._üzv_tipi(obyekt, e.ad, e.yer)
         if not e.təhlükəsiz:
             return tip
