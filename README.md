@@ -23,11 +23,31 @@ son
 
 | | |
 |---|---|
-| Mərhələ | **Dil nüvəsi + veb + desktop + vidjetlər** |
-| Spesifikasiya | 1.0 (layihə) |
+| Mərhələ | **Dil nüvəsi + veb + desktop + vidjetlər + Alqor Studio** |
+| Spesifikasiya | 1.0 (layihə) — 14 bölmə |
 | Etalon implementasiya | Python 3.12 |
-| Sınaqlar | **723 keçir** |
+| Sınaqlar | **932 keçir** (+ Studio brauzer sınaqları) |
 | Tarix | 6 oktyabr 2026 |
+
+**Windows-da bir kliklə** (`alqor` qovluğunda):
+
+| Fayl | Nə açır |
+|---|---|
+| `Studio-ac.cmd` | **Alqor Studio** — redaktor, vidjet paleti, icra, önbaxış |
+| `Brauzerde-ac.cmd` | 08 nümunəsi brauzerdə (`Brauzerde-ac.cmd 10` — Kitab rəfi) |
+| `Desktop-ac.cmd` | 06 nümunəsi desktop pəncərəsində |
+
+**Layihə ilə işləmək** (`alqor.cmd` / `alqor` repo kökündədir):
+
+```bash
+alqor yeni mənim-saytım --şablon veb    # konsol | veb | desktop | kitabxana
+cd mənim-saytım
+alqor işlət          # işə sal
+alqor sına           # sınaqlar (@sınaq)
+alqor format .       # kodu səliqəyə sal
+alqor sənəd          # sənəd/indeks.html — /// şərhlərindən
+alqor qur            # qurma/mənim-saytım.pyz — tək fayllı paket
+```
 
 **Dil işləyir:**
 
@@ -38,6 +58,10 @@ python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py işlət ../numuneler/05-veb-server.alqor   # veb server
 python alqorc.py işlət ../numuneler/06-desktop.alqor      # desktop
 python alqorc.py işlət ../numuneler/08-vidjetler.alqor    # 57 vidjet
+python alqorc.py işlət ../numuneler/09-tapsiriqlar.alqor  # tapşırıq meneceri
+python alqorc.py işlət ../numuneler/10-kitab-refi/esas.alqor  # veb sayt
+python alqorc.py studio ..                                # Alqor Studio
+python alqorfmt.py ..                                     # formatlayıcı
 python sina.py --nümunələr
 ```
 
@@ -126,6 +150,7 @@ Dairə: sahə = 19.63, perimetr = 15.71
 | [11 — Veb Proqramlaşdırma](spesifikasiya/11-VEB-PROQRAMLASDIRMA.md) | Server, marşrutlar, şablonlar, komponentlər, təhlükəsizlik |
 | [12 — Desktop və Konsol](spesifikasiya/12-DESKTOP-VE-KONSOL.md) | Pəncərələr, menyular, dialoqlar, paketləmə |
 | [13 — Alət Zənciri](spesifikasiya/13-ALET-ZENCIRI.md) | CLI, formatter, linter, test, LSP, IDE, CI/CD |
+| [14 — Vidjetlər](spesifikasiya/14-VIDJETLER.md) | 57 hazır element, hadisələr, üslub sistemi, IDE kataloqu (arayış koddan qurulur) |
 | [Qrammatika (EBNF)](spesifikasiya/qrammatika.ebnf) | Rəsmi formal qrammatika |
 | [Açar Sözlər](spesifikasiya/acar-sozler.md) | Tam siyahı + ASCII + beynəlxalq qarşılıqlar |
 
@@ -135,11 +160,15 @@ Dairə: sahə = 19.63, perimetr = 15.71
 |---|---|
 | [1 — Başlanğıc](beledci/00-BASLANGIC.md) | Hamıya: quraşdırma, ilk proqram, 10 dəqiqəlik tur |
 | [2 — Dil Dərsliyi](beledci/01-DIL-DERSLIYI.md) | Yeni başlayanlara: 17 dərs, tapşırıqlarla |
-| [3 — Veb Dərsliyi](beledci/02-VEB-DERSLIYI.md) | Tam veb tətbiq quranlara |
-| [4 — Desktop Dərsliyi](beledci/03-DESKTOP-DERSLIYI.md) | Quraşdırıcılı proqram yazanlara |
+| [3 — Veb Dərsliyi](beledci/02-VEB-DERSLIYI.md) | Veb sayt: şablon, form, giriş, JSON API, canlı səhifə |
+| [4 — Desktop Dərsliyi](beledci/03-DESKTOP-DERSLIYI.md) | Desktop tətbiq: komponent, vidjet, menyu, dialoq, fayl |
 | [5 — Köçürmə Bələdçisi](beledci/04-KOCURME-BELEDCISI.md) | Python/JS/C#/PHP bilənlərə |
 | [6 — Xəta Lüğəti](beledci/05-XETA-LUGETI.md) | Xəta ilə qarşılaşanlara |
 | [7 — Tez Arayış](beledci/06-TEZ-ARAYIS.md) | Hamıya: bir səhifəlik xülasə |
+| [8 — Vidjet Dərsliyi](beledci/07-VIDJET-DERSLIYI.md) | Hazır elementlər, hadisələr, düzülüş, tema, Studio |
+
+Dərsliklər 3, 4 və 8-dəki hər tam proqram `sinaq/test_beledci.py` ilə
+avtomatik ayrılır, tip yoxlamasından keçir və icra olunur.
 
 ---
 
@@ -269,7 +298,7 @@ PROQRAMLASDIRMA DILI/
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
     │   ├── vidjet.py         57 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                723 sınaq
+    └── sinaq/                968 sınaq
 ```
 
 ---
@@ -283,7 +312,7 @@ Dil nüvəsi tamamdır. Növbəti ən faydalı işlər:
 | 1 | **`veb` modulu** (server) | `05-veb-server.alqor` işləyir, spesifikasiyanın 11-ci bölməsi canlanır |
 | 2 | **`pəncərə` modulu** (desktop) | `06-desktop.alqor` işləyir |
 | 3 | **`alqorfmt`** | `--ascii-düzəlt` — klaviatura həllinin üçüncü qatı |
-| 4 | **`alqorls`** (LSP) | VS Code / Neovim dəstəyi |
+| ✅ | **`alqorls`** (LSP) + VS Code genişlənməsi (`redaktor/vscode/`) | VS Code / Neovim / Helix dəstəyi |
 | 5 | `alqor yeni` / `qur` / `sına` / `sənəd` | alət zəncirinin qalanı |
 | 6 | JS/WASM transpilyator | brauzer hədəfi |
 | 7 | Rust-a köçürmə | istehsal kompilyatoru |

@@ -181,6 +181,91 @@ class HadisəCədvəliSınağı(unittest.TestCase):
 #  Dil səviyyəsi — pəncərə və göstərmə
 # ═══════════════════════════════════════════════════════════════════════
 
+class DərslikDüzəlişləriSınağı(unittest.TestCase):
+    """Desktop dərsliyi yazılarkən tapılan boşluqlar."""
+
+    KOMP = """
+komponent Siyahı
+    vəziyyət vacib: məntiq = yanlış
+    vəziyyət seçilən: mətn = "-"
+    metod vacibDəyişdi(d: məntiq)
+        özü.vacib = d
+    son
+    metod seçildi(d: mətn)
+        özü.seçilən = d
+    son
+    metod sıfırla()
+        özü.seçilən = "-"
+    son
+    göstər()
+        qaytar <div>
+            <label><input növ="checkbox" ad="v"
+                dəyişdi={özü.vacibDəyişdi} /> Vacib</label>
+            <table><tr dəyər="0" klik={özü.seçildi}><td>Süd al</td>
+                <td>aktiv</td></tr></table>
+            <button klik={özü.sıfırla}>Sil</button>
+            <button klik={özü.sıfırla}>Bitmişləri sil</button>
+            <p>vacib={özü.vacib} seçilən={özü.seçilən}</p>
+        </div>
+    son
+son
+"""
+
+    def test_məzmun_komponent_nümunəsi_qəbul_edir(self):
+        """Menyudan `menecer.metod()` çağırmaq üçün."""
+        s = başsız(self.KOMP + """
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("S")
+    dəyişən k = yeni Siyahı()
+    p.məzmun(k)
+    k.seçilən = "menyudan"
+    yaz(pəncərə.sınaq.aç(p).ehtiva("seçilən=menyudan"))
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_məzmun_komponent_olmayan_nümunə_xətadır(self):
+        from test_icraci import xəta_tipi
+        self.assertEqual(xəta_tipi(BAŞLIQ + """
+sinif A
+son
+yeni pəncərə.Pəncərə("S").məzmun(yeni A())
+"""), "TipXətası")
+
+    def test_sürücü_qutucuğa_məntiq_göndərir(self):
+        """Brauzer qutucuq üçün mətn yox, məntiq göndərir."""
+        s = başsız(self.KOMP + """
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("S")
+    p.məzmun(<Siyahı />)
+    dəyişən s = pəncərə.sınaq.aç(p)
+    s.yaz("v", doğru)
+    yaz(s.ehtiva("vacib=doğru"))
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_sürücü_sətri_başlanğıc_mətnlə_tapır(self):
+        s = başsız(self.KOMP + """
+funksiya əsas()
+    dəyişən p = yeni pəncərə.Pəncərə("S")
+    p.məzmun(<Siyahı />)
+    dəyişən s = pəncərə.sınaq.aç(p)
+    s.klik("Süd al")
+    yaz(s.ehtiva("seçilən=0"))
+    s.klik("Sil")                 // dəqiq "Sil", "Bitmişləri sil" deyil
+    yaz(s.ehtiva("seçilən=-"))
+son
+""")
+        self.assertEqual(s, ["doğru", "doğru"])
+
+    def test_başlanğıc_söz_sərhədində(self):
+        self.assertTrue(P._başlayır("Süd al aktiv", "Süd al"))
+        self.assertTrue(P._başlayır("Sud al", "Süd al"))
+        self.assertFalse(P._başlayır("Südlü çay", "Süd"))
+        self.assertFalse(P._başlayır("", "a"))
+
+
 class PəncərəSınağı(unittest.TestCase):
     def test_başlıq(self):
         sətirlər = başsız('''
@@ -889,6 +974,58 @@ son
     def test_vəziyyət_son_nöqtəsi(self):
         self.assertEqual(json.loads(self.al("/_alqor/veziyyet")),
                          {"pəncərələr": 1})
+
+    def test_vidjet_üslubu_qoşulur(self):
+        """Desktopda vidjetlər üslubsuz qalmamalıdır."""
+        s = self.al("/")
+        self.assertIn(".v-düymə{", s)
+        self.assertIn("--v-vurgu", s)
+
+    # ── Kənar saytlardan qorunma ──────────────────────────────────────
+
+    def _xam_POST(self, başlıqlar: dict, gövdə: bytes) -> int:
+        sorğu = urllib.request.Request(
+            self.ünvan + "/_alqor/hadise", data=gövdə,
+            headers=başlıqlar, method="POST")
+        try:
+            with urllib.request.urlopen(sorğu, timeout=10) as c:
+                return c.status
+        except urllib.error.HTTPError as x:
+            return x.code
+
+    def test_kənar_saytdan_hadisə_rədd_edilir(self):
+        """
+        Hücum: istifadəçinin brauzerindəki pis sayt `text/plain` ilə
+        "sadə sorğu" göndərir. `Origin` başlığı onu ələ verir.
+        """
+        s = self.al("/")
+        açar = self.açar(s, 'id="artır"')
+        gövdə = _json_bayt({"id": açar, "dəyər": None})
+        for mənbə in ("https://pis-sayt.example", "null",
+                      "http://127.0.0.1:1"):
+            kod = self._xam_POST({"Content-Type": "text/plain",
+                                  "Origin": mənbə}, gövdə)
+            self.assertEqual(kod, 403, mənbə)
+        # Vəziyyət dəyişməyib
+        self.assertIn("<h1>0</h1>", self.al("/"))
+
+    def test_öz_mənbəyindən_hadisə_qəbul_edilir(self):
+        s = self.al("/")
+        açar = self.açar(s, 'id="artır"')
+        kod = self._xam_POST(
+            {"Content-Type": "application/json",
+             "Origin": self.ünvan},
+            _json_bayt({"id": açar, "dəyər": None}))
+        self.assertEqual(kod, 200)
+        self.assertIn("<h1>1</h1>", self.al("/"))
+
+    def test_yad_host_rədd_edilir(self):
+        """DNS rebinding: kənar domen bizim IP-yə yönəldilib."""
+        sorğu = urllib.request.Request(
+            self.ünvan + "/", headers={"Host": "pis-sayt.example"})
+        with self.assertRaises(urllib.error.HTTPError) as k:
+            urllib.request.urlopen(sorğu, timeout=10)
+        self.assertEqual(k.exception.code, 403)
 
     def test_olmayan_yol_404(self):
         with self.assertRaises(urllib.error.HTTPError) as k:

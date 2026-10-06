@@ -47,6 +47,9 @@ class Dəyər:
     filtrlər: list[tuple[str, list[str]]] = field(default_factory=list)
     xam: bool = False
     sətir: int = 1
+    # Miras zamanı blok uşaq şablondan gəlir, göstərən isə valideyndir —
+    # xəta mesajı ifadənin HƏQİQİ faylını göstərməlidir
+    fayl: str = ""
 
 
 @dataclass
@@ -57,6 +60,7 @@ class Blok:
     gövdə: list[Any] = field(default_factory=list)
     yoxsa: list[Any] | None = None
     sətir: int = 1
+    fayl: str = ""
 
 
 @dataclass
@@ -180,7 +184,9 @@ def _ayır_axını(mətn: str, fayl: str, başlanğıc: int):
             continue
 
         if uyğun.group("dəyər") is not None:
-            hədəf().append(_dəyəri_ayır(uyğun.group("dəyər"), sətir))
+            d = _dəyəri_ayır(uyğun.group("dəyər"), sətir)
+            d.fayl = fayl
+            hədəf().append(d)
             continue
 
         əmr = uyğun.group("əmr").strip()
@@ -192,7 +198,7 @@ def _ayır_axını(mətn: str, fayl: str, başlanğıc: int):
 
         if ad in BLOK_AÇANLAR:
             normal = {"eger": "əgər", "her": "hər"}.get(ad, ad)
-            yeni = Blok(normal, arqument, sətir=sətir)
+            yeni = Blok(normal, arqument, sətir=sətir, fayl=fayl)
             hədəf().append(yeni)
             yığın.append(yeni)
             continue
@@ -347,7 +353,10 @@ class Göstərici:
     def __init__(self, icraçı, şablon: Şablon):
         self.i = icraçı
         self.ş = şablon
-        self._keş: dict[str, Any] = {}
+        # Əvvəllər bir lüğət idi: `{% blok məzmun %}` ilə `{{ məzmun }}`
+        # eyni açarı yazır, blokun yerinə ifadə ağacı düşürdü
+        self._bloklar: dict[str, list] = {}
+        self._ağaclar: dict[str, Any] = {}
 
     def göstər(self, verilənlər: dict[str, Any]) -> str:
         mühit = self.i.qlobal.alt()
@@ -358,7 +367,7 @@ class Göstərici:
         if self.ş.genişlət:
             valideyn = self._şablonu_yüklə(self.ş.genişlət)
             g = Göstərici(self.i, valideyn)
-            g._keş = dict(self.ş.bloklar)
+            g._bloklar = dict(self.ş.bloklar)
             return g._qovşaqları_göstər(valideyn.qovşaqlar, mühit)
 
         return self._qovşaqları_göstər(self.ş.qovşaqlar, mühit)
@@ -384,7 +393,7 @@ class Göstərici:
         if isinstance(q, Daxil):
             alt = self._şablonu_yüklə(q.yol)
             g = Göstərici(self.i, alt)
-            g._keş = self._keş
+            g._bloklar = self._bloklar
             return g._qovşaqları_göstər(alt.qovşaqlar, m)
 
         if isinstance(q, Blok):
@@ -393,12 +402,12 @@ class Göstərici:
             if q.növ == "hər":
                 return self._hər(q, m)
             if q.növ == "blok":
-                gövdə = self._keş.get(q.arqument.strip(), q.gövdə)
+                gövdə = self._bloklar.get(q.arqument.strip(), q.gövdə)
                 return self._qovşaqları_göstər(gövdə, m)
         return ""
 
     def _dəyər(self, q: Dəyər, m: Mühit) -> str:
-        dəyər = self._qiymətləndir(q.ifadə, m, q.sətir)
+        dəyər = self._qiymətləndir(q.ifadə, m, q.sətir, q.fayl)
 
         for ad, arqumentlər in q.filtrlər:
             filtr = FİLTRLƏR.get(ad)
@@ -406,12 +415,13 @@ class Göstərici:
                 raise ŞablonXətası(
                     f"Naməlum filtr: `{ad}`\n"
                     f"İcazəli filtrlər: {', '.join(sorted(FİLTRLƏR))}",
-                    self.ş.ad, q.sətir)
+                    q.fayl or self.ş.ad, q.sətir)
             try:
                 dəyər = filtr(dəyər, *arqumentlər)
             except Exception as x:              # noqa: BLE001
                 raise ŞablonXətası(
-                    f"`{ad}` filtri alınmadı: {x}", self.ş.ad, q.sətir)
+                    f"`{ad}` filtri alınmadı: {x}",
+                    q.fayl or self.ş.ad, q.sətir)
 
         # `boş` HTML-ə "boş" kimi yazılmamalıdır — səhifədə görünməsin.
         # Açıq göstərmək lazımsa: `{{ a | standart("—") }}`.
@@ -423,7 +433,7 @@ class Göstərici:
         return mətn if q.xam else html_qaç(mətn)
 
     def _əgər(self, q: Blok, m: Mühit) -> str:
-        şərt = self._qiymətləndir(q.arqument, m, q.sətir)
+        şərt = self._qiymətləndir(q.arqument, m, q.sətir, q.fayl)
         if not isinstance(şərt, bool):
             # Şablonda rahatlıq üçün boşluq/sıfır da yanlış sayılır
             şərt = self._doğrudur(şərt)
@@ -446,14 +456,14 @@ class Göstərici:
     def _hər(self, q: Blok, m: Mühit) -> str:
         # `x üçün siyahı içində` və ya `a, b üçün lüğət içində`
         adlar, mənbə_ifadəsi = self._hər_başlığı(q)
-        mənbə = self._qiymətləndir(mənbə_ifadəsi, m, q.sətir)
+        mənbə = self._qiymətləndir(mənbə_ifadəsi, m, q.sətir, q.fayl)
 
         try:
             elementlər = list(self.i._iterasiya(mənbə, None))
         except AlqorXəta as x:
             raise ŞablonXətası(
                 f"`hər` üzərində dövr qurulmur: {x.mesaj}",
-                self.ş.ad, q.sətir)
+                q.fayl or self.ş.ad, q.sətir)
 
         if not elementlər and q.yoxsa is not None:
             return self._qovşaqları_göstər(q.yoxsa, m)
@@ -487,7 +497,8 @@ class Göstərici:
         else:
             raise ŞablonXətası(
                 "`hər` başlığı belə olmalıdır: "
-                "`{% hər x üçün siyahı içində %}`", self.ş.ad, q.sətir)
+                "`{% hər x üçün siyahı içində %}`",
+                q.fayl or self.ş.ad, q.sətir)
 
         adlar = [a.strip() for a in sol.split(",") if a.strip()]
         mənbə = sağ
@@ -498,15 +509,16 @@ class Göstərici:
         else:
             raise ŞablonXətası(
                 "`hər` başlığının sonunda `içində` olmalıdır",
-                self.ş.ad, q.sətir)
+                q.fayl or self.ş.ad, q.sətir)
         if not adlar:
             raise ŞablonXətası("`hər` üçün dəyişən adı yoxdur",
-                               self.ş.ad, q.sətir)
+                               q.fayl or self.ş.ad, q.sətir)
         return adlar, mənbə.strip()
 
     # ── İfadənin qiymətləndirilməsi ───────────────────────────────────
 
-    def _qiymətləndir(self, ifadə: str, m: Mühit, sətir: int) -> Any:
+    def _qiymətləndir(self, ifadə: str, m: Mühit, sətir: int,
+                      fayl: str = "") -> Any:
         """
         Şablon daxilindəki ifadə HƏQİQİ Alqor ifadəsidir — lekser və
         parser ilə ayrılır, interpretator ilə qiymətləndirilir.
@@ -515,37 +527,47 @@ class Göstərici:
         if not ifadə:
             return ""
 
-        ağac = self._ifadə_ağacı(ifadə, sətir)
+        fayl = fayl or self.ş.ad
+        ağac = self._ifadə_ağacı(ifadə, sətir, fayl)
         try:
             return self.i._ifadə(ağac, m)
         except AlqorXəta as x:
             raise ŞablonXətası(
                 f"`{{{{ {ifadə} }}}}` qiymətləndirilmədi: {x.mesaj}",
-                self.ş.ad, sətir)
+                fayl, sətir)
 
-    def _ifadə_ağacı(self, ifadə: str, sətir: int):
-        if ifadə in self._keş and not isinstance(self._keş[ifadə], list):
-            return self._keş[ifadə]
+    def _ifadə_ağacı(self, ifadə: str, sətir: int, fayl: str = ""):
+        if ifadə in self._ağaclar:
+            return self._ağaclar[ifadə]
 
         from .lekser import Lekser
         from .menbe import Mənbə
         from .parser import Parser, ParserXətası
+        from .token import Növ
         from .xeta import XətaToplayıcı
 
         x = XətaToplayıcı()
-        s = Mənbə.mətndən(ifadə, f"{self.ş.ad}:{sətir}", x)
+        fayl = fayl or self.ş.ad
+        s = Mənbə.mətndən(ifadə, f"{fayl}:{sətir}", x)
         tokenlər = Lekser(s, x, ascii_xəbərdarlığı=False).leksə()
         p = Parser(tokenlər, s, x)
         try:
             ağac = p._ifadə()
+            # `{{ a b }}` — artıq tokenlər səssizcə atılmamalıdır
+            while p._bax().növ is Növ.SETIR_SONU:
+                p._al()
+            if p._bax().növ is not Növ.FAYL_SONU:
+                p._xəta("ALQ-P001", "Gözlənilməyən token",
+                        f"`{p._göstər(p._bax())}` burada gözlənilmirdi")
         except ParserXətası:
             ağac = None
         if ağac is None or not x.uğurludur():
             ilk = x.xətalar[0].mesaj if x.xətalar else "sintaksis xətası"
+            qeyd = x.xətalar[0].qeyd if x.xətalar else ""
             raise ŞablonXətası(
-                f"`{{{{ {ifadə} }}}}` ayrılmadı: {ilk}",
-                self.ş.ad, sətir)
-        self._keş[ifadə] = ağac
+                f"`{{{{ {ifadə} }}}}` ayrılmadı: {ilk}"
+                + (f" — {qeyd}" if qeyd else ""), fayl, sətir)
+        self._ağaclar[ifadə] = ağac
         return ağac
 
 

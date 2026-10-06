@@ -37,6 +37,10 @@ from .xeta import XətaToplayıcı
 
 REJİMLƏR = ("sərbəst", "normal", "sərt")
 
+# Qeyd rejimində `Əhatə.elan` bütün elanları bura yazır (sapa bağlı
+# deyil — `alqorls` analizi ardıcıl aparır)
+_QEYD_SİYAHISI: list | None = None
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Əhatə dairəsi
@@ -82,6 +86,8 @@ class Əhatə:
 
     def elan(self, b: Bağlama) -> None:
         self.adlar[b.ad] = b
+        if _QEYD_SİYAHISI is not None and b.yer is not None:
+            _QEYD_SİYAHISI.append(b)
 
     def funksiya_əhatəsi(self) -> "Əhatə | None":
         ə: Əhatə | None = self
@@ -440,6 +446,7 @@ def _server_metodları() -> dict[str, T.Tip]:
     d.update({
         "statik": F(m, m, m, qaytarır=SERVER, standart=1),
         "şablonQovluğu": F(m, qaytarır=SERVER),
+        "komponent": F(m, e, m, m, qaytarır=SERVER, standart=2),
         "xətaİdarəedicisi": F(e, qaytarır=SERVER),
         "tapılmadı": F(e, qaytarır=SERVER),
         "dinlə": F(i, m, qaytarır=h, standart=2),
@@ -474,7 +481,9 @@ def _cavab_metodları() -> dict[str, T.Tip]:
     m, i, b, e = T.MƏTN, T.TAM, T.MƏNTİQ, T.İSTƏNİLƏN
     return {
         "kod": F(i, qaytarır=CAVAB),
-        "başlıq": F(m, e, qaytarır=CAVAB),
+        # Bir arqumentlə oxuyur (`mətn?`), ikiylə təyin edib cavabı
+        # qaytarır — nəticə arqument sayından asılıdır
+        "başlıq": F(m, e, qaytarır=e, standart=1),
         "kuki": F(m, m, qaytarır=CAVAB),
         "kukiSil": F(m, m, qaytarır=CAVAB, standart=1),
         "vəziyyət": F(qaytarır=i), "mətnƏt": F(qaytarır=m),
@@ -776,13 +785,24 @@ def _modullar() -> dict[str, T.ModulTipi]:
     })
 
     konsol = T.ModulTipi("konsol", {
-        "qırmızı": F(m, qaytarır=m), "yaşıl": F(m, qaytarır=m),
-        "sarı": F(m, qaytarır=m), "mavi": F(m, qaytarır=m),
-        "qalın": F(m, qaytarır=m), "altXətt": F(m, qaytarır=m),
+        "qırmızı": F(e, qaytarır=m), "yaşıl": F(e, qaytarır=m),
+        "sarı": F(e, qaytarır=m), "mavi": F(e, qaytarır=m),
+        "boz": F(e, qaytarır=m),
+        "qalın": F(e, qaytarır=m), "altXətt": F(e, qaytarır=m),
+        "rəng": F(e, m, m, b, qaytarır=m, standart=3),
         "təmizlə": F(qaytarır=h),
+        "kursor": F(i, i, qaytarır=h, standart=1),
+        "ölçü": F(qaytarır=T.Kortej((i, i))),
+        "terminaldır": F(qaytarır=b),
         "cədvəl": F(e, e, qaytarır=h),
-        "soruş": F(m, qaytarır=m, standart=1),
-        "təsdiqlə": F(m, qaytarır=b),
+        "soruş": F(m, e, qaytarır=m, standart=2),
+        "parolSoruş": F(m, qaytarır=m, standart=1),
+        "təsdiqlə": F(m, e, qaytarır=b, standart=1),
+        "seç": F(m, T.Siyahı(e), qaytarır=e),
+        "çoxSeç": F(m, T.Siyahı(e), qaytarır=T.Siyahı(e)),
+        "irəliləyiş": F(i, m, qaytarır=e, standart=1),
+        "fırlanan": F(m, qaytarır=e, standart=1),
+        "arqumentlər": F(qaytarır=e),
     })
 
     jurnal = T.ModulTipi("jurnal", {
@@ -795,7 +815,14 @@ def _modullar() -> dict[str, T.ModulTipi]:
         "bərabərDeyil": F(e, e, m, qaytarır=h, standart=1),
         "doğru": F(b, m, qaytarır=h, standart=1),
         "yanlış": F(b, m, qaytarır=h, standart=1),
-        "təxminən": F(e, e, o, qaytarır=h, standart=1),
+        "təxminən": F(e, e, o, m, qaytarır=h, standart=2),
+        "boş": F(e, m, qaytarır=h, standart=1),
+        "boşDeyil": F(e, m, qaytarır=h, standart=1),
+        "ehtiva": F(e, e, m, qaytarır=h, standart=1),
+        "atır": F(e, e, m, qaytarır=e, standart=2),
+        "atmır": F(e, m, qaytarır=e, standart=1),
+        "uyğun": F(m, m, m, qaytarır=h, standart=1),
+        "uğursuz": F(m, qaytarır=h, standart=1),
     })
 
     paralel = T.ModulTipi("paralel", {
@@ -838,6 +865,15 @@ class TipYoxlayıcı:
         self.siniflər: dict[str, T.SinifTipi] = {}
         self.sadalamalar: dict[str, T.SadalamaTipi] = {}
         self._cari_sinif: T.SinifTipi | None = None
+        # `alqorls` üçün qeyd rejimi (standart olaraq söndürülüb):
+        #   istinadlar — ad istifadəsi → elan (təyinata get, istinadlar)
+        #   ifadə_tipləri — ad/üzv ifadəsi → tip (hover, tamamlama)
+        #   bağlamalar — bütün elanlar (sənəd sxemi, tamamlama)
+        self.qeyd = False
+        self.istinadlar: list[tuple[A.Ad, Bağlama]] = []
+        self.ifadə_tipləri: list[tuple[Any, T.Tip, T.Tip | None]] = []
+        self.bağlamalar: list[Bağlama] = []
+        self._son_obyekt_tipi: T.Tip | None = None
         for ad, tip in _daxili_adlar().items():
             self.qlobal.elan(Bağlama(ad, tip, True, None, True, "daxili"))
 
@@ -1829,7 +1865,12 @@ class TipYoxlayıcı:
         işləyici = _İFADƏLƏR.get(type(e))
         if işləyici is None:
             return T.NAMƏLUM
-        return işləyici(self, e, ə)
+        tip = işləyici(self, e, ə)
+        if self.qeyd and isinstance(e, (A.Ad, A.Üzv)):
+            obyekt = self._son_obyekt_tipi if isinstance(e, A.Üzv) \
+                else None
+            self.ifadə_tipləri.append((e, tip, obyekt))
+        return tip
 
     def _e_literal(self, e: A.Literal, ə: Əhatə) -> T.Tip:
         return {
@@ -1855,6 +1896,8 @@ class TipYoxlayıcı:
                 *self._oxşar_adlar(e.ad, ə))
             return T.NAMƏLUM
         b.istifadə_olunub = True
+        if self.qeyd:
+            self.istinadlar.append((e, b))
         return b.tip
 
     def _oxşar_adlar(self, ad: str, ə: Əhatə) -> list[str]:
@@ -2118,6 +2161,7 @@ class TipYoxlayıcı:
                     "yoxlama: `əgər x boş deyil onda ... son`",
                     "standart dəyər: `x ?? standart`")
         obyekt = T.açılmış(obyekt)
+        self._son_obyekt_tipi = obyekt
         tip = self._üzv_tipi(obyekt, e.ad, e.yer)
         if not e.təhlükəsiz:
             return tip

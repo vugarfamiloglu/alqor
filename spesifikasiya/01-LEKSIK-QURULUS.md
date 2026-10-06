@@ -571,6 +571,17 @@ dəst(1, 2, 3)
                  ikinciDəyər +
                  üçüncüDəyər
   ```
+- Növbəti sətir `.ad` və ya `?.ad` ilə başlayırsa da ifadə davam edir —
+  axıcı (zəncirlənən) API-lər üçün. Aradakı boş və şərh sətirləri
+  ötürülür; `..` (diapazon) və `...` (yayma) ilə başlayan sətir zəncir
+  sayılmır:
+  ```alqor
+  dəyişən a = konsol.arqumentlər()
+      .proqram("hesabla")
+      // şərh zənciri qırmır
+      .bayraq("--ətraflı", "-ə", "Ətraflı çıxış")
+      .təhlil()
+  ```
 
 ---
 

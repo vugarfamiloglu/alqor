@@ -158,6 +158,21 @@ funksiya ikiqat(x: tam) -> tam
 son
 ```
 
+### Açar söz adlı arqumentin etiketi kimi
+
+Arqument siyahısında `etiket:` formasında **tək sözlü açar söz** də
+etiket ola bilər — `açar_söz :` heç bir ifadənin başlanğıcı olmadığı
+üçün qeyri-müəyyənlik yaranmır:
+
+```alqor
+konsol.seçim("--format", "-f", "Format", standart: "mətn")
+konsol.təsdiqlə("Davam edilsin?", standart: doğru)
+```
+
+Çoxsözlü açar sözlər (`və ya`, `digər hallarda`) etiket ola bilməz.
+Alqor-da yazılan funksiyanın parametri isə açar söz ola bilməz — bu
+imkan əsasən kitabxana funksiyaları üçündür.
+
 ---
 
 ## 5.4 Anonim funksiyalar və lambda
@@ -187,6 +202,19 @@ dəyişən emal = (x) => blok
     ver y + 1
 son
 ```
+
+**Gövdə kimi tək mənimsətmə.** Ox funksiyasının gövdəsi bir mənimsətmə
+və ya `++`/`--` ola bilər; nəticəsi `heç`-dir. İnterfeys
+idarəedicilərinin ən təbii formasıdır:
+
+```alqor
+<button klik={() => özü.say += 1}>Artır</button>
+vidjet.düymə(mətn: "Sıfırla", klik: () => özü.say = 0)
+dəyişən növbəti = () => sayğac++
+```
+
+Vergüllü mənimsətmə (`a, b = b, a`) arqument siyahısı ilə qarışdığı
+üçün yalnız `blok` formasında yazılır.
 
 ### Dərhal çağırılan funksiya
 ```alqor

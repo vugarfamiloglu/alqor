@@ -1,0 +1,12 @@
+{% genişlət "esas.alqorhtml" %}
+
+{% blok başlıq %}Giriş — Kitab rəfi{% son %}
+
+{% blok məzmun %}
+<h1>Giriş</h1>
+{% əgər səhv %}<p class="xətalar">Parol yanlışdır.</p>{% son %}
+<form method="post" action="/giriş">
+    <label>Parol <input type="password" name="parol"></label>
+    <button>Daxil ol</button>
+</form>
+{% son %}

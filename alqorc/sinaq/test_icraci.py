@@ -117,6 +117,94 @@ dəyişən b = 5""")
         self.assertTrue(x.uğurludur(), x.hesabat(False))
         self.assertEqual(len(ağac.gövdə), 2)
 
+    # ── Qısa qurucudan sonra üzvlər: girinti qaydası ──────────────────
+
+    def test_qısa_qurucudan_sonra_göstər(self):
+        """`göstər()` qurucunun gövdəsinə düşməməlidir."""
+        self.assertEqual(çıxış("""komponent S
+    qurucu(xassə k: mətn)
+    göstər()
+        qaytar <p>{özü.k}</p>
+    son
+son
+yaz(yeni S("q").k)
+yaz(<S k="z" />)"""), ["q", "<p>z</p>"])
+
+    def test_qısa_qurucunun_öz_sonu(self):
+        """Qurucu ilə eyni sütundakı `son` qurucunundur."""
+        self.assertEqual(çıxış("""sinif A
+    qurucu(xassə a: tam)
+    son
+    metod iki() -> tam
+        qaytar özü.a * 2
+    son
+son
+yaz(yeni A(4).iki())"""), ["8"])
+
+    def test_qısa_qurucudan_sonra_vəziyyət(self):
+        self.assertEqual(çıxış("""komponent S
+    qurucu(xassə k: tam)
+    vəziyyət n: tam = 3
+    göstər()
+        qaytar <p>{özü.k + özü.n}</p>
+    son
+son
+yaz(<S k={2} />)"""), ["<p>5</p>"])
+
+    def test_dərin_girintili_sətir_gövdədir(self):
+        self.assertEqual(çıxış("""sinif A
+    qurucu(xassə a: tam)
+        yaz("qurulur {a}")
+    son
+son
+yeni A(1)"""), ["qurulur 1"])
+
+    # ── Ox funksiyasında mənimsətmə ───────────────────────────────────
+
+    def test_lambda_gövdəsində_mənimsətmə(self):
+        self.assertEqual(çıxış("""sinif A
+    xassə n: tam = 0
+son
+dəyişən a = yeni A()
+dəyişən artır = () => a.n += 2
+dəyişən sıfırla = () => a.n = 0
+dəyişən bir = () => a.n++
+artır()
+artır()
+yaz(a.n)
+sıfırla()
+bir()
+yaz(a.n)
+yaz(artır())"""), ["4", "1", "boş"])
+
+    def test_JSX_ifadəsində_artıq_token_xətadır(self):
+        """Əvvəllər `{a 2}`-dən `2` səssizcə atılırdı."""
+        _, x = ayır("dəyişən a = 1\nyaz(<p>{a 2}</p>)")
+        self.assertFalse(x.uğurludur())
+        _, x = ayır("yaz(<b klik={() => x}>{1 + 2}</b>)")
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+
+    def test_tut_ad_istənilən_xətanı_bağlayır(self):
+        """Əvvəllər `tut x`-də `x` gövdənin ilk cümləsi sayılırdı."""
+        self.assertEqual(çıxış("""cəhd et
+    yaz(1 / 0)
+tut x
+    yaz("tutuldu: {x.mesaj}")
+son
+cəhd et
+    yaz(boş!)
+tut x əgər x.mesaj != ""
+    yaz("mühafizə ilə")
+son"""), ["tutuldu: sıfıra bölmək olmaz", "mühafizə ilə"])
+
+    def test_interpolyasiyada_artıq_token_və_məsləhət(self):
+        _, x = ayır('dəyişən a = 1\nyaz("{a 2}")')
+        self.assertFalse(x.uğurludur())
+        _, x = ayır('yaz(":root{--v-vurgu:#7c3aed}")')
+        self.assertFalse(x.uğurludur())
+        self.assertTrue(any('x"' in k for d in x.siyahı
+                            for k in d.köməklər))
+
     def test_çox_xəta_bir_keçiddə(self):
         _, x = ayır("dəyişən a = $\ndəyişən b = $\ndəyişən c = $")
         self.assertGreaterEqual(len(x.xətalar), 3)
