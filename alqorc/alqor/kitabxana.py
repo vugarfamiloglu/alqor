@@ -23,6 +23,7 @@ from typing import Any, Callable
 
 from . import elifba as E
 from .korutin import Gələcək, Korutin, LəğvNişanı
+from .pencere import Pəncərə, Sürücü
 from .veb import (Cavab, Qrup, Server, Sessiya, Sorğu,
                   SınaqMüştərisi)
 from .deyerler import (AlqorDiapazon, AlqorGenerator, AlqorXəta, BağlıMetod,
@@ -947,12 +948,53 @@ _MÜŞTƏRİ: dict[str, Callable] = {
 }
 
 
+_PƏNCƏRƏ: dict[str, Callable] = {
+    "başlıq": lambda i, p, m=None: p.başlıq(m),
+    "məzmun": lambda i, p, d: p.məzmun(d),
+    # Arqumentlə təyin edir, arqumentsiz menyunun
+    # HTML-ini qaytarır
+    "menyu": lambda i, p, m=None: (
+        p.menyu(m) if m is not None else p.menyu_HTML()),
+    "üslub": lambda i, p, c: p.üslub(c),
+    "ölç": lambda i, p, e, h: p.ölç(e, h),
+    "mərkəzə": lambda i, p: p.mərkəzə(),
+    "ölçüsüSabit": lambda i, p: p.ölçüsüSabit(),
+    "bağlananda": lambda i, p, f: p.bağlananda(f),
+    "göstər": lambda i, p: p.göstər(),
+    "bağla": lambda i, p: (p.bağla(), None)[1],
+    "açıqdır": lambda i, p: p.açıqdır(),
+    "yenilə": lambda i, p: p.yenilə(),
+    "gözlə": lambda i, p: (p.gözlə(), None)[1],
+    "ünvan": lambda i, p: p.ünvan(),
+    "HTML": lambda i, p: p.kök_HTML(),
+    "səhifə": lambda i, p: p.səhifə(),
+}
+
+_SÜRÜCÜ: dict[str, Callable] = {
+    "klik": lambda i, s, n=None, d=None: s.klik(n, d),
+    "yaz": lambda i, s, n, d: s.yaz(n, d),
+    "hadisə": lambda i, s, a, n=None, d=None: s.hadisə(a, n, d),
+    "yenilə": lambda i, s: s.yenilə(),
+    "bağla": lambda i, s: s.bağla(),
+    "HTML": lambda i, s: s.HTML(),
+    "səhifə": lambda i, s: s.səhifə(),
+    "menyu": lambda i, s: s.menyu(),
+    "başlıq": lambda i, s: s.başlıq(),
+    "mətn": lambda i, s: s.mətn(),
+    "ehtiva": lambda i, s, p: s.ehtiva(p),
+    "açıqdır": lambda i, s: s.açıqdır(),
+    "dialoqlar": lambda i, s: s.dialoqlar(),
+}
+
+
 _CƏDVƏLLƏR: dict[type, dict[str, Callable]] = {
     Element: _ELEMENT,
     Server: _SERVER,
     Sorğu: _SORĞU,
     Cavab: _CAVAB,
     Qrup: _QRUP,
+    Pəncərə: _PƏNCƏRƏ,
+    Sürücü: _SÜRÜCÜ,
     Sessiya: _SESSİYA,
     SınaqMüştərisi: _MÜŞTƏRİ,
     Gələcək: _GƏLƏCƏK,
@@ -1555,8 +1597,81 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
         }),
     })
 
+    # ── pəncərə ───────────────────────────────────────────────────────
+    from . import pencere as _p
+
+    dialoq = Modul("pəncərə.dialoq", {
+        "təsdiqlə": D("təsdiqlə",
+                      lambda b, m="": _p.d_təsdiqlə(icraçı, b, m), 1, 2),
+        "xəbərdarlıq": D("xəbərdarlıq",
+                         lambda b, m="": _p.d_xəbərdarlıq(icraçı, b, m),
+                         1, 2),
+        "məlumat": D("məlumat",
+                     lambda b, m="": _p.d_məlumat(icraçı, b, m), 1, 2),
+        "xəta": D("xəta", lambda b, m="": _p.d_xəta(icraçı, b, m), 1, 2),
+        "soruş": D("soruş", lambda b, m="", s="": _p.d_soruş(
+            icraçı, b, m, s), 1, 3),
+        "faylAç": D("faylAç", lambda süzgəclər=None, qovluq=None:
+                    _p.d_faylAç(icraçı, süzgəclər, qovluq), 0, 2),
+        "faylAçHamısı": D("faylAçHamısı",
+                          lambda süzgəclər=None, qovluq=None:
+                          _p.d_faylAçHamısı(icraçı, süzgəclər, qovluq),
+                          0, 2),
+        "faylSaxla": D("faylSaxla",
+                       lambda standartAd="", süzgəclər=None, qovluq=None:
+                       _p.d_faylSaxla(icraçı, standartAd, süzgəclər,
+                                      qovluq), 0, 3),
+        "qovluqSeç": D("qovluqSeç", lambda qovluq=None:
+                       _p.d_qovluqSeç(icraçı, qovluq), 0, 1),
+        "rəngSeç": D("rəngSeç", lambda standart="#3366cc":
+                     _p.d_rəngSeç(icraçı, standart), 0, 1),
+    })
+
+    def _menyu_elementi(ad, qısayol="", klik=None, söndürülmüş=False,
+                        işarələnmiş=None):
+        return _p.MenyuElementi(
+            ad=mətnə(ad, icraçı), qısayol=mətnə(qısayol, icraçı),
+            klik=klik, söndürülmüş=bool(söndürülmüş),
+            işarələnmiş=işarələnmiş)
+
+    pəncərə_m = Modul("pəncərə", {
+        "Pəncərə": D("Pəncərə", lambda başlıq="Alqor", en=800,
+                     hündürlük=600: _p.Pəncərə(
+                         icraçı, başlıq, en, hündürlük), 0, 3),
+        "menyu": D("menyu", lambda ad, elementlər=None: _p.Menyu(
+            mətnə(ad, icraçı),
+            [e for e in (elementlər or []) if isinstance(
+                e, _p.MenyuElementi)]), 1, 2),
+        "element": D("element", _menyu_elementi, 1, 5),
+        "ayırıcı": D("ayırıcı", lambda: _p.MenyuElementi(
+            ayırıcıdır=True)),
+        "bildiriş": D("bildiriş", lambda b, m="": _p.bildiriş(
+            icraçı, b, m), 1, 2),
+        "işlət": D("işlət", lambda: (_p.tətbiq(icraçı).işlət(), None)[1]),
+        "dayandır": D("dayandır", lambda: (
+            _p.tətbiq(icraçı).dayandır(), None)[1]),
+        "pəncərələr": D("pəncərələr", lambda: list(
+            _p.tətbiq(icraçı).açıqlar())),
+        "aparıcı": D("aparıcı", lambda: _p.tətbiq(icraçı).aparıcı
+                     or ("başsız" if _p.tətbiq(icraçı).başsız else "")),
+        "başsızdır": D("başsızdır", lambda: _p.tətbiq(icraçı).başsız),
+        "dialoq": dialoq,
+        "sınaq": Modul("pəncərə.sınaq", {
+            "aç": D("aç", lambda p: _p.Sürücü(icraçı, p), 1, 1),
+            "cavablar": D("cavablar", lambda c: (
+                _p.tətbiq(icraçı).dialoq_cavabları.extend(list(c)),
+                None)[1], 1, 1),
+            "jurnal": D("jurnal", lambda: [
+                list(d) for d in _p.tətbiq(icraçı).dialoq_jurnalı]),
+            "təmizlə": D("təmizlə", lambda: (
+                _p.tətbiq(icraçı).dialoq_jurnalı.clear(),
+                _p.tətbiq(icraçı).dialoq_cavabları.clear(), None)[2]),
+        }),
+    })
+
     return {
         "veb": veb,
+        "pəncərə": pəncərə_m,
         "paralel": paralel, "sap": sap,
         "riyaziyyat": riyaziyyat, "mətn": mətn_modulu,
         "təsadüfi": təsadüfi, "vaxt": vaxt, "fayl": fayl,
@@ -1740,6 +1855,19 @@ def modul_yüklə(icraçı, ad: str, yer=None) -> Modul:
         dəyər = icraçı.qlobal.al(ad)
         if isinstance(dəyər, Modul):
             return dəyər
+
+    # Alt modul: `gətir pəncərə.dialoq`, `gətir veb.sınaq`
+    if "." in ad and not ad.endswith((".alqor", ".alq")):
+        hissələr = ad.split(".")
+        if icraçı.qlobal.var(hissələr[0]):
+            cari: Any = icraçı.qlobal.al(hissələr[0])
+            for h in hissələr[1:]:
+                if not isinstance(cari, Modul) or h not in cari.üzvlər:
+                    cari = None
+                    break
+                cari = cari.üzvlər[h]
+            if isinstance(cari, Modul):
+                return cari
 
     # Yerli fayl
     if ad.endswith((".alqor", ".alq")) or ad.startswith((".", "/")):

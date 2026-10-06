@@ -1,4 +1,7 @@
 // Nümunə 6 — Desktop tətbiq
+//
+//   alqor işlət 06-desktop.alqor            pəncərəni açır
+//   alqor işlət 06-desktop.alqor -- sınaq   pəncərə açmadan yoxlayır
 
 gətir pəncərə
 gətir pəncərə.dialoq
@@ -49,20 +52,74 @@ komponent Sayğac
     son
 son
 
-funksiya əsas()
-    dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 400, 300)
+funksiya pəncərəniQur() -> istənilən
     dəyişən s = yeni Sayğac()
+    dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 400, 300)
 
     p.menyu([
         pəncərə.menyu("Fayl", [
             pəncərə.element("Saxla...", qısayol: "Ctrl+S", klik: s.saxla),
             pəncərə.ayırıcı(),
-            pəncərə.element("Çıxış", qısayol: "Ctrl+Q", klik: () => p.bağla())
+            pəncərə.element("Çıxış", qısayol: "Ctrl+Q",
+                            klik: () => p.bağla())
         ])
     ])
 
+    // Xam çoxsətirli mətn: CSS-dəki `{...}` interpolyasiya sayılmır
+    p.üslub(x"""
+        .sayğac{text-align:center;padding-top:24px}
+        .sayğac h1{font-size:72px;margin:0}
+        .düymələr{display:flex;gap:8px;justify-content:center}
+    """)
+
     p.məzmun(<Sayğac />)
     p.mərkəzə()
+    qaytar p
+son
+
+// ═══════════════════════════════════════════════════════════════
+//  Pəncərə açmadan yoxlama — `pəncərə.sınaq`
+// ═══════════════════════════════════════════════════════════════
+
+funksiya yoxla(p: istənilən)
+    dəyişən s = pəncərə.sınaq.aç(p)
+
+    yaz("── Pəncərə yoxlaması ──")
+    yaz("Başlıq      : {s.başlıq()}")
+    yaz("İlk vəziyyət: {s.mətn()}")
+
+    s.klik("+")
+    s.klik("+")
+    s.klik("+")
+    yaz("Üç dəfə +   : {s.mətn()}")
+
+    s.klik("-")
+    yaz("Bir dəfə -  : {s.mətn()}")
+
+    // Dialoqun cavabını əvvəlcədən veririk
+    pəncərə.sınaq.cavablar([yanlış])
+    s.klik("Sıfırla")
+    yaz("Sıfırla/xeyr: {s.mətn()}")
+
+    pəncərə.sınaq.cavablar([doğru])
+    s.klik("Sıfırla")
+    yaz("Sıfırla/bəli: {s.mətn()}")
+
+    yaz("Dialoqlar   : {uzunluq(pəncərə.sınaq.jurnal())} dəfə soruşuldu")
+
+    s.klik("Çıxış")
+    yaz("Çıxışdan son: açıqdır = {s.açıqdır()}")
+son
+
+funksiya əsas(arqumentlər: siyahı[mətn])
+    dəyişən p = pəncərəniQur()
+
+    əgər "sınaq" içindədir arqumentlər onda
+        yoxla(p)
+        qaytar
+    son
+
     p.göstər()
+    yaz("Pəncərə açıldı ({pəncərə.aparıcı()}): {p.ünvan()}")
     pəncərə.işlət()
 son

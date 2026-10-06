@@ -533,8 +533,10 @@ class Lekser:
     def _mətn_oxu(self, hədəf: list[Token], tam_baş: int,
                   xam: bool = False, bayt: bool = False) -> None:
         sitat = self.m[self.i]
-        üçqat = (not xam and not bayt
-                 and self.m.startswith(sitat * 3, self.i))
+        # Üçqat dırnaq prefikslərlə də işləyir: `x"""…"""` CSS, SQL və
+        # HTML yerləşdirmək üçün yeganə təhlükəsiz formadır — nə qaçış,
+        # nə interpolyasiya emal olunur, `{display:flex}` korlanmır.
+        üçqat = self.m.startswith(sitat * 3, self.i)
         bağlayıcı = sitat * 3 if üçqat else sitat
         self.i += len(bağlayıcı)
 

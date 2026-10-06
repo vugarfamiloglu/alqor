@@ -2086,7 +2086,12 @@ class İcraçı:
                     f"`{hədəf.ad}` komponentində `göstər()` metodu yoxdur",
                     yer, "ALQ-T053",
                 )
-            return self.funksiya_çağır(göstər.bağla(n), [], {}, yer)
+            nəticə = self.funksiya_çağır(göstər.bağla(n), [], {}, yer)
+            if isinstance(nəticə, Element):
+                # Ağac hansı nümunədən gəldiyini xatırlasın: `pəncərə`
+                # vəziyyət dəyişəndə `göstər()`-i yenidən çağırır.
+                nəticə.komponent = n
+            return nəticə
 
         if isinstance(hədəf, Çağırılan):
             adlı = dict(atributlar)

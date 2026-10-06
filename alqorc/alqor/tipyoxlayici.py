@@ -412,6 +412,10 @@ def _ləğv_metodları() -> dict[str, T.Tip]:
 # ═══════════════════════════════════════════════════════════════════════
 
 SERVER = T.Sadə("server")
+PƏNCƏRƏ = T.Sadə("pəncərə")
+MENYU = T.Sadə("menyu")
+MENYU_ELEMENTİ = T.Sadə("menyuElementi")
+SÜRÜCÜ = T.Sadə("sürücü")
 SORĞU = T.Sadə("sorğu")
 CAVAB = T.Sadə("cavab")
 QRUP = T.Sadə("qrup")
@@ -488,6 +492,87 @@ def _müştəri_metodları() -> dict[str, T.Tip]:
         "yenilə": F(m, e, e, qaytarır=CAVAB, standart=2),
         "yamaq": F(m, e, e, qaytarır=CAVAB, standart=2),
     }
+
+
+def _pəncərə_metodları() -> dict[str, T.Tip]:
+    m, i, b, e, h = (T.MƏTN, T.TAM, T.MƏNTİQ, T.İSTƏNİLƏN, T.HEÇ)
+    return {
+        "başlıq": F(m, qaytarır=T.Birləşmə([PƏNCƏRƏ, m]), standart=1),
+        "məzmun": F(e, qaytarır=PƏNCƏRƏ),
+        "menyu": F(T.Siyahı(MENYU),
+                   qaytarır=T.Birləşmə([PƏNCƏRƏ, T.MƏTN]),
+                   standart=1),
+        "üslub": F(m, qaytarır=PƏNCƏRƏ),
+        "ölç": F(i, i, qaytarır=PƏNCƏRƏ),
+        "mərkəzə": F(qaytarır=PƏNCƏRƏ),
+        "ölçüsüSabit": F(qaytarır=PƏNCƏRƏ),
+        "bağlananda": F(e, qaytarır=PƏNCƏRƏ),
+        "göstər": F(qaytarır=PƏNCƏRƏ),
+        "bağla": F(qaytarır=h),
+        "açıqdır": F(qaytarır=b),
+        "yenilə": F(qaytarır=PƏNCƏRƏ),
+        "gözlə": F(qaytarır=h),
+        "ünvan": F(qaytarır=m),
+        "HTML": F(qaytarır=m),
+        "səhifə": F(qaytarır=m),
+    }
+
+
+def _sürücü_metodları() -> dict[str, T.Tip]:
+    m, b, e = T.MƏTN, T.MƏNTİQ, T.İSTƏNİLƏN
+    return {
+        "klik": F(m, e, qaytarır=SÜRÜCÜ, standart=2),
+        "yaz": F(m, e, qaytarır=SÜRÜCÜ),
+        "hadisə": F(m, m, e, qaytarır=SÜRÜCÜ, standart=2),
+        "yenilə": F(qaytarır=SÜRÜCÜ),
+        "bağla": F(qaytarır=SÜRÜCÜ),
+        "HTML": F(qaytarır=m),
+        "səhifə": F(qaytarır=m),
+        "menyu": F(qaytarır=m),
+        "başlıq": F(qaytarır=m),
+        "mətn": F(qaytarır=m),
+        "ehtiva": F(m, qaytarır=b),
+        "açıqdır": F(qaytarır=b),
+        "dialoqlar": F(qaytarır=T.Siyahı(T.Siyahı(m))),
+    }
+
+
+def _pəncərə_modulu() -> T.ModulTipi:
+    m, i, b, e, h = (T.MƏTN, T.TAM, T.MƏNTİQ, T.İSTƏNİLƏN, T.HEÇ)
+    ixtiyari_m = T.ixtiyari(m)
+    dialoq = T.ModulTipi("pəncərə.dialoq", {
+        "təsdiqlə": F(m, m, qaytarır=b, standart=1),
+        "xəbərdarlıq": F(m, m, qaytarır=h, standart=1),
+        "məlumat": F(m, m, qaytarır=h, standart=1),
+        "xəta": F(m, m, qaytarır=h, standart=1),
+        "soruş": F(m, m, m, qaytarır=ixtiyari_m, standart=2),
+        "faylAç": F(e, m, qaytarır=ixtiyari_m, standart=2),
+        "faylAçHamısı": F(e, m, qaytarır=T.Siyahı(m), standart=2),
+        "faylSaxla": F(m, e, m, qaytarır=ixtiyari_m, standart=3),
+        "qovluqSeç": F(m, qaytarır=ixtiyari_m, standart=1),
+        "rəngSeç": F(m, qaytarır=ixtiyari_m, standart=1),
+    })
+    sınaq = T.ModulTipi("pəncərə.sınaq", {
+        "aç": F(PƏNCƏRƏ, qaytarır=SÜRÜCÜ),
+        "cavablar": F(T.Siyahı(T.İSTƏNİLƏN), qaytarır=h),
+        "jurnal": F(qaytarır=T.Siyahı(T.Siyahı(m))),
+        "təmizlə": F(qaytarır=h),
+    })
+    return T.ModulTipi("pəncərə", {
+        "Pəncərə": F(m, i, i, qaytarır=PƏNCƏRƏ, standart=3),
+        "menyu": F(m, T.Siyahı(MENYU_ELEMENTİ), qaytarır=MENYU,
+                   standart=1),
+        "element": F(m, m, e, b, b, qaytarır=MENYU_ELEMENTİ, standart=4),
+        "ayırıcı": F(qaytarır=MENYU_ELEMENTİ),
+        "bildiriş": F(m, m, qaytarır=h, standart=1),
+        "işlət": F(qaytarır=h),
+        "dayandır": F(qaytarır=h),
+        "pəncərələr": F(qaytarır=T.Siyahı(PƏNCƏRƏ)),
+        "aparıcı": F(qaytarır=m),
+        "başsızdır": F(qaytarır=b),
+        "dialoq": dialoq,
+        "sınaq": sınaq,
+    })
 
 
 def _veb_modulu() -> T.ModulTipi:
@@ -694,6 +779,7 @@ def _modullar() -> dict[str, T.ModulTipi]:
 
     return {
         "veb": _veb_modulu(),
+        "pəncərə": _pəncərə_modulu(),
         "riyaziyyat": riyaziyyat, "mətn": mətn_m, "təsadüfi": təsadüfi,
         "vaxt": vaxt, "fayl": fayl, "qovluq": qovluq, "yol": yol,
         "json": json_m, "naxış": naxış, "sistem": sistem,
@@ -2134,6 +2220,10 @@ class TipYoxlayıcı:
                 "təmizlə": F(qaytarır=T.HEÇ),
                 "ehtiva": F(T.MƏTN, qaytarır=T.MƏNTİQ),
             }
+        if t == PƏNCƏRƏ:
+            return _pəncərə_metodları()
+        if t == SÜRÜCÜ:
+            return _sürücü_metodları()
         if t == MÜŞTƏRİ:
             return _müştəri_metodları()
         return None
