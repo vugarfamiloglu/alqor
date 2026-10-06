@@ -338,6 +338,44 @@ class Lambda(İfadə):
 
 
 # ═══════════════════════════════════════════════════════════════════════
+#  İnterfeys sintaksisi (JSX)
+# ═══════════════════════════════════════════════════════════════════════
+
+@dataclass
+class JSXAtribut:
+    """`sinif="qutu"`, `klik={özü.bas}`, `aktiv`, `{...xassələr}`"""
+    ad: str
+    dəyər: "İfadə | None" = None        # None → məntiqi `doğru`
+    yayma: bool = False                 # `{...obyekt}`
+
+
+@dataclass
+class JSXMətn:
+    """Element daxilindəki xam mətn."""
+    dəyər: str
+
+
+@dataclass
+class JSXElement(İfadə):
+    """`<div sinif="a">{mətn}</div>`, `<Sayğac />`"""
+    ad: str                             # "div" | "Sayğac" | "nax.Düymə"
+    atributlar: list[JSXAtribut] = field(default_factory=list)
+    uşaqlar: list["İfadə | JSXMətn"] = field(default_factory=list)
+
+    @property
+    def komponentdir(self) -> bool:
+        """Böyük hərflə başlayan ad komponent istinadıdır."""
+        ilk = self.ad.split(".")[0][:1]
+        return ilk != "" and ilk == ilk.upper() and ilk.isalpha()
+
+
+@dataclass
+class JSXParça(İfadə):
+    """`<>...</>` — sarğısız qrup."""
+    uşaqlar: list["İfadə | JSXMətn"] = field(default_factory=list)
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  Bağlamalar (dağıtma)
 # ═══════════════════════════════════════════════════════════════════════
 

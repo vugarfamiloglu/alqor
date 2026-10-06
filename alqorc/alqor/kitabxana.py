@@ -22,7 +22,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import elifba as E
+from .korutin import Gələcək, Korutin, LəğvNişanı
 from .deyerler import (AlqorDiapazon, AlqorGenerator, AlqorXəta, BağlıMetod,
+                       Element,
                        Çağırılan, Daxili, DayanmaSiqnalı, Funksiya, Modul,
                        Mühit, Nümunə, Sadalama, SadalamaDəyəri, Sinif,
                        mətnə, tip_adı)
@@ -290,6 +292,13 @@ def qlobal_mühit(icraçı) -> Mühit:
     d("dayan", dayan, 0, 1)
     d("eynidir", lambda a, b: a is b, 2, 2)
     d("heş", lambda x: hash(x) if not isinstance(x, Nümunə) else id(x), 1, 1)
+
+    # ── Asinxron köməkçi tiplər ─────────────────────────────
+    m.elan("LəğvNişanı", Daxili(
+        "LəğvNişanı",
+        lambda saniyə=None: LəğvNişanı(saniyə), 0, 1))
+    m.elan("Gələcək", Daxili(
+        "Gələcək", lambda f: Gələcək(lambda: _çağır(icraçı, f)), 1, 1))
 
     # ── Xəta sinifləri — `at Xəta("...")` üçün ──────────────
     from .deyerler import XETA_AGACI
@@ -768,8 +777,49 @@ _DIAPAZON: dict[str, Callable] = {
 _GENERATOR: dict[str, Callable] = {
     "növbəti": lambda i, g: g.növbəti(),
     "bitdi": lambda i, g: g.bitdi(),
+    "bağla": lambda i, g: (g.bağla(), None)[1],
     "siyahıyaÇevir": lambda i, g: g.siyahıyaÇevir(),
+    # Sonsuz generatorlar üçün təhlükəsiz metodlar
+    "ilk": lambda i, g, n: g.ilk(n),
+    "çevir": lambda i, g, f: _gen_çevir(i, g, f),
+    "filtr": lambda i, g, f: _gen_filtr(i, g, f),
+    "atla": lambda i, g, n: _gen_atla(i, g, n),
+    "tap": lambda i, g, f: _gen_tap(i, g, f),
+    "hərBiri": lambda i, g, f: ([_çağır(i, f, x) for x in g], None)[1],
+    "cəm": lambda i, g: sum(g),
+    "uzunluq": lambda i, g: sum(1 for _ in g),
 }
+
+
+def _gen_çevir(icraçı, g, f):
+    from .deyerler import AlqorGenerator
+    return AlqorGenerator(iter(_çağır(icraçı, f, x) for x in g))
+
+
+def _gen_filtr(icraçı, g, f):
+    from .deyerler import AlqorGenerator
+    return AlqorGenerator(
+        iter(x for x in g if _çağır(icraçı, f, x) is True))
+
+
+def _gen_atla(icraçı, g, n):
+    from .deyerler import AlqorGenerator
+
+    def axın():
+        atlanan = 0
+        for x in g:
+            if atlanan < n:
+                atlanan += 1
+                continue
+            yield x
+    return AlqorGenerator(axın())
+
+
+def _gen_tap(icraçı, g, f):
+    for x in g:
+        if _çağır(icraçı, f, x) is True:
+            return x
+    return None
 
 _BAYT: dict[str, Callable] = {
     "uzunluq": lambda i, b: len(b),
@@ -778,7 +828,43 @@ _BAYT: dict[str, Callable] = {
     "base64Kodla": lambda i, b: base64.b64encode(b).decode("ascii"),
 }
 
+_ELEMENT: dict[str, Callable] = {
+    "HTML": lambda i, e: e.HTML(i),
+    "mətn": lambda i, e: e.mətn(i),
+    "mətnƏt": lambda i, e: e.HTML(i),
+    "tap": lambda i, e, teq: e.tap(teq),
+    "atribut": lambda i, e, ad, standart=None: e.atribut(ad, standart),
+    "uzunluq": lambda i, e: len(e.uşaqlar),
+    "uşaqSayı": lambda i, e: len(e.uşaqlar),
+    "boşdur": lambda i, e: len(e.uşaqlar) == 0,
+}
+
+_GƏLƏCƏK: dict[str, Callable] = {
+    "al": lambda i, g, limit=None: i.gözlə(g, None),
+    "başlat": lambda i, g: g.başlat(),
+    "bitdi": lambda i, g: g.bitdimi,
+    "uğurludur": lambda i, g: g.uğurludurmu,
+    "mətnƏt": lambda i, g: repr(g),
+}
+
+_LƏĞV: dict[str, Callable] = {
+    "ləğvEt": lambda i, n: (n.ləğvEt(), None)[1],
+    "ləğvolunub": lambda i, n: n.ləğvolunub,
+    "gözlə": lambda i, n, s=None: n.gözlə(s),
+    "yoxla": lambda i, n: _ləğv_yoxla(n),
+}
+
+
+def _ləğv_yoxla(n):
+    if n.ləğvolunub:
+        raise _xəta("Xəta", "əməliyyat ləğv edildi", "ALQ-R021")
+    return None
+
+
 _CƏDVƏLLƏR: dict[type, dict[str, Callable]] = {
+    Element: _ELEMENT,
+    Gələcək: _GƏLƏCƏK,
+    LəğvNişanı: _LƏĞV,
     str: _MƏTN,
     list: _SIYAHI,
     dict: _LÜĞƏT,
@@ -991,6 +1077,8 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
         "gözləSaniyə": D("gözləSaniyə",
                          lambda s: (_time.sleep(s), None)[1], 1, 1),
         "ölç": D("ölç", lambda: _time.perf_counter()),
+        "limitlə": D("limitlə", lambda ms, g: _vaxt_limitlə(
+            icraçı, ms, g), 2, 2),
     })
 
     # ── fayl ────────────────────────────────────────────────
@@ -1215,7 +1303,118 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
                       2, 3),
     })
 
+    # ── paralel ─────────────────────────────────────────────
+    def _gələcəklər(k) -> list:
+        return [x for x in icraçı._iterasiya(k, None)]
+
+    def p_hamısı(k):
+        """Hamısını paralel işlədir, nəticələri sıra ilə qaytarır."""
+        siyahı = _gələcəklər(k)
+        for g in siyahı:
+            if isinstance(g, Gələcək):
+                g.başlat()
+        return [icraçı.gözlə(g) for g in siyahı]
+
+    def p_hamısı_nəticə(k):
+        """Xətalara dözümlü: hər element üçün (uğurlu, dəyər|mesaj)."""
+        siyahı = _gələcəklər(k)
+        for g in siyahı:
+            if isinstance(g, Gələcək):
+                g.başlat()
+        nəticə = []
+        for g in siyahı:
+            try:
+                nəticə.append((True, icraçı.gözlə(g)))
+            except AlqorXəta as x:
+                nəticə.append((False, x.mesaj))
+        return nəticə
+
+    def p_ilk_bitən(k):
+        import time as _t
+        siyahı = [g for g in _gələcəklər(k)]
+        for g in siyahı:
+            if isinstance(g, Gələcək):
+                g.başlat()
+        while True:
+            for g in siyahı:
+                if not isinstance(g, Gələcək):
+                    return g
+                if g.bitdimi:
+                    return icraçı.gözlə(g)
+            _t.sleep(0.001)
+
+    def p_ilk_uğurlu(k):
+        import time as _t
+        siyahı = [g for g in _gələcəklər(k)]
+        for g in siyahı:
+            if isinstance(g, Gələcək):
+                g.başlat()
+        qalan = list(siyahı)
+        son_xəta = None
+        while qalan:
+            for g in list(qalan):
+                if not isinstance(g, Gələcək):
+                    return g
+                if not g.bitdimi:
+                    continue
+                qalan.remove(g)
+                if g.uğurludurmu:
+                    return icraçı.gözlə(g)
+                son_xəta = g.xəta_al()
+            _t.sleep(0.001)
+        if son_xəta is not None:
+            raise son_xəta
+        raise _xəta("Xəta", "heç bir əməliyyat uğurlu olmadı", "ALQ-R021")
+
+    def p_məhdud(n, k):
+        """Eyni anda ən çox `n` əməliyyat."""
+        siyahı = _gələcəklər(k)
+        nəticə = []
+        for i in range(0, len(siyahı), max(1, n)):
+            dəstə = siyahı[i:i + max(1, n)]
+            for g in dəstə:
+                if isinstance(g, Gələcək):
+                    g.başlat()
+            nəticə.extend(icraçı.gözlə(g) for g in dəstə)
+        return nəticə
+
+    def p_çevir(k, f):
+        gələcəklər = [_çağır(icraçı, f, x)
+                      for x in icraçı._iterasiya(k, None)]
+        return p_hamısı(gələcəklər)
+
+    def p_çağır(*a):
+        """`gözlə paralel(f1(), f2())` — kortej qaytarır."""
+        return tuple(p_hamısı(list(a)))
+
+    paralel = Modul("paralel", {
+        "hamısı": D("hamısı", p_hamısı, 1, 1),
+        "hamısıNəticə": D("hamısıNəticə", p_hamısı_nəticə, 1, 1),
+        "ilkBitən": D("ilkBitən", p_ilk_bitən, 1, 1),
+        "ilkUğurlu": D("ilkUğurlu", p_ilk_uğurlu, 1, 1),
+        "məhdud": D("məhdud", p_məhdud, 2, 2),
+        "çevir": D("çevir", p_çevir, 2, 2),
+    }, çağırışçı=D("paralel", p_çağır, 1))
+
+    # ── sap (həqiqi paralellik) ─────────────────────────────
+    def s_başlat(f, *a):
+        return Gələcək(lambda: _çağır(icraçı, f, *a), "sap").başlat()
+
+    def s_hovuz_xəritələ(f, k, ölçü=4):
+        gələcəklər = [Gələcək(lambda x=x: _çağır(icraçı, f, x), "sap")
+                      for x in icraçı._iterasiya(k, None)]
+        return p_məhdud(ölçü, gələcəklər)
+
+    sap = Modul("sap", {
+        "başlat": D("başlat", s_başlat, 1),
+        "xəritələ": D("xəritələ", s_hovuz_xəritələ, 2, 3),
+        "nüvəSayı": D("nüvəSayı", lambda: os.cpu_count() or 1),
+        "gözlə": D("gözlə", lambda ms: (_time.sleep(ms / 1000), None)[1],
+                   1, 1),
+    })
+
     return {
+        "paralel": paralel, "sap": sap,
         "riyaziyyat": riyaziyyat, "mətn": mətn_modulu,
         "təsadüfi": təsadüfi, "vaxt": vaxt, "fayl": fayl,
         "qovluq": qovluq, "yol": yol_modulu, "json": json_modulu,
@@ -1229,6 +1428,18 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
 class _Naxış:
     def __init__(self, derlənmiş):
         self.r = derlənmiş
+
+
+def _vaxt_limitlə(icraçı, ms, gələcək):
+    """`gözlə vaxt.limitlə(5000, uzunƏməliyyat())`"""
+    if not isinstance(gələcək, Gələcək):
+        return gələcək
+    gələcək.başlat()
+    try:
+        return gələcək.al(ms / 1000)
+    except TimeoutError:
+        raise _xəta("VaxtBitdiXətası",
+                    f"əməliyyat {ms} ms limitini aşdı", "ALQ-R011")
 
 
 def _platforma() -> str:

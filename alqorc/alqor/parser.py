@@ -293,16 +293,16 @@ class Parser:
             return self._idxal()
         if self._acar("ixrac et"):
             return self._ixrac()
-        if self._acar("başlanğıc"):
+        # `başlanğıc` / `bitiş` kontekstlidir: yalnız ardınca yeni sətir
+        # gələndə blok açar sözüdür. `dəyişən başlanğıc = 5` adi koddur.
+        tok = self._bax()
+        if (tok.növ is Növ.AD and tok.dəyər in ("başlanğıc", "bitiş")
+                and self._bax(1).növ is Növ.SETIR_SONU):
             yer = self._al().yer
             gövdə = self._blok()
             self._son_tələb()
-            return A.Başlanğıc(yer, gövdə)
-        if self._acar("bitiş"):
-            yer = self._al().yer
-            gövdə = self._blok()
-            self._son_tələb()
-            return A.Bitiş(yer, gövdə)
+            return (A.Başlanğıc(yer, gövdə) if tok.dəyər == "başlanğıc"
+                    else A.Bitiş(yer, gövdə))
         return self._cümlə()
 
     # ═══════════════════════════════════════════════════════════════════
@@ -1054,18 +1054,42 @@ class Parser:
     def _dəyişən_elanı(self, m: dict) -> A.DəyişənElanı:
         tok = self._al()
         növ = tok.dəyər
-        bağlamalar = [self._bağlama()]
+        bağlamalar: list[A.Bağlama] = []
+        dəyərlər: list[A.İfadə] = []
+
+        ilk = self._bağlama()
+        if self._qəbul_op(":"):
+            ilk.tip = self._tip()
+
+        # ── Fərdi forma: `dəyişən a = 0, b = 1` ─────────────────
+        #  Hər adın öz dəyəri var. Ortaq formadan (`a, b = 1, 2`)
+        #  ilk `=` işarəsinin yerinə görə ayrılır.
+        if self._op("="):
+            self._al()
+            bağlamalar.append(ilk)
+            dəyərlər.append(self._ifadə())
+            while self._qəbul_op(","):
+                b = self._bağlama()
+                if self._qəbul_op(":"):
+                    b.tip = self._tip()
+                self._tələb_op("=", "çoxlu dəyişən elanı")
+                bağlamalar.append(b)
+                dəyərlər.append(self._ifadə())
+            self._cümlə_sonu()
+            return A.DəyişənElanı(tok.yer, növ, bağlamalar, dəyərlər,
+                                  m["görünüş"])
+
+        # ── Ortaq forma: `dəyişən a, b = 1, 2` / `a, b = kortej` ─
+        bağlamalar.append(ilk)
         while self._qəbul_op(","):
             bağlamalar.append(self._bağlama())
 
-        # Ortaq tip: `dəyişən a, b: tam = 1, 2`
         if self._qəbul_op(":"):
             tip = self._tip()
             for b in bağlamalar:
                 if b.tip is None:
                     b.tip = tip
 
-        dəyərlər: list[A.İfadə] = []
         if self._qəbul_op("="):
             dəyərlər.append(self._ifadə())
             while self._qəbul_op(","):
@@ -1924,14 +1948,14 @@ class Parser:
             self._al()
             return A.Ad(yer, tok.dəyər)
 
-        # ── JSX ─────────────────────────────────────────────────
-        if tok.opdur("<"):
-            self._xəta(
-                "ALQ-P030", "İnterfeys sintaksisi (JSX) hələ dəstəklənmir",
-                "`<...>` konstruksiyası",
-                "bu, lekser rejimləri tələb edir — Mərhələ 2b-də gələcək",
-                "hələlik `pəncərə.element(...)` funksiya formasını işlədin")
-            raise ParserXətası()
+        # ── İnterfeys sintaksisi (JSX) ──────────────────────────
+        #  Lekser elementi xam skan edib bir JSX tokeni buraxır.
+        if tok.növ is Növ.JSX:
+            from .parser_jsx import JSXXətası, jsx_oxu
+            try:
+                return jsx_oxu(self)
+            except JSXXətası:
+                raise ParserXətası()
 
         if tok.növ is Növ.ACAR:
             self._xəta("ALQ-P005", "İfadə gözlənilirdi",
