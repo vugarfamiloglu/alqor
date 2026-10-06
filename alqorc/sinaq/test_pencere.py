@@ -890,6 +890,58 @@ son
         self.assertEqual(json.loads(self.al("/_alqor/veziyyet")),
                          {"pəncərələr": 1})
 
+    def test_vidjet_üslubu_qoşulur(self):
+        """Desktopda vidjetlər üslubsuz qalmamalıdır."""
+        s = self.al("/")
+        self.assertIn(".v-düymə{", s)
+        self.assertIn("--v-vurgu", s)
+
+    # ── Kənar saytlardan qorunma ──────────────────────────────────────
+
+    def _xam_POST(self, başlıqlar: dict, gövdə: bytes) -> int:
+        sorğu = urllib.request.Request(
+            self.ünvan + "/_alqor/hadise", data=gövdə,
+            headers=başlıqlar, method="POST")
+        try:
+            with urllib.request.urlopen(sorğu, timeout=10) as c:
+                return c.status
+        except urllib.error.HTTPError as x:
+            return x.code
+
+    def test_kənar_saytdan_hadisə_rədd_edilir(self):
+        """
+        Hücum: istifadəçinin brauzerindəki pis sayt `text/plain` ilə
+        "sadə sorğu" göndərir. `Origin` başlığı onu ələ verir.
+        """
+        s = self.al("/")
+        açar = self.açar(s, 'id="artır"')
+        gövdə = _json_bayt({"id": açar, "dəyər": None})
+        for mənbə in ("https://pis-sayt.example", "null",
+                      "http://127.0.0.1:1"):
+            kod = self._xam_POST({"Content-Type": "text/plain",
+                                  "Origin": mənbə}, gövdə)
+            self.assertEqual(kod, 403, mənbə)
+        # Vəziyyət dəyişməyib
+        self.assertIn("<h1>0</h1>", self.al("/"))
+
+    def test_öz_mənbəyindən_hadisə_qəbul_edilir(self):
+        s = self.al("/")
+        açar = self.açar(s, 'id="artır"')
+        kod = self._xam_POST(
+            {"Content-Type": "application/json",
+             "Origin": self.ünvan},
+            _json_bayt({"id": açar, "dəyər": None}))
+        self.assertEqual(kod, 200)
+        self.assertIn("<h1>1</h1>", self.al("/"))
+
+    def test_yad_host_rədd_edilir(self):
+        """DNS rebinding: kənar domen bizim IP-yə yönəldilib."""
+        sorğu = urllib.request.Request(
+            self.ünvan + "/", headers={"Host": "pis-sayt.example"})
+        with self.assertRaises(urllib.error.HTTPError) as k:
+            urllib.request.urlopen(sorğu, timeout=10)
+        self.assertEqual(k.exception.code, 403)
+
     def test_olmayan_yol_404(self):
         with self.assertRaises(urllib.error.HTTPError) as k:
             self.al("/yoxdur")

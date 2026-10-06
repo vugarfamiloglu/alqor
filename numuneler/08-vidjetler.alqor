@@ -195,14 +195,9 @@ son
 
 funksiya vebServeri()
     dəyişən s = yeni veb.Server()
-    dəyişən panel = yeni Panel()
-
-    s.al("/", funksiya(sorğu)
-        qaytar veb.html(vidjet.səhifə(başlıq: "Heyət paneli",
-                                      məzmun: [panel.göstər()]))
-    son)
-
-    yaz("Veb server: http://127.0.0.1:8081")
+    // Komponent birbaşa qoşulur: düymələr, nişanlar, axtarış vebdə də
+    // işləyir. Hər brauzer sessiyası öz `Panel` nümunəsini alır.
+    s.komponent("/", Panel, başlıq: "Heyət paneli")
     s.dinlə(8081)
 son
 
@@ -245,14 +240,20 @@ funksiya yoxla()
     yaz("")
     yaz("── Vebdə eyni komponent ──")
     dəyişən server = yeni veb.Server()
-    dəyişən panel = yeni Panel()
-    server.al("/", (sorğu) => veb.html(
-        vidjet.səhifə(başlıq: "Heyət", məzmun: [panel.göstər()])))
-    dəyişən c = veb.sınaq.server(server).al("/")
+    server.komponent("/", Panel, başlıq: "Heyət")
+    dəyişən m = veb.sınaq.server(server)
+    dəyişən c = m.al("/")
     yaz("Vəziyyət     : {c.vəziyyət()}")
     yaz("DOCTYPE      : {"<!DOCTYPE html>" içindədir c.mətnƏt()}")
     yaz("Üslub daxil  : {".v-düymə" içindədir c.mətnƏt()}")
     yaz("Cədvəl       : {"Aysel Məmmədova" içindədir c.mətnƏt()}")
+
+    // Brauzerin göndərdiyi hadisəni təqlid edirik: "Ayarlar" nişanı
+    dəyişən h = c.mətnƏt().böl("value=\"Ayarlar\"")[0]
+    dəyişən açar = (h.böl("data-a-klik=\"").son() ?? "").böl("\"")[0]
+    dəyişən cavab = m.göndər("/_alqor/hadise",
+                             {"k": 0, "id": açar, "dəyər": "Ayarlar"})
+    yaz("Vebdə klik   : {"v-açar" içindədir cavab.json()["html"]}")
 
     yaz("")
     yaz("── IDE kataloqu ──")

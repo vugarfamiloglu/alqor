@@ -440,6 +440,7 @@ def _server_metodları() -> dict[str, T.Tip]:
     d.update({
         "statik": F(m, m, m, qaytarır=SERVER, standart=1),
         "şablonQovluğu": F(m, qaytarır=SERVER),
+        "komponent": F(m, e, m, m, qaytarır=SERVER, standart=2),
         "xətaİdarəedicisi": F(e, qaytarır=SERVER),
         "tapılmadı": F(e, qaytarır=SERVER),
         "dinlə": F(i, m, qaytarır=h, standart=2),

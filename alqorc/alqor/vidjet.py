@@ -911,7 +911,9 @@ def sətir(icraçı, məzmun: Any = None, boşluq: Any = 8,
 
 
 def sütun(icraçı, məzmun: Any = None, boşluq: Any = 8,
-          düzləndir: Any = "başlanğıc") -> Element:
+          düzləndir: Any = "dolu") -> Element:
+    # Standart `dolu`: şaquli yığında uşaqlar (naviqasiya, cədvəl, form)
+    # tam eni tutur. `başlanğıc` onları məzmun enində saxlayırdı.
     return _E("div", {
         "class": f"{P}sütun",
         "style": (f"gap:{_ölçü(boşluq)};"

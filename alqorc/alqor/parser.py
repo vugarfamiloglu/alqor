@@ -1340,8 +1340,34 @@ class Parser:
         # Ayırd etmə qaydası: qısa forma `xassə` parametri olan və gövdəsi
         # boş olan formadır. Bu qayda olmadan boş gövdəli qurucu sinfin
         # `son`-unu udurdu.
-        gövdə = self._blok(*SINIF_UZV_ACARLARI)
         qısa_ola_bilər = any(p.xassə_görünüşü for p in parametrlər)
+
+        # Qısa formadan sonra başqa üzv gələndə (komponentdə `göstər()`,
+        # `vəziyyət`…) yalnız açar sözə baxmaq kifayət etmir: `göstər()`
+        # gövdədəki çağırış da ola bilər, `son` isə həm qurucunu, həm də
+        # sinfi bağlaya bilər. Burada GİRİNTİ həll edir — insanın gözü
+        # ilə gördüyü kimi (spesifikasiya § 6.3.1):
+        #
+        #   qurucu(xassə a: tam)      növbəti sətir qurucudan DƏRİN
+        #       yaz(a)                deyilsə, gövdə yoxdur;
+        #   son                       qurucu ilə EYNİ sütundakı `son`
+        #                             qurucunundur, soldakı sinfin.
+        if qısa_ola_bilər and self._bax().növ is Növ.SETIR_SONU:
+            j = self.i
+            while self.t[j].növ is Növ.SETIR_SONU or \
+                    self.t[j].opdur(";"):
+                j += 1
+            növbəti = self.t[j]
+            if növbəti.növ is Növ.FAYL_SONU or \
+                    növbəti.yer.sütun <= yer.sütun:
+                if növbəti.acardır("son") and \
+                        növbəti.yer.sütun == yer.sütun:
+                    self._ayırıcı_atla()
+                    self._son_tələb("qurucu")
+                return A.QurucuElanı(yer, parametrlər, [], ad,
+                                     m["görünüş"])
+
+        gövdə = self._blok(*SINIF_UZV_ACARLARI)
 
         if gövdə:
             # Gövdə var — `son` mütləqdir
