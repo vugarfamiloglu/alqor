@@ -1,0 +1,281 @@
+// Nümunə 10 — Kitab rəfi: veb dərsliyinin (bələdçi § 3) yekun proqramı.
+//
+//   alqor işlət esas.alqor             server: http://127.0.0.1:8083
+//   alqor işlət esas.alqor -- sınaq    port açmadan yoxlayır
+//
+// Giriş parolu: `KITAB_PAROL` mühit dəyişəni, yoxdursa "alqor".
+
+gətir veb
+gətir vidjet
+gətir sistem
+
+// ── Model ────────────────────────────────────────────────────────────
+
+sinif Kitab
+    qurucu(açıq xassə nömrə: tam,
+           açıq xassə ad: mətn,
+           açıq xassə müəllif: mətn,
+           açıq xassə il: tam,
+           açıq xassə qeyd: mətn)
+
+    metod lüğət() -> lüğət[mətn, istənilən]
+        qaytar {"nömrə": özü.nömrə, "ad": özü.ad, "müəllif": özü.müəllif,
+                "il": özü.il, "qeyd": özü.qeyd}
+    son
+son
+
+sinif Rəf
+    xassə kitablar: siyahı[Kitab] = []
+    xassə növbəti: tam = 1
+
+    metod əlavəEt(ad: mətn, müəllif: mətn, il: tam, qeyd: mətn) -> Kitab
+        dəyişən k = yeni Kitab(özü.növbəti, ad, müəllif, il, qeyd)
+        özü.növbəti += 1
+        özü.kitablar = özü.kitablar + [k]
+        qaytar k
+    son
+
+    metod tap(nömrə: tam) -> Kitab?
+        hər k üçün özü.kitablar içində
+            əgər k.nömrə == nömrə onda
+                qaytar k
+            son
+        son
+        qaytar boş
+    son
+
+    metod sil(nömrə: tam) -> məntiq
+        dəyişən əvvəl = uzunluq(özü.kitablar)
+        özü.kitablar = özü.kitablar.filtr((k) => k.nömrə != nömrə)
+        qaytar uzunluq(özü.kitablar) < əvvəl
+    son
+son
+
+dəyişən rəf = yeni Rəf()
+rəf.əlavəEt("Əli və Nino", "Qurban Səid", 1937, "")
+rəf.əlavəEt("Dəli Kür", "İsmayıl Şıxlı", 1967, "Roman")
+rəf.əlavəEt("Ölülər", "Cəlil Məmmədquluzadə", 1909, "Komediya")
+
+// ── Yoxlama ──────────────────────────────────────────────────────────
+
+// Form və JSON eyni qaydalarla yoxlanılır. Boş siyahı — xəta yoxdur.
+funksiya yoxlaKitab(d: lüğət[mətn, istənilən]) -> siyahı[mətn]
+    dəyişən xətalar: siyahı[mətn] = []
+    əgər mətnƏt(d.al("ad", "")).kəs() == "" onda
+        xətalar.əlavə("Ad boş ola bilməz")
+    son
+    əgər mətnƏt(d.al("müəllif", "")).kəs() == "" onda
+        xətalar.əlavə("Müəllif boş ola bilməz")
+    son
+    dəyişən il = tamƏt(mətnƏt(d.al("il", "")), -1)
+    əgər il < 0 və ya il > 2100 onda
+        xətalar.əlavə("İl 0 ilə 2100 arasında ədəd olmalıdır")
+    son
+    qaytar xətalar
+son
+
+// ── Ümumi şablon verilənləri ─────────────────────────────────────────
+
+funksiya adminDir(sorğu: istənilən) -> məntiq
+    qaytar sorğu.sessiya().al("admin", yanlış) == doğru
+son
+
+funksiya səhifə(sorğu: istənilən, ad: mətn,
+                verilənlər: lüğət[mətn, istənilən]) -> istənilən
+    verilənlər["admin"] = adminDir(sorğu)
+    verilənlər["kitabSayı"] = uzunluq(rəf.kitablar)
+    qaytar veb.şablon(ad, verilənlər)
+son
+
+// ── İnteraktiv axtarış (vidjet + komponent) ──────────────────────────
+
+komponent Axtarış
+    vəziyyət sorğu: mətn = ""
+
+    metod yazıldı(dəyər: mətn)
+        özü.sorğu = dəyər
+    son
+
+    göstər()
+        dəyişən s = özü.sorğu.kiçiyə()
+        dəyişən tapılan = rəf.kitablar.filtr((k) =>
+            s içindədir k.ad.kiçiyə() və ya s içindədir k.müəllif.kiçiyə())
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.başlıq(mətn: "Axtarış",
+                          altMətn: "Yazdıqca nəticələr yenilənir"),
+            vidjet.axtarış(ad: "sorğu", dəyər: özü.sorğu,
+                           yazıldı: özü.yazıldı),
+            vidjet.cədvəl(sütunlar: [["ad", "Ad"], ["müəllif", "Müəllif"],
+                                     ["il", "İl"]],
+                          sətirlər: tapılan,
+                          boşMətn: "Heç nə tapılmadı"),
+            vidjet.əlaqə(mətn: "← Bütün kitablar", ünvan: "/")
+        ])
+    son
+son
+
+// ── Server ───────────────────────────────────────────────────────────
+
+funksiya serverQur() -> istənilən
+    dəyişən s = yeni veb.Server()
+    s.ara(veb.sessiya())
+    s.ara(veb.təhlükəsizlikBaşlıqları())
+    s.şablonQovluğu("sablonlar")
+    s.statik("/statik", "statik")
+
+    // ── Səhifələr ──
+
+    s.al("/", (sorğu) => səhifə(sorğu, "siyahi.alqorhtml",
+                                {"kitablar": rəf.kitablar}))
+
+    s.al("/kitab/:nömrə", funksiya(sorğu)
+        dəyişən k = rəf.tap(tamƏt(sorğu.parametr("nömrə"), 0))
+        əgər k boşdur onda
+            qaytar veb.xəta(404, "Belə kitab yoxdur")
+        son
+        qaytar səhifə(sorğu, "kitab.alqorhtml", {"kitab": k})
+    son)
+
+    s.al("/yeni", funksiya(sorğu)
+        əgər deyil adminDir(sorğu) onda
+            qaytar veb.yönləndir("/giriş")
+        son
+        qaytar səhifə(sorğu, "yeni.alqorhtml",
+                      {"forma": {}, "xətalar": []})
+    son)
+
+    s.göndər("/yeni", funksiya(sorğu)
+        əgər deyil adminDir(sorğu) onda
+            qaytar veb.xəta(403, "Giriş tələb olunur")
+        son
+        dəyişən f = sorğu.form()
+        dəyişən xətalar = yoxlaKitab(f)
+        əgər uzunluq(xətalar) > 0 onda
+            // Form yenidən göstərilir — yazılanlar itmir
+            qaytar səhifə(sorğu, "yeni.alqorhtml",
+                          {"forma": f, "xətalar": xətalar}).kod(422)
+        son
+        dəyişən k = rəf.əlavəEt(f["ad"].kəs(), f["müəllif"].kəs(),
+                                tamƏt(f["il"], 0), f.al("qeyd", ""))
+        qaytar veb.yönləndir("/kitab/{k.nömrə}")
+    son)
+
+    // ── Giriş ──
+
+    s.al("/giriş", (sorğu) => səhifə(sorğu, "giris.alqorhtml",
+                                     {"səhv": yanlış}))
+
+    s.göndər("/giriş", funksiya(sorğu)
+        dəyişən parol = sistem.mühit("KITAB_PAROL") ?? "alqor"
+        əgər sorğu.form().al("parol", "") == parol onda
+            sorğu.sessiya().qoy("admin", doğru)
+            qaytar veb.yönləndir("/")
+        son
+        qaytar səhifə(sorğu, "giris.alqorhtml", {"səhv": doğru}).kod(401)
+    son)
+
+    s.göndər("/çıxış", funksiya(sorğu)
+        sorğu.sessiya().təmizlə()
+        qaytar veb.yönləndir("/")
+    son)
+
+    // ── JSON API ──
+
+    s.qrup("/api", funksiya(q)
+        q.al("/kitablar", (sorğu) => veb.json(
+            rəf.kitablar.çevir((k) => k.lüğət())))
+
+        q.al("/kitablar/:nömrə", funksiya(sorğu)
+            dəyişən k = rəf.tap(tamƏt(sorğu.parametr("nömrə"), 0))
+            əgər k boşdur onda
+                qaytar veb.json({"xəta": "tapılmadı"}).kod(404)
+            son
+            qaytar veb.json(k.lüğət())
+        son)
+
+        // Yazma əməliyyatları yalnız admin üçün — marşruta xas ara
+        // proqram ikinci arqumentdir
+        dəyişən yalnızAdmin = funksiya(sorğu, növbəti)
+            əgər deyil adminDir(sorğu) onda
+                qaytar veb.json({"xəta": "giriş tələb olunur"}).kod(401)
+            son
+            qaytar növbəti(sorğu)
+        son
+
+        q.göndər("/kitablar", yalnızAdmin, funksiya(sorğu)
+            dəyişən d = sorğu.json()
+            dəyişən xətalar = yoxlaKitab(d)
+            əgər uzunluq(xətalar) > 0 onda
+                qaytar veb.json({"xətalar": xətalar}).kod(422)
+            son
+            dəyişən k = rəf.əlavəEt(d["ad"], d["müəllif"],
+                                    tamƏt(mətnƏt(d["il"]), 0),
+                                    mətnƏt(d.al("qeyd", "")))
+            qaytar veb.json(k.lüğət()).kod(201)
+        son)
+
+        q.sil("/kitablar/:nömrə", yalnızAdmin, funksiya(sorğu)
+            əgər rəf.sil(tamƏt(sorğu.parametr("nömrə"), 0)) onda
+                qaytar veb.boş()
+            son
+            qaytar veb.json({"xəta": "tapılmadı"}).kod(404)
+        son)
+    son)
+
+    // ── İnteraktiv səhifə ──
+
+    s.komponent("/axtar", Axtarış, başlıq: "Axtarış — Kitab rəfi")
+
+    s.tapılmadı((sorğu) => veb.html(
+        "<h1>404</h1><p>Səhifə tapılmadı. <a href='/'>Ana səhifə</a></p>"
+    ).kod(404))
+
+    qaytar s
+son
+
+// ── Yoxlama ──────────────────────────────────────────────────────────
+
+funksiya yoxla()
+    dəyişən m = veb.sınaq.server(serverQur())
+    dəyişən FORM = {"Content-Type": "application/x-www-form-urlencoded"}
+
+    dəyişən c = m.al("/")
+    yaz("Ana səhifə      : {c.vəziyyət() == 200 və "Dəli Kür" içindədir c.mətnƏt()}")
+    yaz("Kitab səhifəsi  : {"İsmayıl Şıxlı" içindədir m.al("/kitab/2").mətnƏt()}")
+    yaz("Olmayan kitab   : {m.al("/kitab/99").vəziyyət() == 404}")
+    yaz("Statik CSS      : {m.al("/statik/üslub.css").vəziyyət() == 200}")
+    yaz("Girişsiz /yeni  : {m.al("/yeni").vəziyyət() == 302}")
+    yaz("API girişsiz    : {m.göndər("/api/kitablar", {"ad": "X"}).vəziyyət() == 401}")
+
+    c = m.göndər("/giriş", "parol=səhv", FORM)
+    yaz("Səhv parol      : {c.vəziyyət() == 401}")
+    c = m.göndər("/giriş", "parol=alqor", FORM)
+    yaz("Giriş           : {c.vəziyyət() == 302}")
+
+    c = m.göndər("/yeni", "ad=&m%C3%BC%C9%99llif=&il=abc", FORM)
+    yaz("Form xətaları   : {c.vəziyyət() == 422 və "Ad boş ola bilməz" içindədir c.mətnƏt()}")
+    c = m.göndər("/yeni", "ad=Sarı+gəlin&müəllif=Xalq&il=1900", FORM)
+    yaz("Form əlavə etdi : {c.başlıq("Location") == "/kitab/4"}")
+
+    c = m.göndər("/api/kitablar",
+                 {"ad": "Leyli və Məcnun", "müəllif": "Füzuli", "il": 1536})
+    yaz("API əlavə etdi  : {c.vəziyyət() == 201 və c.json()["nömrə"] == 5}")
+    c = m.göndər("/api/kitablar", {"ad": "", "il": "x"})
+    yaz("API yoxlama     : {c.vəziyyət() == 422 və uzunluq(c.json()["xətalar"]) == 3}")
+    yaz("API sil         : {m.sil("/api/kitablar/1").vəziyyət() == 204}")
+    yaz("API siyahı      : {uzunluq(m.al("/api/kitablar").json()) == 4}")
+
+    c = m.al("/axtar")
+    yaz("Axtarış səhifəsi: {"Füzuli" içindədir c.mətnƏt()}")
+    yaz("404 səhifəsi    : {m.al("/yoxdur").vəziyyət() == 404}")
+son
+
+funksiya əsas(arqumentlər: siyahı[mətn])
+    əgər "sınaq" içindədir arqumentlər onda
+        yoxla()
+    yoxsa
+        dəyişən s = serverQur()
+        s.ara(veb.jurnal())
+        s.dinlə(8083)
+    son
+son

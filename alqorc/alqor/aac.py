@@ -574,6 +574,8 @@ class ModulElanı(Cümlə):
     gövdə: list[Cümlə]
     görünüş: str | None = None
     ixrac: bool = False
+    # `@sınaqQrupu("…") modul …` — sınaq işlədicisi oxuyur
+    annotasiyalar: list[Annotasiya] = field(default_factory=list)
 
 
 # ═══════════════════════════════════════════════════════════════════════

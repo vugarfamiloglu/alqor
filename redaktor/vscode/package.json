@@ -1,0 +1,64 @@
+{
+  "name": "alqor",
+  "displayName": "Alqor",
+  "description": "Alqor proqramlaşdırma dili: sintaksis rəngləmə, xətalar, tamamlama, təyinata keçid, ad dəyişmə, formatlama",
+  "version": "0.1.0",
+  "publisher": "alqor",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vugarfamiloglu/alqor"
+  },
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters",
+    "Linters"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "languages": [
+      {
+        "id": "alqor",
+        "aliases": ["Alqor", "alqor"],
+        "extensions": [".alqor"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "alqor",
+        "scopeName": "source.alqor",
+        "path": "./syntaxes/alqor.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Alqor",
+      "properties": {
+        "alqor.serverƏmri": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Dil serverini işə salan əmr. Boşdursa `alqor` (Windows-da `alqor.cmd`) PATH-dan götürülür. Nümunə: `C:\\alqor\\alqor.cmd` və ya `python3 /yol/alqorc/alqorc.py`."
+        },
+        "alqor.tipRejimi": {
+          "type": "string",
+          "enum": ["sərbəst", "normal", "sərt"],
+          "default": "normal",
+          "description": "Tip yoxlamasının sərtliyi (faylda `// alqor: tip sərt` direktivi üstünlük təşkil edir)."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "alqor.serveriYenidənBaşlat",
+        "title": "Alqor: Dil serverini yenidən başlat"
+      }
+    ]
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

@@ -716,6 +716,16 @@ test.atır(() => risk(), ArqumentXətası)
 test.atmır(() => təhlükəsiz())
 test.təxminən(3.14159, 3.14, dəqiqlik: 0.01)
 test.uyğun(mətn, naxış)
+test.uğursuz("səbəb")                     // sınağı dərhal uğursuz edir
+
+// `test.atır` tutulan xətanı qaytarır — mesajını yoxlamaq olar
+dəyişən x = test.atır(() => böl(1, 0), BölməXətası)
+test.ehtiva(x.mesaj, "sıfır")
+
+// Atlamaq
+@atla("hələ yazılmayıb")
+@sınaq
+funksiya gələcək() ... son
 
 // Qruplaşdırma
 @sınaqQrupu("İstifadəçi testləri")
@@ -736,7 +746,7 @@ funksiya kvadratTesti(giriş: tam, gözlənilən: tam)
     test.bərabər(kvadrat(giriş), gözlənilən)
 son
 
-// Saxta obyektlər
+// Saxta obyektlər (planlaşdırılır)
 dəyişən saxta = test.saxta[VerilənlərBazası]()
 saxta.gözlə("tap").qaytarsın(istifadəçi)
 test.yoxla(saxta.çağırıldı("tap", 1))

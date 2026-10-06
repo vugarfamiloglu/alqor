@@ -333,9 +333,17 @@ class _Oxuyucu:
 
         alt = Parser(tokenlər, self.p.s, self.p.x)
         try:
-            return alt._ifadə()
+            nəticə = alt._ifadə()
         except ParserXətası:
             return A.Literal(self.p.s.yer(baş, 0), None, "boş")
+        # Bütün tokenlər istifadə olunmalıdır. Əks halda `{a + b c}`
+        # və ya `{() => x += 1}` (köhnə qrammatika) səssizcə kəsilirdi.
+        qalan = alt._bax()
+        if qalan.növ is not Növ.FAYL_SONU:
+            alt._xəta("ALQ-P001", "Gözlənilməyən token",
+                      f"`{alt._göstər(qalan)}` burada gözlənilmirdi",
+                      "`{…}` daxilində tək ifadə olmalıdır")
+        return nəticə
 
 
 # ═══════════════════════════════════════════════════════════════════════

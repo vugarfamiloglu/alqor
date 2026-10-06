@@ -231,6 +231,13 @@ mənim-layihəm/
 
 ## 8.8 `layihe.alqor` — manifest faylı
 
+Format TOML-a bənzəyir, amma iki fərqi var: **açarlar Azərbaycan hərfli
+ola bilər** (`açarSözlər`, `sərt_boş` — TOML 1.0-da qadağandır) və
+məntiqi dəyərlər `doğru`/`yanlış` yazılır (`true`/`false` da qəbul
+olunur). Dəstəklənən: `[bölmə]`, `[bölmə.alt]`, mətn (`"…"`, `'…'`),
+tam və onluq ədəd, massiv (çoxsətirli də), sətirdaxili cədvəl `{ … }`,
+dırnaqlı açar, `#` şərhi. Xəta mesajı sətir nömrəsini göstərir.
+
 ```toml
 [paket]
 ad = "mənim-layihəm"

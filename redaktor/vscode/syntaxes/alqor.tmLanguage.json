@@ -1,0 +1,256 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Alqor",
+  "scopeName": "source.alqor",
+  "fileTypes": [
+    "alqor"
+  ],
+  "patterns": [
+    {
+      "include": "#ifadə"
+    }
+  ],
+  "repository": {
+    "ifadə": {
+      "patterns": [
+        {
+          "include": "#şərh"
+        },
+        {
+          "include": "#mətn"
+        },
+        {
+          "include": "#annotasiya"
+        },
+        {
+          "include": "#elan"
+        },
+        {
+          "include": "#ədəd"
+        },
+        {
+          "include": "#açar"
+        },
+        {
+          "include": "#operator"
+        },
+        {
+          "include": "#çağırış"
+        }
+      ]
+    },
+    "şərh": {
+      "patterns": [
+        {
+          "name": "comment.line.documentation.alqor",
+          "match": "//[/!].*$"
+        },
+        {
+          "name": "comment.line.directive.alqor",
+          "match": "//\\s*alqor:.*$"
+        },
+        {
+          "name": "comment.line.double-slash.alqor",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.alqor",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "include": "#blok-şərh"
+            }
+          ]
+        }
+      ]
+    },
+    "blok-şərh": {
+      "patterns": [
+        {
+          "name": "comment.block.alqor",
+          "begin": "/\\*",
+          "end": "\\*/",
+          "patterns": [
+            {
+              "include": "#blok-şərh"
+            }
+          ]
+        }
+      ]
+    },
+    "mətn": {
+      "patterns": [
+        {
+          "name": "string.quoted.triple.raw.alqor",
+          "begin": "x\"\"\"",
+          "end": "\"\"\"",
+          "patterns": []
+        },
+        {
+          "name": "string.quoted.double.raw.alqor",
+          "begin": "x\"",
+          "end": "\"",
+          "patterns": []
+        },
+        {
+          "name": "string.quoted.double.bytes.alqor",
+          "begin": "b\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.alqor",
+              "match": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|.)"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.triple.alqor",
+          "begin": "\"\"\"",
+          "end": "\"\"\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.alqor",
+              "match": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|.)"
+            },
+            {
+              "include": "#interpolyasiya"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.double.alqor",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.alqor",
+              "match": "\\\\(?:u\\{[0-9A-Fa-f]+\\}|.)"
+            },
+            {
+              "include": "#interpolyasiya"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.other.char.alqor",
+          "match": "`(?:\\\\.|[^`\\\\])`"
+        }
+      ]
+    },
+    "interpolyasiya": {
+      "name": "meta.interpolation.alqor",
+      "begin": "\\{",
+      "end": "\\}",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.interpolation.begin.alqor"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.interpolation.end.alqor"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#ifadə"
+        }
+      ]
+    },
+    "annotasiya": {
+      "name": "entity.name.decorator.alqor",
+      "match": "@[\\p{L}_][\\p{L}\\p{N}_]*"
+    },
+    "elan": {
+      "patterns": [
+        {
+          "match": "((?<![\\p{L}\\p{N}_])(?:komponent|funksiya|metod)(?![\\p{L}\\p{N}_]))\\s+([\\p{L}_][\\p{L}\\p{N}_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.function.alqor"
+            },
+            "2": {
+              "name": "entity.name.function.alqor"
+            }
+          }
+        },
+        {
+          "match": "((?<![\\p{L}\\p{N}_])(?:interfeys|sadalama|struktur|qarisiq|qarışıq|magaza|mağaza|obyekt|modul|sinif|tip)(?![\\p{L}\\p{N}_]))\\s+([\\p{L}_][\\p{L}\\p{N}_]*)",
+          "captures": {
+            "1": {
+              "name": "storage.type.class.alqor"
+            },
+            "2": {
+              "name": "entity.name.type.alqor"
+            }
+          }
+        }
+      ]
+    },
+    "ədəd": {
+      "name": "constant.numeric.alqor",
+      "match": "(?<![\\p{L}\\p{N}_])(?:0[xX][0-9A-Fa-f_]+|0[bB][01_]+|\\d[\\d_]*(?:\\.\\d[\\d_]*)?(?:[eE][+-]?\\d+)?)"
+    },
+    "açar": {
+      "patterns": [
+        {
+          "name": "keyword.control.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:gecikdir|hallarda|istifade|istifadə|tekrarla|təkrarla|yoxdursa|nehayet|nəhayət|hemise|həmişə|icinde|içində|qaytar|addim|addım|berpa|bərpa|davam|dayan|diger|digər|gozle|gözlə|halda|iddia|qeder|qədər|temin|təmin|varsa|yoxsa|blok|cehd|cəhd|defe|dəfə|eger|onda|ucun|üçün|əgər|eks|hal|her|hər|kec|keç|sec|seç|son|tut|ver|əks|at|et|ki|ne|nə)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "keyword.control.import.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:standart|getir|gətir|ixrac|kimi)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "storage.type.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:interfeys|komponent|deyismez|dəyişməz|funksiya|genislet|genişlət|sadalama|silinsin|struktur|deyisen|dəyişən|qarisiq|qarışıq|magaza|mağaza|obyekt|qurucu|metod|modul|sabit|sinif|xasse|xassə|tip)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "storage.modifier.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:generator|asinxron|mucerred|mücərrəd|qorunan|global|statik|tenbel|tənbəl|gizli|aciq|açıq|son)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "keyword.operator.word.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:icindedir|içindədir|tipidir|bosdur|boşdur|deyil|ve|və|ya)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "constant.language.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:EdedDeyil|ƏdədDeyil|sonsuz|yanlis|yanlış|dogru|doğru|bos|boş)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "variable.language.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:ozu|ust|özü|üst)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "keyword.other.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:dayanNoqtesi|dayanNöqtəsi|tetbiq|tətbiq|miras|evez|yeni|əvəz|ile|ilə)(?![\\p{L}\\p{N}_])"
+        },
+        {
+          "name": "support.type.primitive.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])(?:funksiyaTipi|istənilən|kortej|məntiq|simvol|siyahı|lüğət|onluq|bayt|dəst|mətn|heç|tam)(?![\\p{L}\\p{N}_])"
+        }
+      ]
+    },
+    "operator": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.alqor",
+          "match": "->|=>|→"
+        },
+        {
+          "name": "keyword.operator.alqor",
+          "match": "\\?\\?|\\?\\.|\\.\\.=?|\\*\\*|[-+*/%]=?|==|!=|<=|>=|[<>=|&^~!?]"
+        }
+      ]
+    },
+    "çağırış": {
+      "match": "([\\p{L}_][\\p{L}\\p{N}_]*)\\s*(?=\\()",
+      "captures": {
+        "1": {
+          "name": "entity.name.function.call.alqor"
+        }
+      }
+    }
+  }
+}

@@ -233,7 +233,42 @@ class Lekser:
             return                                    # operatorla bitib
         if son.növ is Növ.ACAR and son.dəyər in AS.DAVAM_ACAR_SOZLERI:
             return
+        if self._növbəti_sətir_zəncirdir():
+            return                                    # `.metod()` zənciri
         hədəf.append(Token(Növ.SETIR_SONU, None, self.s.yer(self.i, 0)))
+
+    def _növbəti_sətir_zəncirdir(self) -> bool:
+        """
+        Növbəti əhəmiyyətli sətir `.ad` və ya `?.ad` ilə başlayırmı?
+        Belədirsə ifadə davam edir (Spes. § 1.11):
+
+            dəyişən a = konsol.arqumentlər()
+                .proqram("hesabla")
+                .təhlil()
+
+        Boş və yalnız şərhdən ibarət sətirlər ötürülür. `..` (diapazon)
+        və `...` (yayma) ilə başlayan sətir zəncir deyil.
+        """
+        m, i, n = self.m, self.i, self.n
+        while i < n:
+            c = m[i]
+            if c in " \t\r\n":
+                i += 1
+                continue
+            if m.startswith("//", i):
+                j = m.find("\n", i)
+                if j == -1:
+                    return False
+                i = j + 1
+                continue
+            break
+        if m.startswith("?.", i):
+            i += 2
+        elif i < n and m[i] == "." and not m.startswith("..", i):
+            i += 1
+        else:
+            return False
+        return i < n and (m[i].isalpha() or m[i] == "_")
 
     @staticmethod
     def _son_əhəmiyyətli(hədəf: list[Token]) -> Token | None:
@@ -276,7 +311,11 @@ class Lekser:
         self.i = sətir_sonu
 
         if sənəd or modul_sənədi:
-            hədəf.append(Token(Növ.SENED, məzmun.strip(),
+            # Yalnız bir aparıcı boşluq atılır — sənəddəki kod
+            # nümunələrinin girintisi qorunmalıdır
+            if məzmun.startswith(" "):
+                məzmun = məzmun[1:]
+            hədəf.append(Token(Növ.SENED, məzmun.rstrip(),
                                self.s.yer(baş, self.i - baş),
                                xam=self.m[baş:self.i]))
             return

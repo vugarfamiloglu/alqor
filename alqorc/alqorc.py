@@ -11,6 +11,7 @@ Alqor — əmr sətri aləti (etalon implementasiya).
 """
 
 from __future__ import annotations
+import os
 import sys
 from pathlib import Path
 
@@ -220,13 +221,30 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
     from alqor.lekser import Lekser
     from alqor.parser import Parser
 
-    if not arqumentlər:
-        çap_xəta("`işlət` əmri üçün fayl adı lazımdır")
-        return 3
+    # `--`-dan sonrakılar proqramındır — alətin bayraqları deyil
+    if "--" in arqumentlər:
+        k = arqumentlər.index("--")
+        öz, proqram_arqumentləri = arqumentlər[:k], arqumentlər[k + 1:]
+    else:
+        öz, proqram_arqumentləri = arqumentlər, []
 
-    yol = arqumentlər[0]
-    proqram_arqumentləri = (arqumentlər[arqumentlər.index("--") + 1:]
-                            if "--" in arqumentlər else [])
+    fayllar = [a for a in öz if not a.startswith("--") or a == "-"]
+    if fayllar:
+        yol = fayllar[0]
+    else:
+        # Fayl verilməyib — layihənin giriş nöqtəsi (`layihe.alqor`)
+        from alqor.layihe import ManifestXətası, tap
+        try:
+            layihə = tap(".")
+        except ManifestXətası as x:
+            çap_xəta(str(x))
+            return 3
+        if layihə is None:
+            çap_xəta("`işlət` əmri üçün fayl adı lazımdır (və ya "
+                     "`layihe.alqor` olan qovluqda işlədin)")
+            return 3
+        yol = str(layihə.giriş)
+    arqumentlər = öz
 
     x = XətaToplayıcı()
     if yol == "-":
@@ -326,6 +344,297 @@ def əmr_yoxla(arqumentlər: list[str]) -> int:
     return 2
 
 
+def əmr_format(arqumentlər: list[str]) -> int:
+    """
+    `alqorfmt` — spesifikasiya § 13.3.
+
+        format <fayl|qovluq>...      faylları yerində format edir
+        --yoxla                      dəyişmir; lazımdırsa kod 1 (CI)
+        --fərq                       dəyişmir; fərqi göstərir
+        --ascii-saxla                ASCII açar sözlərə toxunmur
+        --homoqlif-düzəlt            gizli oxşar simvolları düzəldir
+    """
+    from alqor.alqorfmt import FormatXətası, faylları_tap, formatla
+
+    bayraqlar = {a for a in arqumentlər if a.startswith("--")}
+    naməlum = bayraqlar - {"--yoxla", "--fərq", "--ferq", "--ascii-saxla",
+                           "--ascii-düzəlt", "--ascii-duzelt",
+                           "--homoqlif-düzəlt", "--homoqlif-duzelt"}
+    if naməlum:
+        çap_xəta(f"naməlum seçim: {', '.join(sorted(naməlum))}")
+        return 3
+    yollar_arq = [a for a in arqumentlər if not a.startswith("--")]
+    if not yollar_arq:
+        çap_xəta("`format` əmri üçün fayl və ya qovluq lazımdır "
+                 "(cari qovluq üçün: .)")
+        return 3
+    fayllar = faylları_tap(yollar_arq)
+    if not fayllar:
+        çap_xəta("format ediləcək .alqor faylı tapılmadı")
+        return 4
+
+    yoxla = "--yoxla" in bayraqlar
+    fərq = bool(bayraqlar & {"--fərq", "--ferq"})
+    ascii_düzəlt = "--ascii-saxla" not in bayraqlar
+    homoqlif = bool(bayraqlar & {"--homoqlif-düzəlt", "--homoqlif-duzelt"})
+
+    dəyişən = xətalı = 0
+    for yol in fayllar:
+        try:
+            köhnə = yol.read_bytes().decode("utf-8")
+        except (OSError, UnicodeDecodeError) as x:
+            print(f"✖ {yol}: oxunmadı ({x})", file=sys.stderr)
+            xətalı += 1
+            continue
+        try:
+            n = formatla(köhnə, yol.name, ascii_düzəlt=ascii_düzəlt,
+                         homoqlif_düzəlt=homoqlif)
+        except FormatXətası as x:
+            print(f"✖ {yol}: {x}", file=sys.stderr)
+            xətalı += 1
+            continue
+        if not n.dəyişdi:
+            continue
+        dəyişən += 1
+        if fərq:
+            print(n.fərq(köhnə, str(yol)), end="")
+        elif yoxla:
+            print(f"• {yol}: format lazımdır")
+        else:
+            yol.write_bytes(n.mətn.encode("utf-8"))
+            əlavə = (f" ({n.ascii_düzəlişləri} ASCII açar söz)"
+                     if n.ascii_düzəlişləri else "")
+            print(f"✓ {yol}{əlavə}")
+
+    toplam = len(fayllar)
+    if yoxla or fərq:
+        if dəyişən:
+            print(f"{toplam} fayldan {dəyişən}-i format edilməlidir")
+        else:
+            print(f"✓ {toplam} fayl artıq formatdadır")
+    else:
+        print(f"{toplam} fayl yoxlanıldı, {dəyişən} format edildi")
+    if xətalı:
+        return 2
+    return 1 if (yoxla and dəyişən) else 0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Layihə əmrləri: yeni, sına, sənəd, qur, təmizlə
+# ═══════════════════════════════════════════════════════════════════════
+
+def _seçim(arqumentlər: list[str], *adlar: str) -> str | None:
+    """`--ad dəyər` və ya `--ad=dəyər`."""
+    for i, a in enumerate(arqumentlər):
+        for ad in adlar:
+            if a == ad and i + 1 < len(arqumentlər):
+                return arqumentlər[i + 1]
+            if a.startswith(ad + "="):
+                return a.split("=", 1)[1]
+    return None
+
+
+def _mövqeli(arqumentlər: list[str], *dəyərli: str) -> list[str]:
+    """Bayraq olmayan arqumentlər (`--ad dəyər` cütü atlanır)."""
+    nəticə: list[str] = []
+    atla = False
+    for a in arqumentlər:
+        if atla:
+            atla = False
+            continue
+        if a in dəyərli:
+            atla = True
+            continue
+        if a.startswith("--"):
+            continue
+        nəticə.append(a)
+    return nəticə
+
+
+def _layihə(qovluq: str = "."):
+    from alqor.layihe import ManifestXətası, tap
+    try:
+        return tap(qovluq)
+    except ManifestXətası as x:
+        çap_xəta(str(x))
+        return None
+
+
+def əmr_yeni(arqumentlər: list[str]) -> int:
+    """`yeni <ad> [--şablon konsol|veb|desktop|kitabxana]`"""
+    from alqor.layihe import ŞABLONLAR, yarat
+    adlar = _mövqeli(arqumentlər, "--şablon", "--sablon")
+    if not adlar:
+        çap_xəta("layihə adı lazımdır: alqor yeni <ad> "
+                 f"[--şablon {'|'.join(ŞABLONLAR)}]")
+        return 3
+    ad = adlar[0]
+    şablon = _seçim(arqumentlər, "--şablon", "--sablon") or "konsol"
+    qovluq = Path(ad)
+    try:
+        fayllar = yarat(qovluq, qovluq.name, şablon)
+    except ValueError as x:
+        çap_xəta(str(x))
+        return 3
+    print(f"✓ `{qovluq.name}` layihəsi yaradıldı ({şablon})")
+    for f in fayllar:
+        print(f"    {f.relative_to(qovluq)}")
+    print(f"""
+Növbəti addımlar:
+    cd {qovluq}
+    alqor işlət        # işə sal
+    alqor sına         # sınaqlar""")
+    return 0
+
+
+def əmr_sına(arqumentlər: list[str]) -> int:
+    """
+    `sına [fayl|qovluq]... [--filtr söz] [--sənəd] [--ətraflı]`
+
+    Yol verilməsə layihənin `sınaq/` qovluğu. `--sənəd` sənəd
+    şərhlərindəki nümunələri də işlədir.
+    """
+    import time as _t
+    from alqor import sinaqci as S
+
+    yollar = [Path(a) for a in _mövqeli(arqumentlər, "--filtr")]
+    filtr = _seçim(arqumentlər, "--filtr") or ""
+    layihə = _layihə(str(yollar[0]) if yollar else ".")
+    kök = layihə.kök if layihə else Path.cwd()
+    if not yollar:
+        yollar = [layihə.sınaq_qovluğu if layihə else Path(".")]
+    fayllar = S.sınaq_faylları(yollar)
+
+    print(f"\n  Alqor Sınaq {VERSIYA}\n")
+    baş = _t.perf_counter()
+    nəticələr = [S.faylı_sına(f, filtr) for f in fayllar]
+    if "--sənəd" in arqumentlər or "--sened" in arqumentlər:
+        mənbələr = ([layihə.giriş.parent] if layihə
+                    else [Path(".")])
+        from alqor.alqorfmt import faylları_tap
+        for f in faylları_tap([str(m) for m in mənbələr]):
+            n = S.sənədi_sına(f)
+            if n.nəticələr:
+                nəticələr.append(n)
+    sətirlər, say = S.hesabat(nəticələr, kök.resolve(),
+                              "--ətraflı" in arqumentlər)
+    for sətir in sətirlər:
+        print(sətir)
+    müddət = _t.perf_counter() - baş
+    if not fayllar and len(nəticələr) == 0:
+        print("  Sınaq faylı tapılmadı (`sınaq/` qovluğu və ya "
+              "`*_sınaq.alqor`).")
+        return 4
+    xətalı = say["uğursuz"] + say["xəta"]
+    print(f"  Nəticə: {say['uğurlu']} uğurlu, {say['uğursuz']} uğursuz, "
+          f"{say['xəta']} xəta, {say['atlanmış']} atlanmış"
+          f"      {müddət:.2f}s")
+    return 1 if xətalı else 0
+
+
+def əmr_sənəd(arqumentlər: list[str]) -> int:
+    """`sənəd [fayl|qovluq]... [--format html|markdown] [--çıxış q]`"""
+    from alqor import senedci
+    from alqor.alqorfmt import faylları_tap
+
+    yollar = _mövqeli(arqumentlər, "--format", "--çıxış", "--cixis")
+    format_ = _seçim(arqumentlər, "--format") or "html"
+    if format_ not in ("html", "markdown", "md"):
+        çap_xəta("format `html` və ya `markdown` olmalıdır")
+        return 3
+    layihə = _layihə(yollar[0] if yollar else ".")
+    if not yollar:
+        if layihə is None:
+            çap_xəta("fayl/qovluq verin və ya `layihe.alqor` olan "
+                     "qovluqda işlədin")
+            return 3
+        yollar = [str(layihə.giriş.parent)]
+    çıxış = Path(_seçim(arqumentlər, "--çıxış", "--cixis")
+                 or (layihə.sənəd_qovluğu if layihə else "sənəd"))
+    başlıq = layihə.ad if layihə else Path(yollar[0]).resolve().stem
+
+    sənədlər = []
+    for f in faylları_tap(yollar):
+        try:
+            sənədlər.append(senedci.fayl_sənədi(f))
+        except ValueError as x:
+            print(f"✖ {x}", file=sys.stderr)
+            return 2
+    if not sənədlər:
+        çap_xəta("sənədləşdiriləcək .alqor faylı tapılmadı")
+        return 4
+    çıxış.mkdir(parents=True, exist_ok=True)
+    if format_ == "html":
+        hədəf = çıxış / "indeks.html"
+        hədəf.write_text(senedci.html_sənəd(sənədlər, başlıq),
+                         encoding="utf-8")
+    else:
+        hədəf = çıxış / "API.md"
+        hədəf.write_text(senedci.markdown(sənədlər, başlıq),
+                         encoding="utf-8")
+    elementlər = sum(len(s.elementlər) for s in sənədlər)
+    print(f"✓ {hədəf}  ({len(sənədlər)} fayl, {elementlər} element)")
+    return 0
+
+
+def əmr_qur(arqumentlər: list[str]) -> int:
+    """`qur [--tip]` — `qurma/<ad>.pyz` tək fayllı paket."""
+    from alqor import qurucu
+    from alqor.alqorfmt import faylları_tap
+
+    layihə = _layihə(".")
+    if layihə is None:
+        çap_xəta("`qur` `layihe.alqor` olan qovluqda işlədilir "
+                 "(yeni layihə: alqor yeni <ad>)")
+        return 3
+    if "--tip" in arqumentlər:
+        from alqor.lekser import Lekser
+        from alqor.parser import Parser
+        xəta = 0
+        for f in faylları_tap([str(layihə.giriş.parent)]):
+            x = XətaToplayıcı()
+            s = Mənbə.fayldan(f, x)
+            ağac = Parser(Lekser(s, x).leksə(), s, x).ayır() if s else None
+            if ağac is not None and x.uğurludur():
+                t = _tipləri_yoxla(ağac, s, layihə.tip_rejimi)
+                for d in t.siyahı:
+                    x.əlavə(d)
+            if not x.uğurludur():
+                x.çap()
+                xəta += 1
+        if xəta:
+            print(f"✖ {xəta} faylda xəta — paket qurulmadı")
+            return 2
+    try:
+        n = qurucu.qur(layihə, Path(__file__).resolve().parent)
+    except FileNotFoundError as x:
+        çap_xəta(str(x))
+        return 4
+    try:
+        göstər = n.yol.relative_to(Path.cwd())
+    except ValueError:
+        göstər = n.yol
+    print(f"✓ {göstər}  ({n.ölçü / 1024:.0f} KB, {n.fayl_sayı} fayl)")
+    print(f"  İşlətmək: python {göstər}")
+    return 0
+
+
+def əmr_təmizlə(arqumentlər: list[str]) -> int:
+    from alqor import qurucu
+    layihə = _layihə(".")
+    if layihə is None:
+        çap_xəta("`layihe.alqor` tapılmadı")
+        return 3
+    try:
+        silindi = qurucu.təmizlə(layihə)
+    except ValueError as x:
+        çap_xəta(str(x))
+        return 3
+    print(f"✓ {layihə.çıxış} silindi" if silindi
+          else "Təmizləniləcək heç nə yoxdur")
+    return 0
+
+
 def əmr_hərf(arqumentlər: list[str]) -> int:
     if not arqumentlər:
         çap_xəta("`hərf` əmri üçün mətn lazımdır")
@@ -368,6 +677,39 @@ def əmr_söhbət(arqumentlər: list[str]) -> int:
     return söhbət_başlat(rəngli)
 
 
+def əmr_ls(arqumentlər: list[str]) -> int:
+    """`ls [--stdio]` — Dil Serveri (LSP), stdin/stdout üzərindən."""
+    from alqor.alqorls import işə_sal
+    if sys.stdin.isatty() and "--stdio" not in arqumentlər:
+        print("alqorls — Alqor Dil Serveri (LSP). Redaktor tərəfindən "
+              "işə salınır:\n    alqor ls --stdio", file=sys.stderr)
+    return işə_sal()
+
+
+def əmr_studio(arqumentlər: list[str]) -> int:
+    """Alqor Studio — inkişaf mühiti (`studio/` paketi)."""
+    from studio.server import işə_sal
+    port = 0
+    qovluq = "."
+    atla = False
+    for i, a in enumerate(arqumentlər):
+        if atla:
+            atla = False
+            continue
+        if a == "--port" and i + 1 < len(arqumentlər):
+            try:
+                port = int(arqumentlər[i + 1])
+            except ValueError:
+                çap_xəta(f"port ədəd olmalıdır: {arqumentlər[i + 1]!r}")
+                return 3
+            atla = True
+        elif not a.startswith("-"):
+            qovluq = a
+    başsız = True if {"--başsız", "--bassiz"} & set(arqumentlər) else None
+    sınaq = bool({"--sınaq", "--sinaq"} & set(arqumentlər))
+    return işə_sal(qovluq, port, başsız, sınaq)
+
+
 def əmr_versiya(_: list[str]) -> int:
     print(f"Alqor {VERSIYA}")
     print(f"Etalon implementasiya — Python {sys.version.split()[0]}")
@@ -383,17 +725,31 @@ def əmr_kömək(_: list[str]) -> int:
     python alqorc.py <əmr> [arqumentlər]
 
 ƏMRLƏR:
-    işlət <fayl>         Proqramı icra edir
+    yeni <ad>            Yeni layihə: --şablon konsol|veb|desktop|kitabxana
+    işlət [fayl]         Proqramı icra edir (fayl yoxdursa — layihənin
+                         giriş nöqtəsi, `layihe.alqor`)
                          --tip           icradan əvvəl tipləri yoxlayır
                          -- arq1 arq2    proqrama arqument ötürür
     tokenlər <fayl>      Faylı leksə edib tokenləri göstərir
                          --ətraflı / -e  əlavə məlumat
     söhbət               İnteraktiv rejim (REPL)
     yoxla <fayl|qovluq>  Leksik, sintaktik VƏ TİP xətalarını yoxlayır
+    format <fayl|qovluq> Kodu format edir (alqorfmt): girinti, boşluqlar,
+                         ASCII açar sözlər → `əgər`
+                         --yoxla  --fərq  --ascii-saxla  --homoqlif-düzəlt
+    sına [yol]           Sınaqlar (@sınaq): --filtr söz  --sənəd  --ətraflı
+    sənəd [yol]          API sənədi (///): --format html|markdown  --çıxış q
+    qur [--tip]          qurma/<ad>.pyz — tək fayllı paket
+    təmizlə              qurma/ qovluğunu silir
     tip <fayl|qovluq>    Yalnız tip yoxlaması
                          --rejim sərbəst|normal|sərt
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
     sırala <söz>...      Azərbaycan əlifba sırası ilə sıralayır
+    ls                   Dil serveri (LSP) — VS Code, Neovim, Helix üçün
+    studio [qovluq]      Alqor Studio — redaktor, vidjet paleti, icra
+                         --port N        sabit port
+                         --başsız        pəncərə açmır, ünvanı çap edir
+                         --sınaq         özünü yoxlayıb çıxır
     versiya              Versiya məlumatı
     kömək                Bu mətn
 
@@ -429,8 +785,16 @@ VƏZİYYƏT:
     "yoxla": əmr_yoxla,
     "söhbət": əmr_söhbət, "sohbet": əmr_söhbət, "repl": əmr_söhbət,
     "tip": əmr_tip, "tiplər": əmr_tip, "tipler": əmr_tip,
+    "format": əmr_format, "formatla": əmr_format, "fmt": əmr_format,
+    "yeni": əmr_yeni, "new": əmr_yeni,
+    "sına": əmr_sına, "sina": əmr_sına, "test": əmr_sına,
+    "sənəd": əmr_sənəd, "sened": əmr_sənəd, "doc": əmr_sənəd,
+    "qur": əmr_qur, "build": əmr_qur,
+    "təmizlə": əmr_təmizlə, "temizle": əmr_təmizlə, "clean": əmr_təmizlə,
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
+    "studio": əmr_studio,
+    "ls": əmr_ls, "lsp": əmr_ls,
     "versiya": əmr_versiya, "--versiya": əmr_versiya, "-v": əmr_versiya,
     "kömək": əmr_kömək, "komek": əmr_kömək,
     "--kömək": əmr_kömək, "--komek": əmr_kömək, "-k": əmr_kömək,
@@ -461,6 +825,13 @@ def əsas(arqumentlər: list[str] | None = None) -> int:
     except KeyboardInterrupt:
         print("\n⊣ dayandırıldı", file=sys.stderr)
         return 130
+    except BrokenPipeError:
+        # `alqor … | head` — oxuyan tərəf bağlandı, bu xəta deyil
+        try:
+            sys.stdout = open(os.devnull, "w")
+        except OSError:
+            pass
+        return 0
 
 
 if __name__ == "__main__":

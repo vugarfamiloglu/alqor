@@ -9,7 +9,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent))
 
 from alqor.sablon import Şablon, ŞablonXətası, html_qaç   # noqa: E402
-from alqor.veb import _naxışı_çevir, _müddəti_saniyəyə    # noqa: E402
+from alqor.veb import (_naxışı_çevir, _müddəti_saniyəyə,  # noqa: E402
+                       yol_təhlükəlidir)
 from test_icraci import çıxış                             # noqa: E402
 
 # Hər sınaqda işlənən minimal serverin başlığı
@@ -67,6 +68,39 @@ class MüddətAyırma(unittest.TestCase):
         self.assertEqual(_müddəti_saniyəyə("1saat"), 3600)
         self.assertEqual(_müddəti_saniyəyə(45), 45)
         self.assertEqual(_müddəti_saniyəyə("naməlum"), 60.0)
+
+
+class YolYoxlaması(unittest.TestCase):
+    """`yol_təhlükəlidir` — marşrutlardan əvvəl işləyən süzgəc."""
+
+    def test_adi_yollar_keçir(self):
+        for yol in ("/", "/salam", "/api/tapşırıq/1", "/statik/a.css",
+                    "/istifadəçi/Əli", "/f/a/b/c",
+                    "/qovluq/",            # son kəsik normaldır
+                    "/a/.gizli",           # nöqtə ilə başlayan ad
+                    "/a/...",              # üç nöqtə adi fayl adıdır
+                    "/a/b..c"):
+            self.assertFalse(yol_təhlükəlidir(yol), yol)
+
+    def test_qovluqdan_qaçmaq_rədd_edilir(self):
+        for yol in ("/statik/../gizli.txt", "/../gizli",
+                    "/a/b/../../../etc/passwd", "/..", "/."):
+            self.assertTrue(yol_təhlükəlidir(yol), yol)
+
+    def test_tərs_kəsik_rədd_edilir(self):
+        self.assertTrue(yol_təhlükəlidir("/statik/..\\gizli.txt"))
+        self.assertTrue(yol_təhlükəlidir("/a\\b"))
+
+    def test_boş_daxili_seqment_rədd_edilir(self):
+        """`....//` kimi fəndlər normallaşdırılmamış yol deməkdir."""
+        self.assertTrue(yol_təhlükəlidir("/statik/....//gizli.txt"))
+        self.assertTrue(yol_təhlükəlidir("/a//b"))
+
+    def test_nul_baytı_rədd_edilir(self):
+        self.assertTrue(yol_təhlükəlidir("/statik/a.css\x00.png"))
+
+    def test_boş_yol_rədd_edilir(self):
+        self.assertTrue(yol_təhlükəlidir(""))
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -583,6 +617,32 @@ class ŞablonMirasıSınağı(unittest.TestCase):
         ş = şablonu_yüklə(fayl, self.qovluq, keşlə=False)
         return ş.göstər(İcraçı(), verilənlər)
 
+    def test_uşaq_blokundakı_xəta_öz_faylını_göstərir(self):
+        """Əvvəllər valideynin adı (`əsas.alqorhtml`) yazılırdı."""
+        (self.qovluq / "pis.alqorhtml").write_text(
+            '{% genişlət "əsas.alqorhtml" %}\n'
+            "{% blok məzmun %}\n<p>{{ yoxdur.ad }}</p>{% son %}",
+            encoding="utf-8")
+        with self.assertRaises(ŞablonXətası) as k:
+            self._göstər("pis.alqorhtml", {})
+        self.assertEqual(k.exception.fayl, "pis.alqorhtml")
+        self.assertEqual(k.exception.sətir, 3)
+
+    def test_blok_adı_ilə_eyni_ifadə(self):
+        """`{% blok məzmun %}` və `{{ məzmun }}` keşdə toqquşurdu."""
+        (self.qovluq / "eyni.alqorhtml").write_text(
+            '{% genişlət "əsas.alqorhtml" %}'
+            "{% blok məzmun %}[{{ məzmun }}]{% son %}",
+            encoding="utf-8")
+        self.assertIn("[mətn]",
+                      self._göstər("eyni.alqorhtml", {"məzmun": "mətn"}))
+
+    def test_artıq_token_xətadır(self):
+        (self.qovluq / "artıq.alqorhtml").write_text(
+            "{{ a b }}", encoding="utf-8")
+        with self.assertRaises(ŞablonXətası):
+            self._göstər("artıq.alqorhtml", {"a": 1, "b": 2})
+
     def test_miras(self):
         nəticə = self._göstər("alt.alqorhtml", {"başlıq": "Salam"})
         self.assertIn("<h1>Salam</h1>", nəticə)
@@ -693,6 +753,49 @@ son
 """)
         self.assertEqual(sətirlər, ["404"])
 
+    def test_simvolik_keçid_kənara_aparmır(self):
+        """
+        Statik qovluqdakı simvolik keçid kökdən kənara işarə edirsə
+        fayl verilmir. Yol yoxlaması bunu tutmur — `resolve()` tutur.
+        """
+        keçid = self.qovluq / "statik" / "açıq.txt"
+        try:
+            keçid.symlink_to(self.qovluq / "gizli.txt")
+        except (OSError, NotImplementedError):
+            self.skipTest("simvolik keçid yaradıla bilmir")
+        sətirlər = self._işlət(self.QUR + """
+funksiya əsas()
+    dəyişən c = müştəri().al("/statik/açıq.txt")
+    yaz(c.vəziyyət())
+    yaz("gizli" içindədir c.mətnƏt())
+son
+""")
+        self.assertEqual(sətirlər[0], "403")
+        self.assertEqual(sətirlər[1], "yanlış")
+
+    def test_qonşu_qovluq_adı_köklə_qarışmır(self):
+        """
+        `statik-gizli` mətn kimi `statik` ilə başlayır, amma onun
+        içində deyil. `startswith` ilə müqayisə burada sınardı.
+        """
+        (self.qovluq / "statik-gizli").mkdir()
+        (self.qovluq / "statik-gizli" / "a.txt").write_text(
+            "gizli", encoding="utf-8")
+        keçid = self.qovluq / "statik" / "qonşu"
+        try:
+            keçid.symlink_to(self.qovluq / "statik-gizli")
+        except (OSError, NotImplementedError):
+            self.skipTest("simvolik keçid yaradıla bilmir")
+        sətirlər = self._işlət(self.QUR + """
+funksiya əsas()
+    dəyişən c = müştəri().al("/statik/qonşu/a.txt")
+    yaz(c.vəziyyət())
+    yaz("gizli" içindədir c.mətnƏt())
+son
+""")
+        self.assertEqual(sətirlər[0], "403")
+        self.assertEqual(sətirlər[1], "yanlış")
+
     def test_şablon_cavabı(self):
         sətirlər = self._işlət("""
 funksiya əsas()
@@ -717,6 +820,284 @@ funksiya əsas()
 son
 """)
         self.assertEqual(sətirlər, ["gizli"])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Komponent qoşması — vidjet hadisələri vebdə
+# ═══════════════════════════════════════════════════════════════════════
+
+class KomponentSınağı(unittest.TestCase):
+    """`s.komponent(yol, Sinif)` — hər sessiyaya öz nümunəsi."""
+
+    KOMPONENT = """gətir vidjet
+
+komponent Sayğac
+    vəziyyət n: tam = 0
+    vəziyyət ad: mətn = ""
+
+    metod artır()
+        özü.n += 1
+    son
+
+    metod adDəyişdi(dəyər: mətn)
+        özü.ad = dəyər
+    son
+
+    göstər()
+        qaytar vidjet.sütun(məzmun: [
+            vidjet.düymə(mətn: "Say {özü.n}", klik: özü.artır),
+            vidjet.sahə(ad: "ad", dəyişdi: özü.adDəyişdi),
+            vidjet.mətn(məzmun: "Ad: {özü.ad}")
+        ])
+    son
+son
+
+// HTML-dən `data-a-<hadisə>` açarını çıxarır
+funksiya açar(h: mətn, hadisə: mətn) -> mətn
+    qaytar h.böl("data-a-" + hadisə + "=\\"")[1].böl("\\"")[0]
+son
+
+funksiya JSON(id: mətn) -> lüğət[mətn, istənilən]
+    qaytar {"k": 0, "id": id, "dəyər": boş}
+son
+
+funksiya server() -> istənilən
+    dəyişən s = yeni veb.Server()
+    s.komponent("/", Sayğac, başlıq: "Sayğac")
+    qaytar s
+son
+"""
+
+    def _işlət(self, gövdə: str) -> list[str]:
+        return çıxış(BAŞLIQ + self.KOMPONENT + gövdə)
+
+    def test_səhifə_vidjet_üslubu_və_skript_ilə(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən c = veb.sınaq.server(server()).al("/")
+    dəyişən h = c.mətnƏt()
+    yaz(c.vəziyyət())
+    yaz("<title>Sayğac</title>" içindədir h)
+    yaz(x".v-düymə{" içindədir h)
+    yaz("/_alqor/hadise" içindədir h)
+    yaz("data-a-klik=" içindədir h)
+    yaz("Say 0" içindədir h)
+    yaz("SameSite=Strict" içindədir c.başlıq("Set-Cookie"))
+son
+""")
+        self.assertEqual(s, ["200"] + ["doğru"] * 6)
+
+    def test_klik_vəziyyəti_dəyişir(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    dəyişən h = m.al("/").mətnƏt()
+    hər i üçün 1..3 içində
+        dəyişən c = m.göndər("/_alqor/hadise", JSON(açar(h, "klik")))
+        h = c.json()["html"]
+        yaz(c.vəziyyət(), "Say {i}" içindədir h)
+    son
+son
+""")
+        self.assertEqual(s, ["200 doğru"] * 3)
+
+    def test_dəyər_hadisəyə_ötürülür(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    dəyişən h = m.al("/").mətnƏt()
+    dəyişən j = {"k": 0, "id": açar(h, "deyisdi"), "dəyər": "Aysel"}
+    dəyişən c = m.göndər("/_alqor/hadise", j)
+    yaz("Ad: Aysel" içindədir c.json()["html"])
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_sessiyalar_bir_birindən_ayrıdır(self):
+        """Bir istifadəçinin klikləri digərinin sayğacını dəyişmir."""
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən sv = server()
+    dəyişən a = veb.sınaq.server(sv)
+    dəyişən b = veb.sınaq.server(sv)
+    dəyişən ha = a.al("/").mətnƏt()
+    b.al("/")
+    a.göndər("/_alqor/hadise", JSON(açar(ha, "klik")))
+    yaz("Say 1" içindədir a.al("/").mətnƏt())
+    yaz("Say 0" içindədir b.al("/").mətnƏt())
+son
+""")
+        self.assertEqual(s, ["doğru", "doğru"])
+
+    def test_kənar_saytdan_hadisə_rədd_edilir(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    dəyişən h = m.al("/").mətnƏt()
+    dəyişən c = m.göndər("/_alqor/hadise", JSON(açar(h, "klik")),
+                         {"Origin": "https://pis-sayt.example"})
+    yaz(c.vəziyyət())
+    yaz("Say 0" içindədir m.al("/").mətnƏt())
+son
+""")
+        self.assertEqual(s, ["403", "doğru"])
+
+    def test_JSON_olmayan_gövdə_rədd_edilir(self):
+        """`text/plain` CORS ön-yoxlamasından yan keçir — qəbul edilmir."""
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    m.al("/")
+    dəyişən c = m.göndər("/_alqor/hadise", x\"\"\"{"k":0,"id":"n1h1"}\"\"\",
+                         {"Content-Type": "text/plain"})
+    yaz(c.vəziyyət())
+son
+""")
+        self.assertEqual(s, ["415"])
+
+    def test_sessiyasız_hadisə_yenidən_yükləmə_istəyir(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən c = veb.sınaq.server(server()).göndər(
+        "/_alqor/hadise", JSON("n1h1"))
+    yaz(c.json()["yenidən"])
+son
+""")
+        self.assertEqual(s, ["doğru"])
+
+    def test_olmayan_komponent_nömrəsi(self):
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən m = veb.sınaq.server(server())
+    m.al("/")
+    yaz(m.göndər("/_alqor/hadise", {"k": 7, "id": "x"}).vəziyyət())
+    yaz(m.göndər("/_alqor/hadise", {"k": "a", "id": "x"}).vəziyyət())
+son
+""")
+        self.assertEqual(s, ["404", "400"])
+
+    def test_funksiya_mənbəyi(self):
+        """`() => yeni Sinif(...)` — qurucu arqumentləri ötürmək üçün."""
+        s = self._işlət("""
+komponent Salam
+    qurucu(xassə kimə: mətn)
+    göstər()
+        qaytar vidjet.başlıq(mətn: "Salam, {özü.kimə}")
+    son
+son
+
+funksiya əsas()
+    dəyişən s = yeni veb.Server()
+    s.komponent("/a", () => yeni Salam("Aysel"))
+    s.komponent("/b", () => <Salam kimə="Rəşad" />)
+    dəyişən m = veb.sınaq.server(s)
+    yaz("Salam, Aysel" içindədir m.al("/a").mətnƏt())
+    yaz("Salam, Rəşad" içindədir m.al("/b").mətnƏt())
+son
+""")
+        self.assertEqual(s, ["doğru", "doğru"])
+
+    def test_ara_proqramlar_komponentə_də_tətbiq_olunur(self):
+        """Giriş yoxlayan ara proqram komponent səhifəsini də qoruyur."""
+        s = self._işlət("""
+funksiya əsas()
+    dəyişən s = server()
+    s.ara(funksiya(sorğu, növbəti)
+        əgər sorğu.başlıq("X-Açar") != "gizli" onda
+            qaytar veb.xəta(401, "giriş lazımdır")
+        son
+        qaytar növbəti(sorğu)
+    son)
+    dəyişən m = veb.sınaq.server(s)
+    yaz(m.al("/").vəziyyət())
+    yaz(m.al("/", {"X-Açar": "gizli"}).vəziyyət())
+son
+""")
+        self.assertEqual(s, ["401", "200"])
+
+    def test_təkrar_yol_və_pis_yol_xətadır(self):
+        from test_icraci import xəta_tipi
+        self.assertEqual(xəta_tipi(BAŞLIQ + self.KOMPONENT + """
+funksiya əsas()
+    server().komponent("/", Sayğac)
+son
+"""), "ArqumentXətası")
+        self.assertEqual(xəta_tipi(BAŞLIQ + self.KOMPONENT + """
+funksiya əsas()
+    yeni veb.Server().komponent("səhv", Sayğac)
+son
+"""), "ArqumentXətası")
+
+    def test_sessiya_sayı_məhduddur(self):
+        """Kukisiz botlar yaddaşı doldura bilməz."""
+        import alqor.veb as V
+        köhnə = V.MAKS_KOMPONENT_SESSİYASI
+        V.MAKS_KOMPONENT_SESSİYASI = 5
+        try:
+            s = self._işlət("""
+funksiya əsas()
+    dəyişən sv = server()
+    hər i üçün 1..20 içində
+        veb.sınaq.server(sv).al("/")
+    son
+    yaz("hazır")
+son
+""")
+        finally:
+            V.MAKS_KOMPONENT_SESSİYASI = köhnə
+        self.assertEqual(s, ["hazır"])
+
+    def test_qoşma_sessiyaları_atır(self):
+        """Python səviyyəsində: hədd keçiləndə ən köhnə sessiya gedir."""
+        import alqor.veb as V
+        class Saxta(V._KomponentQoşması):
+            __slots__ = ()
+
+            def _nümunə_yarat(self, icraçı):
+                return object()
+
+        q = Saxta(0, "/", None, "A", "")
+        köhnə = V.MAKS_KOMPONENT_SESSİYASI
+        V.MAKS_KOMPONENT_SESSİYASI = 3
+        try:
+            for i in range(10):
+                q.sessiya(f"açar{i:020d}", None, yarat=True)
+        finally:
+            V.MAKS_KOMPONENT_SESSİYASI = köhnə
+        self.assertEqual(q.sessiya_sayı(), 3)
+        self.assertIsNone(q.sessiya(f"açar{0:020d}", None, yarat=False))
+        self.assertIsNotNone(
+            q.sessiya(f"açar{9:020d}", None, yarat=False))
+
+
+class KitabRəfiSınağı(unittest.TestCase):
+    """10 — veb dərsliyinin yekun proqramı (bələdçi § 3)."""
+
+    def test_10_kitab_refi(self):
+        from alqor.icraci import İcraçı
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.tipyoxlayici import TipYoxlayıcı
+        from alqor.xeta import XətaToplayıcı
+
+        yol = (Path(__file__).parent.parent.parent / "numuneler"
+               / "10-kitab-refi" / "esas.alqor")
+        x = XətaToplayıcı()
+        m = Mənbə.fayldan(yol, x)
+        ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+        t = XətaToplayıcı()
+        TipYoxlayıcı(t).yoxla(ağac)
+        self.assertTrue(t.uğurludur(), t.hesabat(False))
+
+        sətirlər: list[str] = []
+        i = İcraçı(çıxış=sətirlər.append, giriş=lambda: "")
+        i.əsas_qovluq = yol.parent
+        self.assertEqual(i.işlət(ağac, ["sınaq"]), 0)
+        self.assertEqual(len(sətirlər), 16, sətirlər)
+        for s in sətirlər:
+            self.assertTrue(s.endswith("doğru"), s)
 
 
 class NümunəSınağı(unittest.TestCase):

@@ -361,17 +361,37 @@ class _XətaSinfi(Çağırılan):
 #  2. DAXİLİ TİPLƏRİN METODLARI
 # ═══════════════════════════════════════════════════════════════════════
 
+def _cədvəl_tap(obyekt: Any) -> dict[str, Callable] | None:
+    """
+    Python obyektinin Alqor metodları.
+
+    Yeni kitabxana sinifləri mərkəzi `_CƏDVƏLLƏR`-ə yazılmadan öz
+    cədvəllərini daşıya bilər:
+
+        class İrəliləyiş:
+            ALQOR_TİP_ADI = "irəliləyiş"
+            ALQOR_METODLARI = {"yenilə": lambda i, o, n: o.yenilə(n)}
+
+    Cədvəl funksiyaları `(icraçı, obyekt, *arqumentlər)` alır.
+    """
+    cədvəl = _CƏDVƏLLƏR.get(type(obyekt))
+    if cədvəl is not None:
+        return cədvəl
+    if isinstance(obyekt, AlqorDiapazon):
+        return _DIAPAZON
+    if isinstance(obyekt, AlqorGenerator):
+        return _GENERATOR
+    if isinstance(obyekt, bool):
+        return _MƏNTİQ
+    return getattr(type(obyekt), "ALQOR_METODLARI", None)
+
+
 def mövcud_üzvlər(obyekt: Any) -> list[str]:
     """Obyektin bütün mümkün üzv adları — xəta təklifləri üçün."""
     adlar: list[str] = []
     tip = tip_adı(obyekt).split("[")[0]
     adlar.extend(_GENİŞLƏTMƏLƏR.get(tip, {}))
-    cədvəl = _CƏDVƏLLƏR.get(type(obyekt))
-    if cədvəl is None:
-        if isinstance(obyekt, AlqorDiapazon):
-            cədvəl = _DIAPAZON
-        elif isinstance(obyekt, AlqorGenerator):
-            cədvəl = _GENERATOR
+    cədvəl = _cədvəl_tap(obyekt)
     if cədvəl:
         adlar.extend(cədvəl)
     if isinstance(obyekt, Nümunə):
@@ -397,16 +417,9 @@ def daxili_metod(icraçı, obyekt: Any, ad: str) -> BağlıMetod | None:
                           lambda o, *a: icraçı.funksiya_çağır(
                               gen[ad].bağla(o), list(a), {}))
 
-    cədvəl = _CƏDVƏLLƏR.get(type(obyekt))
+    cədvəl = _cədvəl_tap(obyekt)
     if cədvəl is None:
-        if isinstance(obyekt, AlqorDiapazon):
-            cədvəl = _DIAPAZON
-        elif isinstance(obyekt, AlqorGenerator):
-            cədvəl = _GENERATOR
-        elif isinstance(obyekt, bool):
-            cədvəl = _MƏNTİQ
-        else:
-            return None
+        return None
 
     f = cədvəl.get(ad)
     if f is None:
@@ -877,6 +890,8 @@ _SERVER: dict[str, Callable] = {
     "ara": lambda i, s, a: s.ara(a),
     "statik": lambda i, s, p, q, indeks="": s.statik(p, q, indeks),
     "şablonQovluğu": lambda i, s, q: s.şablonQovluğu(q),
+    "komponent": lambda i, s, y, m, başlıq="Alqor", üslub=None:
+        s.komponent(y, m, başlıq, üslub),
     "xətaİdarəedicisi": lambda i, s, f: s.xətaİdarəedicisi(f),
     "tapılmadı": lambda i, s, f: s.tapılmadı(f),
     "dinlə": lambda i, s, port=8080, host="127.0.0.1": s.dinlə(
@@ -1356,7 +1371,9 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
 
     # ── sistem ──────────────────────────────────────────────
     sistem = Modul("sistem", {
-        "arqumentlər": D("arqumentlər", lambda: list(sys.argv[1:])),
+        # Proqramın ÖZ arqumentləri — `alqor işlət f.alqor -- a b` → [a, b]
+        "arqumentlər": D("arqumentlər", lambda: list(
+            getattr(icraçı, "proqram_arqumentləri", []))),
         "mühit": D("mühit", lambda a, s=None: os.environ.get(a, s), 1, 2),
         "mühitQoy": D("mühitQoy",
                       lambda a, d: (os.environ.__setitem__(a, d), None)[1],
@@ -1375,25 +1392,8 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
     })
 
     # ── konsol ──────────────────────────────────────────────
-    def _rəng(mətn_, kod):
-        return f"\033[{kod}m{mətn_}\033[0m"
-
-    konsol = Modul("konsol", {
-        "qırmızı": D("qırmızı", lambda s: _rəng(s, "31"), 1, 1),
-        "yaşıl": D("yaşıl", lambda s: _rəng(s, "32"), 1, 1),
-        "sarı": D("sarı", lambda s: _rəng(s, "33"), 1, 1),
-        "mavi": D("mavi", lambda s: _rəng(s, "34"), 1, 1),
-        "qalın": D("qalın", lambda s: _rəng(s, "1"), 1, 1),
-        "altXətt": D("altXətt", lambda s: _rəng(s, "4"), 1, 1),
-        "təmizlə": D("təmizlə",
-                     lambda: (sys.stdout.write("\033[2J\033[H"), None)[1]),
-        "cədvəl": D("cədvəl",
-                    lambda b, s: (_cədvəl(icraçı, b, s), None)[1], 2, 2),
-        "soruş": D("soruş", lambda s="": input(s), 0, 1),
-        "təsdiqlə": D("təsdiqlə", lambda s: E.kiçiyə(
-            input(s + " (hə/yox) ").strip()) in ("hə", "he", "bəli", "h"),
-                      1, 1),
-    })
+    from . import konsol as _konsol
+    konsol = _konsol.modul(icraçı, Modul, D)
 
     # ── jurnal ──────────────────────────────────────────────
     jurnal = Modul("jurnal", {
@@ -1406,36 +1406,8 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
     })
 
     # ── test ────────────────────────────────────────────────
-    def t_bərabər(a, b, mesaj=""):
-        if not icraçı._bərabərdir(a, b):
-            raise _xəta("İddiaXətası",
-                        mesaj or f"gözlənilən {mətnə(b, icraçı)}, "
-                                f"alınan {mətnə(a, icraçı)}", "ALQ-R007")
-        return None
-
-    test = Modul("test", {
-        "bərabər": D("bərabər", t_bərabər, 2, 3),
-        "bərabərDeyil": D("bərabərDeyil", lambda a, b, m="": (
-            None if not icraçı._bərabərdir(a, b)
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             m or "dəyərlər bərabərdir",
-                                             "ALQ-R007"))), 2, 3),
-        "doğru": D("doğru", lambda ş, m="": (
-            None if ş is True
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             m or "doğru gözlənilirdi",
-                                             "ALQ-R007"))), 1, 2),
-        "yanlış": D("yanlış", lambda ş, m="": (
-            None if ş is False
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             m or "yanlış gözlənilirdi",
-                                             "ALQ-R007"))), 1, 2),
-        "təxminən": D("təxminən", lambda a, b, dəqiqlik=1e-9: (
-            None if abs(a - b) <= dəqiqlik
-            else (_ for _ in ()).throw(_xəta("İddiaXətası",
-                                             f"{a} ≉ {b}", "ALQ-R007"))),
-                      2, 3),
-    })
+    from .sinaqci import test_modulu
+    test = test_modulu(icraçı, Modul, D)
 
     # ── paralel ─────────────────────────────────────────────
     def _gələcəklər(k) -> list:
@@ -1873,17 +1845,6 @@ def _json_hazırla(x: Any, icraçı) -> Any:
     return x
 
 
-def _cədvəl(icraçı, başlıqlar, sətirlər) -> None:
-    hamısı = [[mətnə(h, icraçı) for h in başlıqlar]] + [
-        [mətnə(c, icraçı) for c in s] for s in sətirlər]
-    enlər = [max(len(s[i]) for s in hamısı) for i in range(len(hamısı[0]))]
-    ayırıcı = "─┼─".join("─" * e for e in enlər)
-    for j, s in enumerate(hamısı):
-        icraçı.çıxış(" │ ".join(h.ljust(e) for h, e in zip(s, enlər)))
-        if j == 0:
-            icraçı.çıxış(ayırıcı)
-
-
 def _jurnal(icraçı, səviyyə: str, arqumentlər) -> None:
     vaxt_ = _time.strftime("%H:%M:%S")
     mesaj = " ".join(mətnə(a, icraçı) for a in arqumentlər)
@@ -1935,15 +1896,33 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
     from .parser import Parser
     from .xeta import XətaToplayıcı
 
+    # Nisbi yol İDXAL EDƏN FAYLIN qovluğuna nisbətəndir (prosesin cari
+    # qovluğuna yox): `alqor sına` hansı qovluqdan işə salınsa da
+    # `gətir "../mənbə/əsas.alqor"` eyni faylı tapır.
+    baza = None
+    mənbə = getattr(yer, "mənbə", None) if yer is not None else None
+    if mənbə is not None and getattr(mənbə, "yol", None) is not None:
+        baza = Path(mənbə.yol).resolve().parent
+    elif getattr(icraçı, "əsas_qovluq", None) is not None:
+        baza = Path(icraçı.əsas_qovluq)
     p = Path(yol)
+    if not p.is_absolute() and baza is not None:
+        p = baza / p
     if not p.exists():
         for uzantı in (".alqor", ".alq"):
-            if Path(yol + uzantı).exists():
-                p = Path(yol + uzantı)
+            if Path(str(p) + uzantı).exists():
+                p = Path(str(p) + uzantı)
                 break
     if not p.exists():
         raise AlqorXəta("ArqumentXətası",
                         f'"{yol}" modul faylı tapılmadı', yer, "ALQ-M001")
+    p = p.resolve()
+    açar = str(p)
+    # Keş icraçıya bağlıdır: fayl modulu həmin interpretatorun
+    # mühitində icra olunur, başqa icraçı ilə paylaşılmamalıdır
+    keş = icraçı.__dict__.setdefault("_fayl_modulları", {})
+    if açar in keş:
+        return keş[açar]
 
     x = XətaToplayıcı()
     s = Mənbə.fayldan(p, x)
@@ -1964,5 +1943,5 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
             icraçı._cümlə(c, alt)
 
     modul = Modul(p.stem, dict(alt.adlar))
-    _KEŞ[yol] = modul
+    keş[açar] = modul
     return modul

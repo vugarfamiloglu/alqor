@@ -68,6 +68,18 @@ SINIF_UZV_ACARLARI = (
     "sinif", "struktur", "interfeys", "sadalama", "funksiya",
 )
 
+# Sənəd şərhi ilə elan açar sözü arasında ola bilən sözlər
+SƏNƏD_MODİFİKATORLARI = frozenset({
+    "ixrac et", "ixrac", "et", "açıq", "gizli", "qorunan", "statik",
+    "mücərrəd", "asinxron", "tənbəl", "standart", "son", "əvəz et",
+})
+# Sənədi daşıyan elanlar
+ELAN_AÇARLARI = frozenset({
+    "funksiya", "metod", "sinif", "struktur", "interfeys", "sadalama",
+    "modul", "komponent", "qurucu", "xassə", "sabit", "dəyişən",
+    "dəyişməz", "tip", "obyekt", "qarışıq", "mağaza", "genişlət",
+})
+
 # Blokun bitdiyini bildirən açar sözlər
 BLOK_SONLARI = frozenset({
     "son", "yoxsa", "yoxsa əgər", "hal", "digər hallarda",
@@ -94,6 +106,7 @@ class Parser:
                  toplayıcı: XətaToplayıcı):
         self.t = [x for x in tokenlər if x.növ is not Növ.DIREKTIV]
         self.sənədlər = {}          # mövqe → sənəd mətni
+        self.modul_sənədi: str | None = None
         self._sənədləri_topla(tokenlər)
         self.t = [x for x in self.t if x.növ is not Növ.SENED]
         self.s = mənbə
@@ -101,22 +114,44 @@ class Parser:
         self.i = 0
         self.direktivlər = [x.dəyər for x in tokenlər
                             if x.növ is Növ.DIREKTIV]
-        self.modul_sənədi: str | None = None
+        # `alqorfmt` üçün: hər tokenin hansı BLOK DƏRİNLİYİNDƏ istehlak
+        # olunduğu (mənbə ofseti → dərinlik). Adi ayırmada söndürülüb.
+        self.dərinlik = 0
+        self.dərinlik_qeydi: dict[int, int] | None = None
 
     def _sənədləri_topla(self, tokenlər: list[Token]) -> None:
-        """`///` şərhlərini növbəti elanla əlaqələndirmək üçün yığır."""
+        """
+        `///` şərhlərini növbəti elanla, `//!` şərhlərini fayl ilə
+        əlaqələndirir.
+
+        Sənəd həm ilk tokenə, həm də `ixrac et`, görünüş sözləri və
+        annotasiyalardan (`@sınaq`) sonrakı ELAN AÇAR SÖZÜNƏ bağlanır —
+        elan ayrıcıları mövqeni həmin açar sözdən götürür.
+        """
         yığım: list[str] = []
-        for tok in tokenlər:
+        modul: list[str] = []
+        for j, tok in enumerate(tokenlər):
             if tok.növ is Növ.SENED:
-                yığım.append(tok.dəyər)
-            elif tok.növ is Növ.SETIR_SONU:
+                if (tok.xam or "").startswith("//!"):
+                    modul.append(tok.dəyər)
+                else:
+                    yığım.append(tok.dəyər)
+            elif tok.növ in (Növ.SETIR_SONU, Növ.DIREKTIV):
                 continue
-            elif tok.növ is Növ.DIREKTIV:
-                continue
-            else:
-                if yığım:
-                    self.sənədlər[tok.yer.başlanğıc] = "\n".join(yığım)
-                    yığım = []
+            elif yığım:
+                mətn = "\n".join(yığım)
+                yığım = []
+                self.sənədlər[tok.yer.başlanğıc] = mətn
+                for k in range(j, min(j + 60, len(tokenlər))):
+                    t = tokenlər[k]
+                    if t.növ is Növ.ACAR and t.dəyər in ELAN_AÇARLARI:
+                        self.sənədlər.setdefault(t.yer.başlanğıc, mətn)
+                        break
+                    if t.növ is Növ.ACAR and t.dəyər not in \
+                            SƏNƏD_MODİFİKATORLARI:
+                        break
+        if modul:
+            self.modul_sənədi = "\n".join(modul).strip("\n")
 
     # ═══════════════════════════════════════════════════════════════════
     #  Token axını
@@ -128,6 +163,10 @@ class Parser:
 
     def _al(self) -> Token:
         tok = self.t[self.i]
+        if (self.dərinlik_qeydi is not None
+                and tok.növ is not Növ.SETIR_SONU):
+            # Sətir sonu növbəti sətrin ilk tokeni ilə eyni ofsetdədir
+            self.dərinlik_qeydi.setdefault(tok.yer.başlanğıc, self.dərinlik)
         if self.i < len(self.t) - 1:
             self.i += 1
         return tok
@@ -397,16 +436,21 @@ class Parser:
         dayanlar = set(dayan_acarları) | BLOK_SONLARI
         gövdə: list[A.Cümlə] = []
         self._ayırıcı_atla()
-        while not self._sonudur() and not self._bax().acardır(*dayanlar):
-            if self.x.dolubmu():
-                break
-            try:
-                c = self._cümlə()
-                if c is not None:
-                    gövdə.append(c)
-            except ParserXətası:
-                self._bərpa()
-            self._ayırıcı_atla()
+        self.dərinlik += 1
+        try:
+            while (not self._sonudur()
+                   and not self._bax().acardır(*dayanlar)):
+                if self.x.dolubmu():
+                    break
+                try:
+                    c = self._cümlə()
+                    if c is not None:
+                        gövdə.append(c)
+                except ParserXətası:
+                    self._bərpa()
+                self._ayırıcı_atla()
+        finally:
+            self.dərinlik -= 1
         return gövdə
 
     def _cümlə(self) -> A.Cümlə | None:
@@ -658,6 +702,7 @@ class Parser:
         hallar: list[A.Hal] = []
         digər: list[A.Cümlə] | None = None
 
+        self.dərinlik += 1
         while True:
             self._ayırıcı_atla()
             if self._acar("hal"):
@@ -673,6 +718,7 @@ class Parser:
                     digər = self._blok("hal", "digər hallarda")
                 continue
             break
+        self.dərinlik -= 1
 
         self._son_tələb("seç")
         if not hallar and digər is None:
@@ -892,6 +938,12 @@ class Parser:
                     while self._qəbul_op("|"):
                         tiplər.append(self._tip())
                 self._tələb_op(")", "`tut` bəndi")
+            elif (self._bax().növ is Növ.AD
+                  and (self._bax(1).növ in (Növ.SETIR_SONU, Növ.FAYL_SONU)
+                       or self._acar("əgər", irəli=1))):
+                # `tut x` — istənilən xətanı `x`-ə bağlayır. Əvvəllər `x`
+                # səssizcə gövdənin ilk cümləsi sayılırdı.
+                ad = self._al().dəyər
             mühafizə = None
             if self._qəbul_acar("əgər"):
                 mühafizə = self._ifadə()
@@ -1340,8 +1392,34 @@ class Parser:
         # Ayırd etmə qaydası: qısa forma `xassə` parametri olan və gövdəsi
         # boş olan formadır. Bu qayda olmadan boş gövdəli qurucu sinfin
         # `son`-unu udurdu.
-        gövdə = self._blok(*SINIF_UZV_ACARLARI)
         qısa_ola_bilər = any(p.xassə_görünüşü for p in parametrlər)
+
+        # Qısa formadan sonra başqa üzv gələndə (komponentdə `göstər()`,
+        # `vəziyyət`…) yalnız açar sözə baxmaq kifayət etmir: `göstər()`
+        # gövdədəki çağırış da ola bilər, `son` isə həm qurucunu, həm də
+        # sinfi bağlaya bilər. Burada GİRİNTİ həll edir — insanın gözü
+        # ilə gördüyü kimi (spesifikasiya § 6.3.1):
+        #
+        #   qurucu(xassə a: tam)      növbəti sətir qurucudan DƏRİN
+        #       yaz(a)                deyilsə, gövdə yoxdur;
+        #   son                       qurucu ilə EYNİ sütundakı `son`
+        #                             qurucunundur, soldakı sinfin.
+        if qısa_ola_bilər and self._bax().növ is Növ.SETIR_SONU:
+            j = self.i
+            while self.t[j].növ is Növ.SETIR_SONU or \
+                    self.t[j].opdur(";"):
+                j += 1
+            növbəti = self.t[j]
+            if növbəti.növ is Növ.FAYL_SONU or \
+                    növbəti.yer.sütun <= yer.sütun:
+                if növbəti.acardır("son") and \
+                        növbəti.yer.sütun == yer.sütun:
+                    self._ayırıcı_atla()
+                    self._son_tələb("qurucu")
+                return A.QurucuElanı(yer, parametrlər, [], ad,
+                                     m["görünüş"])
+
+        gövdə = self._blok(*SINIF_UZV_ACARLARI)
 
         if gövdə:
             # Gövdə var — `son` mütləqdir
@@ -1360,6 +1438,13 @@ class Parser:
         return A.QurucuElanı(yer, parametrlər, gövdə, ad, m["görünüş"])
 
     def _sinif_gövdəsi(self) -> list[A.Cümlə]:
+        self.dərinlik += 1
+        try:
+            return self._sinif_üzvləri()
+        finally:
+            self.dərinlik -= 1
+
+    def _sinif_üzvləri(self) -> list[A.Cümlə]:
         üzvlər: list[A.Cümlə] = []
         self._ayırıcı_atla()
         while not self._sonudur() and not self._acar("son"):
@@ -1491,6 +1576,7 @@ class Parser:
 
         üzvlər: list[A.Cümlə] = []
         self._ayırıcı_atla()
+        self.dərinlik += 1
         while not self._sonudur() and not self._acar("son"):
             try:
                 if self._acar("metod"):
@@ -1520,6 +1606,7 @@ class Parser:
                 self._bərpa()
             self._ayırıcı_atla()
 
+        self.dərinlik -= 1
         self._son_tələb("interfeys")
         return A.InterfeysElanı(yer, ad, üzvlər, bazalar, generiklər,
                                 m["görünüş"], False, self._sənəd(yer))
@@ -1534,9 +1621,13 @@ class Parser:
         üzvlər: list[A.Cümlə] = []
         self._ayırıcı_atla()
 
+        self.dərinlik += 1
         while not self._sonudur() and not self._acar("son"):
             if self._elan_başlanğıcıdır() or self._op("@"):
+                # Variantlardan sonrakı üzvlər eyni dərinlikdədir
+                self.dərinlik -= 1
                 üzvlər = self._sinif_gövdəsi()
+                self.dərinlik += 1
                 break
             try:
                 v_yer = self._bax().yer
@@ -1560,6 +1651,7 @@ class Parser:
                 self._bərpa()
             self._ayırıcı_atla()
 
+        self.dərinlik -= 1
         self._son_tələb("sadalama")
         return A.SadalamaElanı(yer, ad, variantlar, üzvlər, əsas_tip,
                                generiklər, m["görünüş"], False,
@@ -1827,7 +1919,8 @@ class Parser:
             self._ayırıcı_atla()
             if self._qəbul_op("..."):
                 nəticə.append(A.Arqument(self._ifadə(), None, True))
-            elif (self._bax().növ is Növ.AD and self._op(":", irəli=1)):
+            elif (self._etiket_ola_bilər(self._bax())
+                  and self._op(":", irəli=1)):
                 ad = self._al().dəyər
                 self._al()
                 nəticə.append(A.Arqument(self._ifadə(), ad))
@@ -1980,10 +2073,24 @@ class Parser:
             else:
                 alt = Parser(list(p.tokenlər) + [
                     Token(Növ.FAYL_SONU, None, yer)], self.s, self.x)
+                əvvəl = len(self.x.siyahı)
                 try:
                     ifadə = alt._ifadə()
+                    qalan = alt._bax()
+                    if qalan.növ is not Növ.FAYL_SONU:
+                        alt._xəta("ALQ-P001", "Gözlənilməyən token",
+                                  f"`{alt._göstər(qalan)}` burada "
+                                  "gözlənilmirdi",
+                                  "`{…}` daxilində tək ifadə olmalıdır")
                 except ParserXətası:
                     ifadə = A.Literal(yer, "", "mətn")
+                # CSS, JSON, regex kimi mətnlərdə `{` interpolyasiya
+                # sayılır — ən çox rast gəlinən çaşqınlıq
+                for d in self.x.siyahı[əvvəl:]:
+                    d.köməklər.append(
+                        "adi mətndə `{…}` interpolyasiyadır; fiqurlu "
+                        'mötərizə lazımdırsa xam mətn yazın: x"…" '
+                        'və ya x"""…"""')
                 parçalar.append(A.KodHissəsi(ifadə, p.format))
         return A.ŞablonMətn(yer, parçalar)
 
@@ -2037,7 +2144,12 @@ class Parser:
         onu atlamaq birmənalıdır.
         """
         self._ayırıcı_atla()
-        return self._ifadə()
+        # Budaq gövdədir: `alqorfmt` onu bir pillə içəri girintiləyir
+        self.dərinlik += 1
+        try:
+            return self._ifadə()
+        finally:
+            self.dərinlik -= 1
 
     @staticmethod
     def _seç_ifadəsinə(seç: A.Seç) -> A.İfadə:
@@ -2063,7 +2175,37 @@ class Parser:
             gövdə = self._blok()
             self._son_tələb("blok")
             return A.Lambda(yer, parametrlər, gövdə)
-        return A.Lambda(yer, parametrlər, self._ifadə())
+        b_yer = self._bax().yer
+        ifadə = self._ifadə()
+        # Tək mənimsətmə gövdə ola bilər — UI idarəedicisinin ən təbii
+        # forması: `klik: () => özü.say += 1`. Nəticəsi `heç`-dir.
+        # Vergüllü mənimsətmə (`a, b = …`) arqument siyahısı ilə
+        # qarışacağı üçün yalnız `blok` formasında yazılır.
+        if self._op(*MƏNİMSƏTMƏ_OPLARI):
+            op = self._al().dəyər
+            dəyər = self._ifadə()
+            return A.Lambda(yer, parametrlər, [A.İfadəCümləsi(
+                b_yer, A.Mənimsətmə(b_yer, [ifadə], op, [dəyər]))])
+        if self._op("++", "--"):
+            op = self._al().dəyər
+            return A.Lambda(yer, parametrlər,
+                            [A.Artırma(b_yer, ifadə, op)])
+        return A.Lambda(yer, parametrlər, ifadə)
+
+    @staticmethod
+    def _etiket_ola_bilər(tok: Token) -> bool:
+        """
+        Adlı arqumentin etiketi: ad və ya TƏK SÖZLÜ açar söz.
+
+        `seçim(standart: "a")`, `vidjet.qutu(sinif: "x")` — arqument
+        siyahısında `açar_söz :` heç bir ifadənin başlanğıcı ola
+        bilmədiyi üçün qeyri-müəyyənlik yoxdur. Çoxsözlü açar sözlər
+        (`və ya`, `digər hallarda`) etiket ola bilməz.
+        """
+        if tok.növ is Növ.AD:
+            return True
+        return (tok.növ is Növ.ACAR and isinstance(tok.dəyər, str)
+                and " " not in tok.dəyər)
 
     def _lambda_mı(self) -> bool:
         """`(` mövqeyindən: bu lambda parametr siyahısıdırmı?"""

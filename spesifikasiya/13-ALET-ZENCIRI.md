@@ -64,6 +64,44 @@ alqor versiya
 alqor kömək <əmr>
 ```
 
+### Etalon implementasiyada vəziyyət
+
+Python etalonunda CLI `python alqorc.py <əmr>` kimi çağırılır. Hər əmrin
+ASCII ləqəbi var (`işlət` = `islet` = `run`) — Windows konsolunda
+Azərbaycan hərfləri yazmaq çətin olanda.
+
+| Əmr | Vəziyyət |
+|---|---|
+| `işlət <fayl> [--tip] [-- arq…]` | ✅ |
+| `yoxla <fayl\|qovluq>` | ✅ leksik + sintaktik + tip |
+| `tip <fayl\|qovluq> [--rejim]` | ✅ |
+| `söhbət` | ✅ (§ 13.7) |
+| `tokenlər <fayl>` | ✅ diaqnostika üçün |
+| `hərf <mətn>`, `sırala <söz>…` | ✅ az-AZ hərf qaydaları |
+| `versiya`, `kömək` | ✅ |
+| `format` (`alqorfmt`) | ✅ § 13.3 |
+| `studio` | ✅ Alqor Studio (§ 13.9) |
+| `ls [--stdio]` | ✅ LSP serveri (§ 13.8) |
+| `yeni <ad> [--şablon konsol\|veb\|desktop\|kitabxana]` | ✅ hər şablonun işləyən sınaqları var |
+| `işlət` (fayl olmadan — layihənin giriş nöqtəsi) | ✅ |
+| `sına [yol] [--filtr] [--sənəd] [--ətraflı]` | ✅ § 13.5 |
+| `sənəd [yol] [--format html\|markdown] [--çıxış]` | ✅ § 13.6 |
+| `qur [--tip]` | ✅ `qurma/<ad>.pyz` — aşağıya baxın |
+| `təmizlə` | ✅ yalnız layihə daxilindəki `qurma/` |
+
+Repo kökündəki `alqor.cmd` (Windows) və `alqor` (Linux/macOS) bu
+əmrləri `alqor yeni …` kimi çağırmağa imkan verir.
+
+**`qur` etalon implementasiyada.** Maşın koduna kompilyator hələ
+yoxdur. `alqor qur` Python *zipapp* yaradır: `qurma/<ad>.pyz` faylının
+içində icra mühiti və layihənin faylları (mənbə, şablon, statik) var;
+`sınaq/`, `sənəd/`, `qurma/` daxil edilmir. İlk işə salınmada layihə
+faylları keş qovluğuna açılır (`ALQOR_KES` ilə dəyişdirilir).
+`python ad.pyz` (Windows) və ya `./ad.pyz` (Linux/macOS) ilə işləyir.
+`--tip` — paketdən əvvəl tip yoxlaması. Aşağıdakı `--hədəf` seçimləri
+yerli kompilyatorla gələcək.
+| `paketlə`, `yerləşdir` | planlaşdırılır |
+
 ### `alqor qur` seçimləri
 ```bash
 alqor qur --hədəf linux-x64      # linux-x64 | linux-arm64 | veb | wasm
@@ -109,6 +147,47 @@ alqorfmt --homoqlif-düzəlt .     # gizli simvolları düzəlt
 | Faylın sonu | bir boş sətir |
 | Sondakı vergül | çoxsətirli siyahılarda var |
 | Açar sözlər | kanonik Azərbaycan formasında |
+
+### Təhlükəsizlik zəmanəti
+
+Formatlayıcı **proqramın mənasını dəyişə bilməz**. Format edilmiş mətn
+yenidən leksə və ayrılır; token axını (ASCII açar sözlərin kanonik
+forması istisna), JSX məzmunu və sintaksis ağacı (mövqelər nəzərə
+alınmadan) orijinalla eyni olmalıdır. Fərq çıxarsa fayl **toxunulmaz
+qalır** və xəta bildirilir. Sintaksis xətası olan fayl format edilmir.
+
+### Girinti alqoritmi
+
+Girinti açar söz sayğacından deyil, **parserdən** gəlir: parser hər
+tokenin neçə blok gövdəsinin içində olduğunu qeyd edir. Mötərizə
+içindəki çoxsətirli bloklar (arqument kimi verilən `funksiya`, siyahıdakı
+`əgər … yoxsa … son`) eyni mötərizədəki qonşu sətrə nisbətən
+girintilənir. Davam sətirlərinin əl ilə hizalanması qorunur, amma
+açan sətirdən ən azı bir pillə dərin olmalıdır.
+
+Çoxsətirli mətn (`"""…"""`, `x"""…"""`) və JSX daxili yalnız bütöv
+sürüşdürülür — dəyəri dəyişmir. Sətir sonu şərhlərinin hizalanması
+qorunur; yalnız şərhdən ibarət sətir növbəti kod sətrinin girintisini
+alır.
+
+### Etalon implementasiyada vəziyyət
+
+| Qayda | Vəziyyət |
+|---|---|
+| Girinti, operator/vergül boşluqları, mötərizə daxili | ✅ |
+| ASCII → kanonik açar söz (standart; `--ascii-saxla` söndürür) | ✅ |
+| `--homoqlif-düzəlt` (bayraqsız homoqlifli fayl rədd edilir) | ✅ |
+| Boş sətirlər (ən çox 2), sətir sonu boşluqları, `LF`, BOM, NFC, tab | ✅ |
+| `--yoxla` (kod 1 — format lazımdır), `--fərq` | ✅ |
+| 100 simvoldan uzun sətirləri bölmək | planlaşdırılır — hazırda toxunulmur |
+| Çoxsətirli siyahılara sondakı vergül | planlaşdırılır |
+| `layihe.alqor` → `[format]` | planlaşdırılır |
+
+Çıxış kodları: `0` — uğurlu / format lazım deyil, `1` — `--yoxla`
+rejimində format lazımdır, `2` — format edilə bilməyən fayl var
+(sintaksis xətası), `3` — yanlış istifadə.
+
+Alqor Studio-da **Ctrl+Shift+F** eyni formatlayıcını çağırır.
 
 Konfiqurasiya — `layihe.alqor`:
 ```toml
@@ -187,6 +266,24 @@ alqortest --təkrar 100           # flaky test axtarışı
 
 ---
 
+### Etalon implementasiyada vəziyyət
+
+`alqor sına` (və ya `alqortest`): yol verilməsə layihənin `sınaq/`
+qovluğu; qovluqda `sınaq/`, `sinaq/`, `test/` altındakı və adı
+`_sınaq.alqor` ilə bitən fayllar. Hər fayl ayrı interpretatorda işləyir.
+
+| Xüsusiyyət | Vəziyyət |
+|---|---|
+| `@sınaq`, `@sınaq("ad")`, `@sınaqVerilənlər([...])` | ✅ |
+| `@sınaqQrupu("ad") modul …` + `@əvvəl` / `@sonra` | ✅ |
+| `@atla("səbəb")` | ✅ |
+| `--filtr söz`, `--sənəd`, `--ətraflı` (uğursuz sınağın `yaz` çıxışı) | ✅ |
+| Uğursuz təsdiqin yeri (`fayl:sətir:sütun`) | ✅ |
+| Çıxış kodu: 0 — hamısı uğurlu, 1 — uğursuz/xəta var, 4 — sınaq yoxdur | ✅ |
+| `--örtük`, `--izlə`, `--paralel`, `--təkrar`, `test.saxta` | planlaşdırılır |
+
+---
+
 ## 13.6 `alqordoc` — sənəd generatoru
 
 ```bash
@@ -221,7 +318,23 @@ ixrac et funksiya dairəSahəsi(radius: onluq) -> onluq
 son
 ```
 
-Sənəddəki nümunə kodlar **test kimi də işlədilir** (`alqortest --sənəd`).
+Sənəddəki nümunə kodlar **test kimi də işlədilir** (`alqor sına --sənəd`):
+hər ```` ```alqor ```` bloku faylın adları əlçatan olan ayrıca proqram kimi
+icra olunur.
+
+**Qaydalar.** `///` sənədi elanın üstündə yazılır və `ixrac et`,
+görünüş sözləri, annotasiyalar (`@sınaq`) aradan keçir. `//!` faylın
+sənədidir. Faylda `ixrac et` varsa yalnız ixrac olunanlar, yoxdursa
+`gizli` olmayan bütün yuxarı səviyyəli elanlar sənədləşdirilir; sinif
+üzvləri də daxildir. İmza mənbədən olduğu kimi götürülür. Sənəd
+mətnində Markdown alt çoxluğu: başlıq (`#`), siyahı, `kod`, **qalın**,
+kod bloku.
+
+| Seçim | Vəziyyət |
+|---|---|
+| HTML (standart, tək fayl, açıq/qaranlıq), `--format markdown` | ✅ |
+| `--çıxış q` | ✅ (standart `sənəd/`) |
+| `--server` (canlı önizləmə) | planlaşdırılır |
 
 ---
 
@@ -304,10 +417,44 @@ alqor> [1, 2, 3].cem()
 
 ## 13.8 `alqorls` — LSP serveri
 
-Dəstəklənən redaktorlar: **Alqor Studio**, VS Code, Neovim, Zed, Helix, Emacs, Sublime.
+```bash
+alqor ls --stdio         # redaktor özü işə salır (JSON-RPC, stdin/stdout)
+```
 
-| Xüsusiyyət | Dəstək |
+Asılılıqsız, LSP 3.17 alt çoxluğu (`alqorc/alqor/alqorls.py`). Analiz
+`alqor yoxla` ilə eynidir: mənbə → lekser → parser → tip yoxlayıcısı.
+Tip yoxlayıcısı **qeyd rejimində** işləyir — hər ad istifadəsinin hansı
+elana bağlandığını və hər `a.b` ifadəsinin tipini yadda saxlayır.
+
+| Xüsusiyyət | Vəziyyət |
 |---|---|
+| Diaqnostika (yazarkən) — leksik, sintaksis, tip; `ALQ-*` kodu ilə | ✅ |
+| Avtotamamlama: `x.` → modul / sinif / mətn / siyahı üzvləri | ✅ |
+| Avtotamamlama: açar sözlər, şablonlar (`funksiya …`, `əgər …`), adlar, `gətir` → modullar | ✅ |
+| Hover: imza, tip, `///` sənəd şərhi, vidjet izahı | ✅ |
+| İmza köməyi (`f(` → parametrlər, aktiv parametr) | ✅ |
+| Təyinata get — dəyişən, funksiya, sinif, metod, qısa qurucunun sahəsi | ✅ |
+| İstinadları tap, ad dəyişdirmə (açar söz / yanlış ad / daxili ad rədd edilir) | ✅ cari faylda |
+| Sənəd sxemi (sinif → qurucu, metod, xassə) | ✅ |
+| Formatlama (`alqorfmt`) | ✅ |
+| Sürətli düzəlişlər: `eger` → `əgər`, "bəlkə: `uzunluq`", hamısını düzəlt | ✅ |
+| Yarımçıq kod: xətalı sətirlər boşluqla əvəz olunub yenidən analiz edilir — hover/tamamlama işləməyə davam edir | ✅ |
+| Layihə üzrə (fayllar arası) istinad və ad dəyişmə | ⏳ |
+| Kod linzaları, semantik rənglər, DAP | ⏳ |
+
+Redaktorlar:
+
+| Redaktor | Necə |
+|---|---|
+| **VS Code** | `redaktor/vscode/` — qrammatika + LSP müştərisi (`npx @vscode/vsce package`) |
+| Neovim, Helix | `alqor ls --stdio` — nümunə konfiqurasiya `redaktor/vscode/README.md`-də |
+| Alqor Studio | öz analizi (`/api/yoxla`); tamamlama `alqorls`-a keçiriləcək ⏳ |
+
+TextMate qrammatikası və `language-configuration.json` açar söz
+siyahısından yaradılır (`python -m alqor.qrammatika --yaz`); sınaq
+onların köhnəlmədiyini yoxlayır.
+
+---|---|
 | Sintaksis vurğulama | ✓ |
 | Avtotamamlama | ✓ (kontekstli, sənədlə) |
 | Təyinata get | ✓ |
@@ -453,6 +600,11 @@ jobs:
 | `ALQOR_DIL` | Mesaj dili (`az` standart, `en` ikinci) |
 | `ALQOR_SAP` | Kompilyator sap sayı |
 | `ALQORHUB_TOKEN` | Paket yayımlama tokeni |
+| `ALQOR_BASSIZ` | `1` — `pəncərə` pəncərə açmır (CI, sınaq; § 12.2.1) |
+| `NO_COLOR` | təyin olunubsa `konsol` rəng kodları çap etmir ([no-color.org](https://no-color.org)) |
+
+Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ` və
+`NO_COLOR` oxunur; qalanları kompilyator və paket meneceri ilə gələcək.
 
 > **Niyə adlar ASCII-dir?**
 > `ALQOR_RƏNG` kimi ad shell-də təyin oluna bilmir — POSIX mühit dəyişəni

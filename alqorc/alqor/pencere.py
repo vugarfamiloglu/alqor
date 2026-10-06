@@ -304,11 +304,20 @@ class Pəncərə:
             p.məzmun(<Sayğac />)           komponent — vəziyyət dəyişəndə
                                            özü yenidən göstərilir
             p.məzmun(() => <p>{x}</p>)     funksiya — hər dəfə çağırılır
+            p.məzmun(menecer)              komponent NÜMUNƏSİ — menyudan
+                                           `menecer.saxla()` çağırmaq üçün
         """
         self._məzmun = dəyər
         self._komponent = None
         if isinstance(dəyər, Element) and dəyər.komponent is not None:
             self._komponent = dəyər.komponent
+        elif isinstance(dəyər, Nümunə):
+            if dəyər.sinif.metod_tap("göstər") is None:
+                raise AlqorXəta(
+                    "TipXətası",
+                    f"`{dəyər.sinif.ad}` komponent deyil — `göstər()` "
+                    "metodu yoxdur", kod="ALQ-T053")
+            self._komponent = dəyər
         return self
 
     def menyu(self, menyular: Any) -> "Pəncərə":
@@ -415,7 +424,8 @@ class Pəncərə:
             '<meta name="viewport" content="width=device-width,'
             'initial-scale=1">'
             f"<title>{qaç(self._başlıq)}</title>"
-            f"<style>{ÜSLUB}{self._üslub}</style></head><body>"
+            f"<style>{ÜSLUB}{_vidjet_üslubu()}{self._üslub}</style>"
+            "</head><body>"
             f"{menyu_blok}"
             f'<main id="alqor-kök">{kök}</main>'
             f"<script>{SKRIPT}</script></body></html>")
@@ -441,6 +451,16 @@ class Pəncərə:
             return {"bağlı": True}
         return {"html": self.kök_HTML(), "menyu": self.menyu_HTML(),
                 "başlıq": self._başlıq}
+
+
+def _vidjet_üslubu() -> str:
+    """
+    `vidjet` elementlərinin CSS-i. Hər pəncərəyə qoşulur: vidjet
+    istifadə edilməsə də zərəri yoxdur (sinifləri `v-` prefikslidir),
+    istifadə edildikdə isə üslubsuz düymə və sahələr görünməz.
+    """
+    from .vidjet import ÜSLUB as V
+    return V
 
 
 def _siyahıya(d: Any) -> list:
@@ -515,24 +535,130 @@ input,select,textarea{font:inherit;padding:6px 8px;
  white-space:pre-wrap;color:#c0392b}
 """
 
-SKRIPT = r"""
-(function(){
- const HADISƏLƏR=[["click","klik"],["dblclick","ikiklik"],
-  ["change","deyisdi"],["input","yazildi"],["submit","gonderildi"],
-  ["focusin","fokus"],["focusout","fokusgetdi"],
-  ["keydown","duymebasma"],["keyup","duymeburaxma"],
-  ["mouseover","sicanustde"],["mouseout","sicancixdi"],
-  ["dragstart","suruklendi"],["drop","buraxildi"],
-  ["pointerdown","basildi"],["scroll","surusdu"]];
- const DƏYƏRLİ={deyisdi:1,yazildi:1};
+# ── Brauzer nüvəsi: `pəncərə` və `veb` üçün ORTAQ ──────────────────────
+#
+# İki problem həll olunur:
+#
+# 1. YAMAQ, ƏVƏZLƏMƏ YOX. Hər hadisədən sonra kökü `innerHTML` ilə
+#    əvəzləmək yazılan sahənin fokusunu və dəyərini itirirdi — `yazıldı`
+#    hadisəli axtarış sahəsinə "rəşad" yazmaq mümkün deyildi. `yamaq()`
+#    mövcud DOM-u yeni HTML-ə uyğunlaşdırır: düyünlər yerində qalır,
+#    fokusdakı sahənin dəyərinə toxunulmur, `<details>`-in açıq/qapalı
+#    vəziyyəti istifadəçiyə məxsusdur.
+#
+# 2. NÖVBƏ, ATMA YOX. Sorğu gedərkən gələn hadisələr əvvəllər atılırdı —
+#    sürətlə yazılan hərflər serverə çatmırdı. İndi növbəyə düşürlər.
+#    Hadisə açarı (`data-a-*`) GÖNDƏRMƏ anında elementdən oxunur: yamaq
+#    düyünü saxladığı üçün element yeni nəslin açarını daşıyır. Dəyər
+#    hadisələri (`dəyişdi`, `yazıldı`) eyni element üçün birləşdirilir
+#    və dəyər də göndərmə anında oxunur — server sonuncu mətni alır.
+#
+# `alqorBağla(göndər)` — `göndər(id, dəyər)` vəd (Promise) qaytarır.
+
+def _nüvə_skripti() -> str:
+    cədvəl = _json.dumps([list(d) for d in HADİSƏLƏR.values()],
+                         separators=(",", ":"))
+    dəyərli = _json.dumps({HADİSƏLƏR[a][1]: 1 for a in sorted(DƏYƏRLİ)},
+                          separators=(",", ":"))
+    return (f"const HADISƏLƏR={cədvəl},DƏYƏRLİ={dəyərli};" + r"""
+// Göndərilməmiş dəyər hadisəsi olan sahələr: yamaq onların dəyərinə
+// toxunmur — yoxsa serverin köhnə cavabı istifadəçinin yeni seçimini
+// (məs. işarələnmiş qutucuğu) geri qaytarardı
+const gözləyən=new Set();
+function yamaq(kök,html){
+ const ş=document.createElement("template");ş.innerHTML=html;
+ uşaqlar(kök,ş.content);
+}
+function uyğundur(a,b){
+ if(a.nodeType!==b.nodeType)return false;
+ if(a.nodeType!==1)return true;
+ return a.tagName===b.tagName&&a.getAttribute("type")===b.getAttribute("type");
+}
+function uşaqlar(k,y){
+ const yn=Array.from(y.childNodes);
+ for(let i=0;i<yn.length;i++){
+  const a=k.childNodes[i],b=yn[i];
+  if(!a){k.appendChild(document.importNode(b,true));continue}
+  if(!uyğundur(a,b)){k.replaceChild(document.importNode(b,true),a);continue}
+  if(a.nodeType===1)element(a,b);
+  else if(a.data!==b.data)a.data=b.data;
+ }
+ while(k.childNodes.length>yn.length)k.removeChild(k.lastChild);
+}
+function element(a,b){
+ const fokus=a===document.activeElement||gözləyən.has(a),teq=a.tagName;
+ for(const at of Array.from(a.attributes))
+  if(!b.hasAttribute(at.name)&&!(teq==="DETAILS"&&at.name==="open"))
+   a.removeAttribute(at.name);
+ for(const at of Array.from(b.attributes))
+  if(a.getAttribute(at.name)!==at.value)a.setAttribute(at.name,at.value);
+ if(teq==="INPUT"){
+  const t=a.type;
+  if(t==="checkbox"||t==="radio"){
+   if(!gözləyən.has(a))a.checked=b.hasAttribute("checked")}
+  else if(t!=="file"&&!fokus){
+   const d=b.getAttribute("value")||"";if(a.value!==d)a.value=d}
+  return;
+ }
+ if(teq==="TEXTAREA"){
+  if(!fokus&&a.value!==b.value)a.value=b.value;return}
+ uşaqlar(a,b);
+ if(teq==="SELECT"&&!fokus){
+  const s=b.querySelector("option[selected]");if(s)a.value=s.value}
+}
+function alqorBağla(göndər){
+ const növbə=[];let gedir=false;
+ async function boşalt(){
+  if(gedir)return;gedir=true;
+  try{
+   while(növbə.length){
+    const h=növbə.shift();
+    if(DƏYƏRLİ[h.ad])gözləyən.delete(h.s);
+    if(!h.t.isConnected)continue;      // element artıq yoxdur
+    const id=h.t.getAttribute("data-a-"+h.ad);
+    if(!id)continue;
+    let d=h.d;
+    if(DƏYƏRLİ[h.ad])d=h.s.type==="checkbox"?h.s.checked:h.s.value;
+    try{await göndər(id,d)}catch(x){növbə.length=0;gözləyən.clear()}
+   }
+  }finally{gedir=false}
+ }
+ for(const [DOM,ad] of HADISƏLƏR){
+  document.addEventListener(DOM,function(h){
+   const t=h.target.closest?h.target.closest("[data-a-"+ad+"]"):null;
+   if(!t)return;
+   if(DOM==="click"||DOM==="submit")h.preventDefault();
+   const s=h.target;
+   if(DƏYƏRLİ[ad]){
+    // Eyni sahə üçün gözləyən hadisə varsa, o, son dəyəri götürəcək
+    if(növbə.some(x=>x.t===t&&x.ad===ad))return;
+    gözləyən.add(s);
+    növbə.push({t:t,ad:ad,s:s});
+   }else{
+    let d;
+    if(DOM==="keydown"||DOM==="keyup")d=h.key;
+    else{
+     // Bir idarəedici bir çox düyməyə bağlı ola bilər (nişanlar,
+     // səhifələmə) — hansının basıldığı `value` ilə bilinir
+     const v=t.getAttribute("value");if(v!==null)d=v}
+    növbə.push({t:t,ad:ad,s:s,d:d});
+   }
+   boşalt();
+  },true);
+ }
+}
+""")
+
+
+NÜVƏ_SKRİPTİ = _nüvə_skripti()
+
+SKRIPT = "(function(){" + NÜVƏ_SKRİPTİ + r"""
  const kök=document.getElementById("alqor-kök");
  const menyu=document.getElementById("alqor-menyu");
- let gedir=false, bağlı=false;
+ let bağlı=false;
 
  async function göndər(id,dəyər){
   if(bağlı) return;
-  if(gedir) return;                 // bir anda bir hadisə
-  gedir=true;
   try{
    const c=await fetch("/_alqor/hadise",{method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -542,33 +668,13 @@ SKRIPT = r"""
    if(n.bağlı){bağlı=true;window.close();
     document.body.innerHTML='<p style="padding:16px">'+
      "Pəncərə bağlandı.</p>";return}
-   if(n.html!==undefined) kök.innerHTML=n.html;
+   if(n.html!==undefined) yamaq(kök,n.html);
    if(n.menyu!==undefined&&menyu){menyu.innerHTML=n.menyu;
     menyu.hidden=!n.menyu}
    if(n.başlıq) document.title=n.başlıq;
   }catch(x){ /* server dayandı — pəncərə bağlanır */ }
-  finally{gedir=false}
  }
-
- for(const [DOM,ad] of HADISƏLƏR){
-  document.addEventListener(DOM,function(h){
-   const t=h.target.closest?h.target.closest("[data-a-"+ad+"]"):null;
-   if(!t) return;
-   if(DOM==="click"||DOM==="submit") h.preventDefault();
-   let d;
-   if(DƏYƏRLİ[ad]){
-    const s=h.target;
-    d=s.type==="checkbox"?s.checked:s.value;
-   } else if(DOM==="keydown"||DOM==="keyup"){ d=h.key }
-   else {
-    // Bir idarəedici bir çox düyməyə bağlı ola bilər (nişanlar,
-    // səhifələmə) — hansının basıldığı `value` ilə bilinir
-    const v=t.getAttribute("value");
-    if(v!==null) d=v;
-   }
-   göndər(t.getAttribute("data-a-"+ad),d);
-  },true);
- }
+ alqorBağla(göndər);
 
  // Menyu qısayolları
  document.addEventListener("keydown",function(h){
@@ -577,7 +683,7 @@ SKRIPT = r"""
   if(h.metaKey)hissələr.push("meta");
   if(h.altKey)hissələr.push("alt");
   if(h.shiftKey)hissələr.push("shift");
-  const a=h.key.length===1?h.key.toLowerCase():h.key.toLowerCase();
+  const a=h.key.toLowerCase();
   if(["control","meta","alt","shift"].includes(a)) return;
   hissələr.push(a);
   const naxış=hissələr.join("+");
@@ -641,6 +747,9 @@ class Tətbiq:
         self._prosslər: list[subprocess.Popen] = []
         self._bitdi = threading.Event()
         self._işləyir = False
+        # `dayandır()` iki sapdan gələ bilər: tətbiqin öz sapı və
+        # çağıran kod. Serveri yalnız bir dəfə bağlamalıyıq.
+        self._qıfıl = threading.Lock()
         # Sınaq rejimində dialoq cavabları buradan götürülür
         self.dialoq_cavabları: list[Any] = []
         self.dialoq_jurnalı: list[tuple[str, str]] = []
@@ -679,15 +788,16 @@ class Tətbiq:
     # ── Server ────────────────────────────────────────────────────────
 
     def _serveri_qaldır(self) -> None:
-        if self._server is not None:
-            return
-        from http.server import ThreadingHTTPServer
-        self._server = ThreadingHTTPServer(
-            ("127.0.0.1", 0), _İdarəedici_yarat(self))
-        self._port = self._server.server_address[1]
-        sap = threading.Thread(target=self._server.serve_forever,
-                               daemon=True, name="alqor-pəncərə")
-        sap.start()
+        with self._qıfıl:
+            if self._server is not None:
+                return
+            from http.server import ThreadingHTTPServer
+            self._server = ThreadingHTTPServer(
+                ("127.0.0.1", 0), _İdarəedici_yarat(self))
+            self._port = self._server.server_address[1]
+            sap = threading.Thread(target=self._server.serve_forever,
+                                   daemon=True, name="alqor-pəncərə")
+            sap.start()
 
     def dayandır(self) -> None:
         for p in list(self.pəncərələr):
@@ -700,10 +810,13 @@ class Tətbiq:
             except Exception:                   # noqa: BLE001
                 pass
         self._prosslər.clear()
-        if self._server is not None:
-            self._server.shutdown()
-            self._server.server_close()
-            self._server = None
+        # Serveri qıfılın altında ƏLDƏN alırıq: iki sap da `is not
+        # None`-u keçib `server_close()`-u iki dəfə çağıra bilər.
+        with self._qıfıl:
+            server, self._server = self._server, None
+        if server is not None:
+            server.shutdown()
+            server.server_close()
         self._bitdi.set()
 
     # ── Əsas dövr ─────────────────────────────────────────────────────
@@ -813,6 +926,12 @@ def _İdarəedici_yarat(t: Tətbiq):
 
         def do_GET(self) -> None:
             yol = self._yol()
+            # GET-də `Origin` olmur; yalnız `Host` yoxlanılır
+            host = (self.headers.get("Host") or "").strip().lower()
+            if host not in (f"127.0.0.1:{t._port}",
+                            f"localhost:{t._port}"):
+                self._göndər(b"forbidden", "text/plain", 403)
+                return
             if yol in ("/", "/index.html"):
                 p = self._pəncərə()
                 if p is None:
@@ -832,6 +951,9 @@ def _İdarəedici_yarat(t: Tətbiq):
 
         def do_POST(self) -> None:
             yol = self._yol()
+            if kənar_sorğudur(self.headers, t._port):
+                self._göndər(b"forbidden", "text/plain", 403)
+                return
             p = self._pəncərə()
             if p is None:
                 self._JSON({"bağlı": True})
@@ -864,6 +986,38 @@ def _İdarəedici_yarat(t: Tətbiq):
             self._JSON(nəticə)
 
     return İdarəedici
+
+
+def kənar_sorğudur(başlıqlar: Any, port: int | None = None) -> bool:
+    """
+    Sorğu başqa saytdan gəlirmi? Hadisə son nöqtələri bunu yoxlayır.
+
+    Yerli server `127.0.0.1`-də dinləyir, amma istifadəçinin brauzerində
+    açıq olan İSTƏNİLƏN sayt ora sorğu göndərə bilər. `text/plain`
+    gövdəli POST "sadə sorğu"dur — CORS ön-yoxlaması olmadan çatır və
+    "Sil" düyməsinin idarəedicisini işə sala bilərdi. Ona görə:
+
+    * `Origin` başlığı varsa, `Host` ilə eyni mənbəni göstərməlidir.
+      Brauzerlər POST sorğularında `Origin`-i həmişə göndərir və onu
+      skript dəyişə bilmir.
+    * `port` verilibsə (desktop), `Host` yalnız `127.0.0.1:port` və ya
+      `localhost:port` ola bilər — DNS rebinding hücumuna qarşı: kənar
+      domen bizim IP-yə yönəldilsə də `Host` başlığı o domen olaraq
+      qalır.
+
+    `Origin` olmayan sorğular (urllib, curl, sınaqlar) brauzerdən
+    gəlmir — onlar CSRF vektoru deyil.
+    """
+    host = (başlıqlar.get("Host") or "").strip().lower()
+    if port is not None:
+        if host not in (f"127.0.0.1:{port}", f"localhost:{port}"):
+            return True
+    mənbə = (başlıqlar.get("Origin") or "").strip().lower()
+    if not mənbə:
+        return False
+    if mənbə == "null":
+        return True
+    return mənbə not in (f"http://{host}", f"https://{host}")
 
 
 def _xəta_mətni(x: BaseException) -> str:
@@ -1325,7 +1479,9 @@ class Sürücü:
             raise AlqorXəta(
                 "ArqumentXətası",
                 f'"{hədəf}" sahəsi tapılmadı', kod="ALQ-R013")
-        self._işlət(açar, mətnə(dəyər, self.i))
+        # Brauzer kimi: qutucuq/açar `məntiq`, qalan sahələr mətn göndərir
+        self._işlət(açar, dəyər if isinstance(dəyər, bool)
+                    else mətnə(dəyər, self.i))
         return self
 
     def hadisə(self, ad: Any, nişan: Any = None,
@@ -1414,6 +1570,10 @@ def _atribut_tap(HTML: str, atribut: str,
     naxış = f'{atribut}="'
     yer = 0
     ilk: str | None = None
+    # İkinci dərəcəli uyğunluq: mətni hədəflə BAŞLAYAN element (cədvəl
+    # sətri "Süd al  bitib"). Yalnız dəqiq uyğunluq tapılmasa işlənir —
+    # "Sil" "Bitmişləri sil" düyməsini deyil, "Sil"-i tapsın.
+    başlanğıc: str | None = None
     while True:
         i = HTML.find(naxış, yer)
         if i < 0:
@@ -1436,13 +1596,27 @@ def _atribut_tap(HTML: str, atribut: str,
         bağlayıcı = f"</{ad}>"
         mətn_sonu = HTML.find(bağlayıcı, teq_sonu)
         içi = HTML[teq_sonu + 1:mətn_sonu] if mətn_sonu > 0 else ""
-        if _uyğundur(hədəf, _teqsiz(içi)):
+        mətn = _teqsiz(içi)
+        if _uyğundur(hədəf, mətn):
             return açar
         # Menyu adı, kimlik, başlıq, sahə adı və dəyəri də nişan sayılır
         for atr_adı in ("data-a-ad", "id", "title", "name", "value"):
             if _uyğundur(hədəf, _teq_atributu(teq, atr_adı)):
                 return açar
-    return None
+        if başlanğıc is None and _başlayır(mətn, hədəf):
+            başlanğıc = açar
+    return başlanğıc
+
+
+def _başlayır(mətn: str, hədəf: str) -> bool:
+    """Söz sərhədində: "Süd al bitib" "Süd al" ilə başlayır, "Südlü" yox."""
+    if not mətn or not hədəf:
+        return False
+    for m, h in ((mətn, hədəf),
+                 (latınla(mətn).lower(), latınla(hədəf).lower())):
+        if m.startswith(h) and (len(m) == len(h) or m[len(h)] == " "):
+            return True
+    return False
 
 
 def _teqi_tap(HTML: str, atribut: str, açar: str) -> str:

@@ -1,0 +1,13 @@
+{% genişlət "esas.alqorhtml" %}
+
+{% blok başlıq %}{{ kitab.ad }} — Kitab rəfi{% son %}
+
+{% blok məzmun %}
+<h1>{{ kitab.ad }}</h1>
+<dl>
+    <dt>Müəllif</dt><dd>{{ kitab.müəllif }}</dd>
+    <dt>İl</dt><dd>{{ kitab.il }}</dd>
+    <dt>Qeyd</dt><dd>{{ kitab.qeyd | standart("—") }}</dd>
+</dl>
+<a href="/">← Bütün kitablar</a>
+{% son %}

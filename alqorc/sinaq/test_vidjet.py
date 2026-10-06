@@ -110,6 +110,36 @@ class KataloqSınağı(unittest.TestCase):
                             f"`{m.ad}` skeleti ayrılmır:\n{gövdə}\n"
                             + x.hesabat(False))
 
+    def test_skeletlərdəki_tiplər_mövcuddur(self):
+        """
+        Skelet yalnız ayrılmamalı, tip yoxlamasından da keçməlidir:
+        IDE onu redaktora yazır, `tamEn` kimi naməlum tip istifadəçiyə
+        dərhal xəta göstərərdi (ALQ-T002).
+        """
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.tipyoxlayici import TipYoxlayıcı
+        from alqor.xeta import XətaToplayıcı
+
+        for m in V.KATALOQ:
+            if not m.skelet and not m.vəziyyət:
+                continue
+            gövdə = V.skelet(None, m.ad, "sınaqAdı")
+            kod = ("komponent K\n"
+                   + "".join(f"    {s}\n" if s.strip() else "\n"
+                             for s in gövdə.split("\n"))
+                   + "\n    göstər()\n        qaytar <p>a</p>\n    son\n"
+                     "son\n")
+            x = XətaToplayıcı()
+            mənbə = Mənbə.mətndən(kod, "skelet.alqor", x)
+            ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
+            t = XətaToplayıcı()
+            TipYoxlayıcı(t).yoxla(ağac)
+            naməlum = [d for d in t.siyahı if d.kod == "ALQ-T002"]
+            self.assertEqual(naməlum, [],
+                             f"`{m.ad}` skeletində naməlum tip:\n{gövdə}")
+
     def test_kataloq_dildən_oxunur(self):
         sətirlər = çıxış(BAŞLIQ + '''
 funksiya əsas()
@@ -503,6 +533,13 @@ son
         h = HTML('vidjet.cədvəl(sütunlar: ["A"], sətirlər: [["x"]],'
                  ' sətirKlik: () => 1)')
         self.assertIn("v-sətir--basılan", h)
+        # Basılan sətrin indeksi idarəediciyə ötürülür
+        self.assertIn('value="0"', h)
+
+    def test_mətn_ölçüsü_yoxlanılır(self):
+        self.assertIn("v-mətn--böyük",
+                      HTML('vidjet.mətn(məzmun: "a", ölçü: "böyük")'))
+        self.assertNotIn("v-mətn--orta", HTML('vidjet.mətn(məzmun: "a")'))
 
     def test_siyahı(self):
         h = HTML('vidjet.siyahı(elementlər: ["bir", "iki"])')
@@ -971,6 +1008,82 @@ class NümunəSınağı(unittest.TestCase):
                            "Modal açıq", "İşçi silindi", "Açar söndü",
                            "DOCTYPE", "IDE kataloqu"):
             self.assertIn(gözlənilən, hamısı)
+
+
+class SpesifikasiyaSınağı(unittest.TestCase):
+    """§ 14 sənədi kodla uyğun qalmalıdır."""
+
+    def test_hər_parametrin_izahı_var(self):
+        from alqor import vidjet_arayis as A
+        yox = [(m.ad, p) for m in V.KATALOQ
+               for p, _ in A.parametrlər(m.ad) if not A.izah(m.ad, p)]
+        self.assertEqual(yox, [], "vidjet_arayis.İZAHLAR-a əlavə edin")
+
+    def test_arayış_köhnəlməyib(self):
+        from alqor import vidjet_arayis as A
+        self.assertEqual(
+            A.sənəddəki_arayış(), A.arayış(),
+            "spesifikasiya/14-VIDJETLER.md köhnədir: "
+            "python -m alqor.vidjet_arayis --yaz")
+
+    def test_sənəddəki_nümunələr_ayrılır(self):
+        """`alqor` bloklarının hamısı sintaktik cəhətdən düzgündür."""
+        import re
+        from alqor import vidjet_arayis as A
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.xeta import XətaToplayıcı
+
+        mətn = A.SƏNƏD.read_text(encoding="utf-8")
+        bloklar = re.findall(r"```alqor\n(.*?)```", mətn, re.S)
+        self.assertGreater(len(bloklar), 60)
+        for b in bloklar:
+            # Komponent gövdəsinə aid parçalar (skelet) sinfə bükülür
+            kod = b
+            if b.lstrip().startswith(("vəziyyət", "metod")):
+                kod = "komponent K\n" + "".join(
+                    f"    {s}\n" for s in b.split("\n")) + "son\n"
+            elif b.lstrip().startswith("s.al("):
+                kod = "funksiya f(s, verilənlər)\n" + b + "son\n"
+            elif b.lstrip().startswith(("p.üslub", "// Desktop")):
+                continue                # sərbəst parçalar
+            x = XətaToplayıcı()
+            m = Mənbə.mətndən(kod, "s14.alqor", x)
+            Parser(Lekser(m, x).leksə(), m, x).ayır()
+            self.assertTrue(x.uğurludur(),
+                            f"ayrılmır:\n{b}\n{x.hesabat(False)}")
+
+
+class TapşırıqNümunəsiSınağı(unittest.TestCase):
+    """09 — desktop dərsliyinin yekun proqramı (bələdçi § 4)."""
+
+    def test_09_tapsiriqlar_işləyir(self):
+        yol = (Path(__file__).parent.parent.parent / "numuneler"
+               / "09-tapsiriqlar.alqor")
+        from alqor.icraci import İcraçı
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.tipyoxlayici import TipYoxlayıcı
+        from alqor.xeta import XətaToplayıcı
+
+        x = XətaToplayıcı()
+        mənbə = Mənbə.fayldan(yol, x)
+        ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+        t = XətaToplayıcı()
+        TipYoxlayıcı(t).yoxla(ağac)
+        self.assertTrue(t.uğurludur(), t.hesabat(False))
+
+        sətirlər: list[str] = []
+        icraçı = İcraçı(çıxış=sətirlər.append, giriş=lambda: "")
+        icraçı.əsas_qovluq = yol.parent
+        self.assertEqual(icraçı.işlət(ağac, ["sınaq"]), 0)
+        self.assertEqual(len(sətirlər), 8, sətirlər)
+        for s in sətirlər:
+            self.assertNotIn("yanlış", s)
+            self.assertTrue(s.endswith("doğru"), s)
 
 
 if __name__ == "__main__":
