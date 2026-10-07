@@ -534,10 +534,10 @@ def elanZolağı(icraçı, mətn: Any = "", növ: Any = "məlumat",
         if bağlandı is not None else None])
 
 
-def təqvim(icraçı, il: Any = 2026, ay_: Any = 1, seçili: Any = None,
+def təqvim(icraçı, il: Any = 2026, ayı: Any = 1, seçili: Any = None,
            klik: Any = None, qeydlilər: Any = None) -> Element:
     i = int(_say(il, 2026))
-    a = max(1, min(12, int(_say(ay_, 1))))
+    a = max(1, min(12, int(_say(ayı, 1))))
     seç = _m(seçili, icraçı) if seçili is not None else ""
     qeydli = set(_sətirlər(qeydlilər, icraçı))
     həftələr = calendar.Calendar(firstweekday=0).monthdayscalendar(i, a)
@@ -794,13 +794,23 @@ def karusel(icraçı, slaydlar: Any = None, cari: Any = 0,
             for i in range(n)])])
 
 
-def markdown(icraçı, mətn: Any = "") -> Element:
+def işarəliMətn(icraçı, mətn: Any = "") -> Element:
     """Markdown → HTML (alt çoxluq: başlıq, siyahı, kod, `kod`, **qalın**).
     Mətn qaçırılır — HTML yeridilə bilməz."""
-    from .deyerler import XamHTML
+    from .modullar.html_ import oxu
     from .senedci import md_html
+
+    def çevir(d) -> list:
+        n: list = []
+        for u in d.uşaq:
+            if isinstance(u, str):
+                n.append(u)
+            else:
+                n.append(Element(u.ad_, dict(u.atr), çevir(u)))
+        return n
+    # md_html mətni qaçırır — ağacda yalnız onun öz teqləri olur
     return _E("div", {"class": f"{P}markdown"},
-              XamHTML(md_html(_m(mətn, icraçı))))
+              çevir(oxu(md_html(_m(mətn, icraçı)))))
 
 
 def profilKartı(icraçı, ad: Any = "", vəzifə: Any = None,
@@ -917,9 +927,9 @@ def ikiSütun(icraçı, sol: Any = None, sağ: Any = None, nisbət: Any = "1:1",
         _E("div", {}, sol), _E("div", {}, sağ)])
 
 
-def nisbət(icraçı, məzmun: Any = None, nisbət_: Any = "16/9") -> Element:
+def nisbət(icraçı, məzmun: Any = None, forma: Any = "16/9") -> Element:
     return _E("div", {"class": f"{P}nisbət",
-                      "style": f"aspect-ratio:{_m(nisbət_, icraçı, '16/9')}"},
+                      "style": f"aspect-ratio:{_m(forma, icraçı, '16/9')}"},
               məzmun)
 
 
@@ -1230,7 +1240,7 @@ def _seçim_skeleti(ad: str, tip: str = "mətn", çevir: str = "dəyər") -> str
             'vidjet.elanZolağı(mətn: "Yeni versiya çıxıb!",\n'
             '                  növ: "məlumat")', ["bağlandı"]),
     Məlumat("təqvim", GÖSTƏRMƏ, "Aylıq təqvim",
-            'vidjet.təqvim(il: 2026, ay_: 10, seçili: özü.{ad},\n'
+            'vidjet.təqvim(il: 2026, ayı: 10, seçili: özü.{ad},\n'
             '              klik: özü.{ad}Seçildi)',
             ["klik"],
             'metod {ad}Seçildi(dəyər: mətn)\n'
@@ -1268,8 +1278,8 @@ def _seçim_skeleti(ad: str, tip: str = "mətn", çevir: str = "dəyər") -> str
             'metod {ad}Keç(dəyər: mətn)\n'
             '    özü.{ad} = tamƏt(dəyər, 0)\n'
             'son', 'vəziyyət {ad}: tam = 0'),
-    Məlumat("markdown", GÖSTƏRMƏ, "Markdown mətni",
-            'vidjet.markdown(mətn: "## Başlıq\\n\\n**Qalın** və `kod`")'),
+    Məlumat("işarəliMətn", GÖSTƏRMƏ, "Markdown işarələməli mətn",
+            'vidjet.işarəliMətn(mətn: "## Başlıq\\n\\n**Qalın** mətn")'),
     Məlumat("profilKartı", GÖSTƏRMƏ, "Profil kartı",
             'vidjet.profilKartı(ad: "Aysel Əliyeva", vəzifə: "Proqramçı",\n'
             '                   statistika: {"Layihə": 12, "İzləyici": 340})'),
@@ -1299,7 +1309,7 @@ def _seçim_skeleti(ad: str, tip: str = "mətn", çevir: str = "dəyər") -> str
     Məlumat("ikiSütun", DÜZÜLÜŞ, "İki sütunlu düzülüş (split)",
             'vidjet.ikiSütun(nisbət: "1:2", sol: [], sağ: [])'),
     Məlumat("nisbət", DÜZÜLÜŞ, "Sabit en/hündürlük nisbəti",
-            'vidjet.nisbət(nisbət_: "16/9", məzmun: [])'),
+            'vidjet.nisbət(forma: "16/9", məzmun: [])'),
     Məlumat("sürüşmə", DÜZÜLÜŞ, "Sürüşən sahə (scroll area)",
             'vidjet.sürüşmə(hündürlük: 240, məzmun: [])'),
     Məlumat("tətbiqQabığı", DÜZÜLÜŞ, "Tətbiq skeleti: başlıq, yan, məzmun",
@@ -1369,7 +1379,7 @@ def _seçim_skeleti(ad: str, tip: str = "mətn", çevir: str = "dəyər") -> str
     "xəttQrafiki": "Line Chart", "dairəQrafiki": "Pie Chart",
     "kiçikQrafik": "Sparkline", "video": "Video", "audio": "Audio",
     "yerləşdirmə": "Embed", "qalereya": "Image Gallery",
-    "karusel": "Carousel", "markdown": "Markdown",
+    "karusel": "Carousel", "işarəliMətn": "Markdown",
     "profilKartı": "Profile Card", "bildirişNişanı": "Notification Badge",
     "yüklənməÖrtüyü": "Loading Overlay", "nəticə": "Result",
     "şifrəGücü": "Password Strength",
@@ -1386,6 +1396,10 @@ def _seçim_skeleti(ad: str, tip: str = "mətn", çevir: str = "dəyər") -> str
 ƏLAVƏ_ÜSLUB = """
 /* ═══ Əlavə elementlər ═══ */
 .v-sönük{color:var(--v-sönük)}
+.v-aralıq-ayırıcı{color:var(--v-sönük)}
+.v-açılan-panel{vertical-align:top}
+.v-keçid-düyməsi{transition:background .15s}
+.v-elan-zolağı--məlumat,.v-qeyd-qutusu--məlumat,.v-nəticə--uğur,.v-şifrə-gücü--0{}
 /* Reytinq */
 .v-reytinq{display:inline-flex;gap:2px}
 .v-ulduz{border:0;background:none;font-size:22px;line-height:1;padding:0 1px;

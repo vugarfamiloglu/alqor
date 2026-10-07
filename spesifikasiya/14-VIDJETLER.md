@@ -312,9 +312,9 @@ Zəmanətlər (sınaqlarla yoxlanılır):
 
 ## 14.7 Vidjet arayışı
 
-Cəmi **57 vidjet**, 6 kateqoriya. Bütün parametrlər adlıdır və ixtiyaridir.
+Cəmi **118 vidjet**, 6 kateqoriya. Bütün parametrlər adlıdır və ixtiyaridir.
 
-### 14.7.1 Form və düymələr — Forms (`form`, 21)
+### 14.7.1 Form və düymələr — Forms (`form`, 40)
 
 #### `vidjet.düymə` — Button
 
@@ -900,7 +900,593 @@ Sahə etiketi.
 vidjet.etiket(mətn: "Ad", sahəsi: "ad")
 ```
 
-### 14.7.2 Göstərmə — Data Display (`göstərmə`, 14)
+#### `vidjet.reytinq` — Rating
+
+Ulduzla qiymətləndirmə.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `dəyər` | `0` | cari dəyər |
+| `maksimum` | `5` | ən böyük dəyər |
+| `klik` | — | basıldıqda çağırılır |
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.reytinq(dəyər: özü.reytinq, klik: özü.reytinqSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət reytinq: tam = 0
+
+metod reytinqSeçildi(dəyər: mətn)
+    özü.reytinq = tamƏt(dəyər, 0)
+son
+```
+
+#### `vidjet.seqmentli` — Segmented Control
+
+Seqmentli seçim (bir neçə düymədən biri).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `seçimlər` | — | `["a", "b"]` · `{"az": "Azərbaycan"}` · `[["az", "Azərbaycan"]]` |
+| `dəyər` | — | cari dəyər |
+| `klik` | — | basıldıqda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.seqmentli(seçimlər: ["Gün", "Həftə", "Ay"],
+                 dəyər: özü.seqmentli, klik: özü.seqmentliSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət seqmentli: mətn = "Gün"
+
+metod seqmentliSeçildi(dəyər: mətn)
+    özü.seqmentli = dəyər
+son
+```
+
+#### `vidjet.çipSeçimi` — Chip Select
+
+Çiplərlə çoxlu seçim.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `seçimlər` | — | `["a", "b"]` · `{"az": "Azərbaycan"}` · `[["az", "Azərbaycan"]]` |
+| `seçilənlər` | — | seçilmiş dəyərlərin siyahısı |
+| `klik` | — | basıldıqda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.çipSeçimi(seçimlər: ["Alqor", "Python", "Rust"],
+                 seçilənlər: özü.çipSeçimi, klik: özü.çipSeçimiDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət çipSeçimi: siyahı[mətn] = []
+
+metod çipSeçimiDəyişdi(dəyər: mətn)
+    əgər dəyər içindədir özü.çipSeçimi onda
+        özü.çipSeçimi = özü.çipSeçimi.filtr((x) => x != dəyər)
+    yoxsa
+        özü.çipSeçimi = özü.çipSeçimi + [dəyər]
+    son
+son
+```
+
+#### `vidjet.teqSahəsi` — Tag Input
+
+Teq daxil etmə sahəsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `teqlər` | — | göstərilən teqlərin siyahısı |
+| `əlavəEdildi` | — | Enter basıldıqda çağırılır — yeni teqi alır |
+| `silindi` | — | ✕ basıldıqda çağırılır — silinən dəyəri alır |
+| `yer` | `"Yazın və Enter basın"` | boş sahədə görünən ipucu (`placeholder`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `əlavəEdildi` · `silindi`
+
+```alqor
+vidjet.teqSahəsi(etiket: "Teqlər", teqlər: özü.teqSahəsi,
+                 əlavəEdildi: özü.teqSahəsiƏlavə,
+                 silindi: özü.teqSahəsiSil)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət teqSahəsi: siyahı[mətn] = []
+
+metod teqSahəsiƏlavə(dəyər: mətn)
+    əgər dəyər.kəs() != "" onda
+        özü.teqSahəsi = özü.teqSahəsi + [dəyər.kəs()]
+    son
+son
+
+metod teqSahəsiSil(dəyər: mətn)
+    özü.teqSahəsi = özü.teqSahəsi.filtr((x) => x != dəyər)
+son
+```
+
+#### `vidjet.təsdiqKodu` — OTP Input
+
+Təsdiq kodu (OTP) sahəsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `uzunluq` | `6` | simvol sayı |
+| `dəyər` | — | cari dəyər |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.təsdiqKodu(etiket: "SMS kodu", uzunluq: 6,
+                  dəyişdi: özü.təsdiqKoduDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət təsdiqKodu: mətn = ""
+
+metod təsdiqKoduDəyişdi(dəyər: mətn)
+    özü.təsdiqKodu = dəyər
+son
+```
+
+#### `vidjet.telefon` — Phone Field
+
+Telefon nömrəsi sahəsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"telefon"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `dəyər` | — | cari dəyər |
+| `ölkəKodu` | `"+994"` | nömrənin önündəki ölkə kodu |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `kömək` | — | sahənin altında kiçik izah mətni |
+| `xəta` | — | doluysa sahə qırmızı çərçivə alır, mətn altda görünür (`kömək`-i əvəzləyir) |
+| `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.telefon(etiket: "Telefon", dəyişdi: özü.telefonDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət telefon: mətn = ""
+
+metod telefonDəyişdi(dəyər: mətn)
+    özü.telefon = dəyər
+son
+```
+
+#### `vidjet.ePoçt` — Email Field
+
+E-poçt sahəsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"epoçt"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `dəyər` | — | cari dəyər |
+| `yer` | `"ad@nümunə.az"` | boş sahədə görünən ipucu (`placeholder`) |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `kömək` | — | sahənin altında kiçik izah mətni |
+| `xəta` | — | doluysa sahə qırmızı çərçivə alır, mətn altda görünür (`kömək`-i əvəzləyir) |
+| `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.ePoçt(etiket: "E-poçt", dəyişdi: özü.ePoçtDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət ePoçt: mətn = ""
+
+metod ePoçtDəyişdi(dəyər: mətn)
+    özü.ePoçt = dəyər
+son
+```
+
+#### `vidjet.keçidSahəsi` — URL Field
+
+URL (veb ünvan) sahəsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"ünvan"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `dəyər` | — | cari dəyər |
+| `yer` | `"https://"` | boş sahədə görünən ipucu (`placeholder`) |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `kömək` | — | sahənin altında kiçik izah mətni |
+| `xəta` | — | doluysa sahə qırmızı çərçivə alır, mətn altda görünür (`kömək`-i əvəzləyir) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.keçidSahəsi(etiket: "Sayt", dəyişdi: özü.keçidSahəsiDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət keçidSahəsi: mətn = ""
+
+metod keçidSahəsiDəyişdi(dəyər: mətn)
+    özü.keçidSahəsi = dəyər
+son
+```
+
+#### `vidjet.pulSahəsi` — Currency Field
+
+Məbləğ (valyuta) sahəsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"məbləğ"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `dəyər` | — | cari dəyər |
+| `valyuta` | `"₼"` | sahənin sonundakı valyuta işarəsi |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `kömək` | — | sahənin altında kiçik izah mətni |
+| `xəta` | — | doluysa sahə qırmızı çərçivə alır, mətn altda görünür (`kömək`-i əvəzləyir) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.pulSahəsi(etiket: "Məbləğ", valyuta: "₼",
+                 dəyişdi: özü.pulSahəsiDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət pulSahəsi: onluq = 0.0
+
+metod pulSahəsiDəyişdi(dəyər: mətn)
+    özü.pulSahəsi = onluqƏt(dəyər, 0.0)
+son
+```
+
+#### `vidjet.tarixAralığı` — Date Range Picker
+
+Tarix aralığı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `başlanğıc` | — | başlanğıc tarixi (`"2026-10-01"`) |
+| `bitmə` | — | son tarix |
+| `başlanğıcDəyişdi` | — | başlanğıc tarixi dəyişəndə çağırılır |
+| `bitməDəyişdi` | — | son tarix dəyişəndə çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `başlanğıcDəyişdi` · `bitməDəyişdi`
+
+```alqor
+vidjet.tarixAralığı(etiket: "Dövr",
+                    başlanğıcDəyişdi: özü.tarixAralığıBaşlanğıc,
+                    bitməDəyişdi: özü.tarixAralığıBitmə)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət tarixAralığıBaş: mətn = ""
+vəziyyət tarixAralığıSon: mətn = ""
+
+metod tarixAralığıBaşlanğıc(dəyər: mətn)
+    özü.tarixAralığıBaş = dəyər
+son
+
+metod tarixAralığıBitmə(dəyər: mətn)
+    özü.tarixAralığıSon = dəyər
+son
+```
+
+#### `vidjet.tarixVaxt` — Date Time Picker
+
+Tarix və vaxt seçimi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"tarixVaxt"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `dəyər` | — | cari dəyər |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.tarixVaxt(etiket: "Görüş", dəyişdi: özü.tarixVaxtDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət tarixVaxt: mətn = ""
+
+metod tarixVaxtDəyişdi(dəyər: mətn)
+    özü.tarixVaxt = dəyər
+son
+```
+
+#### `vidjet.ay` — Month Picker
+
+Ay seçimi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"ay"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `dəyər` | — | cari dəyər |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.ay(etiket: "Ay", dəyişdi: özü.ayDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət ay: mətn = ""
+
+metod ayDəyişdi(dəyər: mətn)
+    özü.ay = dəyər
+son
+```
+
+#### `vidjet.sayğac` — Number Stepper
+
+Artır/azalt sayğacı (stepper).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `dəyər` | `0` | cari dəyər |
+| `minimum` | `0` | ən kiçik dəyər |
+| `maksimum` | `99` | ən böyük dəyər |
+| `pillə` | `1` | bir addımda dəyişmə miqdarı |
+| `klik` | — | basıldıqda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.sayğac(etiket: "Say", dəyər: özü.sayğac,
+              klik: özü.sayğacDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət sayğac: tam = 1
+
+metod sayğacDəyişdi(dəyər: mətn)
+    özü.sayğac = tamƏt(dəyər, 0)
+son
+```
+
+#### `vidjet.avtoTamamlama` — Autocomplete
+
+Təklifli sahə (autocomplete).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"seçim"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `təkliflər` | — | yazarkən təklif olunan dəyərlər |
+| `dəyər` | — | cari dəyər |
+| `yer` | — | boş sahədə görünən ipucu (`placeholder`) |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `yazıldı` | — | hər düymə basışında çağırılır — cari mətni alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi` · `yazıldı`
+
+```alqor
+vidjet.avtoTamamlama(etiket: "Şəhər",
+                     təkliflər: ["Bakı", "Gəncə", "Şəki"],
+                     dəyişdi: özü.avtoTamamlamaDəyişdi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət avtoTamamlama: mətn = ""
+
+metod avtoTamamlamaDəyişdi(dəyər: mətn)
+    özü.avtoTamamlama = dəyər
+son
+```
+
+#### `vidjet.faylSürüklə` — Dropzone
+
+Fayl sürükləmə sahəsi (dropzone).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `ad` | `"fayl"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `növlər` | — | qəbul edilən fayl növləri: `[".png", "image/*"]` |
+| `çoxlu` | `yanlış` | bir neçə fayl seçməyə icazə verir |
+| `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `mətn` | `"Faylı bura sürükləyin və ya seçin"` | görünən mətn |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `dəyişdi`
+
+```alqor
+vidjet.faylSürüklə(etiket: "Sənəd yüklə",
+                   dəyişdi: özü.faylSürükləSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət faylSürüklə: mətn = ""
+
+metod faylSürükləSeçildi(dəyər: mətn)
+    özü.faylSürüklə = dəyər
+son
+```
+
+#### `vidjet.keçidDüyməsi` — Toggle Button
+
+Basılı qalan düymə (toggle).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `basılı` | `yanlış` | `doğru` — düymə basılı vəziyyətdədir |
+| `klik` | — | basıldıqda çağırılır |
+| `ikon` | — | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.keçidDüyməsi(mətn: "Qalın", ikon: "B",
+                    basılı: özü.keçidDüyməsi, klik: özü.keçidDüyməsiDəyiş)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət keçidDüyməsi: məntiq = yanlış
+
+metod keçidDüyməsiDəyiş()
+    özü.keçidDüyməsi = deyil özü.keçidDüyməsi
+son
+```
+
+#### `vidjet.açılanMenyu` — Dropdown Menu
+
+Açılan menyu (dropdown).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `"Menyu"` | görünən mətn |
+| `elementlər` | — | elementlərin siyahısı |
+| `klik` | — | basıldıqda çağırılır |
+| `növ` | `"ikinci"` | rəng növü |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.açılanMenyu(mətn: "Əməliyyatlar",
+                   elementlər: ["Redaktə", "Kopyala", "Sil"],
+                   klik: özü.açılanMenyuSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+metod açılanMenyuSeçildi(dəyər: mətn)
+    // dəyər — seçilən menyu elementi
+son
+```
+
+#### `vidjet.bölünmüşDüymə` — Split Button
+
+Bölünmüş düymə (əsas əməl + menyu).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `klik` | — | basıldıqda çağırılır |
+| `elementlər` | — | elementlərin siyahısı |
+| `seçildi` | — | menyudan seçim edildikdə çağırılır — seçilən dəyəri alır |
+| `növ` | `"əsas"` | rəng növü |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik` · `seçildi`
+
+```alqor
+vidjet.bölünmüşDüymə(mətn: "Saxla", klik: özü.bölünmüşDüyməSaxla,
+                     elementlər: ["Kimi saxla", "Hamısını"],
+                     seçildi: özü.bölünmüşDüyməSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+metod bölünmüşDüyməSaxla()
+    // əsas əməl
+son
+
+metod bölünmüşDüyməSeçildi(dəyər: mətn)
+    // menyudan seçim
+son
+```
+
+#### `vidjet.üzənDüymə` — Floating Action Button
+
+Üzən əməliyyat düyməsi (FAB).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `ikon` | `"+"` | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
+| `başlıq` | `"Əlavə et"` | başlıq mətni |
+| `klik` | — | basıldıqda çağırılır |
+| `tərəf` | `"sağ"` | hansı tərəfdə |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.üzənDüymə(ikon: "+", başlıq: "Yeni",
+                 klik: özü.üzənDüyməBasıldı)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+metod üzənDüyməBasıldı()
+    // …
+son
+```
+
+### 14.7.2 Göstərmə — Data Display (`göstərmə`, 42)
 
 #### `vidjet.başlıq` — Heading
 
@@ -1150,7 +1736,545 @@ vidjet.boşBaxış(başlıq: "Tapşırıq yoxdur",
                 mətn: "Yeni tapşırıq əlavə edin")
 ```
 
-### 14.7.3 Vəziyyət göstəriciləri — Feedback (`vəziyyət`, 5)
+#### `vidjet.çip` — Chip
+
+Çip (silinə bilən teq).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `növ` | `"ikinci"` | rəng növü |
+| `silindi` | — | ✕ basıldıqda çağırılır — silinən dəyəri alır |
+| `ikon` | — | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `silindi`
+
+```alqor
+vidjet.çip(mətn: "Alqor", növ: "əsas")
+```
+
+#### `vidjet.ikon` — Icon
+
+İkon (simvol).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `simvol` | `"★"` | göstərilən simvol və ya emoji |
+| `ölçü` | `20` | `kiçik` · `orta` · `böyük` |
+| `başlıq` | — | başlıq mətni |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.ikon(simvol: "⚙", ölçü: 24, başlıq: "Ayarlar")
+```
+
+#### `vidjet.klaviş` — Kbd
+
+Klaviatura düyməsi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `düymələr` | — | düymə adları, məs. `["Ctrl", "S"]` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.klaviş(düymələr: ["Ctrl", "S"])
+```
+
+#### `vidjet.vaxtXətti` — Timeline
+
+Vaxt xətti (timeline).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `elementlər` | — | elementlərin siyahısı |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.vaxtXətti(elementlər: [
+    ["2024", "Başlanğıc", "Layihə yaradıldı"],
+    ["2026", "1.0", "İlk buraxılış"]
+])
+```
+
+#### `vidjet.ağac` — Tree View
+
+Ağac görünüşü (fayl ağacı).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `elementlər` | — | elementlərin siyahısı |
+| `açılmış` | `doğru` | ilkin vəziyyətdə açıqdır |
+| `klik` | — | basıldıqda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.ağac(elementlər: [
+    ["mənbə", ["əsas.alqor", "model.alqor"]],
+    "README.md"
+], klik: özü.ağacSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət ağac: mətn = ""
+
+metod ağacSeçildi(dəyər: mətn)
+    özü.ağac = dəyər
+son
+```
+
+#### `vidjet.siyahıQrupu` — List Group
+
+Klikləyən sətirli siyahı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `elementlər` | — | elementlərin siyahısı |
+| `klik` | — | basıldıqda çağırılır |
+| `seçili` | — | seçilmiş elementin dəyəri |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.siyahıQrupu(elementlər: [
+    ["Profil", "Ad, şəkil"], ["Təhlükəsizlik", "Şifrə"]
+], seçili: özü.siyahıQrupu, klik: özü.siyahıQrupuSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət siyahıQrupu: mətn = ""
+
+metod siyahıQrupuSeçildi(dəyər: mətn)
+    özü.siyahıQrupu = dəyər
+son
+```
+
+#### `vidjet.avatarQrupu` — Avatar Group
+
+Avatar qrupu.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `adlar` | — | addımların adları |
+| `maksimum` | `4` | ən böyük dəyər |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.avatarQrupu(adlar: ["Aysel Əliyeva", "Kamran Rəhimov",
+                           "Nərmin Həsənova"])
+```
+
+#### `vidjet.göstərici` — Meter
+
+Ölçü göstəricisi (meter).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `dəyər` | `0` | cari dəyər |
+| `minimum` | `0` | ən kiçik dəyər |
+| `maksimum` | `100` | ən böyük dəyər |
+| `etiket` | — | sahənin üstündəki görünən ad |
+| `aşağı` | — | bu dəyərdən aşağı — sarı |
+| `yuxarı` | — | bu dəyərdən yuxarı — xəbərdarlıq rəngi |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.göstərici(etiket: "Disk", dəyər: 72, yuxarı: 80)
+```
+
+#### `vidjet.qiymətKartı` — Pricing Card
+
+Qiymət planı kartı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `plan` | `"Əsas"` | planın adı |
+| `qiymət` | `"0 ₼"` | qiymət mətni, məs. `"19 ₼"` |
+| `dövr` | `"/ ay"` | qiymətin dövrü, məs. `"/ ay"` |
+| `xüsusiyyətlər` | — | planın xüsusiyyətləri (siyahı) |
+| `düyməMətni` | `"Seç"` | düymənin yazısı |
+| `klik` | — | basıldıqda çağırılır |
+| `seçilmiş` | `yanlış` | `doğru` — vurğulanmış (tövsiyə olunan) kart |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.qiymətKartı(plan: "Pro", qiymət: "19 ₼",
+                   xüsusiyyətlər: ["10 layihə", "Dəstək"],
+                   klik: özü.qiymətKartıSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+metod qiymətKartıSeçildi(dəyər: mətn)
+    // dəyər — plan adı
+son
+```
+
+#### `vidjet.xüsusiyyətSiyahısı` — Feature List
+
+İşarəli xüsusiyyət siyahısı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `elementlər` | — | elementlərin siyahısı |
+| `işarə` | `"✓"` | hər sətrin önündəki işarə |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.xüsusiyyətSiyahısı(elementlər: ["Sürətli", "Pulsuz"])
+```
+
+#### `vidjet.rəy` — Testimonial
+
+Müştəri rəyi (testimonial).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `ad` | `""` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `vəzifə` | — | adın altında sönük mətn (vəzifə, rol) |
+| `reytinqi` | — | ulduz sayı (0–5) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.rəy(mətn: "Çox rahatdır!", ad: "Aysel Əliyeva",
+           vəzifə: "Dizayner", reytinqi: 5)
+```
+
+#### `vidjet.qəhrəman` — Hero
+
+Böyük giriş bölməsi (hero).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `başlıq` | `""` | başlıq mətni |
+| `altMətn` | — | başlığın altında sönük izah |
+| `hərəkətlər` | — | düymə(lər) — tək element və ya siyahı |
+| `mərkəzdə` | `doğru` | mətn ortaya düzlənsin |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.qəhrəman(başlıq: "Alqor ilə proqramlaşdır",
+                altMətn: "Azərbaycan dilində",
+                hərəkətlər: [vidjet.düymə(mətn: "Başla")])
+```
+
+#### `vidjet.səhifəAltlığı` — Footer
+
+Səhifə altlığı (footer).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `keçidlər` | — | `[[ünvan, mətn], …]` cütləri |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.səhifəAltlığı(mətn: "© 2026 Alqor",
+                     keçidlər: [["/haqqında", "Haqqında"]])
+```
+
+#### `vidjet.qeydQutusu` — Callout
+
+Diqqət çəkən qeyd (callout).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `başlıq` | — | başlıq mətni |
+| `mətn` | `""` | görünən mətn |
+| `növ` | `"məlumat"` | rəng növü |
+| `ikon` | — | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.qeydQutusu(başlıq: "Məsləhət",
+                  mətn: "Ctrl+S ilə saxlayın")
+```
+
+#### `vidjet.elanZolağı` — Banner
+
+Səhifə üstü elan zolağı (banner).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `növ` | `"məlumat"` | rəng növü |
+| `hərəkət` | — | altda göstərilən element — adətən düymə |
+| `bağlandı` | — | bağlama düyməsi (✕) basıldıqda çağırılır; verilməyibsə düymə görünmür |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `bağlandı`
+
+```alqor
+vidjet.elanZolağı(mətn: "Yeni versiya çıxıb!",
+                  növ: "məlumat")
+```
+
+#### `vidjet.təqvim` — Calendar
+
+Aylıq təqvim.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `il` | `2026` | il |
+| `ayı` | `1` | ay nömrəsi (1–12) |
+| `seçili` | — | seçilmiş elementin dəyəri |
+| `klik` | — | basıldıqda çağırılır |
+| `qeydlilər` | — | nöqtə ilə işarələnən tarixlər |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.təqvim(il: 2026, ayı: 10, seçili: özü.təqvim,
+              klik: özü.təqvimSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət təqvim: mətn = ""
+
+metod təqvimSeçildi(dəyər: mətn)
+    // gün: "2026-10-07"; ay keçidi: "2026-11"
+    özü.təqvim = dəyər
+son
+```
+
+#### `vidjet.sütunQrafiki` — Bar Chart
+
+Sütun qrafiki (bar chart).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `dəyərlər` | — | ədədlər siyahısı |
+| `etiketlər` | — | hər dəyərin adı (dəyərlərlə eyni sırada) |
+| `başlıq` | — | başlıq mətni |
+| `hündürlük` | `160` | hündürlük — ədəd piksel sayılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.sütunQrafiki(başlıq: "Satış",
+                    dəyərlər: [12, 19, 7, 15],
+                    etiketlər: ["Y", "F", "M", "A"])
+```
+
+#### `vidjet.xəttQrafiki` — Line Chart
+
+Xətt qrafiki (line chart).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `dəyərlər` | — | ədədlər siyahısı |
+| `etiketlər` | — | hər dəyərin adı (dəyərlərlə eyni sırada) |
+| `başlıq` | — | başlıq mətni |
+| `hündürlük` | `160` | hündürlük — ədəd piksel sayılır |
+| `sahəli` | `doğru` | xəttin altı rənglə dolsun |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.xəttQrafiki(başlıq: "Ziyarət",
+                   dəyərlər: [3, 8, 5, 12, 9],
+                   etiketlər: ["B.e", "Ç.a", "Ç", "C.a", "C"])
+```
+
+#### `vidjet.dairəQrafiki` — Pie Chart
+
+Dairə qrafiki (pie / donut).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `dəyərlər` | — | ədədlər siyahısı |
+| `etiketlər` | — | hər dəyərin adı (dəyərlərlə eyni sırada) |
+| `başlıq` | — | başlıq mətni |
+| `halqa` | `doğru` | `doğru` — ortası boş (donut) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.dairəQrafiki(dəyərlər: [50, 30, 20],
+                    etiketlər: ["Veb", "Mobil", "Desktop"])
+```
+
+#### `vidjet.kiçikQrafik` — Sparkline
+
+Kiçik xətt qrafiki (sparkline).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `dəyərlər` | — | ədədlər siyahısı |
+| `en` | `100` | en — ədəd piksel sayılır |
+| `hündürlük` | `28` | hündürlük — ədəd piksel sayılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.kiçikQrafik(dəyərlər: [3, 5, 4, 8, 6, 9])
+```
+
+#### `vidjet.video` — Video
+
+Video oynadıcı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mənbə` | `""` | şəklin ünvanı (URL və ya yol) |
+| `poster` | — | video başlamazdan əvvəl görünən şəkil |
+| `idarəetmə` | `doğru` | oynat/dayandır idarələri görünsün |
+| `avtomatik` | `yanlış` | səhifə açılanda özü oynasın (səssiz) |
+| `səssiz` | `yanlış` | səs bağlı başlasın |
+| `təkrar` | `yanlış` | bitəndə yenidən başlasın |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.video(mənbə: "/media/təqdimat.mp4")
+```
+
+#### `vidjet.audio` — Audio
+
+Audio oynadıcı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mənbə` | `""` | şəklin ünvanı (URL və ya yol) |
+| `idarəetmə` | `doğru` | oynat/dayandır idarələri görünsün |
+| `təkrar` | `yanlış` | bitəndə yenidən başlasın |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.audio(mənbə: "/media/mahnı.mp3")
+```
+
+#### `vidjet.yerləşdirmə` — Embed
+
+Xarici məzmun (embed, iframe).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `ünvan` | `""` | keçid ünvanı (`href`) |
+| `başlıq` | `"Yerləşdirilmiş məzmun"` | başlıq mətni |
+| `hündürlük` | `315` | hündürlük — ədəd piksel sayılır |
+| `nisbət` | — | en/hündürlük nisbəti — `"16/9"`, `"1:2"` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.yerləşdirmə(ünvan: "https://www.openstreetmap.org/export/embed.html", nisbət: "16/9")
+```
+
+#### `vidjet.qalereya` — Image Gallery
+
+Şəkil qalereyası.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `şəkillər` | — | şəkil ünvanları və ya `[ünvan, izah]` cütləri |
+| `sütunlar` | `3` | sütun sayı |
+| `klik` | — | basıldıqda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.qalereya(şəkillər: ["/şəkil/1.jpg", "/şəkil/2.jpg",
+                           "/şəkil/3.jpg"], sütunlar: 3)
+```
+
+#### `vidjet.karusel` — Carousel
+
+Slayd göstəricisi (carousel).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `slaydlar` | — | şəkil ünvanı, `[ünvan, başlıq]` və ya element |
+| `cari` | `0` | seçili element |
+| `klik` | — | basıldıqda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.karusel(slaydlar: [["/şəkil/1.jpg", "Bakı"],
+                          ["/şəkil/2.jpg", "Şəki"]],
+               cari: özü.karusel, klik: özü.karuselKeç)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət karusel: tam = 0
+
+metod karuselKeç(dəyər: mətn)
+    özü.karusel = tamƏt(dəyər, 0)
+son
+```
+
+#### `vidjet.işarəliMətn` — Markdown
+
+Markdown işarələməli mətn.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `mətn` | `""` | görünən mətn |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.işarəliMətn(mətn: "## Başlıq\n\n**Qalın** mətn")
+```
+
+#### `vidjet.profilKartı` — Profile Card
+
+Profil kartı.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `ad` | `""` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
+| `vəzifə` | — | adın altında sönük mətn (vəzifə, rol) |
+| `mənbə` | — | şəklin ünvanı (URL və ya yol) |
+| `hərəkətlər` | — | düymə(lər) — tək element və ya siyahı |
+| `statistika` | — | `{"Layihə": 12}` — ad → rəqəm |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.profilKartı(ad: "Aysel Əliyeva", vəzifə: "Proqramçı",
+                   statistika: {"Layihə": 12, "İzləyici": 340})
+```
+
+#### `vidjet.bildirişNişanı` — Notification Badge
+
+Saylı bildiriş ikonu.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `ikon` | `"🔔"` | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
+| `say` | `0` | nişandakı rəqəm; 0 olduqda gizlənir |
+| `klik` | — | basıldıqda çağırılır |
+| `maksimum` | `99` | ən böyük dəyər |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.bildirişNişanı(say: özü.bildirişNişanı, klik: özü.bildirişNişanıAç)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət bildirişNişanı: tam = 3
+
+metod bildirişNişanıAç()
+    özü.bildirişNişanı = 0
+son
+```
+
+### 14.7.3 Vəziyyət göstəriciləri — Feedback (`vəziyyət`, 8)
 
 #### `vidjet.tərəqqi` — Progress Bar
 
@@ -1244,7 +2368,64 @@ vidjet.statistika(etiket: "Satış", dəyər: "1 240 ₼",
                   dəyişmə: 12)
 ```
 
-### 14.7.4 Düzülüş — Layout (`düzülüş`, 7)
+#### `vidjet.yüklənməÖrtüyü` — Loading Overlay
+
+Məzmunun üstündə yüklənmə.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `yüklənir` | `doğru` | `doğru` — örtük və fırlanan görünür |
+| `mətn` | `"Yüklənir…"` | görünən mətn |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.yüklənməÖrtüyü(yüklənir: özü.yüklənməÖrtüyü, məzmun: [])
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət yüklənməÖrtüyü: məntiq = doğru
+```
+
+#### `vidjet.nəticə` — Result
+
+Nəticə səhifəsi (uğur, xəta, 404).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `növ` | `"uğur"` | rəng növü |
+| `başlıq` | `""` | başlıq mətni |
+| `mətn` | — | görünən mətn |
+| `hərəkətlər` | — | düymə(lər) — tək element və ya siyahı |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.nəticə(növ: "uğur", başlıq: "Sifariş qəbul olundu",
+              mətn: "Təşəkkür edirik!")
+```
+
+#### `vidjet.şifrəGücü` — Password Strength
+
+Şifrənin gücü göstəricisi.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `şifrə` | `""` | yoxlanılan şifrə |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.şifrəGücü(şifrə: özü.şifrəGücü)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət şifrəGücü: mətn = ""
+```
+
+### 14.7.4 Düzülüş — Layout (`düzülüş`, 13)
 
 #### `vidjet.qutu` — Box
 
@@ -1354,7 +2535,96 @@ Səhifə bölməsi.
 vidjet.bölmə(başlıq: "Haqqında", məzmun: [])
 ```
 
-### 14.7.5 Naviqasiya — Navigation (`naviqasiya`, 6)
+#### `vidjet.konteyner` — Container
+
+Mərkəzlənmiş en məhdud qab.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `en` | `1100` | en — ədəd piksel sayılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.konteyner(en: 960, məzmun: [])
+```
+
+#### `vidjet.mərkəz` — Center
+
+Məzmunu ortaya qoyur.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `hündürlük` | — | hündürlük — ədəd piksel sayılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.mərkəz(hündürlük: 200, məzmun: [])
+```
+
+#### `vidjet.ikiSütun` — Split Layout
+
+İki sütunlu düzülüş (split).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `sol` | — | sol sütunun məzmunu |
+| `sağ` | — | sağ küncdəki element(lər) |
+| `nisbət` | `"1:1"` | en/hündürlük nisbəti — `"16/9"`, `"1:2"` |
+| `boşluq` | `16` | uşaqlar arası məsafə — ədəd piksel sayılır, mətn olduğu kimi (`"1rem"`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.ikiSütun(nisbət: "1:2", sol: [], sağ: [])
+```
+
+#### `vidjet.nisbət` — Aspect Ratio
+
+Sabit en/hündürlük nisbəti.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `forma` | `"16/9"` | en/hündürlük nisbəti, məs. `"16/9"`, `"1/1"` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.nisbət(forma: "16/9", məzmun: [])
+```
+
+#### `vidjet.sürüşmə` — Scroll Area
+
+Sürüşən sahə (scroll area).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `hündürlük` | `240` | hündürlük — ədəd piksel sayılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.sürüşmə(hündürlük: 240, məzmun: [])
+```
+
+#### `vidjet.tətbiqQabığı` — App Shell
+
+Tətbiq skeleti: başlıq, yan, məzmun.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `başlıq` | — | başlıq mətni |
+| `yan` | — | yan panelin məzmunu |
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `altlıq` | — | aşağı hissə — adətən düymələr |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.tətbiqQabığı(başlıq: vidjet.başlıq(mətn: "Tətbiq"),
+                    yan: [], məzmun: [])
+```
+
+### 14.7.5 Naviqasiya — Navigation (`naviqasiya`, 8)
 
 #### `vidjet.naviqasiya` — Navbar
 
@@ -1485,7 +2755,53 @@ vidjet.çörəkQırıntıları(yollar: [
 ])
 ```
 
-### 14.7.6 Üst qat — Overlays (`üst qat`, 4)
+#### `vidjet.yanNaviqasiya` — Sidebar Nav
+
+Yan menyu (sidebar).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `elementlər` | — | elementlərin siyahısı |
+| `cari` | — | seçili element |
+| `klik` | — | basıldıqda çağırılır |
+| `başlıq` | — | başlıq mətni |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `klik`
+
+```alqor
+vidjet.yanNaviqasiya(elementlər: ["Ana", "Hesabatlar",
+                                  "Ayarlar"],
+                     cari: özü.yanNaviqasiya, klik: özü.yanNaviqasiyaSeçildi)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət yanNaviqasiya: mətn = "Ana"
+
+metod yanNaviqasiyaSeçildi(dəyər: mətn)
+    özü.yanNaviqasiya = dəyər
+son
+```
+
+#### `vidjet.alətlərPaneli` — Toolbar
+
+Alətlər paneli (toolbar).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.alətlərPaneli(məzmun: [
+    vidjet.ikonDüymə(ikon: "B", başlıq: "Qalın"),
+    vidjet.ikonDüymə(ikon: "I", başlıq: "Maili")
+])
+```
+
+### 14.7.6 Üst qat — Overlays (`üst qat`, 7)
 
 #### `vidjet.modal` — Modal
 
@@ -1579,6 +2895,91 @@ Hadisələr: `bağlandı`
 
 ```alqor
 vidjet.bildirişQutusu(mətn: "Saxlanıldı", növ: "uğur")
+```
+
+#### `vidjet.açılanPanel` — Popover
+
+Açılan panel (popover).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `düymə` | `"Ətraflı"` | açan düymənin mətni və ya elementi |
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `açılmış` | `yanlış` | ilkin vəziyyətdə açıqdır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+```alqor
+vidjet.açılanPanel(düymə: "Filtr", məzmun: [])
+```
+
+#### `vidjet.təsdiqDialoqu` — Confirm Dialog
+
+Təsdiq dialoqu.
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `başlıq` | `"Əminsiniz?"` | başlıq mətni |
+| `mətn` | `""` | görünən mətn |
+| `görünür` | `doğru` | `yanlış` olduqda heç nə göstərilmir — vəziyyətlə idarə olunur |
+| `təsdiqləndi` | — | təsdiq düyməsi basıldıqda çağırılır |
+| `ləğvEdildi` | — | ləğv və ya bağlama zamanı çağırılır |
+| `təsdiqMətni` | `"Bəli"` | təsdiq düyməsinin yazısı |
+| `ləğvMətni` | `"Xeyr"` | ləğv düyməsinin yazısı |
+| `təhlükəli` | `yanlış` | `doğru` — təsdiq düyməsi qırmızı (silmə kimi əməllər) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `təsdiqləndi` · `ləğvEdildi`
+
+```alqor
+vidjet.təsdiqDialoqu(başlıq: "Silinsin?",
+                     mətn: "Bu əməl geri qaytarılmır.",
+                     görünür: özü.təsdiqDialoqu, təhlükəli: doğru,
+                     təsdiqləndi: özü.təsdiqDialoquBəli,
+                     ləğvEdildi: özü.təsdiqDialoquXeyr)
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət təsdiqDialoqu: məntiq = yanlış
+
+metod təsdiqDialoquBəli()
+    özü.təsdiqDialoqu = yanlış
+    // silmə əməli
+son
+
+metod təsdiqDialoquXeyr()
+    özü.təsdiqDialoqu = yanlış
+son
+```
+
+#### `vidjet.altVərəq` — Bottom Sheet
+
+Aşağıdan açılan panel (bottom sheet).
+
+| Parametr | Standart | İzah |
+|---|---|---|
+| `başlıq` | `""` | başlıq mətni |
+| `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `görünür` | `doğru` | `yanlış` olduqda heç nə göstərilmir — vəziyyətlə idarə olunur |
+| `bağlandı` | — | bağlama düyməsi (✕) basıldıqda çağırılır; verilməyibsə düymə görünmür |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
+
+Hadisələr: `bağlandı`
+
+```alqor
+vidjet.altVərəq(başlıq: "Paylaş", görünür: özü.altVərəq,
+                bağlandı: özü.altVərəqBağla, məzmun: [])
+```
+
+Kod skeleti (IDE-də iki klik):
+
+```alqor
+vəziyyət altVərəq: məntiq = yanlış
+
+metod altVərəqBağla()
+    özü.altVərəq = yanlış
+son
 ```
 
 <!-- ARAYIŞ SONU -->
