@@ -601,8 +601,10 @@ dəyişən b = gözlə verilənlər.bağlan("postgres://user:pass@localhost/db")
 dəyişən b = gözlə verilənlər.bağlan("sqlite://./məlumat.db")
 dəyişən b = gözlə verilənlər.bağlan("mysql://...")
 
-// Etalon implementasiya: sqlite (+ "sqlite::yaddaş:"); postgres/mysql —
-// sürücü planlaşdırılır. Funksiyalar sinxrondur, `gözlə` də işləyir.
+// Sürücülər asılılıqsızdır: sqlite (+ "sqlite::yaddaş:"), PostgreSQL
+// (protokol v3; SCRAM-SHA-256/md5; ?sslmode=disable|prefer|require|verify-full),
+// MySQL/MariaDB (native və caching_sha2 parolu; ?ssl=true). Parametrlər
+// ($1… və ya ?) SQL-ə yapışdırılmır. Funksiyalar sinxrondur, `gözlə` də işləyir.
 
 // Sorğu
 dəyişən sətirlər = gözlə b.sorğu("SELECT * FROM istifadəçilər WHERE yaş > $1", 18)
