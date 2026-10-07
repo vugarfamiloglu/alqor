@@ -2,7 +2,7 @@
 
 > Yeni sessiyada işə buradan başlayın. İş birbaşa `main` budağında
 > aparılır; hər addımdan sonra commit + push.
-> Sınaq: `cd alqorc && python sina.py --nümunələr` (1102 sınaq keçir).
+> Sınaq: `cd alqorc && python sina.py --nümunələr` (1105 sınaq keçir).
 > Studio brauzer sınaqları Playwright ilə: `python -m unittest sinaq.test_studio`.
 
 ## ✅ Hazır olanlar
@@ -48,7 +48,6 @@
 | İş | Nə qalıb |
 |---|---|
 | qur | yalnız `.pyz` — quraşdırıcı yoxdur |
-| Dil məsələləri | `hər x üçün siyahı içində` söz sırası; `5.` yazılışı spesifikasiya ilə uyğun deyil (bax `alqorc/VEZIYYET.md`) |
 
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 

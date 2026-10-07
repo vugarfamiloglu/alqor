@@ -353,7 +353,9 @@ ekranda görünür:   əgər x > 5 onda
 3.14
 0.5
 .5                 // XƏTA — nöqtədən əvvəl rəqəm olmalıdır
-5.                 // XƏTA — nöqtədən sonra rəqəm olmalıdır
+5.                 // XƏTA (ALQ-L006) — nöqtədən sonra rəqəm olmalıdır
+5.mətnƏt()         // düzgün — tam ədədin metodu (nöqtədən sonra ad)
+t.1.0              // düzgün — iç-içə kortej indeksi (onluq ədəd deyil)
 5.0                // düzgün
 1.5e3              // 1500.0
 2.5E-4             // 0.00025

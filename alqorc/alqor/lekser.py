@@ -512,10 +512,27 @@ class Lekser:
 
         # Kəsr hissəsi — `..` diapazonu ilə qarışdırmamaq üçün
         # nöqtədən sonra MÜTLƏQ rəqəm olmalıdır
-        if (self._gör(0) == "." and rəqəmdir(self._gör(1))):
+        # `t.1.0` — kortej indeksindən sonrakı nöqtə kəsr deyil
+        kortej_indeksi = (baş > 0 and self.m[baş - 1] == "."
+                          and not (baş > 1 and self.m[baş - 2] == "."))
+        if kortej_indeksi:
+            pass
+        elif (self._gör(0) == "." and rəqəmdir(self._gör(1))):
             onluqdur = True
             self.i += 1
             self._rəqəmlər_atla()
+        elif (self._gör(0) == "." and self._gör(1) != "."
+              and not hərfdir(self._gör(1) or " ")
+              and self._gör(1) != "_"):
+            # `5.` — § 1.9.2: nöqtədən sonra rəqəm olmalıdır. `5.mətnƏt()`
+            # (metod), `1..3` (diapazon), `t.0` (kortej indeksi) toxunulmur
+            self.x.xəta("ALQ-L006", mesaj("ALQ-L006"),
+                        self.s.yer(baş, self.i + 1 - baş),
+                        f"`{self.m[baş:self.i]}.` — nöqtədən sonra rəqəm "
+                        "olmalıdır",
+                        f"onluq ədəd: `{self.m[baş:self.i]}.0`")
+            self.i += 1
+            onluqdur = True
 
         # Eksponent
         if self._gör(0) in ("e", "E"):

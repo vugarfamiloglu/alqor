@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **118 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**1102 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**1105 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -84,7 +84,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alq --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 1102 sınaq + nümunələr
+python sina.py --nümunələr                       # 1105 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alq
 python alqorc.py işlət ../numuneler/04-siniflər.alq
 python alqorc.py tokenlər ../numuneler/01-salam.alq
@@ -386,19 +386,11 @@ kodu düzəltdik (və ya spesifikasiyanı, əgər o səhv idisə).
 
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
-### 1. `hər x üçün siyahı içində` söz sırası
+### ✅ Həll olundu (1–5)
 
-Qrammatik cəhətdən tam təbii deyil (təbii forma "siyahıdakı hər x üçün",
-amma `-dakı` şəkilçisi açar söz ola bilmir — `gətir ...dan` ilə eyni
-səbəb). Lekser və parser hazırda yalnız bu formanı dəstəkləyir.
-Alternativ `siyahı içində hər x üçün` da əlavə edilə bilər.
-
-### 2. `5.` yazılışı
-
-Spesifikasiya § 1.9.2 bunu xəta adlandırır, lekser isə `TAM(5)` + `OP(.)`
-buraxır (çünki `5.mətnƏt()` işləməlidir). Spesifikasiya düzəldilməlidir.
-
-### ✅ Həll olundu (3–5)
+- **Alternativ dövr forması** — `siyahı içində hər x üçün … son` (§ 4.5).
+- **`5.` yazılışı** — lekser ALQ-L006 verir (`5.0` təklifi); `5.mətnƏt()`
+  və `t.1.0` (kortej indeksi) düzgün işləyir.
 
 - **Tip yoxlayıcısının əhatəsi** — icrada olan hər modul üzvünün, daxili
   tip metodunun və kitabxana obyektinin imzası var; `sərt` rejim real

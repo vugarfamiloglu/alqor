@@ -586,6 +586,10 @@ class Parser:
         yer = self._bax().yer
         ifadə = self._ifadə()
 
+        # Alternativ dövr forması: `siyahı içində hər x üçün … son`
+        if self._acar("içində") and self._acar("hər", irəli=1):
+            return self._içində_hər(yer, ifadə)
+
         # `i++` / `i--`
         if self._op("++", "--"):
             op = self._al().dəyər
@@ -918,6 +922,28 @@ class Parser:
         self._son_tələb("hər")
         return A.Hər(yer, bağlamalar, mənbə, gövdə, addım, şərt,
                      yoxsa, asinxron, etiket)
+
+    def _içində_hər(self, yer, mənbə) -> A.Hər:
+        """`mənbə içində hər x üçün [əgər şərt] … [yoxsa …] son` (§ 4.4)."""
+        self._tələb_acar("içində")
+        self._al()                                   # `hər`
+        bağlamalar = [self._bağlama()]
+        while self._qəbul_op(","):
+            bağlamalar.append(self._bağlama())
+        üçün = self._bax()
+        self._tələb_acar("üçün")
+        şərt = None
+        # Filtr yalnız EYNİ sətirdə: növbəti sətirdəki `əgər` gövdədir
+        if self._acar("əgər") and self._bax().yer.sətir == üçün.yer.sətir:
+            self._al()
+            şərt = self._ifadə()
+        gövdə = self._blok("yoxsa")
+        yoxsa = None
+        if self._qəbul_acar("yoxsa"):
+            yoxsa = self._blok()
+        self._son_tələb("hər")
+        return A.Hər(yer, bağlamalar, mənbə, gövdə, None, şərt, yoxsa,
+                     False, None)
 
     # ── Cəhd / istifadə ───────────────────────────────────────────────
 
