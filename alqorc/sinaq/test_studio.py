@@ -542,7 +542,7 @@ class Skelet(unittest.TestCase):
         self.assertIn("klik: özü.düymə1Basıldı),\n", n.mətn)
 
     def test_bütün_kataloq_tip_yoxlamasından_keçir(self):
-        """57 vidjetin hər biri iki dəfə əlavə olunur — xəta, T002 yox."""
+        """Bütün vidjetlərin hər biri iki dəfə əlavə olunur — xəta, T002 yox."""
         for m in V.KATALOQ:
             with self.subTest(vidjet=m.ad):
                 for baza in ("", JSX_KOMPONENT, SİYAHI_KOMPONENT, BAŞQA_KOD):
@@ -1093,7 +1093,9 @@ class Brauzer(unittest.TestCase):
         self.aç("boş.alqor")
         self.səhifə.click('[data-panel="palet"]')
         p = self.səhifə
-        self.assertEqual(p.locator(".vidjet-elementi .miniatür").count(), 57)
+        from alqor import vidjet as V
+        self.assertEqual(p.locator(".vidjet-elementi .miniatür").count(),
+                         len(V.KATALOQ))
         # Shadow DOM içində vidjetin həqiqi HTML-i (Playwright açıq
         # shadow kökə daxil olur)
         düymə = p.locator('[data-vidjet="düymə"] .miniatür button.v-düymə')

@@ -271,7 +271,7 @@ python -m unittest sinaq.test_studio -v
 məhdudlaşması (10 qaçış cəhdi × 4 əməliyyat, simvolik keçid, prefiks
 hiyləsi), diaqnostikanın sətir/sütunu, skelet (boş fayl, komponentsiz
 fayl, JSX komponent, `məzmun` siyahısı, təkrar adlar, sabit ad
-toqquşması, `gətir vidjet`, kursor yeri, 57 vidjet × 4 forma × 2 dəfə
+toqquşması, `gətir vidjet`, kursor yeri, 118 vidjet × 4 forma × 2 dəfə
 tip yoxlaması), tamamlama, klaviatura qaydaları, `01-salam.alqor`-un
 SSE ilə işlədilməsi (stdin daxil), dayandırma, önbaxış, şablonlar,
 `studio --sınaq`.

@@ -57,7 +57,7 @@ python alqorc.py söhbət                              # interaktiv rejim
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py işlət ../numuneler/05-veb-server.alqor   # veb server
 python alqorc.py işlət ../numuneler/06-desktop.alqor      # desktop
-python alqorc.py işlət ../numuneler/08-vidjetler.alqor    # 57 vidjet
+python alqorc.py işlət ../numuneler/08-vidjetler.alqor    # 118 vidjet
 python alqorc.py işlət ../numuneler/09-tapsiriqlar.alqor  # tapşırıq meneceri
 python alqorc.py işlət ../numuneler/10-kitab-refi/esas.alqor  # veb sayt
 python alqorc.py studio ..                                # Alqor Studio
@@ -150,7 +150,7 @@ Dairə: sahə = 19.63, perimetr = 15.71
 | [11 — Veb Proqramlaşdırma](spesifikasiya/11-VEB-PROQRAMLASDIRMA.md) | Server, marşrutlar, şablonlar, komponentlər, təhlükəsizlik |
 | [12 — Desktop və Konsol](spesifikasiya/12-DESKTOP-VE-KONSOL.md) | Pəncərələr, menyular, dialoqlar, paketləmə |
 | [13 — Alət Zənciri](spesifikasiya/13-ALET-ZENCIRI.md) | CLI, formatter, linter, test, LSP, IDE, CI/CD |
-| [14 — Vidjetlər](spesifikasiya/14-VIDJETLER.md) | 57 hazır element, hadisələr, üslub sistemi, IDE kataloqu (arayış koddan qurulur) |
+| [14 — Vidjetlər](spesifikasiya/14-VIDJETLER.md) | 118 hazır element (Button, Table, Calendar, Charts …), hadisələr, üslub sistemi, IDE kataloqu (arayış koddan qurulur) |
 | [Qrammatika (EBNF)](spesifikasiya/qrammatika.ebnf) | Rəsmi formal qrammatika |
 | [Açar Sözlər](spesifikasiya/acar-sozler.md) | Tam siyahı + ASCII + beynəlxalq qarşılıqlar |
 
@@ -296,7 +296,7 @@ PROQRAMLASDIRMA DILI/
     │   ├── veb.py            HTTP server, marşrutlar, sessiya
     │   ├── sablon.py         `.alqorhtml` şablon mühərriki
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
-    │   ├── vidjet.py         57 hazır element (veb + desktop)
+    │   ├── vidjet.py         118 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
     └── sinaq/                1020 sınaq
 ```
