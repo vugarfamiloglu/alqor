@@ -73,6 +73,11 @@ def _keş() -> Path:
 def main() -> int:
     import alqorc
     kök = _keş()
+    if sys.stdout is None or sys.stderr is None:
+        # `pythonw` (konsolsuz pəncərəli tətbiq) — çıxış jurnal faylına
+        jurnal = open(kök / "jurnal.txt", "a", encoding="utf-8")
+        sys.stdout = sys.stdout or jurnal
+        sys.stderr = sys.stderr or jurnal
     return alqorc.əmr_işlət([str(kök / GİRİŞ), "--", *sys.argv[1:]])
 
 

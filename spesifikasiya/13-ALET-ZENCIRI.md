@@ -108,7 +108,7 @@ linux,windows,macos`, `--python-daxil`). Xarici alət tələb olunmur:
 | Fayl | Nədir |
 |---|---|
 | `<ad>_<v>_all.deb` | Debian/Ubuntu: `/usr/bin/<ad>`, menyu (`.desktop`), ikon, fayl növləri (MIME) |
-| `<ad>-<v>-windows.zip` | `Quraşdır.cmd`: `%LOCALAPPDATA%\Programs`, Başlat menyusu, masaüstü ikonu, fayl əlaqələri, "Proqramlar"-da silmə — idarəçi hüququ lazım deyil |
+| `<ad>-<v>-windows.zip` | `Qurasdir.cmd`: `%LOCALAPPDATA%\Programs`, Başlat menyusu, masaüstü ikonu, fayl əlaqələri, "Proqramlar"-da silmə — idarəçi hüququ lazım deyil |
 | `<ad>-<v>-windows.iss` | Inno Setup skripti; `iscc` PATH-dadırsa `…-setup.exe` də qurulur |
 | `<ad>-<v>-macos.zip` | `.app` paketi (Info.plist, sənəd növləri) |
 
