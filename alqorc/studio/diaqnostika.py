@@ -39,7 +39,7 @@ def _lüğət(d: Diaqnostika) -> dict[str, Any]:
 
 
 def yoxla(mətn: str, ad: str = "fayl.alq", rejim: str = "normal",
-          tip: bool = True) -> dict[str, Any]:
+          tip: bool = True, lint: dict | None = None) -> dict[str, Any]:
     """
     Mətni yoxlayır. Leksik/sintaktik xəta yoxdursa tip yoxlaması da
     aparılır (`alqorc.py yoxla` ilə eyni ardıcıllıq).
@@ -57,6 +57,13 @@ def yoxla(mətn: str, ad: str = "fayl.alq", rejim: str = "normal",
             mərhələ = "tip"
             from alqor.tipyoxlayici import tipləri_yoxla
             tipləri_yoxla(ağac, x, rejim)
+            if lint is not None:
+                mərhələ = "lint"
+                from alqor import alqorlint as AL
+                ayar = {**AL.STANDART_AYAR, **lint}
+                for t in AL.süz(AL.Yoxlayıcı(s, ağac, ayar, ad).işlət(),
+                                mətn, s, ayar):
+                    x.əlavə(t.diaqnostika())
     except RecursionError:
         x.xəta("ALQ-S001", f"{mərhələ}: iç-içəlik çox dərindir")
     except Exception as xəta:                       # noqa: BLE001

@@ -47,10 +47,12 @@ def _mesajlar(b: bytes) -> list[dict]:
 class Müştəri:
     """Serveri yaddaşda idarə edən sadə LSP müştərisi."""
 
-    def __init__(self):
+    def __init__(self, seçimlər=None):
         self.çıxış = io.BytesIO()
         self.s = L.Server(io.BytesIO(), self.çıxış)
         self.id = 0
+        if seçimlər is not None:
+            self.s.m_initialize({"initializationOptions": seçimlər})
 
     def göndər(self, metod: str, parametrlər=None, bildiriş=False):
         self.çıxış.seek(0)
@@ -187,7 +189,7 @@ class DiaqnostikaSınağı(unittest.TestCase):
         self.assertIn("mətn", t[0]["message"])
 
     def test_ascii_xəbərdarlığı(self):
-        d = Müştəri().aç(MƏNBƏ)
+        d = [x for x in Müştəri().aç(MƏNBƏ) if x["source"] == "alqor"]
         self.assertEqual([x["code"] for x in d], ["ALQ-L020"])
         self.assertEqual(d[0]["severity"], 2)
         self.assertEqual(d[0]["range"], {
@@ -440,6 +442,26 @@ class FormatVəDüzəlişSınağı(unittest.TestCase):
         hamısı = [x for x in r if x["kind"] == "source.fixAll.alqor"]
         self.assertTrue(hamısı[0]["edit"]["changes"][URI][0]["newText"]
                         .startswith("gətir vidjet\n"))
+
+    def test_lint_diaqnostikası_və_düzəlişi(self):
+        m = Müştəri()
+        d = m.aç("gətir json\ndəyişən a: məntiq = doğru\n"
+                 "əgər a == doğru onda\n    yaz(1)\nson\n")
+        lint = {x["code"]: x for x in d if x["source"] == "alqorlint"}
+        self.assertIn("ALQ-Y002", lint)
+        self.assertEqual(lint["ALQ-Y062"]["range"]["start"],
+                         {"line": 2, "character": 5})
+        r = m.sorğu("textDocument/codeAction", {
+            "textDocument": {"uri": URI},
+            "range": {"start": {"line": 2, "character": 6},
+                      "end": {"line": 2, "character": 6}},
+            "context": {"diagnostics": []}})
+        tez = [x for x in r if "a == doğru" in x["title"]]
+        self.assertEqual(tez[0]["edit"]["changes"][URI][0]["newText"], "a")
+        # söndürmək olur
+        m2 = Müştəri(seçimlər={"lint": False})
+        self.assertFalse([x for x in m2.aç("gətir json\n")
+                          if x["source"] == "alqorlint"])
 
     def test_bəlkə_təklifi(self):
         m = Müştəri()

@@ -219,34 +219,85 @@ ascii_düzəlt = doğru
 
 ---
 
-## 13.4 `alqorlint` — linter
+## 13.4 `alqorlint` — linter ✅
 
 ```bash
-alqorlint .
-alqorlint --düzəlt .             # avtomatik düzəldiləni düzəlt
-alqorlint --sərt .
+alqor lint .                     # və ya ./alqorlint .
+alqor lint --düzəlt .            # avtomatik düzəldiləni düzəlt
+alqor lint --sərtlik sərt .      # sərbəst | normal | sərt
+alqor lint --json .              # CI və redaktorlar üçün
+alqor lint --qaydalar            # bütün qaydalar
 ```
 
-### Yoxlamalar
-| Kateqoriya | Nümunə |
-|---|---|
-| İstifadəsiz | istifadə olunmayan dəyişən, idxal, funksiya |
-| Adlandırma | konvensiyaya uyğunluq |
-| Mürəkkəblik | çox dərin iç-içəlik, çox uzun funksiya |
-| Potensial xəta | müqayisədə `=` əvəzinə `==`, boş `tut` bloku |
-| Performans | dövrdə mətn birləşdirmə, lazımsız kopya |
-| Təhlükəsizlik | kodda gizli açar, SQL birləşdirmə, `\| xam` |
-| Üslub | mötərizəsiz qarışıq prioritet, `gətir *` |
-| Əlçatanlıq | veb komponentlərdə `alt` atributu yoxdur |
+Lint nəticələri `alqorls` vasitəsilə VS Code-da və Alqor Studio-nun
+«Problemlər» panelində də görünür; düzəldilə bilənlər üçün sürətli
+düzəliş (quick fix) təklif olunur.
+
+### Qaydalar
+
+| Kod | Ad | Kateqoriya | Səviyyə | Təsvir |
+|---|---|---|---|---|
+| `ALQ-Y001` | `istifadəsiz-dəyişən` | istifadəsiz | xəbərdarlıq | elan olunub, heç yerdə işlənməyən dəyişən və ya parametr |
+| `ALQ-Y002` | `istifadəsiz-idxal` | istifadəsiz | xəbərdarlıq | `gətir` ilə idxal olunub, işlənməyən modul — **düzəldilir** |
+| `ALQ-Y003` | `istifadəsiz-funksiya` | istifadəsiz | məlumat | heç yerdə çağırılmayan, ixrac olunmayan funksiya |
+| `ALQ-Y010` | `adlandırma-dəyişən` | adlandırma | xəbərdarlıq | dəyişən, parametr və funksiya adları kiçikDəvəQutusu olmalıdır |
+| `ALQ-Y011` | `adlandırma-tip` | adlandırma | xəbərdarlıq | sinif, struktur, interfeys, sadalama adları BöyükDəvəQutusu |
+| `ALQ-Y012` | `adlandırma-sabit` | adlandırma | məlumat | modul səviyyəsində sabitlər BÖYÜK_ALT_XƏTT ilə yazılır |
+| `ALQ-Y013` | `adlandırma-fayl` | adlandırma | məlumat | fayl adları kiçik hərf və defislə: `verilənlər-bazası.alq` |
+| `ALQ-Y014` | `kölgələmə` | adlandırma | xəbərdarlıq | daxili blokda xarici adı kölgələyən elan |
+| `ALQ-Y020` | `dərin-iç-içəlik` | mürəkkəblik | xəbərdarlıq | bloklar çox dərin iç-içədir (maks_dərinlik) |
+| `ALQ-Y021` | `uzun-funksiya` | mürəkkəblik | xəbərdarlıq | funksiya çox uzundur (maks_funksiya_sətri) |
+| `ALQ-Y022` | `çox-parametr` | mürəkkəblik | xəbərdarlıq | funksiyanın parametrləri çoxdur (maks_parametr) |
+| `ALQ-Y023` | `uzun-sətir` | mürəkkəblik | məlumat | sətir çox uzundur (maks_sətir) |
+| `ALQ-Y030` | `şərtdə-mənimsətmə` | potensial-xəta | xəta | şərtdə `=` — çox güman ki `==` nəzərdə tutulub |
+| `ALQ-Y031` | `boş-tut` | potensial-xəta | xəbərdarlıq | boş `tut` bloku xətanı səssizcə udur |
+| `ALQ-Y032` | `özünə-mənimsətmə` | potensial-xəta | xəbərdarlıq | `x = x` heç nə etmir |
+| `ALQ-Y033` | `özü-ilə-müqayisə` | potensial-xəta | xəbərdarlıq | `x == x` həmişə eyni nəticəni verir |
+| `ALQ-Y034` | `sabit-şərt` | potensial-xəta | xəbərdarlıq | şərt həmişə doğru və ya həmişə yanlışdır |
+| `ALQ-Y035` | `əlçatmaz-kod` | potensial-xəta | xəbərdarlıq | `qaytar`/`at`/`dayan`/`davam et`-dən sonrakı kod heç vaxt işləmir |
+| `ALQ-Y036` | `təkrar-açar` | potensial-xəta | xəta | lüğət literalında eyni açar iki dəfə |
+| `ALQ-Y037` | `təkrar-hal` | potensial-xəta | xəbərdarlıq | `seç` daxilində eyni `hal` iki dəfə |
+| `ALQ-Y038` | `boş-blok` | potensial-xəta | məlumat | gövdəsi boş `əgər` / dövr |
+| `ALQ-Y039` | `deyil-prioriteti` | potensial-xəta | xəbərdarlıq | `deyil a == b` = `deyil (a == b)` — mötərizə yazın |
+| `ALQ-Y040` | `dövrdə-mətn-birləşdirmə` | performans | xəbərdarlıq | dövrdə `mətn +=` — hissələri siyahıya yığıb `birləşdir` işlədin |
+| `ALQ-Y041` | `indeksli-dövr` | performans | məlumat | `hər i üçün 0..<s.uzunluq()` — `hər x üçün s içində` daha sadədir |
+| `ALQ-Y050` | `gizli-açar` | təhlükəsizlik | xəbərdarlıq | kodda parol / token / açar — mühit dəyişəni işlədin |
+| `ALQ-Y051` | `sql-birləşdirmə` | təhlükəsizlik | xəta | SQL sorğusu mətn birləşdirmə ilə qurulub — parametrlər işlədin (SQL inyeksiyası) |
+| `ALQ-Y052` | `xam-html` | təhlükəsizlik | xəbərdarlıq | şablonda `| xam` — qaçışsız HTML (XSS riski) |
+| `ALQ-Y053` | `əmr-birləşdirmə` | təhlükəsizlik | xəta | sistem əmri mətn birləşdirmə ilə qurulub (əmr inyeksiyası) |
+| `ALQ-Y060` | `qarışıq-prioritet` | üslub | xəbərdarlıq | `və` ilə `və ya` (və ya `??`) mötərizəsiz qarışıb |
+| `ALQ-Y061` | `gətir-ulduz` | üslub | xəbərdarlıq | `gətir modul.*` adları gizli gətirir — açıq siyahı yazın |
+| `ALQ-Y062` | `məntiqlə-müqayisə` | üslub | xəbərdarlıq | `x == doğru` əvəzinə `x`, `x == yanlış` əvəzinə `deyil x` — **düzəldilir** |
+| `ALQ-Y063` | `boşla-müqayisə` | üslub | məlumat | `x == boş` əvəzinə `x boşdur` — **düzəldilir** |
+| `ALQ-Y070` | `şəkil-alt` | əlçatanlıq | xəbərdarlıq | `<img>` / `vidjet.şəkil` alternativ mətnsiz |
+| `ALQ-Y071` | `mətnsiz-düymə` | əlçatanlıq | xəbərdarlıq | düymədə nə mətn, nə də `aria-label` var |
+| `ALQ-Y072` | `etiketsiz-sahə` | əlçatanlıq | məlumat | `<input>` üçün `aria-label` və ya `id` (etiket) yoxdur |
+
+`ALQ-Y001` və `ALQ-Y014` tip yoxlayıcısının `ALQ-T024` / `ALQ-T026`
+tapıntılarıdır — lint hesabatında qayda adı ilə göstərilir.
+
+### Konfiqurasiya
 
 ```toml
 [lint]
-sərtlik = "normal"        # sərbəst | normal | sərt
-söndür = ["istifadəsiz-dəyişən"]
-xəta = ["təhlükəsizlik-*"]
+sərtlik = "normal"        # sərbəst: yalnız potensial xəta və təhlükəsizlik
+                          # sərt: məlumat səviyyəli qaydalar da xəbərdarlıq olur
+söndür = ["uzun-sətir"]   # ad, kod və ya "kateqoriya-*" / "adlandırma-*"
+xəta = ["gizli-açar"]     # xəbərdarlığı xətaya qaldır
 maks_funksiya_sətri = 50
 maks_dərinlik = 4
+maks_sətir = 100
+maks_parametr = 6
 ```
+
+Söndürmə şərhləri:
+
+```alqor
+dəyişən parol = "test123"     // lint: söndür gizli-açar
+// alqor: lint-söndür adlandırma-*        (bütün fayl üçün)
+```
+
+Çıxış kodu: xəta varsa `1` (`--xəbərdarlıq-xətadır` ilə xəbərdarlıqda da).
 
 ---
 

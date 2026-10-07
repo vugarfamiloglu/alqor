@@ -229,13 +229,23 @@ class Lekser:
             return                                    # faylın başı
         if son.növ is Növ.SETIR_SONU:
             return                                    # təkrar yox
-        if son.növ is Növ.OP and son.dəyər not in IFADE_BITIREN_OP:
+        if son.növ is Növ.OP and son.dəyər not in IFADE_BITIREN_OP and \
+                not self._ulduz_idxalıdır(hədəf, son):
             return                                    # operatorla bitib
         if son.növ is Növ.ACAR and son.dəyər in AS.DAVAM_ACAR_SOZLERI:
             return
         if self._növbəti_sətir_zəncirdir():
             return                                    # `.metod()` zənciri
         hədəf.append(Token(Növ.SETIR_SONU, None, self.s.yer(self.i, 0)))
+
+    @staticmethod
+    def _ulduz_idxalıdır(hədəf: list[Token], son: Token) -> bool:
+        """`gətir modul.*` — sondakı `*` vurma operatoru deyil."""
+        if son.dəyər != "*":
+            return False
+        əhəmiyyətli = [t for t in hədəf[-3:] if t.növ is not Növ.SETIR_SONU]
+        return len(əhəmiyyətli) >= 2 and əhəmiyyətli[-2].növ is Növ.OP and \
+            əhəmiyyətli[-2].dəyər == "."
 
     def _növbəti_sətir_zəncirdir(self) -> bool:
         """

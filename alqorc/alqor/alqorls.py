@@ -1152,6 +1152,7 @@ class Sənəd:
     analiz: Analiz | None = None
     son_uğurlu: Analiz | None = None
     bərpa: Analiz | None = None       # xətalı sətirlər boşaldılmış analiz
+    lint: list = field(default_factory=list)   # alqorlint tapıntıları
 
 
 class Server:
@@ -1163,6 +1164,7 @@ class Server:
         self.işləyir = True
         self.çıxış_kodu = 0
         self.rejim = "normal"
+        self.lint = True                  # alqorlint diaqnostikaları
         self.köklər: list[Path] = []          # iş sahəsinin qovluqları
         self._disk_analizləri: dict[str, tuple[Any, Analiz]] = {}
         # Tip yoxlayıcısı idxal olunan faylı oxuyanda redaktordakı
@@ -1247,6 +1249,8 @@ class Server:
         seçimlər = p.get("initializationOptions") or {}
         if seçimlər.get("tipRejimi") in TY.REJİMLƏR:
             self.rejim = seçimlər["tipRejimi"]
+        if "lint" in seçimlər:
+            self.lint = bool(seçimlər["lint"])
         köklər = [q.get("uri") for q in p.get("workspaceFolders") or []]
         if not köklər and p.get("rootUri"):
             köklər = [p["rootUri"]]
@@ -1309,10 +1313,30 @@ class Server:
                         and d.yer.mənbə is s.analiz.mənbə}
             if sətirlər and len(sətirlər) <= 5:
                 s.bərpa = self._sətirsiz_analiz(s, *sətirlər)
+        diaq = [_diaqnostika_lsp(s.analiz, d)
+                for d in s.analiz.diaqnostikalar]
+        s.lint = self._lint(s, yol)
+        for t in s.lint:
+            d = _diaqnostika_lsp(s.analiz, t.diaqnostika())
+            d["source"] = "alqorlint"
+            diaq.append(d)
         self.bildiriş("textDocument/publishDiagnostics", {
-            "uri": s.uri, "version": s.versiya,
-            "diagnostics": [_diaqnostika_lsp(s.analiz, d)
-                            for d in s.analiz.diaqnostikalar]})
+            "uri": s.uri, "version": s.versiya, "diagnostics": diaq})
+
+    def _lint(self, s: "Sənəd", yol: Path | None) -> list:
+        """`alqorlint` qaydaları (tip yoxlayıcısının tapdıqları xaric —
+        onlar artıq diaqnostikadadır)."""
+        a = s.analiz
+        if not self.lint or not a.uğurlu or a.ağac is None:
+            return []
+        try:
+            from . import alqorlint as AL
+            ayar = AL.ayar_oxu(yol.parent if yol else ".")
+            y = AL.Yoxlayıcı(a.mənbə, a.ağac, {**AL.STANDART_AYAR, **ayar},
+                             str(yol) if yol else "")
+            return AL.süz(y.işlət(), a.mətn, a.mənbə, ayar)
+        except Exception:                                   # noqa: BLE001
+            return []
 
     def m_didOpen(self, p: dict) -> None:
         td = p["textDocument"]
@@ -1700,8 +1724,22 @@ class Server:
         a = s.analiz
         r = p.get("range") or {"start": {"line": 0, "character": 0},
                                "end": {"line": 0, "character": 0}}
-        return kod_əməliyyatları(a, s.uri, a.mövqelər.ofset(r["start"]),
-                                 a.mövqelər.ofset(r["end"]))
+        b, e = a.mövqelər.ofset(r["start"]), a.mövqelər.ofset(r["end"])
+        n = kod_əməliyyatları(a, s.uri, b, e)
+        for t in getattr(s, "lint", None) or []:
+            if not t.düzəliş or t.yer is None or not (
+                    t.yer.başlanğıc <= e and b <= t.yer.son):
+                continue
+            db, de, yeni = t.düzəliş
+            n.append({
+                "title": f"Düzəlt: {t.qeyd}" if "→" in t.qeyd
+                else f"Düzəlt [{t.qayda.ad}]",
+                "kind": "quickfix",
+                "diagnostics": [_diaqnostika_lsp(a, t.diaqnostika())],
+                "edit": {"changes": {s.uri: [{
+                    "range": a.mövqelər.aralıq(db, de),
+                    "newText": yeni}]}}})
+        return n
 
     METODLAR = {
         "initialize": m_initialize,

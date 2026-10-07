@@ -1,0 +1,4 @@
+#!/bin/sh
+# alqorlint — Alqor statik təhlil: alqorlint . / alqorlint --düzəlt .
+export PYTHONIOENCODING=utf-8
+exec python3 "$(dirname "$(readlink -f "$0")")/alqorc/alqorc.py" lint "$@"
