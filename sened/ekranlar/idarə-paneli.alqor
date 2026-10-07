@@ -1,0 +1,39 @@
+gətir vidjet
+
+komponent İdarəPaneli
+    vəziyyət dövr: mətn = "Ay"
+
+    metod dövrSeçildi(dəyər: mətn)
+        özü.dövr = dəyər
+    son
+
+    göstər()
+        qaytar vidjet.sütun(boşluq: 16, məzmun: [
+            vidjet.sətir(məzmun: [
+                vidjet.başlıq(mətn: "İdarə paneli", səviyyə: 2,
+                              altMətn: "Oktyabr 2026"),
+                vidjet.seqmentli(seçimlər: ["Gün", "Həftə", "Ay"],
+                                 dəyər: özü.dövr, klik: özü.dövrSeçildi)
+            ]),
+            vidjet.tor(sütunlar: 3, məzmun: [
+                vidjet.statistika(etiket: "Satış", dəyər: "12,5K ₼",
+                                  dəyişmə: "+12%"),
+                vidjet.statistika(etiket: "Sifariş", dəyər: "318",
+                                  dəyişmə: "+4%"),
+                vidjet.statistika(etiket: "Müştəri", dəyər: "1 024",
+                                  dəyişmə: "+9%")
+            ]),
+            vidjet.sütunQrafiki(başlıq: "Aylıq satış",
+                                dəyərlər: [12, 19, 7, 15, 22, 18],
+                                etiketlər: ["May", "İyn", "İyl", "Avq",
+                                            "Sen", "Okt"]),
+            vidjet.tərəqqi(etiket: "İllik hədəf", dəyər: 72,
+                           faizGöstər: doğru),
+            vidjet.sətir(məzmun: [
+                vidjet.düymə(mətn: "Hesabat yüklə",
+                             üslub: {"künc": 20, "fon": "#16a34a"}),
+                vidjet.düymə(mətn: "Ayarlar", növ: "ikinci")
+            ])
+        ])
+    son
+son

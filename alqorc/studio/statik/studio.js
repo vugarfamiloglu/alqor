@@ -352,6 +352,8 @@ function tabaKeç(yol) {
   diaqnostikaNəticəsi(t.diaq);
   elementləriÇək(t.elementlər);
   planlaYoxla(50);
+  // Başqa faylın komponent seçimi yeni fayla aid deyil
+  $("#onbaxis-komponent").innerHTML = "";
   if (S.önbaxışAçıq) önbaxışıYenilə();
   X.mövqe = null;
   if (xüsusiyyətPaneliAçıqdır()) xüsusiyyətləriYüklə();
@@ -1035,6 +1037,11 @@ async function önbaxışıYenilə(canlı = false) {
   try {
     const seçim = $("#onbaxis-komponent").value || undefined;
     const n = await API.göndər("/api/onbaxis", { yol: t.yol, komponent: seçim, canlı });
+    if (n.xəta && seçim && /tapılmadı/.test(n.xəta)) {
+      // Seçilmiş komponent bu faylda yoxdur — birincisi ilə yenidən
+      $("#onbaxis-komponent").innerHTML = "";
+      return önbaxışıYenilə(canlı);
+    }
     if (n.xəta) {
       xət.hidden = false; xət.textContent = n.xəta;
       if (!canlı) çərçivə.src = "about:blank";

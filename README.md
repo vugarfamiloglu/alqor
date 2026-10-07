@@ -24,6 +24,23 @@ yoxsa
 son
 ```
 
+## Ekran görüntüləri
+
+**Alqor Studio** — redaktor, element paleti (118 element, miniatürlü) və
+canlı önbaxış:
+
+![Alqor Studio — qaranlıq tema](sened/ekranlar/studio-qaranliq.png)
+
+**Xüsusiyyətlər paneli** — elementin mətni, rəngi, kənarı, şrifti kod
+yazmadan dəyişir; kod özü yazılır, önbaxış dərhal yenilənir:
+
+![Xüsusiyyətlər paneli](sened/ekranlar/studio-xususiyyetler.png)
+
+**Desktop tətbiq** — `numuneler/09-tapsiriqlar.alqor` (tapşırıq meneceri),
+eyni kod vebdə də işləyir:
+
+![Tapşırıq meneceri](sened/ekranlar/studio-tapsiriqlar.png)
+
 ---
 
 ## Layihənin vəziyyəti
