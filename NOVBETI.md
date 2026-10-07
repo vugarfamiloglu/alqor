@@ -34,13 +34,14 @@
 - Xüsusiyyətlər paneli: mətn, növ, rəng, fon, kənar, künc, şrift …
   → kod avtomatik yazılır, önbaxış canlı yenilənir
 
+**Tip yoxlayıcısı**: generiklərin çıxarılması, modul tipləri annotasiyada, `sərt` rejim tam əhatə ilə
+
 **Sənədlər**: spesifikasiya (§ 1–14), bələdçi dərslikləri, 10 nümunə proqram
 
 ## 🟡 Yarımçıq qalanlar
 
 | İş | Nə qalıb |
 |---|---|
-| Tip yoxlayıcısı | generiklər çıxarılmır (`T` hər şeyə uyğun); `pəncərə.Pəncərə` kimi modul tipləri annotasiyada tanınmır; `sərt` rejim hələ tam deyil |
 | alqorls (LSP) | istinad və ad dəyişmə yalnız cari faylda (layihə üzrə yox); kod linzaları, semantik rənglər, DAP (debaq) yoxdur |
 | Alqor Studio | avtomatik tamamlama alqorls-a qoşulmayıb; sürüklə-burax düzülüş (vizual dizayner) yoxdur; önbaxış Studio temasını yox, OS temasını izləyir; debaq yoxdur |
 | http | WebSocket yoxdur |
