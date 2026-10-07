@@ -1100,6 +1100,19 @@ class Brauzer(unittest.TestCase):
         self.assertEqual(düymə.inner_text(), "Yadda saxla")
         self.assertTrue(p.locator(
             '[data-vidjet="cədvəl"] .miniatür table.v-cədvəl').count())
+        # Beynəlxalq adlar: kartın başlığı, kod adı altda; axtarış hər ikisi
+        self.assertEqual(p.inner_text('[data-vidjet="tərəqqi"] b'),
+                         "Progress Bar")
+        self.assertIn("vidjet.tərəqqi",
+                      p.inner_text('[data-vidjet="tərəqqi"] small'))
+        p.fill("#palet-axtar", "breadcrumb")
+        görünən = p.locator(".vidjet-elementi:not([hidden])")
+        self.assertEqual(görünən.count(), 1)
+        self.assertEqual(görünən.get_attribute("data-vidjet"),
+                         "çörəkQırıntıları")
+        p.fill("#palet-axtar", "cədvəl")
+        self.assertEqual(p.locator(".vidjet-elementi:not([hidden])")
+                         .first.get_attribute("data-vidjet"), "cədvəl")
 
     def test_xüsusiyyətlər_paneli_və_canlı_önbaxış(self):
         ta = self.aç("panel.alqor")
@@ -1107,7 +1120,8 @@ class Brauzer(unittest.TestCase):
         p.click('[data-panel="palet"]')
         p.locator(".fayl-elementi", has_text="düymə").click()
         p.wait_for_selector("#xus-forma:not([hidden]) .xüs-başlıq")
-        self.assertEqual(p.inner_text(".xüs-başlıq b"), "düymə")
+        self.assertEqual(p.inner_text(".xüs-başlıq b"), "Button")
+        self.assertIn("vidjet.düymə", p.inner_text(".xüs-başlıq"))
         self.assertEqual(p.input_value('[data-xus="mətn"]'), "Saxla")
         # Mətn
         p.fill('[data-xus="mətn"]', "Göndər")

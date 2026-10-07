@@ -275,7 +275,8 @@ def oxu(mətn: str, kursor: int) -> dict:
     ü = arqlar.get("üslub")
     üslub = üslub_oxu(ü.dəyər) if ü else {}
     return {
-        "ad": ç.ad, "mövqe": ç.ad_başı,
+        "ad": ç.ad, "beynəlxalqAd": V.BEYNƏLXALQ_ADLAR[ç.ad],
+        "mövqe": ç.ad_başı,
         "sətir": t.sətir_nömrəsi(ç.baş) + 1,
         "parametrlər": parametrlər,
         "üslub": üslub,                  # None — ifadədir, redaktə olunmur

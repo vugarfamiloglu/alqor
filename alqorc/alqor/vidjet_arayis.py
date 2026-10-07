@@ -266,11 +266,13 @@ def arayış() -> str:
     for k in V.KATEQORİYALAR:
         üzvlər = [m for m in V.KATALOQ if m.kateqoriya == k]
         n = BÖLMƏ_NÖMRƏSİ[k]
-        s.append(f"### 14.7.{n} {KATEQORİYA_ADLARI[k]} "
-                 f"(`{k}`, {len(üzvlər)})")
+        s.append(f"### 14.7.{n} {KATEQORİYA_ADLARI[k]} — "
+                 f"{V.KATEQORİYA_BEYNƏLXALQ[k]} (`{k}`, {len(üzvlər)})")
         s.append("")
         for m in üzvlər:
-            s.append(f"#### `vidjet.{m.ad}` — {m.izah}")
+            s.append(f"#### `vidjet.{m.ad}` — {V.BEYNƏLXALQ_ADLAR[m.ad]}")
+            s.append("")
+            s.append(m.izah + ".")
             s.append("")
             s.append("| Parametr | Standart | İzah |")
             s.append("|---|---|---|")

@@ -576,14 +576,12 @@ def _vidjet_izahı(ad: str) -> str | None:
         from .vidjet import _KATALOQ_XƏRİTƏSİ
     except Exception:                                   # noqa: BLE001
         return None
+    from .vidjet import BEYNƏLXALQ_ADLAR
     m = _KATALOQ_XƏRİTƏSİ.get(ad)
     if m is None:
         return None
-    for sahə in ("izah", "təsvir", "açıqlama"):
-        v = getattr(m, sahə, None)
-        if v:
-            return str(v)
-    return None
+    beynəlxalq = BEYNƏLXALQ_ADLAR.get(ad)
+    return f"**{beynəlxalq}** — {m.izah}" if beynəlxalq else m.izah
 
 
 # ═══════════════════════════════════════════════════════════════════════

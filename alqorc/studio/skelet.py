@@ -1002,6 +1002,11 @@ def çağırışı_tamamla(mətn: str, kursor: int) -> Nəticə:
                   əlavələr + [f"gətir {a}" for a in idx])
 
 
+def _beynəlxalq(ad: str) -> str:
+    from alqor.vidjet import BEYNƏLXALQ_ADLAR
+    return BEYNƏLXALQ_ADLAR.get(ad, ad)
+
+
 def elementlər(mətn: str) -> list[dict]:
     """Fayldakı vidjet çağırışları və hər birində nəyin çatışmadığı."""
     t = Mətn(mətn)
@@ -1020,6 +1025,7 @@ def elementlər(mətn: str) -> list[dict]:
                     + [a.split(":")[0] + ":" for a in th.arqumentlər])
         nəticə.append({
             "ad": ç.ad, "sətir": s + 1, "sütun": sütun + 1,
+            "beynəlxalqAd": _beynəlxalq(ç.ad),
             "mövqe": ç.ad_başı, "naməlum": False, "çatışmır": çatışmır,
             "komponent": th.k.ad if th.k else None,
             "kateqoriya": th.m.kateqoriya,
