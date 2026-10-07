@@ -44,7 +44,7 @@
 
 | İş | Nə qalıb |
 |---|---|
-| Alqor Studio | sürüklə-burax düzülüş (vizual dizayner) yoxdur; önbaxış Studio temasını yox, OS temasını izləyir; debaq yoxdur |
+| Alqor Studio | sürüklə-burax düzülüş (vizual dizayner) yoxdur; debaq yoxdur |
 | http | WebSocket yoxdur |
 | verilənlər | yalnız SQLite — PostgreSQL/MySQL sürücüsü və ORM modelləri (`@cədvəl`, `Model`) yoxdur |
 | qur | yalnız `.pyz` — quraşdırıcı yoxdur |

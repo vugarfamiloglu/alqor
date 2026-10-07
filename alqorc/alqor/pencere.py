@@ -482,6 +482,12 @@ def _siyahıya(d: Any) -> list:
 @media (prefers-color-scheme:dark){:root{
  --fon:#1c1c1e;--mətn:#f2f2f4;--kənar:#3a3a3d;--vurgu:#4c9ef0;
  --menyu-fon:#262629;--üst:#333336;--sönük:#79797f}}
+:root[data-tema="qaranlıq"]{color-scheme:dark;
+ --fon:#1c1c1e;--mətn:#f2f2f4;--kənar:#3a3a3d;--vurgu:#4c9ef0;
+ --menyu-fon:#262629;--üst:#333336;--sönük:#79797f}
+:root[data-tema="işıqlı"]{color-scheme:light;
+ --fon:#ffffff;--mətn:#1a1a1a;--kənar:#d8d8d8;--vurgu:#0b6bcb;
+ --menyu-fon:#f4f4f5;--üst:#eaeaec;--sönük:#9a9a9f}
 html,body{margin:0;height:100%}
 body{font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
  background:var(--fon);color:var(--mətn);
@@ -653,6 +659,10 @@ function alqorBağla(göndər){
 NÜVƏ_SKRİPTİ = _nüvə_skripti()
 
 SKRIPT = "(function(){" + NÜVƏ_SKRİPTİ + r"""
+ // `?tema=qaranlıq|işıqlı` — sistem temasının əvəzinə (Studio önbaxışı)
+ try{const t=new URLSearchParams(location.search).get("tema");
+  if(t==="qaranlıq"||t==="işıqlı")document.documentElement.dataset.tema=t;}
+ catch(e){}
  const kök=document.getElementById("alqor-kök");
  const menyu=document.getElementById("alqor-menyu");
  let bağlı=false;

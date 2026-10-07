@@ -150,6 +150,8 @@ function temaQur(t) {
   document.documentElement.dataset.tema = t;
   yaddaş("tema", t);
   if (S.kataloq) miniatürləriÇək();
+  const ç = $("#onbaxis-cercive");
+  if (ç && sonÖnbaxışÜnvanı && !$("#onbaxis-panel").hidden) ç.src = önbaxışÜnvanı(sonÖnbaxışÜnvanı, true);
 }
 
 function ölçüləriBərpaEt() {
@@ -1038,6 +1040,14 @@ async function önbaxışıAçBağla(aç = !S.önbaxışAçıq) {
   }
 }
 
+/** Önbaxış Studio-nun temasını izləyir (sistem temasını yox). */
+var sonÖnbaxışÜnvanı = "";   // `var`: temaQur yüklənmədə daha əvvəl çağırılır
+function önbaxışÜnvanı(ünvan, təzələ = false) {
+  sonÖnbaxışÜnvanı = ünvan;
+  const tema = encodeURIComponent(document.documentElement.dataset.tema || "");
+  return `${ünvan}&tema=${tema}` + (təzələ ? `&y=${Date.now()}` : "");
+}
+
 async function önbaxışıYenilə(canlı = false) {
   const t = cari();
   const xət = $("#onbaxis-xeta");
@@ -1069,7 +1079,7 @@ async function önbaxışıYenilə(canlı = false) {
       `<option${k === n.komponent ? " selected" : ""}>${qaç(k)}</option>`).join("");
     s.hidden = (n.komponentlər || []).length < 2;
     // Canlı yeniləmədə proses və ünvan eynidir — yalnız səhifə yenilənir
-    çərçivə.src = n.yeniləndi ? `${n.ünvan}&y=${Date.now()}` : n.ünvan;
+    çərçivə.src = önbaxışÜnvanı(n.ünvan, n.yeniləndi);
     xət.hidden = true;
   } catch (x) {
     // Seçilmiş komponent artıq yoxdursa — birincisi ilə yenidən
