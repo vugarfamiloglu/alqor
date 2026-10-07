@@ -92,10 +92,14 @@ class İcraçı:
     def _elandır(c: A.Cümlə) -> bool:
         return isinstance(c, (A.FunksiyaElanı, A.SinifElanı,
                               A.InterfeysElanı, A.SadalamaElanı,
-                              A.QarışıqElanı, A.TipAliası))
+                              A.QarışıqElanı, A.TipAliası, A.İdxal))
 
     def _elanları_qaldır(self, gövdə: list[A.Cümlə], m: Mühit) -> None:
         """Funksiya və siniflər qarşılıqlı istinad edə bilsin."""
+        # `gətir` əvvəl — `sinif X miras modul.Y` modulun sinfini görsün
+        for c in gövdə:
+            if isinstance(c, A.İdxal):
+                self._cümlə(c, m)
         for c in gövdə:
             if isinstance(c, A.FunksiyaElanı):
                 self._cümlə(c, m)
@@ -679,6 +683,7 @@ class İcraçı:
 
         s = Sinif(c.ad, baza, mücərrəd=c.mücərrəd, son=c.son,
                   quruluş=c.quruluş, mühit=m,
+                  annotasiyalar=list(c.annotasiyalar),
                   interfeyslər=[t.tam_ad for t in c.interfeyslər
                                 if isinstance(t, A.TipAdı)])
 
@@ -1221,7 +1226,10 @@ class İcraçı:
         if isinstance(obyekt, Sinif):
             var, dəyər = obyekt.statik_tap(ad)
             if var:
-                return dəyər
+                # Kitabxana sinfinin üzvü çağıran ALT sinfi bilməlidir
+                # (`İstifadəçi.tap(5)` → `verilənlər.Model.tap`)
+                bağla = getattr(dəyər, "alqor_bağla", None)
+                return bağla(obyekt, None) if bağla else dəyər
             if ad in obyekt.quruculər:
                 return _QurucuİstinadI(obyekt, ad)
             raise AlqorXəta("ArqumentXətası",
@@ -1327,7 +1335,8 @@ class İcraçı:
 
         var, dəyər = n.sinif.statik_tap(ad)
         if var:
-            return dəyər
+            bağla = getattr(dəyər, "alqor_bağla", None)
+            return bağla(n.sinif, n) if bağla else dəyər
 
         from .kitabxana import daxili_metod
         g = daxili_metod(self, n, ad)

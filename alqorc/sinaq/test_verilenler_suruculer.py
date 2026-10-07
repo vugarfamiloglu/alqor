@@ -150,6 +150,83 @@ class _Ortaq:
             self.assertEqual(int(self.b.bir_dəyər(
                 "SELECT COUNT(*) FROM a")), 2)
 
+    ORM = """gətir verilənlər
+
+@cədvəl("istifadəçilər")
+sinif İstifadəçi miras verilənlər.Model
+    @açar
+    xassə id: tam
+    xassə ad: mətn
+    @sütun("e_poçt")
+    xassə poçt: mətn?
+    xassə aktiv: məntiq = doğru
+    @keçici
+    xassə müvəqqəti: tam = 7
+    @əlaqə(çox: Sifariş)
+    xassə sifarişlər: siyahı[Sifariş] = []
+son
+
+sinif Sifariş miras verilənlər.Model
+    xassə id: tam
+    xassə istifadəçiId: tam
+    xassə məbləğ: onluq
+    @əlaqə(bir: İstifadəçi, açar: "istifadəçiId")
+    xassə sahib: İstifadəçi?
+son
+
+funksiya əsas()
+    dəyişən b = verilənlər.bağlan("ÜNVAN")
+    İstifadəçi.istifadəEt(b)
+    Sifariş.istifadəEt(b)
+    İstifadəçi.cədvəlYarat()
+    Sifariş.cədvəlYarat()
+    dəyişən a = İstifadəçi.yarat({"ad": "Aysel", "poçt": "a@x.az"})
+    dəyişən k = İstifadəçi.yarat({"ad": "Kamran"})
+    yaz(k.id - a.id)
+    Sifariş.yarat({"istifadəçiId": a.id, "məbləğ": 12.5})
+    Sifariş.yarat({"istifadəçiId": a.id, "məbləğ": 30})
+    k.ad = "Kamran Əliyev"
+    k.aktiv = yanlış
+    k.saxla()
+    k.saxla()
+    dəyişən t = İstifadəçi.tap(k.id)
+    yaz(t.ad, t.aktiv, t.poçt)
+    yaz(İstifadəçi.harada("ad", "bənzər", "A%").al()[0].poçt)
+    yaz(a.yüklə("sifarişlər").uzunluq())
+    dəyişən s = Sifariş.harada("məbləğ", ">", 20).ilk()
+    yaz(s.yüklə("sahib").ad, s.məbləğ)
+    yaz(İstifadəçi.say(), İstifadəçi.sırala("ad", "azalan").al()[0].ad)
+    yaz(k.sil(), İstifadəçi.say())
+    yaz(İstifadəçi.tap(999))
+    yaz(a.lüğət())
+son
+"""
+
+    def test_orm(self):
+        from alqor.icraci import İcraçı
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.xeta import XətaToplayıcı
+        for c in ("Sifariş", "istifadəçilər"):
+            self.b.icra(f"DROP TABLE IF EXISTS {self.b.ad(c, 'cədvəl')}")
+        if self.b.d.ad == "sqlite":
+            self.skipTest("yaddaşdakı SQLite hər bağlantıda yenidir — "
+                          "test_modullar-da sınanır")
+        x = XətaToplayıcı()
+        m = Mənbə.mətndən(self.ORM.replace("ÜNVAN", self.ÜNVAN), "orm.alq")
+        ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
+        self.assertTrue(x.uğurludur(), x.siyahı)
+        çıxış = []
+        İcraçı(çıxış=çıxış.append).işlət(ağac)
+        self.assertEqual(çıxış, [
+            "1", "Kamran Əliyev yanlış boş", "a@x.az", "2", "Aysel 30.0",
+            "2 Kamran Əliyev", "doğru 1", "boş",
+            '{"id": ' + çıxış[-1].split(":")[1].split(",")[0].strip()
+            + ', "ad": "Aysel", "poçt": "a@x.az", "aktiv": doğru}'])
+        for c in ("Sifariş", "istifadəçilər"):
+            self.b.icra(f"DROP TABLE IF EXISTS {self.b.ad(c, 'cədvəl')}")
+
 
 class SQLite(_Ortaq, unittest.TestCase):
     ÜNVAN = "sqlite::yaddaş:"

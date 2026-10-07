@@ -332,6 +332,8 @@ class Sinif(Çağırılan):
     mücərrəd_metodlar: set[str] = field(default_factory=set)
     interfeyslər: list[str] = field(default_factory=list)
     mühit: Mühit | None = None
+    # `@cədvəl("x")` kimi sinif annotasiyaları (AST) — ORM oxuyur
+    annotasiyalar: list = field(default_factory=list)
 
     # ── Axtarış ───────────────────────────────────────────────────────
 
