@@ -203,8 +203,11 @@ def _sətirdaxili(m: str) -> str:
     return m
 
 
-def md_html(mətn: str) -> str:
-    """Sənəd şərhlərində işlənən Markdown alt çoxluğu."""
+def md_html(mətn: str, əsl_başlıqlar: bool = False) -> str:
+    """Sənəd şərhlərində işlənən Markdown alt çoxluğu.
+
+    `əsl_başlıqlar` — `#` sayı başlıq səviyyəsidir (`##` → h2); sənəddə
+    isə bütün başlıqlar `h5` olur (elementin başlığından kiçik)."""
     s: list[str] = []
     sətirlər = mətn.split("\n")
     i = 0
@@ -238,7 +241,10 @@ def md_html(mətn: str) -> str:
         elif sətir.startswith("#"):
             abzası_bağla()
             siyahını_bağla()
-            s.append(f"<h5>{_sətirdaxili(sətir.lstrip('#').strip())}</h5>")
+            h = (min(6, len(sətir) - len(sətir.lstrip("#")))
+                 if əsl_başlıqlar else 5)
+            s.append(f"<h{h}>{_sətirdaxili(sətir.lstrip('#').strip())}"
+                     f"</h{h}>")
         elif sətir.lstrip().startswith(("- ", "* ")):
             abzası_bağla()
             if not siyahı:

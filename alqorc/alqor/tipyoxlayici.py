@@ -505,7 +505,7 @@ def _müştəri_metodları() -> dict[str, T.Tip]:
 
 def _vidjet_modulu() -> T.ModulTipi:
     """
-    57 vidjetin imzası `vidjet` modulunun Python funksiyalarından
+    Bütün vidjetlərin imzası `vidjet` modulunun Python funksiyalarından
     çıxarılır. Beləliklə parametr adları heç vaxt bir-birindən
     aralanmır: yeni vidjet əlavə edildikdə tip imzası da hazırdır.
     """

@@ -504,7 +504,7 @@ onların köhnəlmədiyini yoxlayır.
 | **Azərbaycan klaviaturası** | Avtomatik çevirmə, `;` kompozisiya, hərf paneli |
 | **Tam Azərbaycan interfeysi** | Menyular, mesajlar, sənədlər |
 | **Sıfır konfiqurasiya debaq** | Breakpoint, addım-addım, dəyişən izləmə |
-| **Vidjet paleti** | 57 element, hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
+| **Vidjet paleti** | 118 element (beynəlxalq adlarla: Button, Breadcrumb …), hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
 | **Xüsusiyyətlər paneli** | Seçilmiş elementin mətni, növü, ölçüsü və görünüşü (rəng, fon, kənar, künc, şrift… — `üslub:`, § 14.8); dəyişiklik koda yazılır, önbaxış dərhal yenilənir ✅ |
 | **Vizual qurucu** | Desktop UI-ni sürüklə-burax ilə düzəltmək |
 | **Bir klikdə paketləmə** | `.deb`, `.AppImage`, veb bundle |

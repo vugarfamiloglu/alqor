@@ -810,7 +810,7 @@ def işarəliMətn(icraçı, mətn: Any = "") -> Element:
         return n
     # md_html mətni qaçırır — ağacda yalnız onun öz teqləri olur
     return _E("div", {"class": f"{P}markdown"},
-              çevir(oxu(md_html(_m(mətn, icraçı)))))
+              çevir(oxu(md_html(_m(mətn, icraçı), əsl_başlıqlar=True))))
 
 
 def profilKartı(icraçı, ad: Any = "", vəzifə: Any = None,
@@ -1442,7 +1442,7 @@ button.v-çip{cursor:pointer}
 .v-aralıq{display:flex;align-items:center;gap:8px}
 .v-aralıq .v-giriş{flex:1;min-width:0}
 /* Sayğac */
-.v-sayğac{display:inline-flex;align-items:stretch;border:1px solid var(--v-kənar);
+.v-sayğac{align-self:flex-start;display:inline-flex;align-items:stretch;border:1px solid var(--v-kənar);
  border-radius:var(--v-radius);overflow:hidden}
 .v-sayğac-düyməsi{border:0;background:var(--v-üst);color:var(--v-mətn);font:inherit;
  width:36px;font-size:18px;cursor:pointer}

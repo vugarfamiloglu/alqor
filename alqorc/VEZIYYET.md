@@ -6,7 +6,7 @@
 lekser · parser · interpretator · standart kitabxana · REPL ·
 **JSX** · **tənbəl generatorlar** · **asinxron icra** ·
 **statik tip yoxlayıcı** · **veb server + şablon** · **desktop** ·
-**57 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
+**118 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
 **1020 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
@@ -44,7 +44,7 @@ alqorc/
 │   ├── veb.py            HTTP server, marşrutlar, sessiya, ara proqramlar
 │   ├── pencere.py        desktop: pəncərə, menyu, dialoq, hadisə dövrü;
 │   │                     brauzer nüvəsi (DOM yamağı + hadisə növbəsi)
-│   ├── vidjet.py         57 hazır interfeys elementi + IDE kataloqu
+│   ├── vidjet.py         118 hazır interfeys elementi + IDE kataloqu (+ vidjet_elave.py)
 │   ├── vidjet_arayis.py  spesifikasiya § 14.7-ni koddan qurur
 │   ├── konsol.py         rəng, sual-cavab, irəliləyiş, arqumentlər
 │   ├── alqorfmt.py       formatlayıcı (§ 13.3) — `alqorfmt.py` / `format`
