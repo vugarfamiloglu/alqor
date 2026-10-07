@@ -1648,6 +1648,16 @@ def _standart_ad(vidjet_adı: str) -> str:
  --v-vurgu:#4c9ef0;--v-vurgu-mətn:#0b1620;--v-üst:#26262b;
  --v-uğur:#4ac776;--v-xəbərdarlıq:#e3b341;--v-təhlükə:#ff7b72;
  --v-kölgə:0 1px 3px rgba(0,0,0,.4)}}
+:root[data-tema="qaranlıq"]{
+ --v-fon:#1c1c1f;--v-mətn:#f1f1f4;--v-kənar:#3a3a40;--v-sönük:#9a9aa3;
+ --v-vurgu:#4c9ef0;--v-vurgu-mətn:#0b1620;--v-üst:#26262b;
+ --v-uğur:#4ac776;--v-xəbərdarlıq:#e3b341;--v-təhlükə:#ff7b72;
+ --v-kölgə:0 1px 3px rgba(0,0,0,.4)}
+:root[data-tema="işıqlı"]{
+ --v-fon:#fff;--v-mətn:#17171a;--v-kənar:#d7d7db;--v-sönük:#6c6c75;
+ --v-vurgu:#0b6bcb;--v-vurgu-mətn:#fff;--v-üst:#f4f4f6;
+ --v-uğur:#167c3c;--v-xəbərdarlıq:#9a6700;--v-təhlükə:#c0392b;
+ --v-kölgə:0 1px 3px rgba(0,0,0,.1)}
 
 /* ── Düymələr ── */
 .v-düymə{display:inline-flex;align-items:center;gap:6px;

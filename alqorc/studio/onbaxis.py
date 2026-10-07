@@ -186,6 +186,9 @@ def əsas(arqumentlər: list[str]) -> int:
     # Pəncərə açılmır — yalnız server; çərçivəni Studio göstərir
     t.başsız = False
     p._açıqdır = True
+    # Çərçivə yenidən yüklənəndə (tema, canlı yeniləmə) səhifə `pagehide`
+    # göndərir — önbaxış bağlanmamalıdır; ömrünü Studio idarə edir
+    p.bağla = lambda: None
     t._serveri_qaldır()
     _bildir({"ünvan": p.ünvan(), "komponent": ad, "komponentlər": adlar})
     threading.Thread(target=_valideyni_izlə, args=(os.getppid(),),

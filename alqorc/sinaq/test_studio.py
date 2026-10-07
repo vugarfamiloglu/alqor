@@ -1184,6 +1184,24 @@ class Brauzer(unittest.TestCase):
             p.wait_for_timeout(150)
         self.assertIn("background:#16a34a", d.get_attribute("style"))
         self.assertEqual(d.inner_text(), "Göndər")
+        # Önbaxış Studio-nun temasını izləyir (sistem temasını yox)
+        tema = p.locator("html").get_attribute("data-tema")
+        self.assertEqual(çərçivə.locator("html").get_attribute("data-tema"),
+                         tema)
+        p.click("#dym-tema")
+        yeni = p.locator("html").get_attribute("data-tema")
+        self.assertNotEqual(yeni, tema)
+        son = time.monotonic() + 15
+        while time.monotonic() < son:
+            try:
+                if çərçivə.locator("html").get_attribute(
+                        "data-tema", timeout=1000) == yeni:
+                    break
+            except Exception:                           # noqa: BLE001
+                pass
+            p.wait_for_timeout(150)
+        self.assertEqual(çərçivə.locator("html").get_attribute("data-tema"),
+                         yeni)
         # Standarta qaytarmaq (✕) arqumenti silir
         p.click('[data-sətir="ölçü"] .sıfırla')
         son = time.monotonic() + 10
