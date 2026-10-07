@@ -531,6 +531,57 @@ class Server:
             mətnə(üslub, self._icraçı) if üslub is not None else ""))
         return self
 
+    def soket(self, naxış: str, idarəedici: Any) -> "Server":
+        """
+        WebSocket marşrutu (§ 11.6): hər qoşulmada `idarəedici(soket)`
+        çağırılır; `soket.hadisə("mesaj", …)`, `soket.göndər(…)`,
+        `soket.otağaYayımla(…)`.
+        """
+        from .vebsoket import Qovşaq
+        self._soketlər[str(naxış)] = (Marşrut("GET", str(naxış),
+                                              idarəedici, []), Qovşaq())
+        return self
+
+    def _soket_tap(self, yol: str):
+        for marşrut, qovşaq in self._soketlər.values():
+            if marşrut.uyğundur("GET", yol) is not None:
+                return marşrut, qovşaq
+        return None
+
+    def _soketi_idarə_et(self, işləyici) -> bool:
+        """WebSocket sorğusudursa idarə edir (bağlanana qədər) — True."""
+        from . import vebsoket as W
+        if not self._soketlər or işləyici.command != "GET" or \
+                not W.soket_sorğusudur(işləyici):
+            return False
+        ayrılmış = urllib.parse.urlsplit(_yolu_düzəlt(işləyici.path))
+        yol = urllib.parse.unquote(ayrılmış.path, encoding="utf-8",
+                                   errors="replace") or "/"
+        tapılan = self._soket_tap(yol)
+        if tapılan is None:
+            return False
+        marşrut, qovşaq = tapılan
+        işləyici.close_connection = True
+        if not W.server_əl_sıxması(işləyici):
+            return True
+        sorğu = Sorğu("GET", yol, ayrılmış.query,
+                      dict(işləyici.headers.items()), b"",
+                      işləyici.client_address[0], self)
+        sorğu._parametrlər = marşrut.uyğundur("GET", yol) or {}
+        b = W.Bağlantı(işləyici.connection, self._icraçı, False,
+                       qovşaq=qovşaq, sorğu=sorğu)
+        qovşaq.əlavə(b)
+        try:
+            self._icraçı._çağır(marşrut.idarəedici, [b], {}, None)
+        except AlqorXəta as x:
+            print(f"✖ WebSocket {yol}: {x.tip}: {x.mesaj}", file=sys.stderr)
+            b.bağla(1011, "server xətası")
+            qovşaq.çıxar(b)
+            return True
+        b._yay("qoşuldu")
+        b.dövr()
+        return True
+
     def xətaİdarəedicisi(self, f: Any) -> "Server":
         self._xəta_idarəedicisi = f
         return self
@@ -765,6 +816,11 @@ class Server:
                 pass                        # `veb.jurnal()` ara proqramı
 
             def _işlə(self):
+                try:
+                    if server._soketi_idarə_et(self):
+                        return
+                except (BrokenPipeError, ConnectionResetError):
+                    return
                 try:
                     cavab = server._sorğunu_qur_və_işlət(self)
                 except Exception:           # noqa: BLE001

@@ -437,6 +437,25 @@ CAVAB = T.Sadə("cavab")
 QRUP = T.Sadə("qrup")
 SESSİYA = T.Sadə("sessiya")
 MÜŞTƏRİ = T.Sadə("müştəri")
+VEBSOKET = T.Sadə("vebSoket")
+
+
+def _vebsoket_metodları() -> dict[str, T.Tip]:
+    m, i, e, h, b = T.MƏTN, T.TAM, T.İSTƏNİLƏN, T.HEÇ, T.MƏNTİQ
+    return {
+        "göndər": F(e, qaytarır=h),
+        "hadisə": F(m, e, qaytarır=VEBSOKET),
+        "al": F(i, qaytarır=e, standart=1),
+        "bağla": F(i, m, qaytarır=h, standart=2),
+        "açıqdır": F(qaytarır=b),
+        "kimlik": F(qaytarır=m),
+        "sorğu": F(qaytarır=T.ixtiyari(SORĞU)),
+        "otağaQoşul": F(m, qaytarır=h),
+        "otaqdanÇıx": F(m, qaytarır=h),
+        "otağaYayımla": F(m, e, b, qaytarır=i, standart=1),
+        "yayımla": F(e, b, qaytarır=i, standart=1),
+        "bağlanmaKodu": F(qaytarır=T.ixtiyari(i)),
+    }
 
 
 def _marşrut_metodları(özü: T.Tip) -> dict[str, T.Tip]:
@@ -460,6 +479,7 @@ def _server_metodları() -> dict[str, T.Tip]:
         "xətaİdarəedicisi": F(e, qaytarır=SERVER),
         "tapılmadı": F(e, qaytarır=SERVER),
         "dinlə": F(i, m, qaytarır=h, standart=2),
+        "soket": F(m, e, qaytarır=SERVER),
         "dayandır": F(qaytarır=h),
         "marşrutlar": F(qaytarır=T.Siyahı(T.Siyahı(m))),
         "mətnƏt": F(qaytarır=m),
@@ -2462,6 +2482,8 @@ class TipYoxlayıcı:
             return _sürücü_metodları()
         if t == MÜŞTƏRİ:
             return _müştəri_metodları()
+        if t == VEBSOKET:
+            return _vebsoket_metodları()
         if isinstance(t, T.Sadə):
             from . import modullar
             return modullar.obyekt_metodları(t.ad)

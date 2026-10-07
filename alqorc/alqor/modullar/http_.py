@@ -21,6 +21,11 @@
     gözlə http.faylYüklə(url, "arxiv.zip", irəliləyiş: (faiz) => yaz("{faiz}%"))
     gözlə http.faylGöndər(url, "sənəd.pdf")            // multipart
 
+    dəyişən ws = gözlə http.vebSoket("wss://nümunə.az/soket")   // § 11.6
+    ws.hadisə("mesaj", (m) => yaz(m))
+    ws.göndər("salam")
+    ws.bağla()
+
 Bütün funksiyalar `Gələcək` qaytarır — `gözlə` ilə həll olunur,
 `paralel(...)` ilə eyni anda bir neçə sorğu getmək olar. 4xx/5xx
 cavablar xəta deyil (`c.uğurlu()`, `c.yoxla()`); bağlantı problemi —
@@ -353,7 +358,15 @@ def qur(icraçı) -> dict[str, Any]:
         s.başlıqlar["Content-Type"] = növ
         return _gələcək(s)
 
+    def veb_soket(url, başlıqlar=None, vaxtLimiti=15000):
+        from ..vebsoket import bağlan
+        return Gələcək(
+            lambda: bağlan(icraçı, url, başlıqlar,
+                           max(0.1, float(vaxtLimiti) / 1000)),
+            f"vebSoket {url}")
+
     return {
+        "vebSoket": D("vebSoket", veb_soket, 1, 2),
         "al": D("al", metod("GET"), 1, 1),
         "göndər": D("göndər", metod("POST"), 1, 1),
         "yenilə": D("yenilə", metod("PUT"), 1, 1),
@@ -389,6 +402,8 @@ def tiplər() -> dict:
         "yamaq": Fsərbəst(G), "sil": Fsərbəst(G), "başlıq": Fsərbəst(G),
         "Sorğu": F(m, m, qaytarır=T.Sadə("httpSorğusu")),
         "faylYüklə": Fsərbəst(G), "faylGöndər": Fsərbəst(G),
+        "vebSoket": F(m, T.Lüğət(m, T.İSTƏNİLƏN), T.TAM,
+                      qaytarır=T.Gələcək(T.Sadə("vebSoket")), standart=2),
     }
 
 
