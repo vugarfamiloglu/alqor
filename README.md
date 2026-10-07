@@ -36,6 +36,11 @@ yazmadan dəyişir; kod özü yazılır, önbaxış dərhal yenilənir:
 
 ![Xüsusiyyətlər paneli](sened/ekranlar/studio-xususiyyetler.png)
 
+**Debaq** — sətir nömrəsinə klik (dayanma nöqtəsi), 🐞 Debaq; çağırış
+yığını, dəyişənlər, addım-addım icra:
+
+![Debaq](sened/ekranlar/studio-debaq.png)
+
 **Desktop tətbiq** — `numuneler/09-tapsiriqlar.alq` (tapşırıq meneceri),
 eyni kod vebdə də işləyir:
 
@@ -322,7 +327,7 @@ PROQRAMLASDIRMA DILI/
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
     │   ├── vidjet.py         118 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                1048 sınaq
+    └── sinaq/                1051 sınaq
 ```
 
 ---

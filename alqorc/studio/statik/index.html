@@ -18,6 +18,7 @@
     <span class="ayırıcı-xətt"></span>
     <button id="dym-islet" class="vurğulu" title="İşlət (F5)">▶ İşlət</button>
     <button id="dym-dayandir" title="Dayandır (Shift+F5)" disabled>■ Dayandır</button>
+    <button id="dym-debaq" title="Debaq: dayanma nöqtələri ilə işlət (Ctrl+F5). Nöqtə: sətir nömrəsinə klik və ya F9">🐞 Debaq</button>
     <button id="dym-onbaxis" title="Komponentin canlı önbaxışı (F6)">◧ Önbaxış</button>
     <span class="ayırıcı-xətt"></span>
     <button id="dym-ascii" title="Fayldakı bütün ASCII açar sözləri düzəlt (eger → əgər)">eger→əgər</button>
@@ -120,6 +121,7 @@
       <nav class="panel-nişanları alt-nişanlar">
         <button class="aktiv" data-alt="cixis">Çıxış</button>
         <button data-alt="problemler">Problemlər <span id="problem-sayi" class="say"></span></button>
+        <button data-alt="debaq">Debaq</button>
         <span class="boşluq"></span>
         <button id="cixis-temizle" title="Çıxışı təmizlə">Təmizlə</button>
       </nav>
@@ -129,6 +131,25 @@
           <span class="sönük">giriş ›</span>
           <input id="giris" placeholder="Proqrama mətn göndər (oxu)…" spellcheck="false" disabled>
         </form>
+      </div>
+      <div class="alt-məzmun" id="alt-debaq" hidden>
+        <div class="debaq-alətləri">
+          <button id="dbq-davam" title="Davam et (F5)" disabled>▶ Davam</button>
+          <button id="dbq-fasile" title="Fasilə" disabled>⏸</button>
+          <button id="dbq-novbeti" title="Növbəti sətir (F10)" disabled>⤼ Növbəti</button>
+          <button id="dbq-daxil" title="Funksiyaya gir (F11)" disabled>⤓ Daxil ol</button>
+          <button id="dbq-cix" title="Funksiyadan çıx (Shift+F11)" disabled>⤒ Çıx</button>
+          <button id="dbq-dayandir" title="Debaqı dayandır" disabled>■</button>
+          <span class="debaq-vəziyyəti" id="dbq-veziyyet">Sətir nömrəsinə klikləyib dayanma nöqtəsi qoyun, sonra 🐞 Debaq.</span>
+        </div>
+        <div class="debaq-gövdə">
+          <div class="debaq-yığın"><h4>Çağırış yığını</h4><div id="dbq-yigin"></div></div>
+          <div><h4>Dəyişənlər</h4><div id="dbq-deyisenler"></div></div>
+        </div>
+        <form class="debaq-ifadə" id="dbq-ifade-formu" autocomplete="off">
+          <input id="dbq-ifade" placeholder="İfadə hesabla (məs. x * 2)…" spellcheck="false">
+        </form>
+        <div class="debaq-nəticə" id="dbq-netice"></div>
       </div>
       <div class="alt-məzmun" id="alt-problemler" hidden>
         <ul class="problemlər" id="problemler"></ul>

@@ -276,6 +276,12 @@ class Studio:
             ("POST", "/api/vidjet/xususiyyet"): self.api_xüsusiyyət_qoy,
             ("POST", "/api/yoxla"): self.api_yoxla,
             ("POST", "/api/dil"): self.api_dil,
+            ("POST", "/api/debaq"): self.api_debaq,
+            ("POST", "/api/debaq/emr"): self.api_debaq_əmr,
+            ("POST", "/api/debaq/noqteler"): self.api_debaq_nöqtələr,
+            ("POST", "/api/debaq/hesabla"): self.api_debaq_hesabla,
+            ("POST", "/api/debaq/deyisenler"): self.api_debaq_dəyişənlər,
+            ("POST", "/api/debaq/kadr"): self.api_debaq_kadr,
             ("POST", "/api/ascii-duzelt"): self.api_ascii,
             ("POST", "/api/formatla"): self.api_formatla,
             ("POST", "/api/islet"): self.api_işlət,
@@ -493,6 +499,75 @@ class Studio:
         iş = self.icra.başlat(yol, [str(a) for a in arq],
                               self.layihə.nisbi(yol), bool(s.get("tip")))
         return iş.lüğət()
+
+    # ── Debaq ─────────────────────────────────────────────────────────
+
+    def _nöqtələr(self, s: dict) -> dict[str, list[int]]:
+        n = s.get("nöqtələr") or {}
+        if not isinstance(n, dict):
+            raise ApiXətası("`nöqtələr` lüğət olmalıdır")
+        nəticə = {}
+        for yol, sətirlər in n.items():
+            self.layihə.yol(yol)                    # layihədən kənar olmasın
+            if not isinstance(sətirlər, list):
+                raise ApiXətası("sətirlər siyahı olmalıdır")
+            nəticə[yol] = [int(x) for x in sətirlər
+                           if isinstance(x, int) and x > 0]
+        return nəticə
+
+    def api_debaq(self, s: dict) -> dict:
+        from .debaq import DebaqSessiyası
+        yol = self.layihə.yol(self._mətn(s, "yol"))
+        if not yol.is_file():
+            raise ApiXətası("fayl tapılmadı — əvvəlcə saxlayın", 404)
+        sessiya = DebaqSessiyası(yol, self.layihə.kök, self._nöqtələr(s),
+                                 self.layihə.nisbi(yol))
+        self.icra.əlavə_et(sessiya)
+        return sessiya.lüğət()
+
+    def _debaq(self, s: dict):
+        from .debaq import DebaqSessiyası
+        iş = self._iş(s)
+        if not isinstance(iş, DebaqSessiyası):
+            raise ApiXətası("bu iş debaq sessiyası deyil")
+        return iş
+
+    def _debaq_çağır(self, f, *a):
+        from .debaq import DebaqXətası
+        try:
+            return f(*a)
+        except DebaqXətası as x:
+            raise ApiXətası(str(x), 409) from None
+
+    def api_debaq_əmr(self, s: dict) -> dict:
+        d = self._debaq(s)
+        self._debaq_çağır(d.əmr_ver, self._mətn(s, "əmr"))
+        return {"ok": True}
+
+    def api_debaq_nöqtələr(self, s: dict) -> dict:
+        d = self._debaq(s)
+        for yol, sətirlər in self._nöqtələr(s).items():
+            self._debaq_çağır(d.nöqtələri_qoy, yol, sətirlər)
+        return {"ok": True}
+
+    def api_debaq_hesabla(self, s: dict) -> dict:
+        d = self._debaq(s)
+        return self._debaq_çağır(d.hesabla, self._mətn(s, "ifadə"),
+                                 self._tam(s, "kadr"))
+
+    def api_debaq_dəyişənlər(self, s: dict) -> dict:
+        d = self._debaq(s)
+        ref = self._tam(s, "ref")
+        if not ref:
+            raise ApiXətası("`ref` lazımdır")
+        return {"dəyişənlər": self._debaq_çağır(d.dəyişənlər, ref)}
+
+    def api_debaq_kadr(self, s: dict) -> dict:
+        d = self._debaq(s)
+        kadr = self._tam(s, "kadr")
+        if kadr is None:
+            raise ApiXətası("`kadr` lazımdır")
+        return {"sahələr": self._debaq_çağır(d.sahələr, kadr)}
 
     def _iş(self, s: dict):
         iş = self.icra.al(self._mətn(s, "id"))

@@ -202,6 +202,11 @@ class İcraMeneceri:
                 self.işlər.pop(köhnə.id, None)
         return iş
 
+    def əlavə_et(self, iş: İş) -> İş:
+        with self._kilid:
+            self.işlər[iş.id] = iş
+        return iş
+
     def al(self, id_: str) -> İş | None:
         return self.işlər.get(id_)
 

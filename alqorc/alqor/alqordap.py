@@ -242,7 +242,9 @@ class DAPServer:
                 self.emal(m)
         if self.izləyici is not None:
             self.izləyici.dayandır()
-        return 0
+        if self.sap is not None:
+            self.sap.join(timeout=2)
+        return self.çıxış_kodu or 0
 
     def emal(self, m: dict) -> None:
         if m.get("type") != "request":
