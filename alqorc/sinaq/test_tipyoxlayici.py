@@ -636,3 +636,56 @@ class TipƏməliyyatları(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class Generiklər(unittest.TestCase):
+    TƏRİF = """funksiya ilk[T](s: siyahı[T]) -> T?
+    əgər s.uzunluq() == 0 onda
+        qaytar boş
+    son
+    qaytar s[0]
+son
+funksiya eyni[T](a: T, b: T) -> T
+    qaytar a ?? b
+son
+funksiya xəritələ[T, Nəticə](s: siyahı[T], f: funksiyaTipi(T) -> Nəticə) -> siyahı[Nəticə]
+    dəyişən n: siyahı[Nəticə] = []
+    hər x üçün s içində
+        n.əlavə(f(x))
+    son
+    qaytar n
+son
+"""
+
+    def test_nəticə_tipi_çıxarılır(self):
+        təmizdir(self.TƏRİF + "dəyişən a: tam = ilk([1, 2]) ?? 0\nyaz(a)\n")
+        self.assertIn("ALQ-T001", kodlar(
+            self.TƏRİF + 'dəyişən a: mətn = ilk([1, 2]) ?? ""\nyaz(a)\n'))
+
+    def test_ziddiyyət(self):
+        self.assertIn("ALQ-T004", kodlar(self.TƏRİF + 'eyni(1, "x")\n'))
+        təmizdir(self.TƏRİF + "yaz(eyni(1, 2.5))\n")       # tam → onluq
+
+    def test_lambda_kontekstdən_tip_alır(self):
+        təmizdir(self.TƏRİF +
+                 "dəyişən m: siyahı[tam] = xəritələ([1, 2], (x) => x * 2)\n"
+                 "yaz(m)\n")
+        self.assertIn("ALQ-T006", kodlar(
+            self.TƏRİF + "yaz(xəritələ([1, 2], (x) => x.uzunluq()))\n"))
+        self.assertIn("ALQ-T001", kodlar(
+            self.TƏRİF + "dəyişən m: siyahı[mətn] = "
+            "xəritələ([1], (x) => x + 1)\nyaz(m)\n"))
+
+    def test_uzun_generik_adı(self):
+        təmizdir("funksiya bir[Element](e: Element) -> Element\n"
+                 "    qaytar e\nson\ndəyişən x: tam = bir(5)\nyaz(x)\n")
+
+    def test_funksiya_tipi_annotasiyası(self):
+        self.assertEqual(tipi("(a: tam) => a"),
+                         "funksiyaTipi(tam) -> tam")
+        təmizdir("dəyişən f: funksiyaTipi(tam) -> tam = (a) => a\n"
+                 "yaz(f(1))\n")
+
+    def test_kortej_sabit_indeks(self):
+        self.assertEqual(tipi('(1, "x")[1]'), "mətn")
+        self.assertIn("ALQ-T009", kodlar('dəyişən k = (1, 2)\nyaz(k[5])\n'))

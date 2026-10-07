@@ -881,6 +881,7 @@ class TipYoxlayıcı:
         self.ifadə_tipləri: list[tuple[Any, T.Tip, T.Tip | None]] = []
         self.bağlamalar: list[Bağlama] = []
         self._son_obyekt_tipi: T.Tip | None = None
+        self._generik_adlar: frozenset[str] = frozenset()
         for ad, tip in _daxili_adlar().items():
             self.qlobal.elan(Bağlama(ad, tip, True, None, True, "daxili"))
 
@@ -941,7 +942,27 @@ class TipYoxlayıcı:
                 ə.elan(Bağlama(c.ad, self._funksiya_imzası(c, ə), True,
                                c.yer, False, "funksiya"))
 
+    def _generiklərlə(self, c: Any):
+        """`funksiya f[T, Element](…)` — elan olunan generik adlar."""
+        import contextlib
+
+        @contextlib.contextmanager
+        def kontekst():
+            köhnə = self._generik_adlar
+            self._generik_adlar = köhnə | {
+                g[0] if isinstance(g, (tuple, list)) else str(g)
+                for g in (getattr(c, "generiklər", None) or [])}
+            try:
+                yield
+            finally:
+                self._generik_adlar = köhnə
+        return kontekst()
+
     def _funksiya_imzası(self, c: Any, ə: Əhatə) -> T.FunksiyaTipi:
+        with self._generiklərlə(c):
+            return self._funksiya_imzası_(c, ə)
+
+    def _funksiya_imzası_(self, c: Any, ə: Əhatə) -> T.FunksiyaTipi:
         parametrlər: list[T.Parametr] = []
         for p in c.parametrlər:
             tip = self._tip(p.tip, ə) if p.tip else T.NAMƏLUM
@@ -1082,8 +1103,9 @@ class TipYoxlayıcı:
                     return üzv
             return T.NAMƏLUM
 
-        # Generik parametr ola bilər (tək böyük hərf və ya qısa ad)
-        if len(ad) <= 2 and ad[:1].isupper():
+        # Generik parametr: elan olunub (`f[Element]`) və ya qısa ad (`T`)
+        if ad in self._generik_adlar or (len(ad) <= 2
+                                         and ad[:1].isupper()):
             return T.Generik(ad)
 
         if not self.sərbəstdir:
@@ -1234,6 +1256,11 @@ class TipYoxlayıcı:
 
     def _funksiya_gövdəsi(self, c: Any, imza: T.FunksiyaTipi, ə: Əhatə,
                           özü: T.Tip | None = None) -> None:
+        with self._generiklərlə(c):
+            self._funksiya_gövdəsi_(c, imza, ə, özü)
+
+    def _funksiya_gövdəsi_(self, c: Any, imza: T.FunksiyaTipi, ə: Əhatə,
+                           özü: T.Tip | None = None) -> None:
         gövdə = getattr(c, "gövdə", None)
         if gövdə is None:
             return
@@ -2321,6 +2348,9 @@ class TipYoxlayıcı:
 
     def _e_çağırış(self, e: A.Çağırış, ə: Əhatə) -> T.Tip:
         funksiya = self._ifadə(e.funksiya, ə)
+        if isinstance(funksiya, T.FunksiyaTipi) and \
+                T.generiklidir(funksiya):
+            return self._generik_çağırış(e, funksiya, ə)
         arqumentlər = [(a, self._ifadə(a.dəyər, ə)) for a in e.arqumentlər]
 
         # `üst(...)` — BAZA QURUCUSUNUN çağırışıdır, nümunə yaratma deyil.
@@ -2355,6 +2385,62 @@ class TipYoxlayıcı:
                                  self._çağırış_adı(e))
         return self._nəticəni_dəqiqləşdir(e, funksiya.qaytarma,
                                           arqumentlər)
+
+    def _generik_çağırış(self, e: A.Çağırış, imza: T.FunksiyaTipi,
+                         ə: Əhatə) -> T.Tip:
+        """
+        `funksiya ilk[T](s: siyahı[T]) -> T?` çağırışı: generiklər
+        arqumentlərdən çıxarılır (əvvəlcə adi arqumentlər, sonra
+        lambdalar — lambdanın tipsiz parametrləri artıq məlum `T`-ni
+        alır), ziddiyyət ALQ-T004 verir, nəticə dəqiq tipdir.
+        """
+        mövqeli = [p for p in imza.parametrlər if not p.yalnız_adlı]
+        x: dict[str, T.Tip] = {}
+        tiplər: dict[int, T.Tip] = {}
+
+        def parametr(i: int, a) -> T.Parametr | None:
+            if a.ad:
+                return next((p for p in imza.parametrlər if p.ad == a.ad),
+                            None)
+            return mövqeli[i] if i < len(mövqeli) else (
+                mövqeli[-1] if mövqeli and mövqeli[-1].variadic else None)
+
+        sıra = list(enumerate(e.arqumentlər))
+        # Lambdalar sonra: onların parametr tipləri digər arqumentlərdən
+        sıra.sort(key=lambda c: isinstance(c[1].dəyər, A.Lambda))
+        mövqe_sayı = {id(a): i for i, a in enumerate(
+            [a for a in e.arqumentlər if not a.ad and not a.yayma])}
+        for _, a in sıra:
+            p = parametr(mövqe_sayı.get(id(a), -1), a) \
+                if not a.yayma else None
+            if isinstance(a.dəyər, A.Lambda) and p is not None and \
+                    isinstance(T.açılmış(p.tip), T.FunksiyaTipi):
+                gözlənilən = T.yerləşdir(T.açılmış(p.tip), x)
+                tip = self._e_lambda(a.dəyər, ə, gözlənilən)
+            else:
+                tip = self._ifadə(a.dəyər, ə)
+            tiplər[id(a)] = tip
+            if p is None:
+                continue
+            ziddiyyət = T.uyğunlaşdır(p.tip, tip, x)
+            if ziddiyyət and not self.sərbəstdir:
+                self.x.xəta(
+                    "ALQ-T004", "Generik tip ziddiyyəti",
+                    getattr(a.dəyər, "yer", e.yer),
+                    f"`{ziddiyyət}` əvvəl `{x[ziddiyyət].mətn()}` "
+                    f"kimi təyin olunub, bu arqument `{tip.mətn()}`-dir",
+                    f"`{self._çağırış_adı(e)}` bütün `{ziddiyyət}` "
+                    "yerlərində eyni tipi gözləyir")
+                return T.NAMƏLUM
+        konkret = T.yerləşdir(imza, x)
+        arqumentlər = [(a, tiplər[id(a)]) for a in e.arqumentlər]
+        self._arqumentləri_yoxla(konkret, arqumentlər, e,
+                                 self._çağırış_adı(e))
+        nəticə = konkret.qaytarma
+        # Çıxarılmayan generik — nəticə naməlumdur (yalan xəta verməsin)
+        if T.generiklidir(nəticə):
+            nəticə = T.yerləşdir(nəticə, _NAMƏLUMLAR(nəticə))
+        return nəticə
 
     @staticmethod
     def _nəticəni_dəqiqləşdir(e: A.Çağırış, nəticə: T.Tip,
@@ -2491,6 +2577,18 @@ class TipYoxlayıcı:
                 getattr(e.indeks, "yer", e.yer),
                 f"`{gözlənilən.mətn()}` gözlənilir, "
                 f"`{indeks.mətn()}` verilib")
+        # `kortej[tam, mətn]` və sabit indeks `c[0]` → dəqiq element
+        if isinstance(obyekt, T.Kortej) and obyekt.elementlər and \
+                isinstance(e.indeks, A.Literal) and \
+                isinstance(e.indeks.dəyər, int) and \
+                not isinstance(e.indeks.dəyər, bool):
+            i = e.indeks.dəyər
+            n = len(obyekt.elementlər)
+            if -n <= i < n:
+                return obyekt.elementlər[i]
+            self.x.xəta("ALQ-T009", "Kortej indeksi hüdud xaricindədir",
+                        e.yer, f"{n} elementli kortejdə `{i}` indeksi yoxdur")
+            return T.NAMƏLUM
         return T.indeks_nəticəsi(obyekt)
 
     def _e_dilim(self, e: A.Dilim, ə: Əhatə) -> T.Tip:
@@ -2709,13 +2807,23 @@ class TipYoxlayıcı:
                 self._cümlə(c, alt)
         return nəticə
 
-    def _e_lambda(self, e: A.Lambda, ə: Əhatə) -> T.Tip:
+    def _e_lambda(self, e: A.Lambda, ə: Əhatə,
+                  gözlənilən: T.FunksiyaTipi | None = None) -> T.Tip:
+        """`gözlənilən` — kontekstdən gələn imza: tipsiz parametrlər
+        onun tiplərini alır (`xəritələ(s, (x) => x * 2)`)."""
+        kontekst = list(gözlənilən.parametrlər) if gözlənilən else []
+
+        def p_tipi(i: int, p) -> T.Tip:
+            if p.tip:
+                return self._tip(p.tip, ə)
+            if i < len(kontekst) and not T.generiklidir(kontekst[i].tip):
+                return kontekst[i].tip
+            return T.NAMƏLUM
         parametrlər = tuple(
-            T.Parametr(p.ad,
-                       self._tip(p.tip, ə) if p.tip else T.NAMƏLUM,
+            T.Parametr(p.ad, p_tipi(i, p),
                        p.standart is not None,
                        p.variadic or p.adlı_variadic, p.yalnız_adlı)
-            for p in e.parametrlər)
+            for i, p in enumerate(e.parametrlər))
         qaytarma = self._tip(e.qaytarma_tipi, ə) if e.qaytarma_tipi \
             else T.NAMƏLUM
 
@@ -2894,3 +3002,25 @@ def tipləri_yoxla(ağac: A.Proqram, toplayıcı: XətaToplayıcı,
     y = TipYoxlayıcı(toplayıcı, rejim)
     y.yoxla(ağac)
     return y
+
+
+def _NAMƏLUMLAR(t: T.Tip) -> dict[str, T.Tip]:
+    """Tipdəki bütün generik adları → naməlum."""
+    n: dict[str, T.Tip] = {}
+
+    def gəz(x: T.Tip) -> None:
+        if isinstance(x, T.Generik):
+            n[x.ad] = T.NAMƏLUM
+        for f in ("element", "nəticə", "açar", "dəyər", "qaytarma"):
+            v = getattr(x, f, None)
+            if isinstance(v, T.Tip):
+                gəz(v)
+        for v in getattr(x, "elementlər", ()) or ():
+            gəz(v)
+        for v in getattr(x, "variantlar", ()) or ():
+            gəz(v)
+        for p in getattr(x, "parametrlər", ()) or ():
+            if isinstance(p, T.Parametr):
+                gəz(p.tip)
+    gəz(t)
+    return n

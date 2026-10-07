@@ -514,3 +514,108 @@ def indeks_açarı(t: Tip) -> Tip:
     if isinstance(t, (Siyahı, Kortej)) or t in (MƏTN, BAYT):
         return TAM
     return NAMƏLUM
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Generiklər — unifikasiya
+# ═══════════════════════════════════════════════════════════════════════
+#
+#     funksiya ilk[T](s: siyahı[T]) -> T?
+#     ilk([1, 2])        → `T = tam`  →  nəticə `tam?`
+#
+# `uyğunlaşdır(şablon, faktiki, x)` şablondakı `Generik`-ləri faktiki
+# tipdən çıxarıb `x`-ə yazır; ziddiyyət olarsa (`T` həm `tam`, həm
+# `mətn`) ziddiyyətli adı qaytarır. `yerləşdir(t, x)` isə tapılan
+# tipləri yerinə qoyur.
+
+def generiklidir(t: Tip) -> bool:
+    if isinstance(t, Generik):
+        return True
+    if isinstance(t, (Siyahı, Dəst, Generator)):
+        return generiklidir(t.element)
+    if isinstance(t, Gələcək):
+        return generiklidir(t.nəticə)
+    if isinstance(t, Lüğət):
+        return generiklidir(t.açar) or generiklidir(t.dəyər)
+    if isinstance(t, Kortej):
+        return any(generiklidir(e) for e in t.elementlər)
+    if isinstance(t, Birləşmə):
+        return any(generiklidir(v) for v in t.variantlar)
+    if isinstance(t, FunksiyaTipi):
+        return any(generiklidir(p.tip) for p in t.parametrlər) or \
+            generiklidir(t.qaytarma)
+    return False
+
+
+def yerləşdir(t: Tip, x: dict[str, Tip]) -> Tip:
+    if isinstance(t, Generik):
+        return x.get(t.ad, t)
+    if isinstance(t, Siyahı):
+        return Siyahı(yerləşdir(t.element, x))
+    if isinstance(t, Dəst):
+        return Dəst(yerləşdir(t.element, x))
+    if isinstance(t, Generator):
+        return Generator(yerləşdir(t.element, x))
+    if isinstance(t, Gələcək):
+        return Gələcək(yerləşdir(t.nəticə, x))
+    if isinstance(t, Lüğət):
+        return Lüğət(yerləşdir(t.açar, x), yerləşdir(t.dəyər, x))
+    if isinstance(t, Kortej):
+        return Kortej(tuple(yerləşdir(e, x) for e in t.elementlər))
+    if isinstance(t, Birləşmə):
+        return birləşmə(*(yerləşdir(v, x) for v in t.variantlar))
+    if isinstance(t, FunksiyaTipi):
+        return FunksiyaTipi(
+            tuple(Parametr(p.ad, yerləşdir(p.tip, x), p.standartı_var,
+                           p.variadic, p.yalnız_adlı)
+                  for p in t.parametrlər),
+            yerləşdir(t.qaytarma, x), t.asinxron, t.generator)
+    return t
+
+
+def uyğunlaşdır(şablon: Tip, faktiki: Tip, x: dict[str, Tip]) -> str | None:
+    """Generikləri çıxarır. Ziddiyyət varsa ziddiyyətli generik adı."""
+    if naməlumdur(faktiki) and not isinstance(faktiki, Generik):
+        return None
+    if isinstance(şablon, Generik):
+        if isinstance(faktiki, Generik) and faktiki.ad == şablon.ad:
+            return None
+        əvvəl = x.get(şablon.ad)
+        if əvvəl is None or naməlumdur(əvvəl):
+            x[şablon.ad] = faktiki
+            return None
+        if uyğundur(faktiki, əvvəl):
+            return None
+        if uyğundur(əvvəl, faktiki):
+            x[şablon.ad] = faktiki          # `tam` sonra `onluq` → onluq
+            return None
+        return şablon.ad
+    if isinstance(şablon, Birləşmə):
+        # `T?` ← `tam?` və ya `tam`
+        qalan = [v for v in şablon.variantlar if v != HEÇ]
+        if len(qalan) == 1:
+            return uyğunlaşdır(qalan[0], açılmış(faktiki), x)
+        return None
+    if isinstance(şablon, (Siyahı, Dəst, Generator)) and \
+            type(faktiki) is type(şablon):
+        return uyğunlaşdır(şablon.element, faktiki.element, x)
+    if isinstance(şablon, Gələcək) and isinstance(faktiki, Gələcək):
+        return uyğunlaşdır(şablon.nəticə, faktiki.nəticə, x)
+    if isinstance(şablon, Lüğət) and isinstance(faktiki, Lüğət):
+        return (uyğunlaşdır(şablon.açar, faktiki.açar, x)
+                or uyğunlaşdır(şablon.dəyər, faktiki.dəyər, x))
+    if isinstance(şablon, Kortej) and isinstance(faktiki, Kortej) and \
+            len(şablon.elementlər) == len(faktiki.elementlər):
+        for a, b in zip(şablon.elementlər, faktiki.elementlər):
+            z = uyğunlaşdır(a, b, x)
+            if z:
+                return z
+        return None
+    if isinstance(şablon, FunksiyaTipi) and isinstance(faktiki,
+                                                       FunksiyaTipi):
+        for a, b in zip(şablon.parametrlər, faktiki.parametrlər):
+            z = uyğunlaşdır(a.tip, b.tip, x)
+            if z:
+                return z
+        return uyğunlaşdır(şablon.qaytarma, faktiki.qaytarma, x)
+    return None
