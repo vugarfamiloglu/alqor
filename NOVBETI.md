@@ -2,7 +2,7 @@
 
 > Yeni sessiyada işə buradan başlayın. İş birbaşa `main` budağında
 > aparılır; hər addımdan sonra commit + push.
-> Sınaq: `cd alqorc && python sina.py --nümunələr` (1044 sınaq keçir).
+> Sınaq: `cd alqorc && python sina.py --nümunələr` (1048 sınaq keçir).
 > Studio brauzer sınaqları Playwright ilə: `python -m unittest sinaq.test_studio`.
 
 ## ✅ Hazır olanlar
@@ -23,8 +23,10 @@
   miqrasiya)
 
 **Alətlər**
-- `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls`
-- `alqorfmt` (formatlayıcı), `alqorls` (LSP) + VS Code genişlənməsi (`redaktor/vscode/`)
+- `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls / dap`
+- `alqorfmt` (formatlayıcı), `alqorls` (LSP: layihə üzrə keçid/istinad/ad
+  dəyişmə, iş sahəsi simvolları, kod linzaları, semantik rənglər),
+  `alqor dap` (debaqçı) + VS Code genişlənməsi (`redaktor/vscode/`, F5 debaq)
 - `qur` → tək fayllı `.pyz` paketi
 
 **Alqor Studio** (`alqorc/studio/`)
@@ -42,7 +44,6 @@
 
 | İş | Nə qalıb |
 |---|---|
-| alqorls (LSP) | DAP (debaq) yoxdur — layihə üzrə istinad/ad dəyişmə, iş sahəsi simvolları, kod linzaları, semantik rənglər ✅ |
 | Alqor Studio | avtomatik tamamlama alqorls-a qoşulmayıb; sürüklə-burax düzülüş (vizual dizayner) yoxdur; önbaxış Studio temasını yox, OS temasını izləyir; debaq yoxdur |
 | http | WebSocket yoxdur |
 | verilənlər | yalnız SQLite — PostgreSQL/MySQL sürücüsü və ORM modelləri (`@cədvəl`, `Model`) yoxdur |

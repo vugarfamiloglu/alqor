@@ -1,7 +1,7 @@
 {
   "name": "alqor",
   "displayName": "Alqor",
-  "description": "Alqor proqramlaşdırma dili: sintaksis rəngləmə, xətalar, tamamlama, təyinata keçid, ad dəyişmə, formatlama",
+  "description": "Alqor proqramlaşdırma dili: sintaksis rəngləmə, xətalar, tamamlama, təyinata keçid, ad dəyişmə, formatlama, debaq",
   "version": "0.1.0",
   "publisher": "alqor",
   "license": "MIT",
@@ -15,7 +15,8 @@
   "categories": [
     "Programming Languages",
     "Formatters",
-    "Linters"
+    "Linters",
+    "Debuggers"
   ],
   "main": "./extension.js",
   "activationEvents": [],
@@ -68,6 +69,66 @@
       {
         "command": "alqor.serveriYenidənBaşlat",
         "title": "Alqor: Dil serverini yenidən başlat"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "alqor"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "alqor",
+        "label": "Alqor",
+        "languages": [
+          "alqor"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "İşlədiləcək .alqor faylı",
+                "default": "${file}"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Proqramın arqumentləri",
+                "default": []
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "İlk cümlədə dayan",
+                "default": false
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "alqor",
+            "request": "launch",
+            "name": "Alqor: cari faylı işlət",
+            "program": "${file}"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Alqor: faylı debaq et",
+            "body": {
+              "type": "alqor",
+              "request": "launch",
+              "name": "Alqor: cari faylı işlət",
+              "program": "^\"\\${file}\""
+            }
+          }
+        ]
       }
     ]
   },
