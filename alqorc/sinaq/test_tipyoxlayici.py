@@ -689,3 +689,23 @@ son
     def test_kortej_sabit_indeks(self):
         self.assertEqual(tipi('(1, "x")[1]'), "mətn")
         self.assertIn("ALQ-T009", kodlar('dəyişən k = (1, 2)\nyaz(k[5])\n'))
+
+
+class ModulTipləriAnnotasiyada(unittest.TestCase):
+    def test_qurucu_adı_tip_kimi(self):
+        təmizdir("gətir pəncərə\n"
+                 "funksiya yarat() -> pəncərə.Pəncərə\n"
+                 '    qaytar yeni pəncərə.Pəncərə("A")\nson\n'
+                 "funksiya göstər(p: pəncərə.Pəncərə)\n    p.göstər()\nson\n"
+                 "göstər(yarat())\n")
+        self.assertIn("ALQ-T006", kodlar(
+            "gətir pəncərə\nfunksiya f(p: pəncərə.Pəncərə)\n"
+            "    p.yoxdur()\nson\n"))
+
+    def test_əlavə_modul(self):
+        təmizdir('gətir http\ndəyişən s: http.Sorğu = '
+                 'yeni http.Sorğu("AL", "https://a.az")\nyaz(s.url())\n')
+
+    def test_naməlum_modul_tipi(self):
+        k = kodlar("gətir pəncərə\ndəyişən x: pəncərə.Yox = 1\nyaz(x)\n")
+        self.assertEqual(k.count("ALQ-T002"), 1)     # təkrar yoxdur

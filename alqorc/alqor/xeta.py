@@ -178,6 +178,8 @@ class XətaToplayıcı:
         self.xəbərdarlıq_xətadır = xəbərdarlıq_xətadır
         self.limit = limit
         self._söndürülmüş: set[str] = set()
+        self._görülənlər: set[tuple] = set()
+        self._təkrar_xəta = 0
 
     # ── Söndürmə (// alqor: ... direktivləri) ──────────────────────────
 
@@ -192,6 +194,16 @@ class XətaToplayıcı:
     def əlavə(self, d: Diaqnostika) -> None:
         if self._söndürülüb(d.kod):
             return
+        # Eyni yer, kod və mesaj iki dəfə göstərilmir (ifadə həm elanların
+        # qaldırılmasında, həm də sırası gələndə yoxlana bilir). Təkrar
+        # yenə də limitə sayılır — parserin bərpa dövrü dayanmalıdır.
+        açar = (d.kod, d.mesaj, d.qeyd, d.səviyyə,
+                (id(d.yer.mənbə), d.yer.başlanğıc) if d.yer else None)
+        if açar in self._görülənlər:
+            if d.xətadır:
+                self._təkrar_xəta += 1
+            return
+        self._görülənlər.add(açar)
         if (self.xəbərdarlıq_xətadır
                 and d.səviyyə is Səviyyə.XEBERDARLIQ):
             d.səviyyə = Səviyyə.XETA
@@ -222,7 +234,7 @@ class XətaToplayıcı:
         return not self.xətalar
 
     def dolubmu(self) -> bool:
-        return len(self.xətalar) >= self.limit
+        return len(self.xətalar) + self._təkrar_xəta >= self.limit
 
     # ── Hesabat ───────────────────────────────────────────────────────
 
