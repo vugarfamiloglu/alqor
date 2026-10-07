@@ -98,6 +98,8 @@ const S = {
   önbaxışAçıq: false,
   nöqtələr: {},        // yol → [sətir] (dayanma nöqtələri)
   dbq: null,           // debaqda dayanma: {yığın, kadr, sahələr}
+  dizayn: false,       // vizual dizayner açıqdır
+  dzSeçili: null,      // seçilmiş düyünün yolu (JSON)
 };
 
 const R = new Redaktor($("#redaktor"));
@@ -351,6 +353,8 @@ function tabaKeç(yol) {
   yaddaş("aktiv", yol);
   R.yüklə(t.v.mətn, t.v);
   R.nöqtələriQoy(S.nöqtələr[yol]);
+  S.dzSeçili = null;
+  dizaynıPlanla(50);
   R.icraSətriniQoy(dbqSətri(yol));
   tablarıÇək();
   xoşGəldin();
@@ -470,6 +474,7 @@ $("#sablonlar").addEventListener("click", async (h) => {
 R.on("dəyişdi", () => {
   const t = cari();
   if (!t) return;
+  dizaynıPlanla();
   const ç = çirklidir(t);
   const el = $(`.tab[data-yol="${CSS.escape(t.yol)}"]`);
   if (el && el.classList.contains("çirkli") !== ç) el.classList.toggle("çirkli", ç);
@@ -1197,9 +1202,160 @@ $("#dbq-ifade-formu").addEventListener("submit", async (h) => {
   } catch (x) { $("#dbq-netice").textContent = `✖ ${x.message}`; }
 });
 
+// ══ Vizual dizayner ══════════════════════════════════════════════════
+//
+// Komponentin vidjet ağacı qutular şəklində. Paletdən element buraxmaq,
+// mövcud elementi daşımaq, silmək — hamısı KODU dəyişir (server
+// `dizayner.py`), redaktor və önbaxış dərhal yenilənir.
+
+let dzTaymer = 0;
+
+async function dizaynıAçBağla(aç = !S.dizayn) {
+  S.dizayn = aç;
+  $("#dizayn").hidden = !aç;
+  $("#dym-dizayn").classList.toggle("vurğulu", aç);
+  if (aç && !S.önbaxışAçıq) await önbaxışıAçBağla(true);
+  if (aç) dizaynıYenilə();
+}
+
+function dizaynıPlanla(ms = 250) {
+  if (!S.dizayn) return;
+  clearTimeout(dzTaymer);
+  dzTaymer = setTimeout(dizaynıYenilə, ms);
+}
+
+async function dizaynıYenilə() {
+  if (!S.dizayn) return;
+  const yer = $("#dizayn-agac");
+  const t = cari();
+  if (!t || !/\.(alqor|alq)$/.test(t.yol)) { yer.innerHTML = '<div class="dz-xəta">.alq faylı açın.</div>'; return; }
+  try {
+    const n = await API.göndər("/api/dizayn/agac", {
+      mətn: R.mətn, kursor: R.kursor, komponent: $("#onbaxis-komponent").value || undefined });
+    if (n.xəta) { yer.innerHTML = `<div class="dz-xəta">${qaç(n.xəta)}</div>`; return; }
+    if (!n.kök) {
+      yer.innerHTML = '<div class="dz-xəta">`göstər()` vidjet qaytarmır. Paletdən element əlavə edin — ' +
+        "kök `vidjet.sütun` avtomatik yaranacaq.</div>";
+      return;
+    }
+    yer.innerHTML = dzDüyün(n.kök);
+  } catch (x) { yer.innerHTML = `<div class="dz-xəta">${qaç(x.message)}</div>`; }
+}
+
+function dzDüyün(d) {
+  const yol = qaç(JSON.stringify(d.yol));
+  const seçili = S.dzSeçili === JSON.stringify(d.yol) ? " seçili" : "";
+  const ad = d.ad ? qaç(d.beynəlxalqAd || d.ad) : "ifadə";
+  const xülasə = d.xülasə ? `<span class="dz-xülasə">${qaç(d.xülasə)}</span>` : "";
+  const sil = d.yol.length ? '<button class="dz-sil" title="Sil (Delete)">✕</button>' : "";
+  if (!d.konteyner) {
+    return `<div class="dz-element${d.ad ? "" : " kod"}${seçili}" draggable="true" data-yol="${yol}" ` +
+      `data-movqe="${d.mövqe}" data-setir="${d.sətir}" title="${qaç(d.ad || "")} — sətir ${d.sətir}">` +
+      `<b>${ad}</b>${xülasə}${sil}</div>`;
+  }
+  const yerlər = [];
+  const uşaqlar = d.uşaqlar || [];
+  for (let i = 0; i <= uşaqlar.length; i++) {
+    yerlər.push(`<div class="dz-yer" data-hedef="${yol}" data-indeks="${i}"></div>`);
+    if (i < uşaqlar.length) yerlər.push(dzDüyün(uşaqlar[i]));
+  }
+  return `<div class="dz-konteyner ${d.istiqamət}${seçili}" data-yol="${yol}" data-movqe="${d.mövqe}" ` +
+    `data-setir="${d.sətir}"${d.yol.length ? ' draggable="true"' : ""}>` +
+    `<div class="dz-başlıq"><b>${ad}</b><span class="sönük">${qaç(d.ad || "")}</span>${xülasə}${sil}</div>` +
+    `<div class="dz-uşaqlar">${yerlər.join("")}</div></div>`;
+}
+
+async function dizaynƏməliyyatı(gövdə) {
+  const t = cari();
+  if (!t) return;
+  try {
+    const n = await API.göndər("/api/dizayn/emeliyyat", {
+      mətn: R.mətn, komponent: $("#onbaxis-komponent").value || undefined, ...gövdə });
+    if (n.mətn !== R.mətn) R.mətniƏvəzlə(n.mətn, n.kursor);
+    S.dzSeçili = n.yol ? JSON.stringify(n.yol) : null;
+    planlaYoxla(150);
+    await saxla(t, true);
+    await dizaynıYenilə();
+    if (n.mesaj) bildir(n.mesaj, "uğur", 2200);
+  } catch (x) { xəta(x); }
+}
+
+function dzSeç(el) {
+  for (const x of $$("#dizayn .seçili")) x.classList.remove("seçili");
+  el.classList.add("seçili");
+  S.dzSeçili = el.dataset.yol;
+  // Kursor elementin ÖZÜNƏ qoyulur — xüsusiyyətlər paneli kursoru izləyir
+  const { sətir, sütun } = R.sətirSütun(+el.dataset.movqe);
+  R.sətirəKeç(sətir, sütun);
+  if (el.dataset.movqe) {
+    panelAç("xususiyyet");
+    xüsusiyyətləriYüklə(+el.dataset.movqe);
+  }
+}
+
+$("#dizayn").addEventListener("click", (h) => {
+  const sil = h.target.closest(".dz-sil");
+  const el = h.target.closest("[data-yol]");
+  if (!el) return;
+  if (sil) { dizaynƏməliyyatı({ əməliyyat: "sil", yol: JSON.parse(el.dataset.yol) }); return; }
+  dzSeç(el);
+});
+
+$("#dizayn").addEventListener("keydown", (h) => {
+  if ((h.key === "Delete" || h.key === "Backspace") && S.dzSeçili && S.dzSeçili !== "[]") {
+    h.preventDefault();
+    dizaynƏməliyyatı({ əməliyyat: "sil", yol: JSON.parse(S.dzSeçili) });
+  }
+});
+
+$("#dizayn").addEventListener("dragstart", (h) => {
+  const el = h.target.closest("[data-yol][draggable]");
+  if (!el) return;
+  h.dataTransfer.setData("application/x-alqor-dizayn", el.dataset.yol);
+  h.dataTransfer.effectAllowed = "move";
+  el.classList.add("sürüklənir");
+});
+
+// Sürükləmə zamanı buraxma yerləri görünür (paletdən də, dizaynerdən də)
+document.addEventListener("dragstart", (h) => {
+  const növlər = [...(h.dataTransfer?.types || [])];
+  if (növlər.includes("application/x-alqor-vidjet") || növlər.includes("application/x-alqor-dizayn")) {
+    document.body.classList.add("dz-sürüklə");
+  }
+});
+document.addEventListener("dragend", () => {
+  document.body.classList.remove("dz-sürüklə");
+  for (const x of $$("#dizayn .sürüklənir, #dizayn .üstündə")) x.classList.remove("sürüklənir", "üstündə");
+});
+
+$("#dizayn").addEventListener("dragover", (h) => {
+  const y = h.target.closest(".dz-yer");
+  const növlər = [...h.dataTransfer.types];
+  if (!y || !(növlər.includes("application/x-alqor-vidjet") || növlər.includes("application/x-alqor-dizayn"))) return;
+  h.preventDefault();
+  h.dataTransfer.dropEffect = növlər.includes("application/x-alqor-dizayn") ? "move" : "copy";
+  for (const x of $$("#dizayn .dz-yer.üstündə")) if (x !== y) x.classList.remove("üstündə");
+  y.classList.add("üstündə");
+});
+
+$("#dizayn").addEventListener("drop", (h) => {
+  const y = h.target.closest(".dz-yer");
+  if (!y) return;
+  h.preventDefault();
+  document.body.classList.remove("dz-sürüklə");
+  const hədəf = JSON.parse(y.dataset.hedef), indeks = +y.dataset.indeks;
+  const yol = h.dataTransfer.getData("application/x-alqor-dizayn");
+  const vidjet = h.dataTransfer.getData("application/x-alqor-vidjet");
+  if (yol) dizaynƏməliyyatı({ əməliyyat: "köçür", yol: JSON.parse(yol), hədəf, indeks });
+  else if (vidjet) dizaynƏməliyyatı({ əməliyyat: "əlavə", vidjet, hədəf, indeks });
+});
+
+$("#dym-dizayn").addEventListener("click", () => dizaynıAçBağla());
+
 // ══ Önbaxış ══════════════════════════════════════════════════════════
 async function önbaxışıAçBağla(aç = !S.önbaxışAçıq) {
   S.önbaxışAçıq = aç;
+  if (!aç && S.dizayn) { S.dizayn = false; $("#dizayn").hidden = true; $("#dym-dizayn").classList.remove("vurğulu"); }
   $("#onbaxis-panel").hidden = !aç;
   $("#onbaxis-bolucu").hidden = !aç;
   $("#dym-onbaxis").classList.toggle("vurğulu", aç);
@@ -1258,7 +1414,7 @@ async function önbaxışıYenilə(canlı = false) {
   }
 }
 
-$("#onbaxis-komponent").addEventListener("change", önbaxışıYenilə);
+$("#onbaxis-komponent").addEventListener("change", () => { önbaxışıYenilə(); dizaynıPlanla(0); });
 $("#onbaxis-yenile").addEventListener("click", önbaxışıYenilə);
 $("#onbaxis-bagla").addEventListener("click", () => önbaxışıAçBağla(false));
 
@@ -1354,6 +1510,7 @@ document.addEventListener("keydown", (h) => {
   if (a === "F10" && S.dbq) { h.preventDefault(); debaqƏmri("növbəti"); return; }
   if (a === "F11" && S.dbq) { h.preventDefault(); debaqƏmri(h.shiftKey ? "çıx" : "daxil"); return; }
   if (a === "F6") { h.preventDefault(); önbaxışıAçBağla(); return; }
+  if (a === "F7") { h.preventDefault(); dizaynıAçBağla(); return; }
   if (a === "F8") { h.preventDefault(); növbətiProblem(); return; }
   if (ctrl && !h.shiftKey && (a === "s" || a === "S")) { h.preventDefault(); saxla(); return; }
   if (ctrl && h.shiftKey && (a === "f" || a === "F")) { h.preventDefault(); formatla(); return; }

@@ -36,6 +36,11 @@ yazmadan dəyişir; kod özü yazılır, önbaxış dərhal yenilənir:
 
 ![Xüsusiyyətlər paneli](sened/ekranlar/studio-xususiyyetler.png)
 
+**Vizual dizayner** (⊞ Dizayn, F7) — elementləri paletdən sürükləyib
+buraxın, daşıyın, silin; kod və önbaxış dərhal yenilənir:
+
+![Vizual dizayner](sened/ekranlar/studio-dizayner.png)
+
 **Debaq** — sətir nömrəsinə klik (dayanma nöqtəsi), 🐞 Debaq; çağırış
 yığını, dəyişənlər, addım-addım icra:
 
@@ -327,7 +332,7 @@ PROQRAMLASDIRMA DILI/
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
     │   ├── vidjet.py         118 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                1051 sınaq
+    └── sinaq/                1058 sınaq
 ```
 
 ---

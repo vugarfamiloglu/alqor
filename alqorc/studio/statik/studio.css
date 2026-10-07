@@ -356,3 +356,30 @@ body.sürüklənir iframe { pointer-events: none; }
 .debaq-ifadə input { flex: 1; font-family: var(--kod-şrift); }
 .debaq-nəticə { padding: 0 10px 4px; font: 12px/1.5 var(--kod-şrift); color: var(--mətn); white-space: pre-wrap; }
 #alt-debaq { display: flex; flex-direction: column; }
+
+/* ── Vizual dizayner ── */
+.önbaxış-panel .dizayn { flex: 0 1 auto; max-height: 60%; min-height: 120px; overflow: auto; background: var(--fon-2);
+  border-bottom: 1px solid var(--kənar); padding: 8px; outline: none; }
+.dz-ipucu { color: var(--sönük); font-size: 11.5px; margin: 0 2px 8px; }
+.dz-xəta { color: var(--sönük); padding: 12px; white-space: pre-wrap; }
+.dz-konteyner { border: 1px dashed var(--kənar); border-radius: 8px; padding: 4px 6px 6px; background: var(--fon); margin: 2px 0; }
+.dz-konteyner > .dz-uşaqlar { display: flex; flex-direction: column; gap: 0; min-height: 26px; }
+.dz-konteyner.üfüqi > .dz-uşaqlar { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
+.dz-başlıq { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--sönük);
+  padding: 1px 2px 3px; cursor: grab; user-select: none; }
+.dz-başlıq b { color: var(--t-sinif); font-weight: 600; }
+.dz-element { display: flex; align-items: center; gap: 8px; padding: 5px 8px; margin: 0; border-radius: 6px;
+  background: var(--fon-3); border: 1px solid var(--kənar); cursor: grab; user-select: none; font-size: 12.5px; min-width: 0; }
+.dz-element b { color: var(--t-çağırış); font-weight: 600; white-space: nowrap; }
+.dz-element .dz-xülasə, .dz-başlıq .dz-xülasə { color: var(--mətn); opacity: .8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dz-element.kod b { color: var(--sönük); font-style: italic; }
+.dz-element.seçili, .dz-konteyner.seçili { outline: 2px solid var(--vurğu); outline-offset: 1px; }
+.dz-sil { margin-left: auto; border: 0; background: transparent; color: var(--sönük); padding: 0 4px; visibility: hidden; cursor: pointer; }
+.dz-element:hover > .dz-sil, .dz-başlıq:hover > .dz-sil { visibility: visible; }
+.dz-sil:hover { color: var(--xəta); }
+/* Buraxma yerləri sabit ölçüdədir — sürükləmə zamanı düzülüş sürüşməsin */
+.dz-yer { flex: none; height: 10px; border-radius: 3px; transition: background .1s; }
+.dz-konteyner.üfüqi > .dz-uşaqlar > .dz-yer { width: 10px; height: auto; }
+body.dz-sürüklə .dz-yer { background: color-mix(in srgb, var(--vurğu) 18%, transparent); }
+body.dz-sürüklə .dz-yer.üstündə { background: var(--vurğu); }
+.dz-element.sürüklənir, .dz-konteyner.sürüklənir { opacity: .4; }

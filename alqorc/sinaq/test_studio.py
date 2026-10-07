@@ -476,6 +476,123 @@ class Debaq(ServerSınağı):
         self.assertEqual(kod, 403)
 
 
+class Dizayner(unittest.TestCase):
+    """Vizual dizayner: ağac, əlavə et, daşı, sil — kod dəyişir."""
+
+    KOD = """gətir vidjet
+
+komponent Forma
+    vəziyyət ad: mətn = ""
+
+    göstər()
+        qaytar vidjet.sütun(boşluq: 12, məzmun: [
+            vidjet.başlıq("Qeydiyyat"),
+            // ad sahəsi
+            vidjet.sahə(etiket: "Ad", dəyər: özü.ad),
+            vidjet.sətir([
+                vidjet.düymə(mətn: "Ləğv"),
+                vidjet.düymə(mətn: "Göndər", növ: "əsas")
+            ]),
+            özü.əlavə
+        ])
+    son
+son
+"""
+
+    def setUp(self):
+        from studio import dizayner
+        self.D = dizayner
+
+    def göstər(self, mətn):
+        return mətn[mətn.index("qaytar"):mətn.index("    son\nson")]
+
+    def adlar(self, mətn):
+        k = self.D.ağac(mətn)["kök"]
+
+        def gəz(d):
+            if d.get("konteyner"):
+                return [d["ad"] or "?", [gəz(u) for u in d["uşaqlar"]]]
+            return (d["ad"] or "?") + (f":{d['xülasə']}" if d["xülasə"]
+                                       else "")
+        return gəz(k)
+
+    def test_ağac(self):
+        a = self.D.ağac(self.KOD)
+        self.assertEqual(a["komponent"], "Forma")
+        self.assertEqual(self.adlar(self.KOD), [
+            "sütun", ["başlıq:Qeydiyyat", "sahə:Ad",
+                      ["sətir", ["düymə:Ləğv", "düymə:Göndər"]],
+                      "?:özü.əlavə"]])
+        k = a["kök"]
+        self.assertEqual(k["istiqamət"], "şaquli")
+        self.assertEqual(k["uşaqlar"][2]["istiqamət"], "üfüqi")
+        self.assertEqual(k["uşaqlar"][2]["yol"], [2])
+        self.assertEqual(k["uşaqlar"][2]["uşaqlar"][1]["yol"], [2, 1])
+        self.assertEqual(self.KOD[k["uşaqlar"][1]["mövqe"]:][:4], "sahə")
+
+    def test_eyni_siyahıda_yer_dəyişmə(self):
+        n = self.D.köçür(self.KOD, [0], [], 3)
+        self.assertEqual(self.adlar(n["mətn"])[1][:3],
+                         ["sahə:Ad", ["sətir", ["düymə:Ləğv", "düymə:Göndər"]],
+                          "başlıq:Qeydiyyat"])
+        self.assertEqual(n["yol"], [2])
+        # şərh elementlə birlikdə qalır
+        self.assertIn("// ad sahəsi\n            vidjet.sahə", n["mətn"])
+
+    def test_başqa_konteynerə_daşıma(self):
+        n = self.D.köçür(self.KOD, [0], [2], 1)
+        self.assertEqual(self.adlar(n["mətn"]), [
+            "sütun", ["sahə:Ad",
+                      ["sətir", ["düymə:Ləğv", "başlıq:Qeydiyyat",
+                                 "düymə:Göndər"]], "?:özü.əlavə"]])
+        self.assertEqual(n["yol"], [1, 1])
+        # konteynerdən çıxarma
+        n2 = self.D.köçür(n["mətn"], [1, 2], [], 0)
+        self.assertEqual(self.adlar(n2["mətn"])[1][0], "düymə:Göndər")
+        # girinti: çoxsətirli element yeni yerə uyğunlaşır
+        self.assertIn('                vidjet.başlıq("Qeydiyyat"),',
+                      n["mətn"])
+
+    def test_sil_və_qadağalar(self):
+        n = self.D.sil(self.KOD, [2, 0])
+        self.assertEqual(self.adlar(n["mətn"])[1][2],
+                         ["sətir", ["düymə:Göndər"]])
+        n = self.D.sil(n["mətn"], [2, 0])
+        self.assertIn("vidjet.sətir([])", n["mətn"])
+        with self.assertRaises(self.D.DizaynXətası):
+            self.D.sil(self.KOD, [])
+        with self.assertRaises(self.D.DizaynXətası):
+            self.D.köçür(self.KOD, [2], [2], 0)          # öz içinə
+        with self.assertRaises(self.D.DizaynXətası):
+            self.D.köçür(self.KOD, [0], [1], 0)          # konteyner deyil
+        with self.assertRaises(self.D.DizaynXətası):
+            self.D.sil(self.KOD, [9])
+
+    def test_paletdən_əlavə(self):
+        n = self.D.əlavə_et(self.KOD, "nişan", [2], 1)
+        self.assertEqual(self.adlar(n["mətn"])[1][2][1][1].split(":")[0],
+                         "nişan")
+        self.assertEqual(n["yol"], [2, 1])
+        # nəticə ayrılır və tip yoxlamasından keçir
+        from studio import diaqnostika
+        d = diaqnostika.yoxla(n["mətn"], "f.alq")
+        self.assertEqual([x for x in d["diaqnostikalar"]
+                          if x["səviyyə"] == "xəta"], [], n["mətn"])
+
+    def test_vəziyyət_və_metod_ilə_əlavə(self):
+        n = self.D.əlavə_et(self.KOD, "sahə", [], 0)
+        self.assertIn("vəziyyət sahə1", n["mətn"])
+        self.assertEqual(self.adlar(n["mətn"])[1][0], "sahə:Ad")
+        self.assertEqual(n["yol"], [0])
+
+    def test_kök_yoxdursa(self):
+        a = self.D.ağac("komponent A\n    göstər()\n        qaytar <p>x</p>"
+                        "\n    son\nson\n")
+        self.assertIsNone(a["kök"])
+        with self.assertRaises(self.D.DizaynXətası):
+            self.D.ağac("yaz(1)\n")
+
+
 class Skelet(unittest.TestCase):
 
     def təmizdir(self, mətn, ad=""):
@@ -1213,6 +1330,53 @@ class Brauzer(unittest.TestCase):
         self.assertEqual(vəz.inner_text(), "Debaq bitdi.")
         self.assertIn("cəm: 14", p.inner_text("#cixis"))
         self.assertFalse(p.locator("#dym-debaq").is_disabled())
+
+    def test_vizual_dizayner(self):
+        (self.qovluq / "dizayn.alq").write_text(Dizayner.KOD,
+                                                encoding="utf-8")
+        p = self.səhifə
+        p.reload()
+        p.wait_for_selector(".düyün")
+        ta = self.aç("dizayn.alq")
+        p.click("#dym-dizayn")
+        p.wait_for_selector('#dizayn .dz-element[data-yol="[0]"]')
+        self.assertEqual(p.locator("#dizayn .dz-konteyner").count(), 2)
+        self.assertIn("Qeydiyyat", p.inner_text('[data-yol="[0]"]'))
+        # 1. Elementi daşı: başlıq → sətir konteynerinin sonuna
+        p.locator('#dizayn [data-yol="[0]"]').drag_to(
+            p.locator('#dizayn .dz-yer[data-hedef="[2]"][data-indeks="2"]'))
+        m = self.gözlə(ta, '"Göndər", növ: "əsas"),')
+        self.assertLess(m.index('"Göndər"'), m.index('"Qeydiyyat"'))
+        # 2. Paletdən əlavə: nişan → kökün əvvəlinə
+        p.click('[data-panel="palet"]')
+        p.locator('#palet [data-vidjet="nişan"]').drag_to(
+            p.locator('#dizayn .dz-yer[data-hedef="[]"][data-indeks="0"]'))
+        m = self.gözlə(ta, "vidjet.nişan(")
+        self.assertLess(m.index("vidjet.nişan("), m.index("vidjet.sahə("))
+        # 3. Sil: seç + ✕
+        el = p.locator('#dizayn [data-yol="[0]"]')
+        son = time.monotonic() + 10
+        while "Badge" not in el.inner_text() and time.monotonic() < son:
+            p.wait_for_timeout(100)
+        self.assertIn("Badge", el.inner_text())
+        el.hover()
+        el.locator(".dz-sil").click()
+        son = time.monotonic() + 10
+        while "vidjet.nişan(" in ta.input_value() and \
+                time.monotonic() < son:
+            p.wait_for_timeout(100)
+        self.assertNotIn("vidjet.nişan(", ta.input_value())
+        # 4. Klik — redaktor elementin sətrinə keçir, xüsusiyyətlər açılır
+        el = p.locator('#dizayn [data-yol="[0]"]')
+        son = time.monotonic() + 10
+        while "Text Field" not in el.inner_text() and time.monotonic() < son:
+            p.wait_for_timeout(100)
+        el.click()
+        p.wait_for_selector("#xus-forma:not([hidden]) .xüs-başlıq")
+        self.assertIn("vidjet.sahə", p.inner_text(".xüs-başlıq"))
+        # Fayl saxlanılıb
+        self.assertIn("vidjet.sətir", (self.qovluq / "dizayn.alq").read_text(
+            encoding="utf-8"))
 
     def test_palet_iki_klik(self):
         ta = self.aç("boş.alq")
