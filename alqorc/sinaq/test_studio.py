@@ -1058,6 +1058,37 @@ class Brauzer(unittest.TestCase):
         self.səhifə.keyboard.press("Control+y")
         self.assertTrue(ta.input_value().endswith("son\n"))
 
+    def test_tamamlama_alqorls_ilə(self):
+        ta = self.aç("boş.alqor")
+        ta.fill("")
+        ta.click()
+        k = self.səhifə.keyboard
+        k.type("funksiya topla(a: tam, b: tam) -> tam\nqaytar a + b\nson\n")
+        self.gözlə(ta, "son\n")
+        k.type("yaz(top")
+        siyahı = self.səhifə.locator(".r-tamamla")
+        siyahı.wait_for(state="visible")
+        self.assertIn("topla", siyahı.inner_text())
+        k.press("Enter")
+        self.gözlə(ta, "yaz(topla")
+        # imza ipucu
+        k.type("(")
+        imza = self.səhifə.locator(".r-imza")
+        imza.wait_for(state="visible")
+        self.assertIn("a: tam", imza.inner_text())
+        k.type("1, ")
+        self.səhifə.wait_for_timeout(400)
+        self.assertEqual(imza.locator("b").inner_text(), "b: tam")
+        k.press("Escape")
+        # modul üzvləri `.` ilə
+        k.type("2))\ngətir riyaziyyat\nyaz(riyaziyyat.")
+        siyahı.wait_for(state="visible")
+        self.assertIn("kök", siyahı.inner_text())
+        k.type("kö")
+        k.press("Tab")
+        self.gözlə(ta, "riyaziyyat.kök")
+        self.assertTrue(siyahı.is_hidden())
+
     def test_palet_iki_klik(self):
         ta = self.aç("boş.alqor")
         ta.fill("")

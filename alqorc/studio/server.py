@@ -82,6 +82,7 @@ class Studio:
         self.port = self.server.server_address[1]
         self._sap: threading.Thread | None = None
         self.marşrutlar = self._marşrutlar()
+        self._dil: Any = None
 
     # ── Ünvanlar ──────────────────────────────────────────────────────
 
@@ -157,6 +158,11 @@ class Studio:
             except subprocess.TimeoutExpired:
                 p.kill()
                 p.wait(timeout=2)
+        if p.stdin is not None:
+            try:
+                p.stdin.close()
+            except OSError:
+                pass
 
     def önbaxışı_başlat(self, fayl: Path, komponent: str | None) -> dict:
         self.önbaxışı_dayandır()
@@ -269,6 +275,7 @@ class Studio:
             ("POST", "/api/vidjet/xususiyyetler"): self.api_xüsusiyyətlər,
             ("POST", "/api/vidjet/xususiyyet"): self.api_xüsusiyyət_qoy,
             ("POST", "/api/yoxla"): self.api_yoxla,
+            ("POST", "/api/dil"): self.api_dil,
             ("POST", "/api/ascii-duzelt"): self.api_ascii,
             ("POST", "/api/formatla"): self.api_formatla,
             ("POST", "/api/islet"): self.api_işlət,
@@ -441,6 +448,22 @@ class Studio:
                                  rejim if isinstance(rejim, str)
                                  else "normal",
                                  bool(s.get("tip", True)))
+
+    def api_dil(self, s: dict) -> dict:
+        """Tamamlama / imza / hover / təyinat — `alqorls` vasitəsilə."""
+        from .dilserver import DilKörpüsü
+        if self._dil is None:
+            self._dil = DilKörpüsü(self.layihə.kök, self.tip_rejimi())
+        yol = self.layihə.yol(self._mətn(s, "yol"))
+        sətir, sütun = self._tam(s, "sətir"), self._tam(s, "sütun")
+        if sətir is None or sütun is None:
+            raise ApiXətası("`sətir` və `sütun` lazımdır")
+        try:
+            return {"nəticə": self._dil.sorğu(
+                self._mətn(s, "metod"), yol, self._mətn(s, "mətn"),
+                sətir, sütun)}
+        except ValueError as x:
+            raise ApiXətası(str(x)) from None
 
     def api_ascii(self, s: dict) -> dict:
         mətn, say = diaqnostika.ascii_düzəlt(self._mətn(s, "mətn"))

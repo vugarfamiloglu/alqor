@@ -298,3 +298,28 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 
 body.sürüklənir { user-select: none; }
 body.sürüklənir iframe { pointer-events: none; }
+
+/* ── Tamamlama siyahısı, imza ipucu (redaktor) ── */
+.r-tamamla {
+  position: absolute; z-index: 30; min-width: 260px; max-width: 520px;
+  background: var(--panel); border: 1px solid var(--kənar); border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .28); font: 12.5px/1.4 var(--kod-şrift); overflow: hidden;
+}
+.r-t-siyahı { max-height: 236px; overflow-y: auto; }
+.r-t-maddə { display: flex; align-items: center; gap: 8px; padding: 2px 8px; cursor: pointer; white-space: nowrap; }
+.r-t-maddə.seçili { background: var(--seçim); }
+.r-t-növ { flex: none; width: 16px; text-align: center; font-size: 11px; font-weight: 700; color: var(--t-çağırış); }
+.r-t-növ.n7, .r-t-növ.n22, .r-t-növ.n25 { color: var(--t-sinif); }
+.r-t-növ.n9 { color: var(--t-tip); }
+.r-t-növ.n14, .r-t-növ.n15 { color: var(--t-açar); }
+.r-t-növ.n5, .r-t-növ.n6, .r-t-növ.n10, .r-t-növ.n21 { color: var(--t-özü); }
+.r-t-ad { color: var(--mətn); }
+.r-t-detal { margin-left: auto; padding-left: 16px; color: var(--sönük); overflow: hidden; text-overflow: ellipsis; }
+.r-t-izah { border-top: 1px solid var(--kənar); padding: 6px 8px; color: var(--sönük); font-family: var(--ui-şrift);
+  white-space: pre-wrap; max-height: 90px; overflow-y: auto; }
+.r-imza {
+  position: absolute; z-index: 29; padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+  background: var(--panel); border: 1px solid var(--kənar); box-shadow: 0 4px 14px rgba(0, 0, 0, .22);
+  font: 12px/1.5 var(--kod-şrift); color: var(--sönük);
+}
+.r-imza b { color: var(--vurğu); font-weight: 700; }
