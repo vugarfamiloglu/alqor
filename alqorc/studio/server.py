@@ -165,7 +165,7 @@ class Studio:
         if komponent:
             əmr.append(komponent)
         p = subprocess.Popen(əmr, cwd=str(fayl.parent), env=mühit(),
-                             stdin=subprocess.DEVNULL,
+                             stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         with self._önbaxış_kilidi:
@@ -175,9 +175,9 @@ class Studio:
 
         def stdout_oxu() -> None:
             assert p.stdout is not None
-            for i, sətir in enumerate(iter(p.stdout.readline, b"")):
-                if i == 0:
-                    növbə.put(sətir.decode("utf-8", "replace"))
+            # Hər sətir bir cavabdır: ilki başlanğıc, sonrakılar `yenilə`
+            for sətir in iter(p.stdout.readline, b""):
+                növbə.put(sətir.decode("utf-8", "replace"))
             növbə.put("")
             p.stdout.close()           # proses bitdi — boru da bağlanır
 
@@ -201,9 +201,53 @@ class Studio:
             return {"xəta": b"".join(xəta_parçaları).decode(
                 "utf-8", "replace").strip() or "önbaxış prosesi bitdi"}
         try:
-            return json.loads(sətir)
+            n = json.loads(sətir)
         except ValueError:
             return {"xəta": sətir}
+        if "ünvan" in n:
+            with self._önbaxış_kilidi:
+                if self._önbaxış is p:
+                    self._önbaxış_məlumatı = {
+                        "fayl": fayl, "komponent": n.get("komponent"),
+                        "istənən": komponent, "növbə": növbə, "cavab": n}
+        return n
+
+    def önbaxışı_yenilə(self, fayl: Path, komponent: str | None) -> dict:
+        """
+        İşləyən önbaxışa `yenilə` göndərir — proses, server və ünvan
+        qalır, yalnız komponent yenidən qurulur. Önbaxış yoxdursa,
+        başqa fayla və ya komponentə aiddirsə, təzəsini başladır.
+        """
+        with self._önbaxış_kilidi:
+            p = self._önbaxış
+            m = getattr(self, "_önbaxış_məlumatı", None)
+        uyğun = (p is not None and p.poll() is None and m is not None
+                 and m["fayl"] == fayl and p.stdin is not None
+                 and komponent in (None, m["komponent"]))
+        if not uyğun:
+            return self.önbaxışı_başlat(fayl, komponent)
+        növbə: queue.Queue[str] = m["növbə"]
+        while not növbə.empty():                 # köhnə cavablar
+            növbə.get_nowait()
+        try:
+            p.stdin.write("yenilə\n".encode())
+            p.stdin.flush()
+            sətir = növbə.get(timeout=ÖNBAXIŞ_GÖZLƏMƏ)
+        except (OSError, queue.Empty):
+            return self.önbaxışı_başlat(fayl, komponent)
+        if not sətir.strip():
+            return self.önbaxışı_başlat(fayl, komponent)
+        try:
+            n = json.loads(sətir)
+        except ValueError:
+            return {"xəta": sətir}
+        if "xəta" in n:
+            return n
+        cavab = dict(m["cavab"])
+        cavab["komponentlər"] = n.get("komponentlər",
+                                      cavab.get("komponentlər"))
+        cavab["yeniləndi"] = True
+        return cavab
 
     # ── API marşrutları ───────────────────────────────────────────────
 
@@ -222,6 +266,8 @@ class Studio:
             ("POST", "/api/vidjet/numune"): self.api_vidjet_nümunə,
             ("POST", "/api/vidjet/tamamla"): self.api_vidjet_tamamla,
             ("POST", "/api/vidjet/elementler"): self.api_elementlər,
+            ("POST", "/api/vidjet/xususiyyetler"): self.api_xüsusiyyətlər,
+            ("POST", "/api/vidjet/xususiyyet"): self.api_xüsusiyyət_qoy,
             ("POST", "/api/yoxla"): self.api_yoxla,
             ("POST", "/api/ascii-duzelt"): self.api_ascii,
             ("POST", "/api/formatla"): self.api_formatla,
@@ -265,13 +311,17 @@ class Studio:
 
     def api_kataloq(self, _: dict) -> dict:
         from alqor import vidjet as V
+        from . import miniatur
+        şəkillər = miniatur.hamısı()
         return {
+            "üslub": miniatur.üslub(),
             "kateqoriyalar": list(V.KATEQORİYALAR),
             "vidjetlər": [{
                 "ad": m.ad, "kateqoriya": m.kateqoriya, "izah": m.izah,
                 "nümunə": skelet._düzəlt(m.nümunə),
                 "hadisələr": list(m.hadisələr),
                 "skeletVar": bool(m.skelet or m.vəziyyət),
+                "miniatür": şəkillər.get(m.ad, ""),
             } for m in V.KATALOQ],
         }
 
@@ -355,6 +405,30 @@ class Studio:
     def api_elementlər(self, s: dict) -> dict:
         return {"elementlər": skelet.elementlər(self._mətn(s, "mətn"))}
 
+    def api_xüsusiyyətlər(self, s: dict) -> dict:
+        from .xususiyyet import XüsusiyyətXətası, oxu
+        kursor = self._tam(s, "kursor")
+        if kursor is None:
+            raise ApiXətası("`kursor` lazımdır")
+        try:
+            return oxu(self._mətn(s, "mətn"), kursor)
+        except XüsusiyyətXətası as x:
+            return {"xəta": str(x)}
+
+    def api_xüsusiyyət_qoy(self, s: dict) -> dict:
+        from .xususiyyet import XüsusiyyətXətası, qoy
+        kursor = self._tam(s, "kursor")
+        if kursor is None:
+            raise ApiXətası("`kursor` lazımdır")
+        dəyər = s.get("dəyər")
+        if not (dəyər is None or isinstance(dəyər, (str, int, float, bool))):
+            raise ApiXətası("`dəyər` mətn, ədəd, məntiq və ya boş olmalıdır")
+        try:
+            return qoy(self._mətn(s, "mətn"), kursor, self._mətn(s, "ad"),
+                       dəyər)
+        except XüsusiyyətXətası as x:
+            raise ApiXətası(str(x), 422)
+
     # ── Dil alətləri ──────────────────────────────────────────────────
 
     def api_yoxla(self, s: dict) -> dict:
@@ -417,8 +491,10 @@ class Studio:
         if not yol.is_file():
             raise ApiXətası("fayl tapılmadı — əvvəlcə saxlayın", 404)
         k = s.get("komponent")
-        return self.önbaxışı_başlat(yol, k if isinstance(k, str) and k
-                                    else None)
+        k = k if isinstance(k, str) and k else None
+        if s.get("canlı"):
+            return self.önbaxışı_yenilə(yol, k)
+        return self.önbaxışı_başlat(yol, k)
 
     # ── Pəncərənin həyatı ─────────────────────────────────────────────
 

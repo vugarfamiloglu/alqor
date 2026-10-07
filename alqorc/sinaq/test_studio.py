@@ -637,6 +637,75 @@ class Skelet(unittest.TestCase):
 #  5. Quruluş və klaviatura
 # ═══════════════════════════════════════════════════════════════════════
 
+class Xüsusiyyətlər(unittest.TestCase):
+    MƏTN = ("gətir vidjet\nkomponent P\n    göstər()\n"
+            "        qaytar vidjet.sütun(məzmun: [\n"
+            '            vidjet.düymə(mətn: "Saxla", növ: "əsas",\n'
+            "                         klik: özü.saxla),\n"
+            '            vidjet.başlıq(mətn: "Salam {ad}")\n'
+            "        ])\n    son\nson\n")
+
+    def k(self, söz="düymə"):
+        return self.MƏTN.index(söz) + 2
+
+    def test_oxu(self):
+        from studio.xususiyyet import oxu
+        n = oxu(self.MƏTN, self.k())
+        p = {x["ad"]: x for x in n["parametrlər"]}
+        self.assertEqual(n["ad"], "düymə")
+        self.assertEqual((p["mətn"]["dəyər"], p["mətn"]["növ"]),
+                         ("Saxla", "mətn"))
+        self.assertEqual(p["növ"]["növ"], "seçim")
+        self.assertEqual(p["klik"]["növ"], "hadisə")
+        self.assertFalse(p["klik"]["sadə"])
+        self.assertEqual(p["söndürülmüş"]["növ"], "məntiq")
+        self.assertEqual(n["üslub"], {})
+        # Interpolyasiyalı mətn ifadədir — panel toxunmur
+        b = {x["ad"]: x for x in oxu(self.MƏTN, self.k("başlıq("))
+             ["parametrlər"]}
+        self.assertFalse(b["mətn"]["sadə"])
+
+    def test_qoy_dəyiş_əlavə_sil(self):
+        from studio.xususiyyet import oxu, qoy
+        k = self.k()
+        m = qoy(self.MƏTN, k, "mətn", 'De "salam" {x}')["mətn"]
+        self.assertIn('vidjet.düymə(mətn: "De \\"salam\\" \\{x\\}"', m)
+        m = qoy(m, k, "ölçü", "böyük")["mətn"]
+        self.assertIn("klik: özü.saxla,\n                         "
+                      'ölçü: "böyük")', m)
+        m = qoy(m, k, "üslub.fon", "#fff")["mətn"]
+        m = qoy(m, k, "üslub.künc", 8)["mətn"]
+        self.assertEqual(oxu(m, k)["üslub"], {"fon": "#fff", "künc": 8})
+        for a in ("üslub.fon", "üslub.künc", "ölçü"):
+            m = qoy(m, k, a, None)["mətn"]
+        self.assertNotIn("üslub", m)
+        self.assertNotIn("ölçü", m)
+        self.assertIn("klik: özü.saxla),", m)
+        # Nəticə həmişə ayrılır
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.xeta import XətaToplayıcı
+        x = XətaToplayıcı()
+        mb = Mənbə.mətndən(m, "t", x)
+        Parser(Lekser(mb, x).leksə(), mb, x).ayır()
+        self.assertTrue(x.uğurludur(), x.siyahı)
+
+    def test_qadağalar(self):
+        from studio.xususiyyet import XüsusiyyətXətası, qoy
+        for ad, d in (("klik", "x"), ("yox", 1), ("üslub.pis", "x")):
+            with self.assertRaises(XüsusiyyətXətası):
+                qoy(self.MƏTN, self.k(), ad, d)
+        with self.assertRaises(XüsusiyyətXətası):
+            qoy("yaz(1)\n", 2, "mətn", "a")
+
+    def test_api_və_miniatürlər(self):
+        from studio.miniatur import hamısı
+        from alqor import vidjet as V
+        self.assertEqual(set(hamısı()), set(V.VİDJETLƏR))
+        self.assertIn("v-düymə", hamısı()["düymə"])
+
+
 class Quruluş(unittest.TestCase):
 
     def test_xəritə(self):
@@ -861,7 +930,10 @@ class ÖnbaxışVəŞablon(ServerSınağı):
         self.assertEqual(kod, 422)
         kod, d = self.api("/api/kataloq")
         self.assertEqual(len(d["vidjetlər"]), len(V.KATALOQ))
-        self.assertNotIn("tamEn", json.dumps(d, ensure_ascii=False))
+        # Kod nümunələrində köhnə `tamEn` tipi yoxdur (CSS sinfi ola bilər)
+        self.assertNotIn("tamEn", json.dumps(
+            [x["nümunə"] for x in d["vidjetlər"]], ensure_ascii=False))
+        self.assertIn("v-düymə", d["vidjetlər"][0]["miniatür"])
 
     def test_pəncərə_pencere_aparıcısı_ilə_açılır(self):
         """`pencere._pəncərəni_aç` təkrar istifadə olunur (`--app=`)."""
@@ -918,6 +990,10 @@ class Brauzer(unittest.TestCase):
             raise unittest.SkipTest("playwright quraşdırılmayıb")
         cls.qovluq = Path(tempfile.mkdtemp(prefix="studio-brauzer-"))
         (cls.qovluq / "boş.alqor").write_text("", encoding="utf-8")
+        (cls.qovluq / "panel.alqor").write_text(
+            "gətir vidjet\n\nkomponent Panel\n    göstər()\n"
+            '        qaytar vidjet.düymə(mətn: "Saxla", növ: "əsas")\n'
+            "    son\nson\n", encoding="utf-8")
         (cls.qovluq / "forma.alqor").write_text(
             "komponent Forma\n    göstər()\n        qaytar <div>\n"
             '            {vidjet.sahə(etiket: "Ad", ad: "ad")}\n'
@@ -1012,6 +1088,61 @@ class Brauzer(unittest.TestCase):
         el.dblclick()
         self.gözlə(ta, "metod adDəyişdi")
         self.səhifə.wait_for_selector(".fayl-elementi.tam")
+
+    def test_palet_miniatürləri(self):
+        self.aç("boş.alqor")
+        self.səhifə.click('[data-panel="palet"]')
+        p = self.səhifə
+        self.assertEqual(p.locator(".vidjet-elementi .miniatür").count(), 57)
+        # Shadow DOM içində vidjetin həqiqi HTML-i (Playwright açıq
+        # shadow kökə daxil olur)
+        düymə = p.locator('[data-vidjet="düymə"] .miniatür button.v-düymə')
+        self.assertEqual(düymə.inner_text(), "Yadda saxla")
+        self.assertTrue(p.locator(
+            '[data-vidjet="cədvəl"] .miniatür table.v-cədvəl').count())
+
+    def test_xüsusiyyətlər_paneli_və_canlı_önbaxış(self):
+        ta = self.aç("panel.alqor")
+        p = self.səhifə
+        p.click('[data-panel="palet"]')
+        p.locator(".fayl-elementi", has_text="düymə").click()
+        p.wait_for_selector("#xus-forma:not([hidden]) .xüs-başlıq")
+        self.assertEqual(p.inner_text(".xüs-başlıq b"), "düymə")
+        self.assertEqual(p.input_value('[data-xus="mətn"]'), "Saxla")
+        # Mətn
+        p.fill('[data-xus="mətn"]', "Göndər")
+        self.gözlə(ta, 'mətn: "Göndər"')
+        # Seçim
+        p.select_option('[data-xus="ölçü"]', "böyük")
+        self.gözlə(ta, 'ölçü: "böyük"')
+        # Üslub: fon rəngi və künc
+        p.fill('[data-xus="üslub.fon"]', "#16a34a")
+        p.fill('[data-xus="üslub.künc"]', "14")
+        m = self.gözlə(ta, '"künc": 14')
+        self.assertIn('üslub: {"fon": "#16a34a", "künc": 14}', m)
+        # Fayl səssiz saxlanılıb, önbaxış açılıb və yenilənib
+        son = time.monotonic() + 15
+        while time.monotonic() < son:
+            if '"künc": 14' in (self.qovluq / "panel.alqor").read_text(
+                    encoding="utf-8"):
+                break
+            p.wait_for_timeout(100)
+        çərçivə = p.frame_locator("#onbaxis-cercive")
+        d = çərçivə.locator("button.v-düymə")
+        d.wait_for(timeout=20000)
+        son = time.monotonic() + 20
+        while time.monotonic() < son:
+            if "border-radius:14px" in (d.get_attribute("style") or ""):
+                break
+            p.wait_for_timeout(150)
+        self.assertIn("background:#16a34a", d.get_attribute("style"))
+        self.assertEqual(d.inner_text(), "Göndər")
+        # Standarta qaytarmaq (✕) arqumenti silir
+        p.click('[data-sətir="ölçü"] .sıfırla')
+        son = time.monotonic() + 10
+        while "ölçü:" in ta.input_value() and time.monotonic() < son:
+            p.wait_for_timeout(100)
+        self.assertNotIn("ölçü:", ta.input_value())
 
     def test_diaqnostika_dalğalı_xətt(self):
         ta = self.aç("boş.alqor")

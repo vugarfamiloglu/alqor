@@ -1987,4 +1987,145 @@ body{font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
 """
 
 
+
+# ═══════════════════════════════════════════════════════════════════════
+#  `üslub:` — bütün vidjetlər üçün ümumi görünüş parametri
+# ═══════════════════════════════════════════════════════════════════════
+#
+#     vidjet.düymə(mətn: "Saxla", üslub: {"fon": "#16a34a", "künc": 20,
+#                                         "kənar": "2px solid #14532d"})
+#
+# Açarlar Azərbaycanca, ədədlər piksel sayılır. Form sahələrində rəng,
+# fon, kənar, künc və şrift sahənin ÖZÜNƏ (input), qalanı bütövə aiddir.
+
+ÜSLUB_AÇARLARI: dict[str, str] = {
+    "rəng": "color",
+    "fon": "background",
+    "kənar": "border",
+    "kənarRəngi": "border-color",
+    "künc": "border-radius",
+    "şrift": "font-size",
+    "şriftAiləsi": "font-family",
+    "qalınlıq": "font-weight",
+    "en": "width",
+    "hündürlük": "height",
+    "minEn": "min-width",
+    "maksEn": "max-width",
+    "boşluq": "padding",
+    "xaricBoşluq": "margin",
+    "düzləndir": "text-align",
+    "şəffaflıq": "opacity",
+    "kölgə": "box-shadow",
+}
+_ÖLÇÜLÜ = {"künc", "şrift", "en", "hündürlük", "minEn", "maksEn", "boşluq",
+           "xaricBoşluq"}
+_BÜTÖVƏ = {"en", "hündürlük", "minEn", "maksEn", "xaricBoşluq"}
+_DÜZLƏNMƏ = {"sol": "left", "sağ": "right", "orta": "center",
+             "iki tərəf": "justify"}
+
+
+def _üslub_dəyəri(açar: str, d: Any, icraçı: Any) -> str:
+    if açar == "qalın" or (açar == "qalınlıq" and isinstance(d, bool)):
+        return "bold" if d else "normal"
+    if açar in _ÖLÇÜLÜ and isinstance(d, (int, float)) \
+            and not isinstance(d, bool):
+        return f"{d:g}px"
+    v = _m(d, icraçı)
+    if açar == "düzləndir":
+        v = _DÜZLƏNMƏ.get(v, v)
+    # CSS-dən çıxmağın qarşısı: `;`, `{`, `}`, `<`, xarici URL, ifadə
+    t = v.lower()
+    if any(c in v for c in ";{}<>\\") or "url(" in t or \
+            "expression" in t or "javascript" in t or "@import" in t:
+        raise AlqorXəta("ArqumentXətası",
+                        f"üslub dəyəri icazəsiz simvol daşıyır: {v!r}",
+                        kod="ALQ-R013")
+    return v
+
+
+def üslub_css(üslub: Any, icraçı: Any = None) -> tuple[str, str]:
+    """`üslub:` lüğəti → (sahənin özünə CSS, bütövə CSS)."""
+    if üslub is None:
+        return "", ""
+    if isinstance(üslub, Nümunə):
+        üslub = üslub.sahələr
+    if not isinstance(üslub, dict):
+        raise AlqorXəta("ArqumentXətası",
+                        "`üslub` lüğət olmalıdır: {\"rəng\": \"#fff\", "
+                        "\"fon\": \"#0b6bcb\"}", kod="ALQ-R013")
+    iç: list[str] = []
+    çöl: list[str] = []
+    for a, d in üslub.items():
+        a = str(a)
+        if d is None:
+            continue
+        if a == "qalın":
+            (iç).append(f"font-weight:{_üslub_dəyəri(a, d, icraçı)}")
+            continue
+        if a == "kursiv":
+            iç.append("font-style:" + ("italic" if d else "normal"))
+            continue
+        css = ÜSLUB_AÇARLARI.get(a)
+        if css is None:
+            raise AlqorXəta(
+                "ArqumentXətası", f"`{a}` üslub açarı tanınmır. İcazəli: "
+                + ", ".join([*ÜSLUB_AÇARLARI, "qalın", "kursiv"]),
+                kod="ALQ-R013")
+        (çöl if a in _BÜTÖVƏ else iç).append(
+            f"{css}:{_üslub_dəyəri(a, d, icraçı)}")
+    return ";".join(iç), ";".join(çöl)
+
+
+def _stil_əlavə(e: Element, css: str) -> None:
+    if not css:
+        return
+    köhnə = e.atributlar.get("style")
+    e.atributlar["style"] = f"{köhnə};{css}" if köhnə else css
+
+
+def _əsas_idarə(e: Element) -> Element | None:
+    """Form sahəsinin özü (input/select/textarea), varsa."""
+    for u in e.uşaqlar:
+        if isinstance(u, Element):
+            if u.ad in FORM_TEQLƏRİ:
+                return u
+            t = _əsas_idarə(u)
+            if t is not None:
+                return t
+    return None
+
+
+def _üslubla(funksiya):
+    import functools
+    import inspect
+
+    @functools.wraps(funksiya)
+    def bürü(icraçı, *a, üslub: Any = None, **k):
+        e = funksiya(icraçı, *a, **k)
+        if üslub is None or not isinstance(e, Element):
+            return e
+        iç, çöl = üslub_css(üslub, icraçı)
+        hədəf = e
+        if e.ad not in FORM_TEQLƏRİ:
+            # `or` yox: uşaqsız Element `len() == 0` olduğu üçün yalandır
+            idarə = _əsas_idarə(e)
+            if idarə is not None:
+                hədəf = idarə
+        _stil_əlavə(hədəf, iç)
+        _stil_əlavə(e, çöl)
+        return e
+
+    imza = inspect.signature(funksiya)
+    bürü.__signature__ = imza.replace(parameters=[
+        *imza.parameters.values(),
+        inspect.Parameter("üslub", inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                          default=None)])
+    return bürü
+
+
+for _ad in VİDJETLƏR:
+    globals()[_ad] = _üslubla(globals()[_ad])
+del _ad
+
+
 _kataloqu_yoxla()

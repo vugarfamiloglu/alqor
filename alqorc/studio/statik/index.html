@@ -37,6 +37,7 @@
     <nav class="panel-nişanları" role="tablist">
       <button class="aktiv" data-panel="layihe" role="tab">Layihə</button>
       <button data-panel="palet" role="tab">Elementlər</button>
+      <button data-panel="xususiyyet" role="tab" title="Seçilmiş elementin xüsusiyyətləri">Xüsusiyyətlər</button>
     </nav>
 
     <section class="panel" id="panel-layihe">
@@ -60,6 +61,17 @@
       <p class="ipucu-mətni">Bir klik — kursora qoyur · <b>iki klik</b> — işləməsi üçün
         lazım olan bütün kodu yazır · redaktora sürükləmək də olar</p>
       <div class="palet" id="palet"></div>
+    </section>
+
+    <section class="panel" id="panel-xususiyyet" hidden>
+      <div class="xüs-boş" id="xus-bos">
+        <p><b>Element seçin</b></p>
+        <p class="ipucu-mətni">Redaktorda kursoru <code>vidjet.…(…)</code> çağırışının
+          içinə qoyun və ya <b>Elementlər → Fayldakı elementlər</b> siyahısında
+          elementə klikləyin. Mətn, rəng, kənar, ölçü və bütün parametrlər
+          burada dəyişir — önbaxış dərhal yenilənir.</p>
+      </div>
+      <div id="xus-forma" hidden></div>
     </section>
   </aside>
   <div class="bölücü şaquli" data-bolucu="yan"></div>

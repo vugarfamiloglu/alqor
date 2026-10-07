@@ -87,6 +87,37 @@ nəticə həm ayrılır, həm də tip yoxlamasından xətasız keçir.
 
 ---
 
+## Miniatürlər və Xüsusiyyətlər paneli
+
+**Elementlər** panelində hər vidjetin adı ilə yanaşı əsl görünüşü də
+var. Miniatür serverdə `vidjet` modulunun özü ilə nümunə dəyərlərlə
+qurulur (`miniatur.py`) və Shadow DOM-da vidjet üslubu ilə göstərilir.
+Ona görə önbaxışdakı ilə eynidir, açıq və qaranlıq temaya uyğunlaşır.
+
+**Xüsusiyyətlər** paneli elementi iki yolla seçir:
+- **Fayldakı elementlər** siyahısında elementə klik;
+- kursoru `vidjet.…(…)` çağırışının içinə qoymaq.
+
+Panel bölmələri:
+
+| Bölmə | Nə var |
+|---|---|
+| Xüsusiyyətlər | vidjetin bütün parametrləri — mətn, ədəd, seçim (`növ`, `ölçü`), bayraq |
+| Görünüş | `üslub:` — rəng, fon, kənar, kənar rəngi, künc, şrift, qalın/kursiv, en/hündürlük, boşluqlar, düzlənmə, şəffaflıq, kölgə |
+| Hadisələr və ifadələr | `klik: özü.saxla`, `məzmun: [...]` — göstərilir, toxunulmur |
+
+Hər dəyişiklikdə bu ardıcıllıq baş verir:
+1. Server çağırışın arqumentini dəyişir (`xususiyyet.py`). Dırnaqlar
+   qaçırılır, çox sətirli çağırışda girinti qorunur, arqument yoxdursa
+   əlavə olunur. ✕ düyməsi arqumenti silir — vidjet standart dəyərə qayıdır.
+2. Fayl səssiz saxlanılır.
+3. Önbaxış **canlı** yenilənir. İşləyən önbaxış prosesinə `yenilə` əmri
+   gedir, proses komponenti yenidən qurur. Proses yenidən başladılmır,
+   ünvan dəyişmir — dəyişiklik təxminən dərhal görünür.
+
+Sadə literal olmayan dəyərlər (`"Salam {ad}"`, `özü.x`, dəyişən) panelda
+redaktə olunmur. Panel istifadəçinin ifadələrini pozmur.
+
 ## Redaktor
 
 Öz yazdığımız yüngül redaktor (`statik/redaktor.js`): şəffaf

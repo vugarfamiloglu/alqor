@@ -330,6 +330,7 @@ Cəmi **57 vidjet**, 6 kateqoriya. Bütün parametrlər adlıdır və ixtiyaridi
 | `ikon` | — | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
 | `kimlik` | — | HTML `id` atributu |
 | `əlavəSinif` | — | əlavə CSS sinfi |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -356,6 +357,7 @@ son
 | `növ` | `"sakit"` | `düymə` ilə eyni növlər |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
 | `kimlik` | — | HTML `id` atributu |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -377,6 +379,7 @@ son
 | Parametr | Standart | İzah |
 |---|---|---|
 | `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.düyməQrupu(məzmun: [
@@ -393,6 +396,7 @@ vidjet.düyməQrupu(məzmun: [
 | `ünvan` | `"#"` | keçid ünvanı (`href`) |
 | `klik` | — | verilibsə keçid əvəzinə idarəedici işləyir |
 | `yeniNişan` | `yanlış` | ünvanı yeni nişanda açır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -415,6 +419,7 @@ vidjet.əlaqə(mətn: "Ətraflı", ünvan: "/haqqında")
 | `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
 | `oxunaqlı` | `yanlış` | yalnız oxunur, dəyişdirilmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi` · `yazıldı`
 
@@ -445,6 +450,7 @@ son
 | `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
 | `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -478,6 +484,7 @@ son
 | `dəyişdi` | — | dəyər dəyişəndə çağırılır — mətn kimi alır (`tamƏt`/`onluqƏt` ilə çevirin) |
 | `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -505,6 +512,7 @@ son
 | `dəyər` | — | cari dəyər |
 | `yazıldı` | — | hər düymə basışında çağırılır — cari mətni alır |
 | `göndərildi` | — | form göndəriləndə (Enter) çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `yazıldı` · `göndərildi`
 
@@ -536,6 +544,7 @@ son
 | `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
 | `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -568,6 +577,7 @@ son
 | `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
 | `boşEtiket` | — | siyahının əvvəlində boş dəyərli seçim (məs. `"Seçin…"`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -597,6 +607,7 @@ son
 | `dəyişdi` | — | işarələnəndə/götürüləndə çağırılır — `doğru`/`yanlış` alır |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
 | `kömək` | — | sahənin altında kiçik izah mətni |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -625,6 +636,7 @@ son
 | `yanıq` | `yanlış` | açarın yanılı vəziyyəti |
 | `dəyişdi` | — | yandırılanda/söndürüləndə çağırılır — `doğru`/`yanlış` alır |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -655,6 +667,7 @@ son
 | `üfüqi` | `yanlış` | seçimləri bir sətirdə düzür |
 | `kömək` | — | sahənin altında kiçik izah mətni |
 | `xəta` | — | doluysa sahə qırmızı çərçivə alır, mətn altda görünür (`kömək`-i əvəzləyir) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -688,6 +701,7 @@ son
 | `dəyişdi` | — | sürüşdürərkən çağırılır — dəyəri mətn kimi alır |
 | `dəyəriGöstər` | `doğru` | sürüşdürücünün yanında cari dəyəri göstərir |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -719,6 +733,7 @@ son
 | `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
 | `tələb` | `yanlış` | məcburi sahə — etiketin yanında `*` |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -746,6 +761,7 @@ son
 | `dəyər` | — | `"14:30"` formatında |
 | `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
 | `söndürülmüş` | `yanlış` | `doğru` olduqda element sönükdür, hadisə getmir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -761,6 +777,7 @@ vidjet.vaxt(etiket: "Saat", ad: "vaxt")
 | `ad` | `"rəng"` | sahənin adı (`name`/`id`); sınaq sürücüsü də bununla tapır |
 | `dəyər` | `"#3366cc"` | `"#rrggbb"` formatında |
 | `dəyişdi` | — | dəyər dəyişəndə çağırılır — yeni dəyəri alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -778,6 +795,7 @@ vidjet.rəng(etiket: "Rəng", ad: "rəng")
 | `çoxlu` | `yanlış` | bir neçə fayl seçməyə icazə verir |
 | `dəyişdi` | — | fayl seçiləndə çağırılır — faylın adını alır |
 | `kömək` | — | sahənin altında kiçik izah mətni |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `dəyişdi`
 
@@ -794,6 +812,7 @@ vidjet.faylSahəsi(etiket: "Şəkil", ad: "faylSahəsi",
 | `göndərildi` | — | form göndəriləndə (Enter) çağırılır |
 | `başlıq` | — | formun üstündəki başlıq |
 | `sıx` | `yanlış` | sahələr arası məsafəni azaldır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `göndərildi`
 
@@ -819,6 +838,7 @@ son
 |---|---|---|
 | `başlıq` | `""` | qrupun adı (`<legend>`) |
 | `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.sahəDəsti(başlıq: "Ünvan", məzmun: [
@@ -832,6 +852,7 @@ vidjet.sahəDəsti(başlıq: "Ünvan", məzmun: [
 |---|---|---|
 | `mətn` | `""` | etiketin mətni |
 | `sahəsi` | — | etiketin bağlandığı sahənin `ad`-ı |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.etiket(mətn: "Ad", sahəsi: "ad")
@@ -846,6 +867,7 @@ vidjet.etiket(mətn: "Ad", sahəsi: "ad")
 | `mətn` | `""` | görünən mətn |
 | `səviyyə` | `1` | `1`–`6` (`<h1>`–`<h6>`) |
 | `altMətn` | — | başlığın altında sönük izah |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.başlıq(mətn: "Tapşırıqlar", səviyyə: 1,
@@ -860,6 +882,7 @@ vidjet.başlıq(mətn: "Tapşırıqlar", səviyyə: 1,
 | `sönük` | `yanlış` | boz, ikinci dərəcəli mətn |
 | `ölçü` | `"orta"` | `kiçik` · `orta` · `böyük` |
 | `qalın` | `yanlış` | qalın şrift |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.mətn(məzmun: "Salam, dünya!")
@@ -871,6 +894,7 @@ vidjet.mətn(məzmun: "Salam, dünya!")
 |---|---|---|
 | `mətn` | `""` | görünən mətn |
 | `növ` | `"ikinci"` | `düymə` ilə eyni növlər |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.nişan(mətn: "Yeni", növ: "uğur")
@@ -885,6 +909,7 @@ vidjet.nişan(mətn: "Yeni", növ: "uğur")
 | `başlıq` | — | başlıq mətni |
 | `bağlana` | `yanlış` | bağlama düyməsi (✕) göstərir |
 | `bağlandı` | — | `bağlana: doğru` olduqda ✕ basılanda çağırılır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `bağlandı`
 
@@ -912,6 +937,7 @@ son
 | `altlıq` | — | aşağı hissə — adətən düymələr |
 | `altMətn` | — | başlığın altında sönük mətn |
 | `klik` | — | verilibsə bütün kart basılandır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -931,6 +957,7 @@ vidjet.kart(başlıq: "Hesabat", məzmun: [
 | `zolaqlı` | `doğru` | cüt sətirlərin fonu fərqlənir |
 | `çərçivəli` | `yanlış` | bütün xanaların çərçivəsi |
 | `sətirKlik` | — | sətir basıldıqda çağırılır — sətrin indeksini (0-dan, mətn kimi) alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `sətirKlik`
 
@@ -957,6 +984,7 @@ son
 | `elementlər` | — | mətn və ya element siyahısı |
 | `nömrəli` | `yanlış` | nömrəli siyahı (`<ol>`) |
 | `işarəsiz` | `yanlış` | siyahı işarələri gizlənir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.siyahı(elementlər: ["bir", "iki", "üç"])
@@ -967,6 +995,7 @@ vidjet.siyahı(elementlər: ["bir", "iki", "üç"])
 | Parametr | Standart | İzah |
 |---|---|---|
 | `cütlər` | — | ad → dəyər lüğəti |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.təsvirSiyahısı(cütlər: {"Ad": "Əli", "Yaş": 30})
@@ -978,6 +1007,7 @@ vidjet.təsvirSiyahısı(cütlər: {"Ad": "Əli", "Yaş": 30})
 |---|---|---|
 | `məzmun` | `""` | kod mətni — HTML qaçışı avtomatikdir |
 | `dil` | — | proqramlaşdırma dili (`data-dil` atributu) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.kod(məzmun: "yaz(\"salam\")", dil: "alqor")
@@ -989,6 +1019,7 @@ vidjet.kod(məzmun: "yaz(\"salam\")", dil: "alqor")
 |---|---|---|
 | `mətn` | `""` | görünən mətn |
 | `mənbə` | — | sitatın müəllifi / mənbəyi |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.sitat(mətn: "Bilik gücdür", mənbə: "Atalar sözü")
@@ -1003,6 +1034,7 @@ vidjet.sitat(mətn: "Bilik gücdür", mənbə: "Atalar sözü")
 | `en` | — | en — ədəd piksel sayılır |
 | `hündürlük` | — | hündürlük — ədəd piksel sayılır |
 | `yuvarlaq` | `yanlış` | dairəvi kəsim |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.şəkil(mənbə: "/statik/logo.png",
@@ -1016,6 +1048,7 @@ vidjet.şəkil(mənbə: "/statik/logo.png",
 | `ad` | `""` | tam ad — şəkil yoxdursa baş hərflər göstərilir (`Aysel Məmmədova` → `AM`) |
 | `mənbə` | — | şəkil ünvanı (ixtiyari) |
 | `ölçü` | `"orta"` | `kiçik` · `orta` · `böyük` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.avatar(ad: "Aysel Məmmədova")
@@ -1026,6 +1059,7 @@ vidjet.avatar(ad: "Aysel Məmmədova")
 | Parametr | Standart | İzah |
 |---|---|---|
 | `mətn` | — | xəttin ortasında mətn (ixtiyari) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.ayırıcı(mətn: "və ya")
@@ -1039,6 +1073,7 @@ vidjet.ayırıcı(mətn: "və ya")
 | `mətn` | — | izah mətni |
 | `ikon` | `"○"` | böyük simvol |
 | `hərəkət` | — | altda göstərilən element — adətən düymə |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.boşBaxış(başlıq: "Tapşırıq yoxdur",
@@ -1057,6 +1092,7 @@ vidjet.boşBaxış(başlıq: "Tapşırıq yoxdur",
 | `faizGöstər` | `doğru` | faizi rəqəmlə göstərir |
 | `növ` | `"əsas"` | dolğunun rəngi — `düymə` ilə eyni növlər |
 | `qeyriMüəyyən` | `yanlış` | müddəti bilinməyən iş — hərəkətli zolaq |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.tərəqqi(dəyər: özü.tərəqqi, maksimum: 100,
@@ -1077,6 +1113,7 @@ vəziyyət tərəqqi: tam = 0
 | `maksimum` | `100` | ən böyük dəyər |
 | `ölçü` | `64` | diametr, piksel |
 | `mətn` | — | ortadakı mətn; verilməyibsə faiz |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.halqaTərəqqi(dəyər: özü.halqaTərəqqi, ölçü: 80)
@@ -1094,6 +1131,7 @@ vəziyyət halqaTərəqqi: tam = 0
 |---|---|---|
 | `ölçü` | `"orta"` | `kiçik` · `orta` · `böyük` |
 | `mətn` | — | fırlananın yanındakı mətn |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.fırlanan(mətn: "Yüklənir…")
@@ -1105,6 +1143,7 @@ vidjet.fırlanan(mətn: "Yüklənir…")
 |---|---|---|
 | `sətirlər` | `3` | sətir sayı |
 | `en` | — | sətirlərin eni |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.skeletYüklənmə(sətirlər: 3)
@@ -1118,6 +1157,7 @@ vidjet.skeletYüklənmə(sətirlər: 3)
 | `dəyər` | `""` | əsas rəqəm (mətn kimi göstərilir) |
 | `dəyişmə` | — | dəyişmə faizi: müsbət ▲ yaşıl, mənfi ▼ qırmızı |
 | `ikon` | — | ikon kimi işlənən simvol (məs. `"✕"`, `"⚙"`) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.statistika(etiket: "Satış", dəyər: "1 240 ₼",
@@ -1135,6 +1175,7 @@ vidjet.statistika(etiket: "Satış", dəyər: "1 240 ₼",
 | `kənar` | `yanlış` | çərçivə xətti |
 | `fon` | — | fon rəngi (CSS dəyəri) |
 | `kimlik` | — | HTML `id` atributu |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.qutu(boşluq: 16, kənar: doğru, məzmun: [])
@@ -1149,6 +1190,7 @@ vidjet.qutu(boşluq: 16, kənar: doğru, məzmun: [])
 | `düzləndir` | `"başlanğıc"` | üfüqi düzləndirmə: `başlanğıc` · `mərkəz` · `son` · `ara` · `ətraf` · `bərabər` |
 | `şaquli` | `"mərkəz"` | şaquli düzləndirmə (`düzləndir` ilə eyni dəyərlər) |
 | `sarı` | `doğru` | yer çatmayanda uşaqlar növbəti sətrə keçir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.sətir(boşluq: 8, düzləndir: "ara", məzmun: [])
@@ -1161,6 +1203,7 @@ vidjet.sətir(boşluq: 8, düzləndir: "ara", məzmun: [])
 | `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
 | `boşluq` | `8` | uşaqlar arası məsafə — ədəd piksel sayılır, mətn olduğu kimi (`"1rem"`) |
 | `düzləndir` | `"dolu"` | uşaqların eni: `dolu` (tam en) · `başlanğıc` · `mərkəz` · `son` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.sütun(boşluq: 12, məzmun: [])
@@ -1174,6 +1217,7 @@ vidjet.sütun(boşluq: 12, məzmun: [])
 | `sütunlar` | `2` | sütun sayı |
 | `boşluq` | `12` | uşaqlar arası məsafə — ədəd piksel sayılır, mətn olduğu kimi (`"1rem"`) |
 | `minimum` | — | verilibsə sütun sayı avtomatikdir: hər sütun ən azı bu endədir |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.tor(sütunlar: 3, boşluq: 12, məzmun: [])
@@ -1184,6 +1228,7 @@ vidjet.tor(sütunlar: 3, boşluq: 12, məzmun: [])
 | Parametr | Standart | İzah |
 |---|---|---|
 | `hündürlük` | `16` | boş sahənin hündürlüyü |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.boşluq(hündürlük: 24)
@@ -1196,6 +1241,7 @@ vidjet.boşluq(hündürlük: 24)
 | `başlıq` | — | panelin başlıq zolağı |
 | `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
 | `alətlər` | — | başlığın sağında element(lər) — adətən düymələr |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.panel(başlıq: "Ayarlar", məzmun: [])
@@ -1208,6 +1254,7 @@ vidjet.panel(başlıq: "Ayarlar", məzmun: [])
 | `başlıq` | — | bölmənin başlığı (`<h2>`) |
 | `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
 | `altMətn` | — | başlığın altında sönük izah |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.bölmə(başlıq: "Haqqında", məzmun: [])
@@ -1222,6 +1269,7 @@ vidjet.bölmə(başlıq: "Haqqında", məzmun: [])
 | `başlıq` | `""` | sol küncdə tətbiqin adı |
 | `elementlər` | — | orta hissədəki element(lər) — adətən `əlaqə` |
 | `sağ` | — | sağ küncdəki element(lər) |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.naviqasiya(başlıq: "Tətbiqim", elementlər: [
@@ -1237,6 +1285,7 @@ vidjet.naviqasiya(başlıq: "Tətbiqim", elementlər: [
 | `cari` | — | seçili nişanın dəyəri; verilməyibsə birincisi |
 | `klik` | — | nişan basıldıqda çağırılır — nişanın dəyərini alır |
 | `məzmun` | — | nişan sətrinin altındakı gövdə |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -1262,6 +1311,7 @@ son
 | `başlıq` | `""` | başlıq mətni |
 | `məzmun` | — | uşaq element(lər) — tək element və ya siyahı |
 | `açılmış` | `yanlış` | ilkin vəziyyətdə açıqdır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.yığcam(başlıq: "Ətraflı", açılmış: yanlış,
@@ -1275,6 +1325,7 @@ vidjet.yığcam(başlıq: "Ətraflı", açılmış: yanlış,
 | `səhifə` | `1` | cari səhifə (1-dən) |
 | `cəmi` | `1` | səhifələrin sayı |
 | `klik` | — | səhifə basıldıqda çağırılır — səhifə nömrəsini mətn kimi alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -1299,6 +1350,7 @@ son
 |---|---|---|
 | `adlar` | — | addımların adları |
 | `cari` | `1` | cari addım (1-dən); əvvəlkilər ✓ ilə |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.addımlar(adlar: ["Ad", "Ünvan", "Təsdiq"],
@@ -1317,6 +1369,7 @@ vəziyyət addımlar: tam = 1
 |---|---|---|
 | `yollar` | — | `[[ünvan, ad], …]` — sonuncu cari səhifədir |
 | `klik` | — | qırıntı basıldıqda çağırılır — ünvanı alır |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `klik`
 
@@ -1338,6 +1391,7 @@ vidjet.çörəkQırıntıları(yollar: [
 | `görünür` | `doğru` | `yanlış` olduqda heç nə göstərilmir — vəziyyətlə idarə olunur |
 | `bağlandı` | — | bağlama düyməsi (✕) basıldıqda çağırılır; verilməyibsə düymə görünmür |
 | `ölçü` | `"orta"` | pəncərənin eni: `kiçik` · `orta` · `böyük` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `bağlandı`
 
@@ -1365,6 +1419,7 @@ son
 | `görünür` | `doğru` | `yanlış` olduqda heç nə göstərilmir — vəziyyətlə idarə olunur |
 | `tərəf` | `"sağ"` | `sol` · `sağ` |
 | `bağlandı` | — | bağlama düyməsi (✕) basıldıqda çağırılır; verilməyibsə düymə görünmür |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `bağlandı`
 
@@ -1390,6 +1445,7 @@ son
 | `mətn` | `""` | ipucunun mətni |
 | `məzmun` | — | üzərinə gəlinəcək element |
 | `tərəf` | `"üst"` | `üst` · `alt` · `sol` · `sağ` |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 ```alqor
 vidjet.ipucu(mətn: "Silinəcək",
@@ -1403,6 +1459,7 @@ vidjet.ipucu(mətn: "Silinəcək",
 | `mətn` | `""` | bildirişin mətni |
 | `növ` | `"məlumat"` | `uğur` · `xəbərdarlıq` · `təhlükə` · `məlumat` |
 | `bağlandı` | — | bağlama düyməsi (✕) basıldıqda çağırılır; verilməyibsə düymə görünmür |
+| `üslub` | — | görünüş: `{"rəng": …, "fon": …, "kənar": …, "künc": 8, "şrift": 18, "qalın": doğru}` — bax § 14.8 |
 
 Hadisələr: `bağlandı`
 
@@ -1414,7 +1471,50 @@ vidjet.bildirişQutusu(mətn: "Saxlanıldı", növ: "uğur")
 
 ---
 
-## 14.8 Təhlükəsizlik
+## 14.8 Görünüş — `üslub:`
+
+Hər vidjet əlavə olaraq `üslub:` parametrini qəbul edir:
+
+```alqor
+vidjet.düymə(mətn: "Saxla", növ: "əsas",
+             üslub: {"fon": "#16a34a", "rəng": "#fff", "künc": 20,
+                     "kənar": "2px solid #14532d", "şrift": 17,
+                     "qalın": doğru})
+
+vidjet.sahə(etiket: "Ad", ad: "ad",
+            üslub: {"kənarRəngi": "#0b6bcb", "en": 320})
+```
+
+| Açar | CSS | Qeyd |
+|---|---|---|
+| `rəng` | `color` | mətnin rəngi |
+| `fon` | `background` | |
+| `kənar` | `border` | `"2px solid #333"` |
+| `kənarRəngi` | `border-color` | |
+| `künc` | `border-radius` | ədəd → piksel |
+| `şrift` | `font-size` | ədəd → piksel |
+| `şriftAiləsi` | `font-family` | |
+| `qalın` / `kursiv` | `font-weight` / `font-style` | `doğru` / `yanlış` |
+| `qalınlıq` | `font-weight` | `400`, `700` … |
+| `en`, `hündürlük`, `minEn`, `maksEn` | ölçülər | ədəd → piksel; vidjetin **bütövünə** |
+| `boşluq` | `padding` | |
+| `xaricBoşluq` | `margin` | vidjetin **bütövünə** |
+| `düzləndir` | `text-align` | `sol` · `orta` · `sağ` · `iki tərəf` |
+| `şəffaflıq` | `opacity` | `0`–`1` |
+| `kölgə` | `box-shadow` | |
+
+Form sahələrində (`sahə`, `seçim`, `çoxsətirli` …) rəng, fon, kənar,
+künc və şrift **sahənin özünə** (`input`), ölçülər və `xaricBoşluq`
+etiketlə birlikdə bütövə aiddir. Naməlum açar `ArqumentXətası` verir.
+Dəyərdə `;` `{` `}` `<` `>`, `url(`, `expression`, `javascript` olarsa
+rədd edilir — üslub CSS-dən kənara çıxa bilməz.
+
+Alqor Studio-nun **Xüsusiyyətlər** paneli bu parametri vizual redaktə
+edir (§ 13.9).
+
+---
+
+## 14.9 Təhlükəsizlik
 
 | Təhlükə | Qoruma |
 |---|---|
@@ -1429,7 +1529,7 @@ Xam HTML lazımdırsa JSX-də elementlər açıq yazılır.
 
 ---
 
-## 14.9 Sınaq
+## 14.10 Sınaq
 
 Vidjetli interfeys pəncərə açmadan və port açmadan sınanır:
 
@@ -1452,7 +1552,7 @@ Sürücü (`pəncərə.sınaq.aç`) metodları: `klik(nişan, dəyər?)`,
 
 ---
 
-## 14.10 Xəta kodları
+## 14.11 Xəta kodları
 
 | Kod | Nə vaxt |
 |---|---|

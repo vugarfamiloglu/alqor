@@ -53,6 +53,7 @@ SON = "<!-- ARAYIŞ SONU -->"
     "boşluq": "uşaqlar arası məsafə — ədəd piksel sayılır, mətn "
               "olduğu kimi (`\"1rem\"`)",
     "kimlik": "HTML `id` atributu",
+    "üslub": "görünüş: `{\"rəng\": …, \"fon\": …, \"kənar\": …, \"künc\": 8, \"şrift\": 18, \"qalın\": doğru}` — bax § 14.8",
     "sətirlər": "sətir sayı",
     "altMətn": "başlığın altında sönük izah",
     "elementlər": "elementlərin siyahısı",
