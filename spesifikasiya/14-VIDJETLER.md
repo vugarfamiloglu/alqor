@@ -314,9 +314,11 @@ Zəmanətlər (sınaqlarla yoxlanılır):
 
 Cəmi **57 vidjet**, 6 kateqoriya. Bütün parametrlər adlıdır və ixtiyaridir.
 
-### 14.7.1 Form və düymələr (`form`, 21)
+### 14.7.1 Form və düymələr — Forms (`form`, 21)
 
-#### `vidjet.düymə` — Basıla bilən düymə
+#### `vidjet.düymə` — Button
+
+Basıla bilən düymə.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -347,7 +349,9 @@ metod düyməBasıldı()
 son
 ```
 
-#### `vidjet.ikonDüymə` — Yalnız ikondan ibarət düymə
+#### `vidjet.ikonDüymə` — Icon Button
+
+Yalnız ikondan ibarət düymə.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -374,7 +378,9 @@ metod ikonDüyməBasıldı()
 son
 ```
 
-#### `vidjet.düyməQrupu` — Yanaşı duran düymələr
+#### `vidjet.düyməQrupu` — Button Group
+
+Yanaşı duran düymələr.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -388,7 +394,9 @@ vidjet.düyməQrupu(məzmun: [
 ])
 ```
 
-#### `vidjet.əlaqə` — Keçid (link)
+#### `vidjet.əlaqə` — Link
+
+Keçid (link).
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -404,7 +412,9 @@ Hadisələr: `klik`
 vidjet.əlaqə(mətn: "Ətraflı", ünvan: "/haqqında")
 ```
 
-#### `vidjet.sahə` — Mətn sahəsi
+#### `vidjet.sahə` — Text Field
+
+Mətn sahəsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -438,7 +448,9 @@ metod sahəDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.parol` — Şifrə sahəsi
+#### `vidjet.parol` — Password Field
+
+Şifrə sahəsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -469,7 +481,9 @@ metod şifrəDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.ədəd` — Ədəd sahəsi
+#### `vidjet.ədəd` — Number Field
+
+Ədəd sahəsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -503,7 +517,9 @@ metod ədədDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.axtarış` — Axtarış sahəsi
+#### `vidjet.axtarış` — Search Field
+
+Axtarış sahəsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -530,7 +546,9 @@ metod axtar(sorğu: mətn)
 son
 ```
 
-#### `vidjet.çoxsətirli` — Çoxsətirli mətn sahəsi
+#### `vidjet.çoxsətirli` — Textarea
+
+Çoxsətirli mətn sahəsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -563,7 +581,9 @@ metod çoxsətirliDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.seçim` — Açılan siyahı
+#### `vidjet.seçim` — Select
+
+Açılan siyahı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -597,7 +617,9 @@ metod seçimDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.qeyd` — İşarələmə qutusu
+#### `vidjet.qeyd` — Checkbox
+
+İşarələmə qutusu.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -627,7 +649,9 @@ metod qeydDəyişdi(_dəyər: istənilən)
 son
 ```
 
-#### `vidjet.açar` — Yandır/söndür açarı
+#### `vidjet.açar` — Switch
+
+Yandır/söndür açarı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -655,7 +679,9 @@ metod açarDəyişdi(_dəyər: istənilən)
 son
 ```
 
-#### `vidjet.radioQrupu` — Bir variantın seçimi
+#### `vidjet.radioQrupu` — Radio Group
+
+Bir variantın seçimi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -688,7 +714,9 @@ metod radioQrupuDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.sürüşdürücü` — Sürüşdürülən dəyər
+#### `vidjet.sürüşdürücü` — Slider
+
+Sürüşdürülən dəyər.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -721,7 +749,9 @@ metod sürüşdürücüDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.tarix` — Tarix seçimi
+#### `vidjet.tarix` — Date Picker
+
+Tarix seçimi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -752,7 +782,9 @@ metod tarixDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.vaxt` — Vaxt seçimi
+#### `vidjet.vaxt` — Time Picker
+
+Vaxt seçimi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -769,7 +801,9 @@ Hadisələr: `dəyişdi`
 vidjet.vaxt(etiket: "Saat", ad: "vaxt")
 ```
 
-#### `vidjet.rəng` — Rəng seçimi
+#### `vidjet.rəng` — Color Picker
+
+Rəng seçimi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -785,7 +819,9 @@ Hadisələr: `dəyişdi`
 vidjet.rəng(etiket: "Rəng", ad: "rəng")
 ```
 
-#### `vidjet.faylSahəsi` — Fayl yükləmə sahəsi
+#### `vidjet.faylSahəsi` — File Upload
+
+Fayl yükləmə sahəsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -804,7 +840,9 @@ vidjet.faylSahəsi(etiket: "Şəkil", ad: "faylSahəsi",
                   növlər: ["image/*"])
 ```
 
-#### `vidjet.form` — Form qabı
+#### `vidjet.form` — Form
+
+Form qabı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -832,7 +870,9 @@ metod göndər()
 son
 ```
 
-#### `vidjet.sahəDəsti` — Qruplaşdırılmış sahələr
+#### `vidjet.sahəDəsti` — Fieldset
+
+Qruplaşdırılmış sahələr.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -846,7 +886,9 @@ vidjet.sahəDəsti(başlıq: "Ünvan", məzmun: [
 ])
 ```
 
-#### `vidjet.etiket` — Sahə etiketi
+#### `vidjet.etiket` — Label
+
+Sahə etiketi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -858,9 +900,11 @@ vidjet.sahəDəsti(başlıq: "Ünvan", məzmun: [
 vidjet.etiket(mətn: "Ad", sahəsi: "ad")
 ```
 
-### 14.7.2 Göstərmə (`göstərmə`, 14)
+### 14.7.2 Göstərmə — Data Display (`göstərmə`, 14)
 
-#### `vidjet.başlıq` — Başlıq (h1–h6)
+#### `vidjet.başlıq` — Heading
+
+Başlıq (h1–h6).
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -874,7 +918,9 @@ vidjet.başlıq(mətn: "Tapşırıqlar", səviyyə: 1,
               altMətn: "Bugünkü işlər")
 ```
 
-#### `vidjet.mətn` — Abzas
+#### `vidjet.mətn` — Text
+
+Abzas.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -888,7 +934,9 @@ vidjet.başlıq(mətn: "Tapşırıqlar", səviyyə: 1,
 vidjet.mətn(məzmun: "Salam, dünya!")
 ```
 
-#### `vidjet.nişan` — Kiçik nişan (badge)
+#### `vidjet.nişan` — Badge
+
+Kiçik nişan (badge).
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -900,7 +948,9 @@ vidjet.mətn(məzmun: "Salam, dünya!")
 vidjet.nişan(mətn: "Yeni", növ: "uğur")
 ```
 
-#### `vidjet.xəbərdarlıq` — Bildiriş qutusu
+#### `vidjet.xəbərdarlıq` — Alert
+
+Bildiriş qutusu.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -928,7 +978,9 @@ metod xəbərdarlığıBağla()
 son
 ```
 
-#### `vidjet.kart` — Kart qabı
+#### `vidjet.kart` — Card
+
+Kart qabı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -947,7 +999,9 @@ vidjet.kart(başlıq: "Hesabat", məzmun: [
 ])
 ```
 
-#### `vidjet.cədvəl` — Məlumat cədvəli
+#### `vidjet.cədvəl` — Table
+
+Məlumat cədvəli.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -977,7 +1031,9 @@ metod sətirBasıldı()
 son
 ```
 
-#### `vidjet.siyahı` — Sadalama siyahısı
+#### `vidjet.siyahı` — List
+
+Sadalama siyahısı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -990,7 +1046,9 @@ son
 vidjet.siyahı(elementlər: ["bir", "iki", "üç"])
 ```
 
-#### `vidjet.təsvirSiyahısı` — Açar–dəyər siyahısı
+#### `vidjet.təsvirSiyahısı` — Description List
+
+Açar–dəyər siyahısı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1001,7 +1059,9 @@ vidjet.siyahı(elementlər: ["bir", "iki", "üç"])
 vidjet.təsvirSiyahısı(cütlər: {"Ad": "Əli", "Yaş": 30})
 ```
 
-#### `vidjet.kod` — Kod bloku
+#### `vidjet.kod` — Code Block
+
+Kod bloku.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1013,7 +1073,9 @@ vidjet.təsvirSiyahısı(cütlər: {"Ad": "Əli", "Yaş": 30})
 vidjet.kod(məzmun: "yaz(\"salam\")", dil: "alqor")
 ```
 
-#### `vidjet.sitat` — Sitat
+#### `vidjet.sitat` — Blockquote
+
+Sitat.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1025,7 +1087,9 @@ vidjet.kod(məzmun: "yaz(\"salam\")", dil: "alqor")
 vidjet.sitat(mətn: "Bilik gücdür", mənbə: "Atalar sözü")
 ```
 
-#### `vidjet.şəkil` — Şəkil
+#### `vidjet.şəkil` — Image
+
+Şəkil.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1041,7 +1105,9 @@ vidjet.şəkil(mənbə: "/statik/logo.png",
              alternativ: "Loqo", en: 120)
 ```
 
-#### `vidjet.avatar` — İstifadəçi avatarı
+#### `vidjet.avatar` — Avatar
+
+İstifadəçi avatarı.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1054,7 +1120,9 @@ vidjet.şəkil(mənbə: "/statik/logo.png",
 vidjet.avatar(ad: "Aysel Məmmədova")
 ```
 
-#### `vidjet.ayırıcı` — Ayırıcı xətt
+#### `vidjet.ayırıcı` — Divider
+
+Ayırıcı xətt.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1065,7 +1133,9 @@ vidjet.avatar(ad: "Aysel Məmmədova")
 vidjet.ayırıcı(mətn: "və ya")
 ```
 
-#### `vidjet.boşBaxış` — Boş vəziyyət
+#### `vidjet.boşBaxış` — Empty State
+
+Boş vəziyyət.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1080,9 +1150,11 @@ vidjet.boşBaxış(başlıq: "Tapşırıq yoxdur",
                 mətn: "Yeni tapşırıq əlavə edin")
 ```
 
-### 14.7.3 Vəziyyət göstəriciləri (`vəziyyət`, 5)
+### 14.7.3 Vəziyyət göstəriciləri — Feedback (`vəziyyət`, 5)
 
-#### `vidjet.tərəqqi` — Tərəqqi çubuğu
+#### `vidjet.tərəqqi` — Progress Bar
+
+Tərəqqi çubuğu.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1105,7 +1177,9 @@ Kod skeleti (IDE-də iki klik):
 vəziyyət tərəqqi: tam = 0
 ```
 
-#### `vidjet.halqaTərəqqi` — Halqa şəklində tərəqqi
+#### `vidjet.halqaTərəqqi` — Circular Progress
+
+Halqa şəklində tərəqqi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1125,7 +1199,9 @@ Kod skeleti (IDE-də iki klik):
 vəziyyət halqaTərəqqi: tam = 0
 ```
 
-#### `vidjet.fırlanan` — Gözləmə göstəricisi
+#### `vidjet.fırlanan` — Spinner
+
+Gözləmə göstəricisi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1137,7 +1213,9 @@ vəziyyət halqaTərəqqi: tam = 0
 vidjet.fırlanan(mətn: "Yüklənir…")
 ```
 
-#### `vidjet.skeletYüklənmə` — Yüklənmə skeleti
+#### `vidjet.skeletYüklənmə` — Skeleton
+
+Yüklənmə skeleti.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1149,7 +1227,9 @@ vidjet.fırlanan(mətn: "Yüklənir…")
 vidjet.skeletYüklənmə(sətirlər: 3)
 ```
 
-#### `vidjet.statistika` — Rəqəmli göstərici
+#### `vidjet.statistika` — Stat
+
+Rəqəmli göstərici.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1164,9 +1244,11 @@ vidjet.statistika(etiket: "Satış", dəyər: "1 240 ₼",
                   dəyişmə: 12)
 ```
 
-### 14.7.4 Düzülüş (`düzülüş`, 7)
+### 14.7.4 Düzülüş — Layout (`düzülüş`, 7)
 
-#### `vidjet.qutu` — Sadə qab
+#### `vidjet.qutu` — Box
+
+Sadə qab.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1181,7 +1263,9 @@ vidjet.statistika(etiket: "Satış", dəyər: "1 240 ₼",
 vidjet.qutu(boşluq: 16, kənar: doğru, məzmun: [])
 ```
 
-#### `vidjet.sətir` — Üfüqi düzülüş
+#### `vidjet.sətir` — Row
+
+Üfüqi düzülüş.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1196,7 +1280,9 @@ vidjet.qutu(boşluq: 16, kənar: doğru, məzmun: [])
 vidjet.sətir(boşluq: 8, düzləndir: "ara", məzmun: [])
 ```
 
-#### `vidjet.sütun` — Şaquli düzülüş
+#### `vidjet.sütun` — Column
+
+Şaquli düzülüş.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1209,7 +1295,9 @@ vidjet.sətir(boşluq: 8, düzləndir: "ara", məzmun: [])
 vidjet.sütun(boşluq: 12, məzmun: [])
 ```
 
-#### `vidjet.tor` — Tor (grid) düzülüşü
+#### `vidjet.tor` — Grid
+
+Tor (grid) düzülüşü.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1223,7 +1311,9 @@ vidjet.sütun(boşluq: 12, məzmun: [])
 vidjet.tor(sütunlar: 3, boşluq: 12, məzmun: [])
 ```
 
-#### `vidjet.boşluq` — Şaquli boşluq
+#### `vidjet.boşluq` — Spacer
+
+Şaquli boşluq.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1234,7 +1324,9 @@ vidjet.tor(sütunlar: 3, boşluq: 12, məzmun: [])
 vidjet.boşluq(hündürlük: 24)
 ```
 
-#### `vidjet.panel` — Başlıqlı panel
+#### `vidjet.panel` — Panel
+
+Başlıqlı panel.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1247,7 +1339,9 @@ vidjet.boşluq(hündürlük: 24)
 vidjet.panel(başlıq: "Ayarlar", məzmun: [])
 ```
 
-#### `vidjet.bölmə` — Səhifə bölməsi
+#### `vidjet.bölmə` — Section
+
+Səhifə bölməsi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1260,9 +1354,11 @@ vidjet.panel(başlıq: "Ayarlar", məzmun: [])
 vidjet.bölmə(başlıq: "Haqqında", məzmun: [])
 ```
 
-### 14.7.5 Naviqasiya (`naviqasiya`, 6)
+### 14.7.5 Naviqasiya — Navigation (`naviqasiya`, 6)
 
-#### `vidjet.naviqasiya` — Üst naviqasiya sətri
+#### `vidjet.naviqasiya` — Navbar
+
+Üst naviqasiya sətri.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1277,7 +1373,9 @@ vidjet.naviqasiya(başlıq: "Tətbiqim", elementlər: [
 ])
 ```
 
-#### `vidjet.nişanlar` — Nişanlar (tabs)
+#### `vidjet.nişanlar` — Tabs
+
+Nişanlar (tabs).
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1304,7 +1402,9 @@ metod nişanlarSeçildi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.yığcam` — Açılıb-yığılan bölmə
+#### `vidjet.yığcam` — Accordion
+
+Açılıb-yığılan bölmə.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1318,7 +1418,9 @@ vidjet.yığcam(başlıq: "Ətraflı", açılmış: yanlış,
               məzmun: [])
 ```
 
-#### `vidjet.səhifələmə` — Səhifələrə bölmə
+#### `vidjet.səhifələmə` — Pagination
+
+Səhifələrə bölmə.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1344,7 +1446,9 @@ metod səhifələməDəyişdi(dəyər: mətn)
 son
 ```
 
-#### `vidjet.addımlar` — Addım göstəricisi
+#### `vidjet.addımlar` — Stepper
+
+Addım göstəricisi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1363,7 +1467,9 @@ Kod skeleti (IDE-də iki klik):
 vəziyyət addımlar: tam = 1
 ```
 
-#### `vidjet.çörəkQırıntıları` — Yol göstəricisi
+#### `vidjet.çörəkQırıntıları` — Breadcrumb
+
+Yol göstəricisi.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1379,9 +1485,11 @@ vidjet.çörəkQırıntıları(yollar: [
 ])
 ```
 
-### 14.7.6 Üst qat (`üst qat`, 4)
+### 14.7.6 Üst qat — Overlays (`üst qat`, 4)
 
-#### `vidjet.modal` — Modal pəncərə
+#### `vidjet.modal` — Modal
+
+Modal pəncərə.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1410,7 +1518,9 @@ metod modalBağla()
 son
 ```
 
-#### `vidjet.yanPanel` — Yan panel (drawer)
+#### `vidjet.yanPanel` — Drawer
+
+Yan panel (drawer).
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1438,7 +1548,9 @@ metod yanPanelBağla()
 son
 ```
 
-#### `vidjet.ipucu` — Üzərinə gələndə görünən izah
+#### `vidjet.ipucu` — Tooltip
+
+Üzərinə gələndə görünən izah.
 
 | Parametr | Standart | İzah |
 |---|---|---|
@@ -1452,7 +1564,9 @@ vidjet.ipucu(mətn: "Silinəcək",
              məzmun: vidjet.ikonDüymə(ikon: "✕"))
 ```
 
-#### `vidjet.bildirişQutusu` — Küncdə görünən bildiriş
+#### `vidjet.bildirişQutusu` — Toast
+
+Küncdə görünən bildiriş.
 
 | Parametr | Standart | İzah |
 |---|---|---|

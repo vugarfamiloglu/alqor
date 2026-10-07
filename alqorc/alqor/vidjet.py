@@ -1491,6 +1491,37 @@ _KATALOQ_XƏRİTƏSİ = {m.ad: m for m in KATALOQ}
 # (və ya əksinə) vidjet yarana bilmir.
 VİDJETLƏR: tuple[str, ...] = tuple(m.ad for m in KATALOQ)
 
+# Interfeysdə (Alqor Studio paleti, sənədlər, redaktor ipucları) hər
+# vidjet dünyada qəbul olunmuş adı ilə göstərilir — "Progress Bar",
+# "Breadcrumb", "Tabs". Kodda Azərbaycanca ad qalır (`vidjet.tərəqqi`).
+BEYNƏLXALQ_ADLAR: dict[str, str] = {
+    "düymə": "Button", "ikonDüymə": "Icon Button",
+    "düyməQrupu": "Button Group", "əlaqə": "Link",
+    "sahə": "Text Field", "parol": "Password Field",
+    "ədəd": "Number Field", "axtarış": "Search Field",
+    "çoxsətirli": "Textarea", "seçim": "Select", "qeyd": "Checkbox",
+    "açar": "Switch", "radioQrupu": "Radio Group",
+    "sürüşdürücü": "Slider", "tarix": "Date Picker",
+    "vaxt": "Time Picker", "rəng": "Color Picker",
+    "faylSahəsi": "File Upload", "form": "Form", "sahəDəsti": "Fieldset",
+    "etiket": "Label", "başlıq": "Heading", "mətn": "Text",
+    "nişan": "Badge", "xəbərdarlıq": "Alert", "kart": "Card",
+    "cədvəl": "Table", "siyahı": "List",
+    "təsvirSiyahısı": "Description List", "kod": "Code Block",
+    "sitat": "Blockquote", "şəkil": "Image", "avatar": "Avatar",
+    "ayırıcı": "Divider", "boşBaxış": "Empty State",
+    "tərəqqi": "Progress Bar", "halqaTərəqqi": "Circular Progress",
+    "fırlanan": "Spinner", "skeletYüklənmə": "Skeleton",
+    "statistika": "Stat", "qutu": "Box", "sətir": "Row",
+    "sütun": "Column", "tor": "Grid", "boşluq": "Spacer",
+    "panel": "Panel", "bölmə": "Section", "naviqasiya": "Navbar",
+    "nişanlar": "Tabs", "yığcam": "Accordion",
+    "səhifələmə": "Pagination", "addımlar": "Stepper",
+    "çörəkQırıntıları": "Breadcrumb", "modal": "Modal",
+    "yanPanel": "Drawer", "ipucu": "Tooltip",
+    "bildirişQutusu": "Toast",
+}
+
 
 def _kataloqu_yoxla() -> None:
     import sys as _sys
@@ -1500,6 +1531,9 @@ def _kataloqu_yoxla() -> None:
     if çatışmayan:
         raise RuntimeError(
             "kataloqda var, funksiyası yoxdur: " + ", ".join(çatışmayan))
+    adsız = [a for a in VİDJETLƏR if a not in BEYNƏLXALQ_ADLAR]
+    if adsız:
+        raise RuntimeError("beynəlxalq adı yoxdur: " + ", ".join(adsız))
     təkrar = [a for a in VİDJETLƏR if VİDJETLƏR.count(a) > 1]
     if təkrar:
         raise RuntimeError("kataloqda təkrar: " + ", ".join(set(təkrar)))
@@ -1515,6 +1549,7 @@ def kataloq(icraçı, kateqoriya: Any = None) -> list:
             f"{', '.join(KATEQORİYALAR)}", kod="ALQ-R013")
     return [{
         "ad": m.ad,
+        "beynəlxalqAd": BEYNƏLXALQ_ADLAR[m.ad],
         "kateqoriya": m.kateqoriya,
         "izah": m.izah,
         "nümunə": m.nümunə,
@@ -1525,6 +1560,10 @@ def kataloq(icraçı, kateqoriya: Any = None) -> list:
 
 
 KATEQORİYALAR = (FORM, GÖSTƏRMƏ, VƏZİYYƏT, DÜZÜLÜŞ, NAVİQASİYA, ÜST_QAT)
+KATEQORİYA_BEYNƏLXALQ: dict[str, str] = {
+    FORM: "Forms", GÖSTƏRMƏ: "Data Display", VƏZİYYƏT: "Feedback",
+    DÜZÜLÜŞ: "Layout", NAVİQASİYA: "Navigation", ÜST_QAT: "Overlays",
+}
 
 
 def kateqoriyalar(icraçı) -> list[str]:

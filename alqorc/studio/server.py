@@ -316,8 +316,10 @@ class Studio:
         return {
             "üslub": miniatur.üslub(),
             "kateqoriyalar": list(V.KATEQORİYALAR),
+            "kateqoriyaAdları": dict(V.KATEQORİYA_BEYNƏLXALQ),
             "vidjetlər": [{
-                "ad": m.ad, "kateqoriya": m.kateqoriya, "izah": m.izah,
+                "ad": m.ad, "beynəlxalqAd": V.BEYNƏLXALQ_ADLAR[m.ad],
+                "kateqoriya": m.kateqoriya, "izah": m.izah,
                 "nümunə": skelet._düzəlt(m.nümunə),
                 "hadisələr": list(m.hadisələr),
                 "skeletVar": bool(m.skelet or m.vəziyyət),

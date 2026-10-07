@@ -149,6 +149,7 @@ async function başla() {
 function temaQur(t) {
   document.documentElement.dataset.tema = t;
   yaddaş("tema", t);
+  if (S.kataloq) miniatürləriÇək();
 }
 
 function ölçüləriBərpaEt() {
@@ -558,12 +559,12 @@ function paletiQur() {
   $("#palet").innerHTML = kateqoriyalar.map((k) => {
     const v = vidjetlər.filter((x) => x.kateqoriya === k);
     return `<details class="kateqoriya" data-kateqoriya="${qaç(k)}"${açıq.has(k) ? " open" : ""}>` +
-      `<summary>${qaç(k)} <span class="say">${v.length}</span></summary>` +
+      `<summary>${qaç(S.kataloq.kateqoriyaAdları?.[k] || k)} <span class="say">${v.length}</span></summary>` +
       v.map((x) => `<div class="vidjet-elementi" draggable="true" data-vidjet="${qaç(x.ad)}" ` +
-        `title="${qaç(x.nümunə)}"><b>${qaç(x.ad)}</b>` +
+        `title="${qaç(x.nümunə)}"><b>${qaç(x.beynəlxalqAd || x.ad)}</b>` +
         (x.skeletVar ? '<span class="nişan-skelet" title="İki klik: vəziyyət + idarəedici yazılır">⚡ kod</span>' : "<span></span>") +
         (x.miniatür ? '<div class="miniatür" aria-hidden="true"></div>' : "") +
-        `<small>${qaç(x.izah)}</small></div>`).join("") + "</details>";
+        `<small><code>vidjet.${qaç(x.ad)}</code> · ${qaç(x.izah)}</small></div>`).join("") + "</details>";
   }).join("");
   miniatürləriÇək();
 }
@@ -574,18 +575,22 @@ function paletiQur() {
  * modulunun özü ilə qurulub, ona görə önbaxışdakı ilə eynidir.
  */
 function miniatürləriÇək() {
-  // Vidjet üslubunun dəyişənləri `:root`-dadır — Shadow DOM-da `:host`
-  const vidjetÜslubu = (S.kataloq.üslub || "").replaceAll(":root", ":host");
-  const üslub = `${vidjetÜslubu}
+  // Vidjet üslubunun dəyişənləri `:root`-dadır — Shadow DOM-da `:host`.
+  // Qaranlıq rənglər OS-un yox, Studio-nun öz temasına görə seçilir.
+  let css = (S.kataloq.üslub || "").replaceAll(":root", ":host");
+  const qaranlıq = document.documentElement.dataset.tema === "qaranlıq";
+  css = css.replace(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{(:host\{[^}]*\})\}/,
+    (_, iç) => (qaranlıq ? iç : ""));
+  const üslub = `${css}
     :host{display:block;height:100%;background:var(--v-fon);color:var(--v-mətn)}
     .ç{position:absolute;left:8px;top:7px;transform:scale(.72);transform-origin:0 0;
        width:calc((100% - 16px) / .72);font:14px/1.5 system-ui,"Segoe UI",sans-serif}
     .ç .v-modal-örtük,.ç .v-yan-panel-örtük{position:relative!important;inset:auto!important}`;
   for (const v of $$(".vidjet-elementi")) {
     const yer = $(".miniatür", v);
-    if (!yer || yer.shadowRoot) continue;
+    if (!yer) continue;
     const x = S.kataloq.vidjetlər.find((y) => y.ad === v.dataset.vidjet);
-    const kök = yer.attachShadow({ mode: "open" });
+    const kök = yer.shadowRoot || yer.attachShadow({ mode: "open" });
     kök.innerHTML = `<style>${üslub}</style><div class="ç">${x.miniatür}</div>`;
   }
 }
@@ -598,7 +603,9 @@ $("#palet-axtar").addEventListener("input", (h) => {
   const s = h.target.value.trim().toLocaleLowerCase("az");
   for (const v of $$(".vidjet-elementi")) {
     const x = S.kataloq.vidjetlər.find((y) => y.ad === v.dataset.vidjet);
-    v.hidden = !!s && !(`${x.ad} ${x.izah} ${x.kateqoriya}`.toLocaleLowerCase("az").includes(s));
+    const kat = S.kataloq.kateqoriyaAdları?.[x.kateqoriya] || "";
+    v.hidden = !!s && !(`${x.beynəlxalqAd} ${x.ad} ${x.izah} ${x.kateqoriya} ${kat}`
+      .toLocaleLowerCase("az").includes(s));
   }
   for (const d of $$(".kateqoriya")) {
     const görünən = $$(".vidjet-elementi:not([hidden])", d).length;
@@ -687,7 +694,7 @@ function elementləriÇək(siyahı) {
     return `<div class="fayl-elementi ${tam ? "tam" : "yarımçıq"}" data-i="${i}" ` +
       `title="${tam ? "Hazırdır" : "İki klik: " + qaç(e.çatışmır.join(", ")) + " yazılsın"}">` +
       `<span class="vəziyyət-işarəsi">${tam ? "✓" : "⚡"}</span>` +
-      `<span>${qaç(e.ad)}</span><span class="sönük">:${e.sətir}</span>` +
+      `<span>${qaç(e.beynəlxalqAd || e.ad)}</span><span class="sönük">${qaç(e.ad)} :${e.sətir}</span>` +
       (tam ? "" : `<span class="çatışmır">${qaç(e.çatışmır.join(", "))}</span>`) + "</div>";
   }).join("") : '<p class="ipucu-mətni">Bu faylda `vidjet.…` çağırışı yoxdur.</p>';
 }
@@ -762,7 +769,8 @@ async function xüsusiyyətləriYüklə(kursor = R.kursor) {
 function xüsusiyyətFormu(n) {
   const sadələr = n.parametrlər.filter((p) => p.sadə);
   const ifadələr = n.parametrlər.filter((p) => !p.sadə);
-  let h = `<div class="xüs-başlıq"><b>${qaç(n.ad)}</b><span class="sönük">sətir ${n.sətir}</span>` +
+  let h = `<div class="xüs-başlıq"><b>${qaç(n.beynəlxalqAd || n.ad)}</b>` +
+    `<span class="sönük"><code>vidjet.${qaç(n.ad)}</code> · sətir ${n.sətir}</span>` +
     `<button data-xus-get title="Redaktorda göstər">↗ kod</button></div>`;
   h += `<div class="xüs-qrup"><h4>Xüsusiyyətlər</h4>${sadələr.map(sahəHTML).join("")}</div>`;
   h += `<div class="xüs-qrup"><h4>Görünüş</h4>`;
