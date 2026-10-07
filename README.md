@@ -322,7 +322,7 @@ PROQRAMLASDIRMA DILI/
     │   ├── pencere.py        desktop: pəncərə, menyu, dialoq
     │   ├── vidjet.py         118 hazır element (veb + desktop)
     │   └── sohbet.py         interaktiv rejim (REPL)
-    └── sinaq/                1033 sınaq
+    └── sinaq/                1044 sınaq
 ```
 
 ---

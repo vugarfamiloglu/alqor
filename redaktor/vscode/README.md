@@ -7,7 +7,11 @@ Alqor dili üçün tam redaktor dəstəyi:
 - **Xətalar yazdıqca** — leksik, sintaksis və tip xətaları, Azərbaycan dilində
 - **Tamamlama** — `vidjet.`, `s.` kimi üzvlər; açar sözlər, şablonlar
 - **Hover** — tip, imza və `///` sənəd şərhi
-- **Təyinata keçid** (F12), **istinadlar** (Shift+F12), **ad dəyişmə** (F2)
+- **Təyinata keçid** (F12), **istinadlar** (Shift+F12), **ad dəyişmə** (F2) —
+  bütün layihə üzrə (`gətir "./x.alqor"`)
+- **İş sahəsi simvolları** (Ctrl+T)
+- **Kod linzaları** — "N istinad", `@sınaq` funksiyaları üstündə "▶ Sına"
+- **Semantik rənglər** — sinif, funksiya, metod, xassə, parametr, sabit
 - **Sənəd sxemi** (Ctrl+Shift+O)
 - **Formatlama** (Shift+Alt+F) — `alqorfmt`
 - **Sürətli düzəlişlər** (Ctrl+.) — `eger` → `əgər`, "bəlkə: uzunluq"

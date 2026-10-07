@@ -601,5 +601,68 @@ class LayihəSınağı(unittest.TestCase):
         self.assertIsNotNone(a.yoxlayıcı)
 
 
+class LinzaVəSemantikaSınağı(unittest.TestCase):
+    def test_kod_linzaları(self):
+        m = Müştəri()
+        mətn = MƏNBƏ + """
+gətir test
+
+@sınaq("hesab düzgündür")
+funksiya hesabSınağı()
+    test.bərabər(hesabla(1), 6)
+son
+"""
+        m.aç(mətn)
+        r = m.sorğu("textDocument/codeLens", {"textDocument": {"uri": URI}})
+        sınaq = [x for x in r if "command" in x]
+        self.assertEqual(sınaq[0]["command"]["command"], "alqor.sına")
+        self.assertEqual(sınaq[0]["command"]["arguments"],
+                         [URI, "hesab düzgündür"])
+        həll = {}
+        for x in r:
+            if "data" in x:
+                h = m.sorğu("codeLens/resolve", x)
+                həll[h["range"]["start"]["line"]] = h["command"]
+        # Nöqtə: 1 istinad (hesabla daxilində); hesabla: 2 (yaz + sınaq)
+        s_nöqtə, _ = _mövqe(mətn, "sinif Nöqtə")
+        s_hesab, _ = _mövqe(mətn, "funksiya hesabla")
+        self.assertEqual(həll[s_nöqtə]["title"], "1 istinad")
+        self.assertEqual(həll[s_hesab]["title"], "2 istinad")
+        self.assertEqual(həll[s_hesab]["command"], "alqor.istinadlarıGöstər")
+        self.assertEqual(len(həll[s_hesab]["arguments"][2]), 2)
+
+    def test_semantik_tokenlər(self):
+        m = Müştəri()
+        r = m.sorğu("initialize", {"capabilities": {}})
+        legend = r["capabilities"]["semanticTokensProvider"]["legend"]
+        m.aç(MƏNBƏ)
+        data = m.sorğu("textDocument/semanticTokens/full",
+                       {"textDocument": {"uri": URI}})["data"]
+        self.assertEqual(len(data) % 5, 0)
+        mövqelər = L.Mövqelər(MƏNBƏ)
+        sətirlər = MƏNBƏ.split("\n")
+        tokenlər = {}
+        sətir = sütun = 0
+        for i in range(0, len(data), 5):
+            ds, dc, uz, növ, əl = data[i:i + 5]
+            sətir += ds
+            sütun = dc if ds else sütun + dc
+            mətn = sətirlər[sətir][sütun:sütun + uz]
+            tokenlər.setdefault(mətn, set()).add(
+                (legend["tokenTypes"][növ],
+                 tuple(a for j, a in enumerate(legend["tokenModifiers"])
+                       if əl >> j & 1)))
+        del mövqelər
+        self.assertIn(("class", ("declaration",)), tokenlər["Nöqtə"])
+        self.assertIn(("class", ()), tokenlər["Nöqtə"])
+        self.assertIn(("function", ("declaration",)), tokenlər["hesabla"])
+        self.assertIn(("parameter", ()), tokenlər["a"])
+        self.assertIn(("method", ()), tokenlər["cəm"])
+        self.assertIn(("method", ("declaration",)), tokenlər["cəm"])
+        self.assertIn(("property", ()), tokenlər["x"])
+        self.assertIn(("function", ("defaultLibrary",)), tokenlər["yaz"])
+        self.assertIn(("namespace", ("declaration",)), tokenlər["vidjet"])
+
+
 if __name__ == "__main__":
     unittest.main()

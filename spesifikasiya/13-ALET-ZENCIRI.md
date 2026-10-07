@@ -434,13 +434,21 @@ elana bağlandığını və hər `a.b` ifadəsinin tipini yadda saxlayır.
 | Hover: imza, tip, `///` sənəd şərhi, vidjet izahı | ✅ |
 | İmza köməyi (`f(` → parametrlər, aktiv parametr) | ✅ |
 | Təyinata get — dəyişən, funksiya, sinif, metod, qısa qurucunun sahəsi | ✅ |
-| İstinadları tap, ad dəyişdirmə (açar söz / yanlış ad / daxili ad rədd edilir) | ✅ cari faylda |
+| İstinadları tap, ad dəyişdirmə (açar söz / yanlış ad / daxili ad rədd edilir) | ✅ |
 | Sənəd sxemi (sinif → qurucu, metod, xassə) | ✅ |
 | Formatlama (`alqorfmt`) | ✅ |
 | Sürətli düzəlişlər: `eger` → `əgər`, "bəlkə: `uzunluq`", hamısını düzəlt | ✅ |
 | Yarımçıq kod: xətalı sətirlər boşluqla əvəz olunub yenidən analiz edilir — hover/tamamlama işləməyə davam edir | ✅ |
-| Layihə üzrə (fayllar arası) istinad və ad dəyişmə | ⏳ |
-| Kod linzaları, semantik rənglər, DAP | ⏳ |
+| Layihə üzrə: `gətir "./x.alqor"` elanına keçid, istinadlar və ad dəyişmə bütün iş sahəsində (`{f kimi g}` ləqəbi yerli qalır) | ✅ |
+| İş sahəsi simvolları (Ctrl+T) — `tpl` → `topla` | ✅ |
+| Kod linzaları: üst səviyyə funksiya/sinif üstündə "N istinad"; `@sınaq` üstündə "▶ Sına" | ✅ |
+| Semantik rənglər: sinif, funksiya, metod, xassə, parametr, modul, sadalama; `sabit` → readonly, daxili → defaultLibrary | ✅ |
+| DAP (debaq) | ⏳ |
+
+Fayl idxalı tip yoxlayıcısında da görünür: `gətir "./x.alqor" kimi m`
+faylı ayrıca ayrılıb yoxlanır (keşlənir, dövri idxal qorunur), onun qlobal
+elanları `m`-in üzvləri olur — `m.yoxdur` → ALQ-M002, tapılmayan fayl →
+ALQ-M001.
 
 Redaktorlar:
 

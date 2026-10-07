@@ -872,6 +872,174 @@ def sənəd_sxemi(a: Analiz) -> list[dict]:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+#  Kod linzaları, semantik rənglər
+# ═══════════════════════════════════════════════════════════════════════
+
+def _annotasiya(q: Any, ad: str) -> Any:
+    for x in getattr(q, "annotasiyalar", None) or []:
+        if x.ad == ad:
+            return x
+    return None
+
+
+def _sınaq_adı(q: A.FunksiyaElanı) -> str | None:
+    s = _annotasiya(q, "sınaq")
+    if s is None and _annotasiya(q, "sınaqVerilənlər") is None:
+        return None
+    if s is not None and s.arqumentlər:
+        d = s.arqumentlər[0].dəyər
+        if isinstance(d, A.Literal) and isinstance(d.dəyər, str):
+            return d.dəyər
+    return q.ad
+
+
+def kod_linzaları(a: Analiz, uri: str) -> list[dict]:
+    """Üst səviyyə elanların üstündə: istinad sayı, `▶ Sına`."""
+    if a.ağac is None:
+        return []
+    n: list[dict] = []
+
+    def linza(q, ad: str) -> None:
+        yer = a.ad_yeri(q.yer, ad)
+        if yer is None:
+            return
+        n.append({"range": a.mövqelər.aralıq(*yer),
+                  "data": {"uri": uri, "ofset": yer[0]}})
+
+    def gəz(gövdə, qrup: bool) -> None:
+        for q in gövdə or []:
+            if q.yer is None:
+                continue
+            if isinstance(q, A.FunksiyaElanı):
+                sınaq = _sınaq_adı(q)
+                if sınaq is not None:
+                    yer = a.ad_yeri(q.yer, q.ad)
+                    if yer is not None:
+                        n.append({"range": a.mövqelər.aralıq(*yer),
+                                  "command": {
+                                      "title": "▶ Sına",
+                                      "command": "alqor.sına",
+                                      "arguments": [uri, sınaq]}})
+                    continue
+                if not qrup:
+                    linza(q, q.ad)
+            elif isinstance(q, A.SinifElanı | A.InterfeysElanı
+                            | A.SadalamaElanı) and not qrup:
+                linza(q, q.ad)
+            elif isinstance(q, A.ModulElanı):
+                gəz(q.gövdə, qrup=True)
+
+    gəz(a.ağac.gövdə, qrup=False)
+    return n
+
+
+SEMANTİK_NÖVLƏR = ["namespace", "class", "enum", "interface", "function",
+                   "method", "property", "variable", "parameter", "type",
+                   "enumMember", "typeParameter"]
+SEMANTİK_ƏLAMƏTLƏR = ["declaration", "readonly", "defaultLibrary", "async"]
+_SN = {ad: i for i, ad in enumerate(SEMANTİK_NÖVLƏR)}
+_SƏ = {ad: 1 << i for i, ad in enumerate(SEMANTİK_ƏLAMƏTLƏR)}
+
+
+def _tipə_görə(tip: T.Tip | None, varsayılan: str) -> str:
+    if isinstance(tip, T.ModulTipi):
+        return "namespace"
+    if isinstance(tip, T.SinifTipi):
+        return "interface" if tip.quruluş == "interfeys" else "class"
+    if isinstance(tip, T.SadalamaTipi):
+        return "enum"
+    if isinstance(tip, T.FunksiyaTipi):
+        return "function"
+    return varsayılan
+
+
+def _bağlama_növü(b) -> tuple[str, int]:
+    növ = {"funksiya": "function", "parametr": "parameter",
+           "tip": "type", "modul": "namespace"}.get(b.elan_növü)
+    if b.elan_növü in ("sinif", "sadalama", "daxili", "idxal"):
+        növ = _tipə_görə(b.tip, "variable")
+    if növ is None:
+        növ = _tipə_görə(b.tip, "variable") if isinstance(
+            b.tip, T.FunksiyaTipi) else "variable"
+    əl = 0
+    if b.sabit and b.elan_növü == "dəyişən":
+        əl |= _SƏ["readonly"]
+    if b.elan_növü == "daxili":
+        əl |= _SƏ["defaultLibrary"]
+    if isinstance(b.tip, T.FunksiyaTipi) and b.tip.asinxron:
+        əl |= _SƏ["async"]
+    return növ, əl
+
+
+def semantik_tokenlər(a: Analiz) -> list[int]:
+    """LSP `semanticTokens/full` — nisbi kodlaşdırılmış 5-lik ardıcıllıq."""
+    y = a.yoxlayıcı
+    if y is None:
+        return []
+    tapılan: dict[int, tuple[int, str, int]] = {}
+
+    def əlavə(baş: int, son: int, növ: str, əl: int = 0) -> None:
+        if son > baş and baş not in tapılan:
+            tapılan[baş] = (son, növ, əl)
+
+    # Elanlar
+    for b in a.bağlamalar:
+        if not _yerlidir(a, b):
+            continue
+        yer = a.ad_yeri(b.yer, b.ad)
+        if yer:
+            növ, əl = _bağlama_növü(_mənşəyə(b))
+            əlavə(*yer, növ, əl | _SƏ["declaration"])
+    for q in a.elanlar.values():
+        if isinstance(q, A.MetodElanı):
+            yer = a.ad_yeri(q.yer, q.ad)
+            if yer:
+                əlavə(*yer, "method", _SƏ["declaration"])
+        elif isinstance(q, A.XassəElanı):
+            yer = a.ad_yeri(q.yer, q.ad)
+            if yer:
+                əlavə(*yer, "property", _SƏ["declaration"])
+    # Ad istifadələri
+    for e, b in y.istinadlar:
+        if e.ad == "özü":
+            continue
+        növ, əl = _bağlama_növü(_mənşəyə(b))
+        əlavə(e.yer.başlanğıc, e.yer.son, növ, əl)
+    # Üzvlər `a.b`
+    for e, tip, obyekt in y.ifadə_tipləri:
+        if not isinstance(e, A.Üzv):
+            continue
+        yer = a.üzv_adı_yeri(e)
+        if not yer:
+            continue
+        if isinstance(obyekt, T.ModulTipi):
+            növ = _tipə_görə(tip, "variable")
+            əl = _SƏ["defaultLibrary"] if not obyekt.elanlar else 0
+        elif isinstance(obyekt, T.SadalamaTipi):
+            növ, əl = "enumMember", 0
+        else:
+            növ = "method" if isinstance(tip, T.FunksiyaTipi) \
+                else "property"
+            əl = 0
+        əlavə(*yer, növ, əl)
+
+    data: list[int] = []
+    əvvəlki_sətir = əvvəlki_sütun = 0
+    for baş in sorted(tapılan):
+        son, növ, əl = tapılan[baş]
+        b = a.mövqelər.lsp(baş)
+        e = a.mövqelər.lsp(son)
+        if e["line"] != b["line"]:
+            continue
+        sətir, sütun = b["line"], b["character"]
+        data += [sətir - əvvəlki_sətir,
+                 sütun - (əvvəlki_sütun if sətir == əvvəlki_sətir else 0),
+                 e["character"] - sütun, _SN[növ], əl]
+        əvvəlki_sətir, əvvəlki_sütun = sətir, sütun
+    return data
+
+
+# ═══════════════════════════════════════════════════════════════════════
 #  Diaqnostika, kod əməliyyatları
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -1101,6 +1269,11 @@ class Server:
                 "definitionProvider": True,
                 "referencesProvider": True,
                 "workspaceSymbolProvider": True,
+                "codeLensProvider": {"resolveProvider": True},
+                "semanticTokensProvider": {
+                    "legend": {"tokenTypes": SEMANTİK_NÖVLƏR,
+                               "tokenModifiers": SEMANTİK_ƏLAMƏTLƏR},
+                    "full": True},
                 "renameProvider": {"prepareProvider": True},
                 "documentSymbolProvider": True,
                 "documentFormattingProvider": True,
@@ -1268,6 +1441,40 @@ class Server:
             for y in fayl_istinadları(fa, açar, h.ad, elan_daxil):
                 n.append((uri, fa, y))
         return n
+
+    def m_codeLens(self, p: dict) -> list:
+        s = self._sənəd(p)
+        a = s.analiz if s.analiz.ağac is not None else self._naviqasiya(s)
+        return kod_linzaları(a, s.uri)
+
+    def m_codeLens_resolve(self, p: dict) -> dict:
+        data = p.get("data") or {}
+        s = self.sənədlər.get(data.get("uri", ""))
+        if s is None:
+            return {**p, "command": {"title": "", "command": ""}}
+        a = self._naviqasiya(s)
+        ofset = data.get("ofset", 0)
+        h = hədəfi_tap(a, ofset)
+        yerlər: list[dict] = []
+        if h is not None:
+            if layihə_simvoludur(a, h):
+                yerlər = [{"uri": uri or s.uri,
+                           "range": fa.mövqelər.aralıq(*y)}
+                          for uri, fa, y in self.layihə_istinadları(
+                              a, h, False)]
+            else:
+                yerlər = [{"uri": s.uri, "range": a.mövqelər.aralıq(*y)}
+                          for y in istinadlar(a, h, False)]
+        n = len(yerlər)
+        başlıq = "istinad yoxdur" if n == 0 else f"{n} istinad"
+        return {**p, "command": {
+            "title": başlıq, "command": "alqor.istinadlarıGöstər",
+            "arguments": [s.uri, a.mövqelər.lsp(ofset), yerlər]}}
+
+    def m_semanticTokens(self, p: dict) -> dict:
+        s = self._sənəd(p)
+        a = self._naviqasiya(s)
+        return {"data": semantik_tokenlər(a)}
 
     def m_symbol(self, p: dict) -> list:
         sorğu = (p.get("query") or "").casefold()
@@ -1516,6 +1723,9 @@ class Server:
         "textDocument/formatting": m_formatting,
         "textDocument/codeAction": m_codeAction,
         "workspace/symbol": m_symbol,
+        "textDocument/codeLens": m_codeLens,
+        "codeLens/resolve": m_codeLens_resolve,
+        "textDocument/semanticTokens/full": m_semanticTokens,
     }
 
 
