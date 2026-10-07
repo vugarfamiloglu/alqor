@@ -453,5 +453,153 @@ class FormatVəDüzəlişSınağı(unittest.TestCase):
         self.assertIn("`uzunluq` ilə əvəz et", başlıqlar)
 
 
+KÖMƏK = """/// İki ədədin cəmi.
+funksiya topla(a: tam, b: tam) -> tam
+    qaytar a + b
+son
+
+sabit ƏMSAL = 3
+"""
+
+ƏSAS = """gətir "./kömək.alqor" kimi k
+gətir "./kömək".{topla}
+
+dəyişən x = k.topla(1, 2) + topla(3, 4) * k.ƏMSAL
+yaz(x)
+"""
+
+DİGƏR = """gətir "./kömək.alqor".{topla kimi cəm}
+yaz(cəm(1, 1))
+"""
+
+
+class LayihəSınağı(unittest.TestCase):
+    """Fayllar arası: `gətir "./x.alqor"` — keçid, istinad, ad dəyişmə."""
+
+    def setUp(self):
+        import tempfile
+        self._q = tempfile.TemporaryDirectory()
+        self.kök = Path(self._q.name)
+        (self.kök / "kömək.alqor").write_text(KÖMƏK, encoding="utf-8")
+        (self.kök / "əsas.alqor").write_text(ƏSAS, encoding="utf-8")
+        alt = self.kök / "alt"
+        alt.mkdir()
+        (alt / "digər.alqor").write_text(
+            DİGƏR.replace("./kömək", "../kömək"), encoding="utf-8")
+        self.m = Müştəri()
+        self.m.sorğu("initialize", {"capabilities": {},
+                                    "rootUri": self.kök.as_uri()})
+        self.uri = (self.kök / "əsas.alqor").as_uri()
+        self.m.aç(ƏSAS, self.uri)
+
+    def tearDown(self):
+        self._q.cleanup()
+
+    def yer(self, axtarış, n=1, əlavə=1):
+        s, c = _mövqe(ƏSAS, axtarış, əlavə, n)
+        return {"textDocument": {"uri": self.uri},
+                "position": {"line": s, "character": c}}
+
+    def test_tip_yoxlaması_faylları_görür(self):
+        d = self.m.aç(ƏSAS.replace("topla(3, 4)", 'topla(3, "a")'),
+                      self.uri)
+        self.assertTrue(any("ALQ-T004" == x.get("code") for x in d), d)
+        d = self.m.aç(ƏSAS.replace("k.ƏMSAL", "k.yoxdur"), self.uri)
+        self.assertTrue(any("ALQ-M002" == x.get("code") for x in d), d)
+
+    def test_təyinata_keçid_başqa_fayla(self):
+        for yer in (self.yer("k.topla", əlavə=3), self.yer("topla(3")):
+            r = self.m.sorğu("textDocument/definition", yer)
+            self.assertEqual(len(r), 1)
+            self.assertTrue(r[0]["uri"].endswith("k%C3%B6m%C9%99k.alqor")
+                            or r[0]["uri"].endswith("kömək.alqor"),
+                            r[0]["uri"])
+            self.assertEqual(r[0]["range"]["start"],
+                             {"line": 1, "character": 9})
+
+    def test_hover_başqa_fayldan(self):
+        h = self.m.sorğu("textDocument/hover", self.yer("k.topla", əlavə=3))
+        self.assertIn("funksiya topla(a: tam, b: tam) -> tam",
+                      h["contents"]["value"])
+        self.assertIn("kömək.alqor", h["contents"]["value"])
+
+    def test_istinadlar_layihə_üzrə(self):
+        r = self.m.sorğu("textDocument/references", {
+            **self.yer("topla(3"), "context": {"includeDeclaration": True}})
+        fayllar = {}
+        for x in r:
+            ad = Path(L.uri_yolu(x["uri"])).name
+            fayllar[ad] = fayllar.get(ad, 0) + 1
+        # elan (kömək) + idxal siyahısı, k.topla, topla(3 (əsas)
+        # + idxal siyahısı (digər, ləqəbli — `cəm` istifadəsi deyil)
+        self.assertEqual(fayllar, {"kömək.alqor": 1, "əsas.alqor": 3,
+                                   "digər.alqor": 1})
+
+    def test_ad_dəyişmə_layihə_üzrə(self):
+        r = self.m.sorğu("textDocument/rename", {
+            **self.yer("topla(3"), "newName": "cəmlə"})
+        dəyişikliklər = {Path(L.uri_yolu(u)).name: len(v)
+                         for u, v in r["changes"].items()}
+        self.assertEqual(dəyişikliklər, {"kömək.alqor": 1, "əsas.alqor": 3,
+                                         "digər.alqor": 1})
+        # Tətbiq edilmiş mətn yenə də düzgün yoxlanır
+        for u, v in r["changes"].items():
+            yol = L.uri_yolu(u)
+            mətn = self.m.s._açıq_mətn(yol) or yol.read_text("utf-8")
+            mv = L.Mövqelər(mətn)
+            for d in sorted(v, key=lambda d: -mv.ofset(d["range"]["start"])):
+                b = mv.ofset(d["range"]["start"])
+                e = mv.ofset(d["range"]["end"])
+                self.assertEqual(mətn[b:e], "topla")
+                mətn = mətn[:b] + d["newText"] + mətn[e:]
+            yol.write_text(mətn, encoding="utf-8")
+        a = L.analiz_et((self.kök / "əsas.alqor").read_text("utf-8"),
+                        "əsas.alqor", self.kök / "əsas.alqor")
+        self.assertEqual([d for d in a.diaqnostikalar if d.xətadır], [])
+
+    def test_ləqəbli_ad_yerli_qalır(self):
+        uri = (self.kök / "alt" / "digər.alqor").as_uri()
+        mətn = DİGƏR.replace("./kömək", "../kömək")
+        self.m.aç(mətn, uri)
+        s, c = _mövqe(mətn, "cəm(1", 1)
+        r = self.m.sorğu("textDocument/references", {
+            "textDocument": {"uri": uri},
+            "position": {"line": s, "character": c},
+            "context": {"includeDeclaration": True}})
+        self.assertEqual({x["uri"] for x in r}, {uri})
+        self.assertEqual(len(r), 2)
+
+    def test_açıq_sənəd_dəyişəndə_asılılar_yenilənir(self):
+        kuri = (self.kök / "kömək.alqor").as_uri()
+        self.m.aç(KÖMƏK, kuri)
+        m = self.m.göndər("textDocument/didChange", {
+            "textDocument": {"uri": kuri, "version": 2},
+            "contentChanges": [{"text": KÖMƏK.replace(
+                "b: tam) -> tam", "b: mətn) -> tam").replace(
+                "a + b", "a")}]}, bildiriş=True)
+        əsas = [x for x in m if x["params"]["uri"] == self.uri]
+        self.assertTrue(əsas)
+        self.assertTrue(any(d.get("code") == "ALQ-T004"
+                            for d in əsas[-1]["params"]["diagnostics"]))
+
+    def test_iş_sahəsi_simvolları(self):
+        r = self.m.sorğu("workspace/symbol", {"query": "tpl"})
+        self.assertEqual([x["name"] for x in r], ["topla"])
+        r = self.m.sorğu("workspace/symbol", {"query": ""})
+        adlar = {x["name"] for x in r}
+        self.assertTrue({"topla", "ƏMSAL", "x"} <= adlar, adlar)
+
+    def test_dövri_idxal_donmur(self):
+        (self.kök / "a.alqor").write_text(
+            'gətir "./b.alqor" kimi b\nfunksiya f() -> tam\n'
+            '    qaytar 1\nson\n', encoding="utf-8")
+        (self.kök / "b.alqor").write_text(
+            'gətir "./a.alqor" kimi a\nfunksiya g() -> tam\n'
+            '    qaytar a.f()\nson\n', encoding="utf-8")
+        a = L.analiz_et((self.kök / "a.alqor").read_text("utf-8"),
+                        "a.alqor", self.kök / "a.alqor")
+        self.assertIsNotNone(a.yoxlayıcı)
+
+
 if __name__ == "__main__":
     unittest.main()

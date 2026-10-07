@@ -367,8 +367,14 @@ def hədəfi_tap(a: Analiz, ofset: int) -> Hədəf | None:
     # 1. Ad istifadəsi
     for e, b in y.istinadlar:
         if e.yer.başlanğıc <= ofset <= e.yer.son:
+            b = _mənşəyə(b)
             return Hədəf("bağlama", b.ad, b, tip=b.tip,
                          aralıq=(e.yer.başlanğıc, e.yer.son))
+    # 1b. Fayl modulunun üzvü `m.f` — həmin fayldakı elan
+    for e, b in getattr(y, "üzv_istinadları", ()):
+        yer = a.üzv_adı_yeri(e)
+        if yer and yer[0] <= ofset <= yer[1]:
+            return Hədəf("bağlama", b.ad, b, tip=b.tip, aralıq=yer)
     # 2. Üzv müraciəti `a.b`
     for e, tip, obyekt in y.ifadə_tipləri:
         if not isinstance(e, A.Üzv):
@@ -397,8 +403,89 @@ def hədəfi_tap(a: Analiz, ofset: int) -> Hədəf | None:
     for b in a.bağlamalar:
         yer = a.ad_yeri(b.yer, b.ad)
         if yer and yer[0] <= ofset <= yer[1]:
+            b = _mənşəyə(b)
             return Hədəf("bağlama", b.ad, b, tip=b.tip, aralıq=yer)
     return None
+
+
+def _mənşəyə(b):
+    """
+    `gətir "./x.alqor".{f}` — ləqəbsiz idxal olunan ad həmin fayldakı
+    elanın özüdür (keçid, istinad, ad dəyişmə onun üzərindən gedir).
+    `{f kimi g}` isə yerli addır.
+    """
+    m = getattr(b, "mənşə", None)
+    return m if m is not None and m.ad == b.ad else b
+
+
+def _yerlidir(a: Analiz, b) -> bool:
+    return b is not None and b.yer is not None and b.yer.mənbə is a.mənbə
+
+
+def bağlama_açarı(b) -> tuple | None:
+    """Fayllar arası eyni elan: (fayl, ad, ofset)."""
+    if b is None or b.yer is None:
+        return None
+    m = b.yer.mənbə
+    yol = getattr(m, "yol", None)
+    f = str(Path(yol).resolve()) if yol is not None else f"<{id(m)}>"
+    return (f, b.ad, b.yer.başlanğıc)
+
+
+def mənbədə_ad_yeri(m: Mənbə, yer: Yer, ad: str) -> tuple[int, int]:
+    """Tokenləri olmayan (başqa fayldakı) elanın adının yeri."""
+    mətn = m.mətn
+    son = mətn.find("\n", yer.son)
+    if son < 0:
+        son = len(mətn)
+    x = re.compile(r"(?<!\w)" + re.escape(ad) + r"(?!\w)").search(
+        mətn, yer.başlanğıc, son)
+    return x.span() if x else (yer.başlanğıc, yer.son)
+
+
+def layihə_simvoludur(a: Analiz, h: Hədəf) -> bool:
+    """Başqa fayllardan da görünə bilən elan (faylın qlobal adı)."""
+    if h.növ != "bağlama" or h.bağlama is None or h.bağlama.yer is None:
+        return False
+    b = h.bağlama
+    if b.elan_növü in ("daxili", "parametr", "modul", "idxal"):
+        return False
+    if not _yerlidir(a, b):
+        return True
+    if a.yoxlayıcı is None:
+        return False
+    return a.yoxlayıcı.qlobal.adlar.get(b.ad) is b
+
+
+def fayl_istinadları(a: Analiz, açar: tuple, ad: str, elan_daxil: bool
+                     ) -> list[tuple[int, int]]:
+    """`a` faylında `açar` elanına bütün istinadlar (layihə üzrə)."""
+    y = a.yoxlayıcı
+    if y is None:
+        return []
+    nəticə: list[tuple[int, int]] = []
+    if elan_daxil:
+        for b in a.bağlamalar:
+            if bağlama_açarı(b) == açar and _yerlidir(a, b):
+                yer = a.ad_yeri(b.yer, b.ad)
+                if yer:
+                    nəticə.append(yer)
+    for e, b in y.istinadlar:
+        if bağlama_açarı(_mənşəyə(b)) == açar:
+            nəticə.append((e.yer.başlanğıc, e.yer.son))
+    for e, b in getattr(y, "üzv_istinadları", ()):
+        if bağlama_açarı(b) == açar:
+            yer = a.üzv_adı_yeri(e)
+            if yer:
+                nəticə.append(yer)
+    # `gətir "./x.alqor".{f, f kimi g}` — idxal siyahısındakı ad
+    for b in a.bağlamalar:
+        m = getattr(b, "mənşə", None)
+        if m is not None and bağlama_açarı(m) == açar and _yerlidir(a, b):
+            yer = a.ad_yeri(b.yer, m.ad)
+            if yer:
+                nəticə.append(yer)
+    return sorted(set(nəticə))
 
 
 def _sahib_sinif(obyekt: T.Tip | None, ad: str) -> str | None:
@@ -520,7 +607,7 @@ def hover_mətni(a: Analiz, h: Hədəf) -> str:
     sənəd = ""
     if h.növ == "bağlama":
         b = h.bağlama
-        q = a.elanlar.get(b.yer.başlanğıc) if b.yer is not None else None
+        q = a.elanlar.get(b.yer.başlanğıc) if _yerlidir(a, b) else None
         if q is not None and not isinstance(q, A.Parametr | A.İdxal) \
                 and b.elan_növü in ("funksiya", "sinif", "sadalama",
                                     "tip", "modul"):
@@ -528,6 +615,12 @@ def hover_mətni(a: Analiz, h: Hədəf) -> str:
             sənəd = getattr(q, "sənəd", None) or ""
         elif b.elan_növü == "daxili":
             imza = f"{b.ad}: {_tip_mətni(b.tip)}"
+        elif b.yer is not None and not _yerlidir(a, b) and \
+                isinstance(b.tip, T.FunksiyaTipi) and \
+                b.elan_növü == "funksiya":
+            imza = (f"funksiya {b.ad}("
+                    f"{', '.join(_param_mətni(x) for x in b.tip.parametrlər)})"
+                    f" -> {_tip_mətni(b.tip.qaytarma)}")
         elif b.elan_növü == "modul" or isinstance(b.tip, T.ModulTipi):
             imza = f"gətir {b.tip.ad}" if isinstance(
                 b.tip, T.ModulTipi) else f"modul {b.ad}"
@@ -553,6 +646,11 @@ def hover_mətni(a: Analiz, h: Hədəf) -> str:
             sənəd = _vidjet_izahı(h.ad) or sənəd
     if sənəd:
         hissələr.append(sənəd.strip())
+    if h.növ == "bağlama" and h.bağlama is not None and \
+            h.bağlama.yer is not None and not _yerlidir(a, h.bağlama):
+        yol = getattr(h.bağlama.yer.mənbə, "yol", None)
+        if yol is not None:
+            hissələr.append(f"*{Path(yol).name}*")
     return "\n\n".join(hissələr)
 
 
@@ -897,6 +995,11 @@ class Server:
         self.işləyir = True
         self.çıxış_kodu = 0
         self.rejim = "normal"
+        self.köklər: list[Path] = []          # iş sahəsinin qovluqları
+        self._disk_analizləri: dict[str, tuple[Any, Analiz]] = {}
+        # Tip yoxlayıcısı idxal olunan faylı oxuyanda redaktordakı
+        # (saxlanmamış) mətni görsün
+        TY.FAYL_MƏTNİ = self._açıq_mətn
 
     # ── Nəqliyyat ─────────────────────────────────────────────────────
 
@@ -976,6 +1079,16 @@ class Server:
         seçimlər = p.get("initializationOptions") or {}
         if seçimlər.get("tipRejimi") in TY.REJİMLƏR:
             self.rejim = seçimlər["tipRejimi"]
+        köklər = [q.get("uri") for q in p.get("workspaceFolders") or []]
+        if not köklər and p.get("rootUri"):
+            köklər = [p["rootUri"]]
+        for uri in köklər:
+            yol = uri_yolu(uri or "")
+            if yol is not None and yol.is_dir():
+                self.köklər.append(yol)
+        if not self.köklər and p.get("rootPath"):
+            if Path(p["rootPath"]).is_dir():
+                self.köklər.append(Path(p["rootPath"]))
         return {
             "capabilities": {
                 "positionEncoding": "utf-16",
@@ -987,6 +1100,7 @@ class Server:
                 "signatureHelpProvider": {"triggerCharacters": ["(", ","]},
                 "definitionProvider": True,
                 "referencesProvider": True,
+                "workspaceSymbolProvider": True,
                 "renameProvider": {"prepareProvider": True},
                 "documentSymbolProvider": True,
                 "documentFormattingProvider": True,
@@ -1048,6 +1162,7 @@ class Server:
                 s.mətn = d["text"]
         s.versiya = td.get("version", s.versiya)
         self._yenilə(s)
+        self._asılıları_yenilə(s)
 
     def m_didClose(self, p: dict) -> None:
         uri = p["textDocument"]["uri"]
@@ -1057,6 +1172,126 @@ class Server:
 
     def m_didSave(self, p: dict) -> None:
         return None
+
+    def _asılıları_yenilə(self, s: Sənəd) -> None:
+        """Bu faylı `gətir` edən açıq sənədlər yenidən yoxlanır."""
+        yol = uri_yolu(s.uri)
+        if yol is None:
+            return
+        for d in list(self.sənədlər.values()):
+            if d is not s and "gətir" in d.mətn and yol.stem in d.mətn:
+                self._yenilə(d)
+
+    # ── Layihə (iş sahəsi) ────────────────────────────────────────────
+
+    def _açıq_mətn(self, yol: Path) -> str | None:
+        for d in self.sənədlər.values():
+            p = uri_yolu(d.uri)
+            if p is not None and _eyni_fayl(p, yol):
+                return d.mətn
+        return None
+
+    def _uri(self, yol: Path) -> str:
+        for d in self.sənədlər.values():
+            p = uri_yolu(d.uri)
+            if p is not None and _eyni_fayl(p, yol):
+                return d.uri
+        return Path(yol).resolve().as_uri()
+
+    def layihə_faylları(self) -> list[Path]:
+        """Açıq sənədlər + iş sahəsindəki bütün `.alqor` faylları."""
+        görülən: set[str] = set()
+        n: list[Path] = []
+
+        def əlavə(p: Path) -> None:
+            açar = str(p.resolve())
+            if açar not in görülən:
+                görülən.add(açar)
+                n.append(p)
+
+        for d in self.sənədlər.values():
+            p = uri_yolu(d.uri)
+            if p is not None:
+                əlavə(p)
+        for kök in self.köklər:
+            for p in _alqor_faylları(kök):
+                əlavə(p)
+        return n
+
+    def fayl_analizi(self, yol: Path) -> Analiz | None:
+        for d in self.sənədlər.values():
+            p = uri_yolu(d.uri)
+            if p is not None and _eyni_fayl(p, yol):
+                return self._naviqasiya(d)
+        try:
+            st = yol.stat()
+            açar = str(yol.resolve())
+        except OSError:
+            return None
+        vəziyyət = (st.st_mtime_ns, st.st_size, self.rejim)
+        köhnə = self._disk_analizləri.get(açar)
+        if köhnə is not None and köhnə[0] == vəziyyət:
+            return köhnə[1]
+        try:
+            mətn = yol.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return None
+        a = analiz_et(mətn, yol.name, yol, self.rejim)
+        self._disk_analizləri[açar] = (vəziyyət, a)
+        return a
+
+    def layihə_istinadları(self, a: Analiz, h: Hədəf, elan_daxil: bool
+                           ) -> list[tuple[str, Analiz, tuple[int, int]]]:
+        """(uri, analiz, aralıq) — bütün layihə faylları üzrə."""
+        açar = bağlama_açarı(h.bağlama)
+        n: list[tuple[str, Analiz, tuple[int, int]]] = []
+        cari = a.mənbə.yol
+        if cari is None:                     # adsız sənəd — yalnız özü
+            return [("", a, y) for y in fayl_istinadları(
+                a, açar, h.ad, elan_daxil)]
+        for yol in self.layihə_faylları():
+            if _eyni_fayl(yol, cari):
+                fa = a
+            else:
+                mətn = self._açıq_mətn(yol)
+                if mətn is None:
+                    try:
+                        mətn = yol.read_text(encoding="utf-8")
+                    except (OSError, UnicodeDecodeError):
+                        continue
+                if h.ad not in mətn:
+                    continue
+                fa = self.fayl_analizi(yol)
+                if fa is None:
+                    continue
+            uri = self._uri(yol)
+            for y in fayl_istinadları(fa, açar, h.ad, elan_daxil):
+                n.append((uri, fa, y))
+        return n
+
+    def m_symbol(self, p: dict) -> list:
+        sorğu = (p.get("query") or "").casefold()
+        n: list[dict] = []
+        for yol in self.layihə_faylları():
+            a = self.fayl_analizi(yol)
+            if a is None:
+                continue
+            uri = self._uri(yol)
+
+            def gəz(simvollar, konteyner=None):
+                for x in simvollar:
+                    if _uyğundur(sorğu, x["name"]):
+                        m = {"name": x["name"], "kind": x["kind"],
+                             "location": {"uri": uri,
+                                          "range": x["selectionRange"]}}
+                        if konteyner:
+                            m["containerName"] = konteyner
+                        n.append(m)
+                    gəz(x.get("children") or [], x["name"])
+            gəz(sənəd_sxemi(a))
+            if len(n) >= 500:
+                break
+        return n[:500]
 
     # ── Sorğular ──────────────────────────────────────────────────────
 
@@ -1105,7 +1340,8 @@ class Server:
         for n in nömrələr:
             if 0 <= n < len(sətirlər):
                 sətirlər[n] = " " * len(sətirlər[n])
-        a = analiz_et("\n".join(sətirlər), rejim=self.rejim)
+        a = analiz_et("\n".join(sətirlər), yol=uri_yolu(s.uri),
+                      rejim=self.rejim)
         return a if a.yoxlayıcı is not None else None
 
     def _naviqasiya(self, s: Sənəd) -> Analiz:
@@ -1161,6 +1397,15 @@ class Server:
         h = hədəfi_tap(a, ofset)
         if h is None:
             return None
+        b = h.bağlama
+        if h.növ == "bağlama" and b is not None and b.yer is not None \
+                and not _yerlidir(a, b):
+            m = b.yer.mənbə
+            if getattr(m, "yol", None) is None:
+                return None
+            return [{"uri": self._uri(Path(m.yol)),
+                     "range": Mövqelər(m.mətn).aralıq(
+                         *mənbədə_ad_yeri(m, b.yer, b.ad))}]
         yer = təyinat(a, h)
         if yer is None:
             return None
@@ -1173,6 +1418,9 @@ class Server:
         if h is None:
             return []
         daxil = (p.get("context") or {}).get("includeDeclaration", True)
+        if layihə_simvoludur(a, h):
+            return [{"uri": uri or s.uri, "range": fa.mövqelər.aralıq(*y)}
+                    for uri, fa, y in self.layihə_istinadları(a, h, daxil)]
         return [{"uri": s.uri, "range": a.mövqelər.aralıq(*y)}
                 for y in istinadlar(a, h, daxil)]
 
@@ -1212,6 +1460,12 @@ class Server:
         if səbəb:
             raise Xəta(-32602, səbəb)
         h = self._adlandırıla_bilər(a, ofset)
+        if layihə_simvoludur(a, h):
+            dəyişikliklər: dict[str, list] = {}
+            for uri, fa, y in self.layihə_istinadları(a, h, True):
+                dəyişikliklər.setdefault(uri or s.uri, []).append(
+                    {"range": fa.mövqelər.aralıq(*y), "newText": yeni})
+            return {"changes": dəyişikliklər}
         yerlər = istinadlar(a, h, True)
         return {"changes": {s.uri: [
             {"range": a.mövqelər.aralıq(*y), "newText": yeni}
@@ -1261,7 +1515,46 @@ class Server:
         "textDocument/documentSymbol": m_documentSymbol,
         "textDocument/formatting": m_formatting,
         "textDocument/codeAction": m_codeAction,
+        "workspace/symbol": m_symbol,
     }
+
+
+_GİZLİ_QOVLUQLAR = {"node_modules", "__pycache__", "hədəf", "hedef",
+                    "dist", "build", "venv", ".venv"}
+
+
+def _alqor_faylları(kök: Path, hədd: int = 2000) -> list[Path]:
+    n: list[Path] = []
+    try:
+        for p in sorted(kök.rglob("*.alqor")):
+            hissələr = p.relative_to(kök).parts[:-1]
+            if any(h.startswith(".") or h in _GİZLİ_QOVLUQLAR
+                   for h in hissələr):
+                continue
+            n.append(p)
+            if len(n) >= hədd:
+                break
+    except OSError:
+        pass
+    return n
+
+
+def _eyni_fayl(a: Path, b: Path) -> bool:
+    try:
+        return a.resolve() == Path(b).resolve()
+    except OSError:
+        return False
+
+
+def _uyğundur(sorğu: str, ad: str) -> bool:
+    """Boş sorğu hər şeyə; yoxsa hərflər ardıcıllıqla (`tpl` → `topla`)."""
+    if not sorğu:
+        return True
+    i = 0
+    for c in ad.casefold():
+        if i < len(sorğu) and c == sorğu[i]:
+            i += 1
+    return i == len(sorğu)
 
 
 def _modul_adıdır(ad: str) -> bool:

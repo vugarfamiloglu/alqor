@@ -41,6 +41,14 @@ REJİMLƏR = ("sərbəst", "normal", "sərt")
 # deyil — `alqorls` analizi ardıcıl aparır)
 _QEYD_SİYAHISI: list | None = None
 
+# Fayl modulları (`gətir "./x.alqor"`): həll olunmuş yol → (açar, tip).
+# Açar faylın vəziyyətidir (mtime/ölçü və ya redaktordakı mətn).
+_FAYL_KEŞİ: dict[str, tuple[Any, T.ModulTipi]] = {}
+_YÜKLƏNİR: set[str] = set()
+# `alqorls` açıq sənədlərin (yaddaşdakı, saxlanmamış) mətnini verir:
+#   Path → str | None
+FAYL_MƏTNİ: Any = None
+
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Əhatə dairəsi
@@ -54,6 +62,8 @@ class Bağlama:
     yer: Yer | None = None
     istifadə_olunub: bool = False
     elan_növü: str = "dəyişən"      # dəyişən | parametr | funksiya | sinif
+    # `gətir "./x.alqor".{f}` — idxal olunan adın həmin fayldakı elanı
+    mənşə: "Bağlama | None" = None
 
 
 class Əhatə:
@@ -649,6 +659,60 @@ def _veb_modulu() -> T.ModulTipi:
     })
 
 
+def fayl_modulu(yol: Any, rejim: str = "normal") -> T.ModulTipi:
+    """Həll olunmuş fayl yolu → modul tipi (keşlənir, dövrə qorunur)."""
+    from .lekser import Lekser
+    from .menbe import Mənbə
+    from .parser import Parser
+    global _QEYD_SİYAHISI
+
+    açar_yol = str(yol)
+    mətn = FAYL_MƏTNİ(yol) if FAYL_MƏTNİ is not None else None
+    if mətn is not None:
+        vəziyyət: Any = ("mətn", hash(mətn), rejim)
+    else:
+        try:
+            st = yol.stat()
+        except OSError:
+            return T.ModulTipi(yol.stem)
+        vəziyyət = ("fayl", st.st_mtime_ns, st.st_size, rejim)
+    köhnə = _FAYL_KEŞİ.get(açar_yol)
+    if köhnə is not None and köhnə[0] == vəziyyət:
+        return köhnə[1]
+    if açar_yol in _YÜKLƏNİR:               # dövri idxal: a → b → a
+        return T.ModulTipi(yol.stem, yol=yol)
+
+    x = XətaToplayıcı()
+    if mətn is None:
+        m = Mənbə.fayldan(yol, x)
+    else:
+        m = Mənbə.mətndən(mətn, yol.name)
+        m.yol = yol
+    modul = T.ModulTipi(yol.stem, yol=yol)
+    if m is None:
+        return modul
+    _YÜKLƏNİR.add(açar_yol)
+    qeyd = _QEYD_SİYAHISI
+    _QEYD_SİYAHISI = None                    # idxal edənin qeydinə qarışmasın
+    try:
+        ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
+        if x.uğurludur():
+            y = TipYoxlayıcı(x, rejim)
+            y.yoxla(ağac)
+            for ad, b in y.qlobal.adlar.items():
+                if b.elan_növü == "daxili":
+                    continue
+                modul.üzvlər[ad] = b.tip
+                modul.elanlar[ad] = b
+    except Exception:                         # noqa: BLE001
+        pass
+    finally:
+        _QEYD_SİYAHISI = qeyd
+        _YÜKLƏNİR.discard(açar_yol)
+    _FAYL_KEŞİ[açar_yol] = (vəziyyət, modul)
+    return modul
+
+
 def _modullar() -> dict[str, T.ModulTipi]:
     i, o, m, b, h, e = (T.TAM, T.ONLUQ, T.MƏTN, T.MƏNTİQ, T.HEÇ,
                         T.İSTƏNİLƏN)
@@ -880,6 +944,8 @@ class TipYoxlayıcı:
         self.istinadlar: list[tuple[A.Ad, Bağlama]] = []
         self.ifadə_tipləri: list[tuple[Any, T.Tip, T.Tip | None]] = []
         self.bağlamalar: list[Bağlama] = []
+        # `m.f` — fayl modulunun üzvü → həmin fayldakı elan
+        self.üzv_istinadları: list[tuple[A.Üzv, Bağlama]] = []
         self._son_obyekt_tipi: T.Tip | None = None
         self._generik_adlar: frozenset[str] = frozenset()
         self._qaldırılmış_idxallar: set[int] = set()
@@ -1439,6 +1505,8 @@ class TipYoxlayıcı:
             return False                     # artıq qaldırılıb
         ad = ".".join(c.yol) if c.yol else (c.mətn_yolu or "")
         modul = self.modullar.get(ad)
+        if modul is None and c.mətn_yolu is not None:
+            modul = self._fayl_modulu(c)
 
         if modul is None and c.mətn_yolu is None and not c.elementlər \
                 and not c.hamısı and ad and ad not in self.modullar:
@@ -1464,13 +1532,40 @@ class TipYoxlayıcı:
                         "ALQ-M002", "Modulda belə ixrac yoxdur", c.yer,
                         f"`{ad}` modulunda `{e.ad}` yoxdur")
                 ə.elan(Bağlama(e.ləqəb or e.ad, tip, True, c.yer, False,
-                               "idxal"))
+                               "idxal",
+                               modul.elanlar.get(e.ad) if modul else None))
             return False
 
         yerli_ad = c.ləqəb or (c.yol[-1] if c.yol else ad)
         ə.elan(Bağlama(yerli_ad, modul or T.ModulTipi(yerli_ad), True,
                        c.yer, False, "modul"))
         return False
+
+    def _fayl_modulu(self, c: A.İdxal) -> T.ModulTipi | None:
+        """
+        `gətir "./x.alqor" kimi m` — faylı ayırıb ayrıca yoxlayırıq;
+        onun qlobal elanları modulun üzvləri olur (icraçıdakı kimi).
+        Nisbi yol idxal edən faylın qovluğuna nisbətəndir.
+        """
+        from pathlib import Path
+        mənbə = getattr(c.yer, "mənbə", None)
+        əsas = getattr(mənbə, "yol", None)
+        p = Path(c.mətn_yolu or "")
+        if not p.is_absolute():
+            if əsas is None:
+                return None                  # yaddaşdakı mətn — baza yoxdur
+            p = Path(əsas).resolve().parent / p
+        if not p.exists():
+            for uzantı in (".alqor", ".alq"):
+                if Path(str(p) + uzantı).exists():
+                    p = Path(str(p) + uzantı)
+                    break
+        if not p.is_file():
+            if not self.sərbəstdir:
+                self.x.xəta("ALQ-M001", "Modul faylı tapılmadı", c.yer,
+                            f'"{c.mətn_yolu}" yoxdur')
+            return None
+        return fayl_modulu(p.resolve(), self.rejim)
 
     def _c_tip_aliası(self, c: A.TipAliası, ə: Əhatə) -> bool:
         if ə.yerli_tap(c.ad) is None:
@@ -2220,6 +2315,9 @@ class TipYoxlayıcı:
         obyekt = T.açılmış(obyekt)
         self._son_obyekt_tipi = obyekt
         tip = self._üzv_tipi(obyekt, e.ad, e.yer)
+        if self.qeyd and isinstance(obyekt, T.ModulTipi) \
+                and e.ad in obyekt.elanlar:
+            self.üzv_istinadları.append((e, obyekt.elanlar[e.ad]))
         if not e.təhlükəsiz:
             return tip
         # `a?.uzunluq()` → `tam?`. İxtiyarilik funksiyanın ÖZÜNƏ yox,

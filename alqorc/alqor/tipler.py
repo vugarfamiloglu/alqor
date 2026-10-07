@@ -245,6 +245,10 @@ class ModulTipi(Tip):
     ad: str
     üzvlər: dict[str, Tip] = field(default_factory=dict)
     çağırıla_bilir: bool = False
+    # Fayl modulu (`gətir "./x.alqor"`): üzv adı → həmin fayldakı elan
+    # (`Bağlama`). `alqorls` layihə üzrə keçid/istinad üçün işlədir.
+    elanlar: dict = field(default_factory=dict, compare=False, repr=False)
+    yol: Any = field(default=None, compare=False, repr=False)
 
     def mətn(self) -> str:
         return f"modul[{self.ad}]"
