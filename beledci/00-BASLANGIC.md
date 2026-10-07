@@ -113,6 +113,8 @@ Windows-da sadəcə `Studio-ac.cmd` faylına iki dəfə klikləyin.
 - **Ctrl+Shift+F** — kodu səliqəyə salır
 - Elementlər panelində 57 hazır vidjet: **iki klik** — işləməsi üçün
   lazım olan kod özü yazılır
+- **Xüsusiyyətlər** paneli — elementin mətnini, rəngini, kənarını,
+  şriftini kod yazmadan dəyişin, önbaxışda dərhal görünür
 
 ---
 

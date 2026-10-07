@@ -352,6 +352,8 @@ function tabaKeç(yol) {
   elementləriÇək(t.elementlər);
   planlaYoxla(50);
   if (S.önbaxışAçıq) önbaxışıYenilə();
+  X.mövqe = null;
+  if (xüsusiyyətPaneliAçıqdır()) xüsusiyyətləriYüklə();
   R.fokus();
 }
 
@@ -400,15 +402,15 @@ $("#tablar").addEventListener("auxclick", (h) => {
   if (t && h.button === 1) tabıBağla(t.dataset.yol);
 });
 
-async function saxla(t = cari()) {
+async function saxla(t = cari(), səssiz = false) {
   if (!t) return false;
   const mətn = t.yol === S.aktiv ? R.mətn : t.v.mətn;
   try {
     await API.göndər("/api/fayl/yaz", { yol: t.yol, mətn });
     t.saxlanmış = mətn;
     tablarıÇək();
-    bildir(`Saxlanıldı: ${t.yol}`, "uğur", 1800);
-    if (S.önbaxışAçıq && t.yol === S.aktiv) önbaxışıYenilə();
+    if (!səssiz) bildir(`Saxlanıldı: ${t.yol}`, "uğur", 1800);
+    if (S.önbaxışAçıq && t.yol === S.aktiv) önbaxışıYenilə(true);
     return true;
   } catch (x) { xəta(x); return false; }
 }
@@ -560,8 +562,32 @@ function paletiQur() {
       v.map((x) => `<div class="vidjet-elementi" draggable="true" data-vidjet="${qaç(x.ad)}" ` +
         `title="${qaç(x.nümunə)}"><b>${qaç(x.ad)}</b>` +
         (x.skeletVar ? '<span class="nişan-skelet" title="İki klik: vəziyyət + idarəedici yazılır">⚡ kod</span>' : "<span></span>") +
+        (x.miniatür ? '<div class="miniatür" aria-hidden="true"></div>' : "") +
         `<small>${qaç(x.izah)}</small></div>`).join("") + "</details>";
   }).join("");
+  miniatürləriÇək();
+}
+
+/**
+ * Hər vidjetin həqiqi görünüşü — Shadow DOM-da (Studio üslubu ilə
+ * qarışmasın), vidjet üslubu ilə, kiçildilmiş. HTML serverdə `vidjet`
+ * modulunun özü ilə qurulub, ona görə önbaxışdakı ilə eynidir.
+ */
+function miniatürləriÇək() {
+  // Vidjet üslubunun dəyişənləri `:root`-dadır — Shadow DOM-da `:host`
+  const vidjetÜslubu = (S.kataloq.üslub || "").replaceAll(":root", ":host");
+  const üslub = `${vidjetÜslubu}
+    :host{display:block;height:100%;background:var(--v-fon);color:var(--v-mətn)}
+    .ç{position:absolute;left:8px;top:7px;transform:scale(.72);transform-origin:0 0;
+       width:calc((100% - 16px) / .72);font:14px/1.5 system-ui,"Segoe UI",sans-serif}
+    .ç .v-modal-örtük,.ç .v-yan-panel-örtük{position:relative!important;inset:auto!important}`;
+  for (const v of $$(".vidjet-elementi")) {
+    const yer = $(".miniatür", v);
+    if (!yer || yer.shadowRoot) continue;
+    const x = S.kataloq.vidjetlər.find((y) => y.ad === v.dataset.vidjet);
+    const kök = yer.attachShadow({ mode: "open" });
+    kök.innerHTML = `<style>${üslub}</style><div class="ç">${x.miniatür}</div>`;
+  }
 }
 
 $("#palet").addEventListener("toggle", () => {
@@ -669,9 +695,19 @@ function elementləriÇək(siyahı) {
 $("#elementler").addEventListener("click", (h) => {
   const d = h.target.closest("[data-i]");
   const e = cari()?.elementlər?.[+d?.dataset.i];
-  if (e) R.sətirəKeç(e.sətir, e.sütun);
+  if (!e) return;
+  R.sətirəKeç(e.sətir, e.sütun);
+  // Tək klik — xüsusiyyətlər; iki klikdən ayırmaq üçün qısa gözləmə
+  clearTimeout(elementKlikTaymeri);
+  if (h.detail > 1) return;
+  elementKlikTaymeri = setTimeout(() => {
+    panelAç("xususiyyet");
+    xüsusiyyətləriYüklə(e.mövqe);
+  }, 260);
 });
+let elementKlikTaymeri = 0;
 $("#elementler").addEventListener("dblclick", (h) => {
+  clearTimeout(elementKlikTaymeri);
   const d = h.target.closest("[data-i]");
   const e = cari()?.elementlər?.[+d?.dataset.i];
   if (e) vidjetiTamamla(e.mövqe);
@@ -682,9 +718,186 @@ for (const b of $$(".yan-panel > .panel-nişanları button")) {
     for (const x of $$(".yan-panel > .panel-nişanları button")) x.classList.toggle("aktiv", x === b);
     $("#panel-layihe").hidden = b.dataset.panel !== "layihe";
     $("#panel-palet").hidden = b.dataset.panel !== "palet";
+    $("#panel-xususiyyet").hidden = b.dataset.panel !== "xususiyyet";
     if (b.dataset.panel === "palet") $("#palet-axtar").focus();
+    if (b.dataset.panel === "xususiyyet") xüsusiyyətləriYüklə();
   });
 }
+
+function panelAç(ad) {
+  $(`.yan-panel > .panel-nişanları button[data-panel="${ad}"]`)?.click();
+}
+
+// ══ Xüsusiyyətlər paneli ═════════════════════════════════════════════
+//
+// Kursorun içində olduğu `vidjet.…(…)` çağırışının parametrləri. Hər
+// dəyişiklik koda yazılır (server mətni dəyişir — dırnaq, girinti,
+// vergül düzgün qalır), fayl səssiz saxlanır, önbaxış canlı yenilənir.
+
+const X = { mövqe: null, məlumat: null, taymer: 0, yazılır: false, növbə: Promise.resolve() };
+
+function xüsusiyyətPaneliAçıqdır() { return !$("#panel-xususiyyet").hidden; }
+
+async function xüsusiyyətləriYüklə(kursor = R.kursor) {
+  const t = cari();
+  const boş = $("#xus-bos"), forma = $("#xus-forma");
+  if (!t || !/\.(alqor|alq)$/.test(t.yol)) { boş.hidden = false; forma.hidden = true; X.mövqe = null; return; }
+  let n;
+  try { n = await API.göndər("/api/vidjet/xususiyyetler", { mətn: R.mətn, kursor }); }
+  catch (x) { return; }
+  if (n.xəta) {
+    // Kursor çağırışdan çıxıb — son seçilmiş element panelda qalır
+    if (X.mövqe === null) { boş.hidden = false; forma.hidden = true; }
+    return;
+  }
+  // Eyni element və istifadəçi paneldə yazır — formanı yenidən qurmuruq
+  if (X.mövqe === n.mövqe && forma.contains(document.activeElement)) { X.məlumat = n; return; }
+  X.mövqe = n.mövqe;
+  X.məlumat = n;
+  boş.hidden = true;
+  forma.hidden = false;
+  forma.innerHTML = xüsusiyyətFormu(n);
+}
+
+function xüsusiyyətFormu(n) {
+  const sadələr = n.parametrlər.filter((p) => p.sadə);
+  const ifadələr = n.parametrlər.filter((p) => !p.sadə);
+  let h = `<div class="xüs-başlıq"><b>${qaç(n.ad)}</b><span class="sönük">sətir ${n.sətir}</span>` +
+    `<button data-xus-get title="Redaktorda göstər">↗ kod</button></div>`;
+  h += `<div class="xüs-qrup"><h4>Xüsusiyyətlər</h4>${sadələr.map(sahəHTML).join("")}</div>`;
+  h += `<div class="xüs-qrup"><h4>Görünüş</h4>`;
+  if (n.üslub === null) {
+    h += `<div class="xüs-sətir"><label>üslub</label><span class="ifadə" data-xus-get title="ifadədir — redaktorda dəyişin">${qaç(n.üslubİfadə)}</span></div>`;
+  } else {
+    h += n.üslubSahələri.map((u) => sahəHTML({
+      ad: `üslub.${u.ad}`, görünən: u.ad, növ: u.növ, izah: u.izah, seçimlər: u.seçimlər,
+      verilib: u.ad in n.üslub, dəyər: n.üslub[u.ad] ?? null, standart: null,
+    })).join("");
+  }
+  h += "</div>";
+  if (ifadələr.length) {
+    h += `<div class="xüs-qrup"><h4>Hadisələr və ifadələr</h4>` + ifadələr.map((p) =>
+      `<div class="xüs-sətir${p.verilib ? " verilib" : ""}"><label title="${qaç(p.izah)}">${qaç(p.ad)}</label>` +
+      `<span class="ifadə" data-xus-get title="${p.verilib ? "redaktorda dəyişin" : qaç(p.izah)}">` +
+      `${p.verilib ? qaç(p.ifadə) : "—"}</span><span></span></div>`).join("") + "</div>";
+  }
+  return h + `<div class="xüs-xəta" id="xus-xeta" hidden></div>`;
+}
+
+function sahəHTML(p) {
+  const ad = qaç(p.ad), görünən = qaç(p.görünən || p.ad);
+  const d = p.verilib ? p.dəyər : null;
+  const std = p.standart;
+  let giriş;
+  if (p.növ === "məntiq") {
+    const işarəli = d ?? std ?? false;
+    giriş = `<input type="checkbox" data-xus="${ad}" data-nov="məntiq"${işarəli ? " checked" : ""}>`;
+  } else if (p.növ === "seçim") {
+    const cari = d ?? "";
+    giriş = `<select data-xus="${ad}" data-nov="seçim"><option value="">${std != null ? `standart (${qaç(std)})` : "—"}</option>` +
+      p.seçimlər.map((s) => `<option value="${qaç(s)}" data-tip="${typeof s}"${String(s) === String(cari) ? " selected" : ""}>${qaç(s)}</option>`).join("") +
+      "</select>";
+  } else if (p.növ === "rəng") {
+    const hex = typeof d === "string" && /^#[0-9a-f]{6}$/i.test(d) ? d : "#000000";
+    giriş = `<span class="birləşik"><input type="color" data-xus-reng="${ad}" value="${hex}">` +
+      `<input type="text" data-xus="${ad}" data-nov="mətn" value="${qaç(d ?? "")}" placeholder="#0b6bcb, red …"></span>`;
+  } else if (p.növ === "ədəd" || p.növ === "aralıq") {
+    const ad_ = p.növ === "aralıq" ? ' step="0.05" min="0" max="1"' : "";
+    giriş = `<input type="number" data-xus="${ad}" data-nov="ədəd"${ad_} value="${d ?? ""}" placeholder="${std != null ? qaç(std) : ""}">`;
+  } else {
+    giriş = `<input type="text" data-xus="${ad}" data-nov="mətn" value="${qaç(d ?? "")}" placeholder="${std != null && std !== "" ? qaç(std) : ""}">`;
+  }
+  return `<div class="xüs-sətir${p.verilib ? " verilib" : ""}" data-sətir="${ad}">` +
+    `<label title="${qaç(p.izah || "")}">${görünən}</label>${giriş}` +
+    `<button class="sıfırla" data-xus-sil="${ad}" title="Standarta qaytar (arqumenti sil)">✕</button>` +
+    (p.izah ? `<div class="izah">${qaç(p.izah)}</div>` : "") + "</div>";
+}
+
+function xüsusiyyətDəyəri(el) {
+  const növ = el.dataset.nov;
+  if (növ === "məntiq") return el.checked;
+  if (el.value === "") return null;
+  if (növ === "ədəd") { const n = Number(el.value); return Number.isFinite(n) ? n : null; }
+  if (növ === "seçim") {
+    const o = el.selectedOptions[0];
+    return o?.dataset.tip === "number" ? Number(el.value) : el.value;
+  }
+  return el.value;
+}
+
+function xüsusiyyətQoy(ad, dəyər) {
+  // Ardıcıl icra — sürətli yazılan dəyişikliklər bir-birini ötməsin
+  X.növbə = X.növbə.then(async () => {
+    if (X.mövqe === null) return;
+    const xət = $("#xus-xeta");
+    try {
+      const n = await API.göndər("/api/vidjet/xususiyyet", { mətn: R.mətn, kursor: X.mövqe, ad, dəyər });
+      if (xət) xət.hidden = true;
+      if (!n.dəyişdi) return;
+      X.yazılır = true;
+      R.mətniƏvəzlə(n.mətn, n.kursor);
+      X.yazılır = false;
+      $(`[data-sətir="${CSS.escape(ad)}"]`)?.classList.toggle("verilib", dəyər !== null);
+      planlaYoxla(150);
+      const t = cari();
+      if (t && /\.(alqor|alq)$/.test(t.yol)) {
+        if (await saxla(t, true) && !S.önbaxışAçıq) {
+          // Önbaxış bağlıdır — ilk dəyişiklikdə açırıq ki, nəticə görünsün
+          if (/\bkomponent\s+[\p{L}_]/u.test(R.mətn)) önbaxışıAçBağla(true);
+        }
+      }
+    } catch (x) {
+      X.yazılır = false;
+      if (xət) { xət.hidden = false; xət.textContent = x.message; }
+    }
+  });
+}
+
+$("#xus-forma").addEventListener("input", (h) => {
+  const el = h.target;
+  if (el.dataset.xusReng) {                 // rəng seçici → mətn sahəsi
+    const m = $(`[data-xus="${CSS.escape(el.dataset.xusReng)}"]`);
+    if (m) m.value = el.value;
+    clearTimeout(X.taymer);
+    X.taymer = setTimeout(() => xüsusiyyətQoy(el.dataset.xusReng, el.value), 120);
+    return;
+  }
+  if (!el.dataset.xus) return;
+  // Rəng mətn kimi yazılır — yanındakı rəng kvadratı da yenilənsin
+  const kvadrat = el.parentElement?.querySelector("input[type=color]");
+  if (kvadrat && /^#[0-9a-f]{6}$/i.test(el.value)) kvadrat.value = el.value;
+  if (el.dataset.nov === "mətn" || el.dataset.nov === "ədəd") {
+    clearTimeout(X.taymer);
+    X.taymer = setTimeout(() => xüsusiyyətQoy(el.dataset.xus, xüsusiyyətDəyəri(el)), 300);
+  }
+});
+$("#xus-forma").addEventListener("change", (h) => {
+  const el = h.target;
+  if (!el.dataset.xus) return;
+  clearTimeout(X.taymer);
+  xüsusiyyətQoy(el.dataset.xus, xüsusiyyətDəyəri(el));
+});
+$("#xus-forma").addEventListener("click", (h) => {
+  const sil = h.target.closest("[data-xus-sil]");
+  if (sil) {
+    const ad = sil.dataset.xusSil;
+    const el = $(`[data-xus="${CSS.escape(ad)}"]`);
+    if (el) { if (el.type === "checkbox") el.checked = false; else el.value = ""; }
+    xüsusiyyətQoy(ad, null);
+    return;
+  }
+  if (h.target.closest("[data-xus-get]") && X.məlumat) {
+    R.sətirəKeç(X.məlumat.sətir, 1);
+  }
+});
+
+// Kursor başqa vidjet çağırışına keçəndə panel yenilənir
+let xüsKursorTaymeri = 0;
+R.on("kursor", () => {
+  if (!xüsusiyyətPaneliAçıqdır() || X.yazılır) return;
+  clearTimeout(xüsKursorTaymeri);
+  xüsKursorTaymeri = setTimeout(() => xüsusiyyətləriYüklə(), 220);
+});
 
 // ══ İcra ═════════════════════════════════════════════════════════════
 const ANSİ = { 30: "#555", 31: "var(--xəta)", 32: "var(--uğur)", 33: "var(--xəbərdarlıq)",
@@ -798,7 +1011,7 @@ async function önbaxışıAçBağla(aç = !S.önbaxışAçıq) {
   }
 }
 
-async function önbaxışıYenilə() {
+async function önbaxışıYenilə(canlı = false) {
   const t = cari();
   const xət = $("#onbaxis-xeta");
   const çərçivə = $("#onbaxis-cercive");
@@ -809,18 +1022,22 @@ async function önbaxışıYenilə() {
       "komponent iskeleti avtomatik yaradılacaq.";
     return;
   }
-  if (çirklidir(t) && !(await saxla(t))) return;
-  xət.hidden = false;
-  xət.textContent = "Yüklənir…";
+  if (çirklidir(t) && !(await saxla(t, canlı))) return;
+  if (!canlı) { xət.hidden = false; xət.textContent = "Yüklənir…"; }
   try {
     const seçim = $("#onbaxis-komponent").value || undefined;
-    const n = await API.göndər("/api/onbaxis", { yol: t.yol, komponent: seçim });
-    if (n.xəta) { xət.textContent = n.xəta; çərçivə.src = "about:blank"; return; }
+    const n = await API.göndər("/api/onbaxis", { yol: t.yol, komponent: seçim, canlı });
+    if (n.xəta) {
+      xət.hidden = false; xət.textContent = n.xəta;
+      if (!canlı) çərçivə.src = "about:blank";
+      return;
+    }
     const s = $("#onbaxis-komponent");
     s.innerHTML = (n.komponentlər || []).map((k) =>
       `<option${k === n.komponent ? " selected" : ""}>${qaç(k)}</option>`).join("");
     s.hidden = (n.komponentlər || []).length < 2;
-    çərçivə.src = n.ünvan;
+    // Canlı yeniləmədə proses və ünvan eynidir — yalnız səhifə yenilənir
+    çərçivə.src = n.yeniləndi ? `${n.ünvan}&y=${Date.now()}` : n.ünvan;
     xət.hidden = true;
   } catch (x) {
     // Seçilmiş komponent artıq yoxdursa — birincisi ilə yenidən

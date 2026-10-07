@@ -56,11 +56,11 @@ def komponentlər(ağac: A.Proqram) -> list[str]:
             if isinstance(c, A.SinifElanı) and c.quruluş == "komponent"]
 
 
-def hazırla(yol: Path, ad: str | None = None):
-    """Faylı yükləyir, komponenti göstərməyə hazır pəncərə qaytarır."""
+def element_qur(yol: Path, ad: str | None = None):
+    """Faylı yükləyir, komponentin elementini qurur.
+
+    Qaytarır: (icraçı, element, komponent adı, bütün komponentlər)."""
     from alqor.icraci import İcraçı
-    from alqor import pencere as P
-    from alqor import vidjet as V
 
     x = XətaToplayıcı()
     s = Mənbə.fayldan(yol, x)
@@ -96,13 +96,63 @@ def hazırla(yol: Path, ad: str | None = None):
     for c in Parser(Lekser(s2, x2).leksə(), s2, x2).ayır().gövdə:
         icraçı._cümlə(c, m)
     element = m.al("studioÖnbaxışı")
+    return icraçı, element, ad, adlar
 
+
+def hazırla(yol: Path, ad: str | None = None):
+    """Faylı yükləyir, komponenti göstərməyə hazır pəncərə qaytarır."""
+    from alqor import pencere as P
+    from alqor import vidjet as V
+
+    icraçı, element, ad, adlar = element_qur(yol, ad)
     p = P.Pəncərə(icraçı, f"{ad} — önbaxış", 800, 600)
     p.məzmun(element)
     p.üslub(V.ÜSLUB + ÖNBAXIŞ_ÜSLUBU)
     # İlk göstərmə xətasız olmalıdır
     p.kök_HTML()
     return icraçı, p, ad, adlar
+
+
+def _əmrləri_oxu(t, p, yol: Path, ad: str) -> None:
+    """
+    Studio-dan gələn əmrlər (stdin, hər sətir bir əmr):
+
+        yenilə      fayl yenidən oxunur, komponent təzədən qurulur —
+                    proses və server qalır, ünvan dəyişmir. Xüsusiyyətlər
+                    panelindəki hər dəyişiklik belə görünür (~50 ms).
+
+    Hər əmrə bir JSON sətri ilə cavab verilir.
+    """
+    for sətir in sys.stdin:
+        əmr = sətir.strip()
+        if əmr != "yenilə":
+            continue
+        try:
+            icraçı, element, _, adlar = element_qur(yol, ad)
+
+            def dəyiş():
+                köhnə = p._icraçı, p._məzmun
+                # Yeni icraçı köhnə tətbiqi (server, növbə) paylaşır
+                icraçı._pəncərə_tətbiqi = t
+                p._icraçı = icraçı
+                p.məzmun(element)
+                try:
+                    p.kök_HTML()         # xətalı versiya göstərilməsin
+                except BaseException:
+                    p._icraçı = köhnə[0]
+                    p.məzmun(köhnə[1])
+                    raise
+            t.növbəyə(dəyiş)
+            _bildir({"yeniləndi": True, "komponentlər": adlar})
+        except (ValueError, LookupError) as x:
+            _bildir({"xəta": str(x)})
+        except AlqorXəta as x:
+            _bildir({"xəta": f"{x.tip}: {x.mesaj}"})
+        except RecursionError:
+            _bildir({"xəta": "StekDaşmaXətası: çağırış dərinliyi həddi "
+                             "aşıldı"})
+        except BaseException as x:              # noqa: BLE001
+            _bildir({"xəta": f"{type(x).__name__}: {x}"})
 
 
 def _valideyni_izlə(valideyn: int) -> None:
@@ -139,6 +189,8 @@ def əsas(arqumentlər: list[str]) -> int:
     t._serveri_qaldır()
     _bildir({"ünvan": p.ünvan(), "komponent": ad, "komponentlər": adlar})
     threading.Thread(target=_valideyni_izlə, args=(os.getppid(),),
+                     daemon=True).start()
+    threading.Thread(target=_əmrləri_oxu, args=(t, p, yol, ad),
                      daemon=True).start()
     try:
         t.işlət()

@@ -120,6 +120,33 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 .vidjet-elementi b { font-family: var(--kod-şrift); font-weight: 600; font-size: 12.5px; }
 .vidjet-elementi small { grid-column: 1 / -1; color: var(--sönük); }
 .vidjet-elementi .nişan-skelet { color: var(--uğur); font-size: 11px; }
+/* Miniatür — vidjetin həqiqi görünüşü, Shadow DOM-da kiçildilmiş */
+.vidjet-elementi .miniatür { grid-column: 1 / -1; height: 64px; margin: 4px 0 2px; border-radius: 5px;
+  border: 1px solid var(--kənar); overflow: hidden; pointer-events: none; position: relative; }
+
+/* ── Xüsusiyyətlər paneli ── */
+#panel-xususiyyet { overflow: auto; }
+.xüs-boş { padding: 10px 4px; color: var(--sönük); }
+.xüs-başlıq { display: flex; align-items: baseline; gap: 8px; padding: 2px 2px 8px; border-bottom: 1px solid var(--kənar); margin-bottom: 6px; }
+.xüs-başlıq b { font-family: var(--kod-şrift); font-size: 14px; }
+.xüs-başlıq .sönük { color: var(--sönük); }
+.xüs-başlıq button { margin-left: auto; font-size: 11px; padding: 2px 6px; }
+.xüs-qrup { margin: 4px 0 10px; }
+.xüs-qrup > h4 { margin: 6px 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--sönük); }
+.xüs-sətir { display: grid; grid-template-columns: 96px 1fr auto; gap: 4px 6px; align-items: center; padding: 3px 0; }
+.xüs-sətir > label { font-family: var(--kod-şrift); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.xüs-sətir.verilib > label { color: var(--vurğu); font-weight: 600; }
+.xüs-sətir input[type=text], .xüs-sətir input[type=number], .xüs-sətir select { width: 100%; min-width: 0; padding: 3px 6px; }
+.xüs-sətir input[type=color] { width: 28px; height: 24px; padding: 0 2px; border: 1px solid var(--kənar); border-radius: 5px; background: none; flex: none; }
+.xüs-sətir .birləşik { display: flex; gap: 4px; min-width: 0; }
+.xüs-sətir .birləşik input[type=text] { flex: 1; }
+.xüs-sətir .sıfırla { border: 0; background: none; color: var(--sönük); padding: 0 4px; visibility: hidden; }
+.xüs-sətir.verilib .sıfırla { visibility: visible; }
+.xüs-sətir .sıfırla:hover { color: var(--xəta); }
+.xüs-sətir .ifadə { font-family: var(--kod-şrift); font-size: 11.5px; color: var(--sönük); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--fon-3); border-radius: 4px; padding: 2px 6px; cursor: pointer; }
+.xüs-sətir .izah { grid-column: 2 / -1; color: var(--sönük); font-size: 11px; margin-top: -2px; }
+.xüs-xəta { color: var(--xəta); font-size: 12px; padding: 4px 2px; }
 .fayl-elementləri { border: 1px solid var(--kənar); border-radius: 8px; padding: 4px 8px; background: var(--fon); flex: none; }
 .fayl-elementləri > summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
 .elementlər { display: flex; flex-direction: column; gap: 3px; max-height: 28vh; overflow: auto; margin-top: 4px; }
