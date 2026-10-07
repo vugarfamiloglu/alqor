@@ -457,7 +457,7 @@ Redaktorlar:
 |---|---|
 | **VS Code** | `redaktor/vscode/` — qrammatika + LSP müştərisi (`npx @vscode/vsce package`) |
 | Neovim, Helix | `alqor ls --stdio` — nümunə konfiqurasiya `redaktor/vscode/README.md`-də |
-| Alqor Studio | öz analizi (`/api/yoxla`); tamamlama `alqorls`-a keçiriləcək ⏳ |
+| Alqor Studio | diaqnostika öz analizi ilə (`/api/yoxla`); tamamlama, imza ipucu `alqorls` ilə (eyni prosesdə, `/api/dil`) ✅ |
 
 TextMate qrammatikası və `language-configuration.json` açar söz
 siyahısından yaradılır (`python -m alqor.qrammatika --yaz`); sınaq
@@ -512,7 +512,9 @@ onların köhnəlmədiyini yoxlayır.
 | **Canlı önizləmə** | Veb / desktop / konsol çıxışı yan paneldə, hər dəyişiklikdə yenilənir |
 | **Azərbaycan klaviaturası** | Avtomatik çevirmə, `;` kompozisiya, hərf paneli |
 | **Tam Azərbaycan interfeysi** | Menyular, mesajlar, sənədlər |
-| **Sıfır konfiqurasiya debaq** | Breakpoint, addım-addım, dəyişən izləmə |
+| **Sıfır konfiqurasiya debaq** | Sətir nömrəsinə klik (F9) — dayanma nöqtəsi; 🐞 Debaq (Ctrl+F5); F5 davam, F10 növbəti, F11 daxil ol, Shift+F11 çıx; çağırış yığını, dəyişənlər ağacı, ifadə hesablama (`alqor dap` üzərindən) ✅ |
+| **Avtomatik tamamlama** | `alqorls` ilə: üzvlər (`x.`), açar sözlər, şablonlar, Ctrl+Boşluq; imza ipucu ✅ |
+| **Önbaxış teması** | Studio-nun açıq/qaranlıq temasını izləyir ✅ |
 | **Vidjet paleti** | 118 element (beynəlxalq adlarla: Button, Breadcrumb …), hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
 | **Xüsusiyyətlər paneli** | Seçilmiş elementin mətni, növü, ölçüsü və görünüşü (rəng, fon, kənar, künc, şrift… — `üslub:`, § 14.8); dəyişiklik koda yazılır, önbaxış dərhal yenilənir ✅ |
 | **Vizual qurucu** | Desktop UI-ni sürüklə-burax ilə düzəltmək |
@@ -526,6 +528,10 @@ Texnologiya: Tauri + CodeMirror 6. Ölçü: ~15 MB (Electron ekvivalenti ~150 MB
 ---
 
 ## 13.10 Debaq
+
+Hazırda debaq `alqor dap` (§ 13.8) üzərindədir: VS Code-da F5, Alqor
+Studio-da 🐞 Debaq. Aşağıdakı terminal konsolu (`alqor debaq`) və kodda
+`dayanNöqtəsi` hələ planlaşdırılır ⏳.
 
 ```bash
 alqor debaq əsas.alq

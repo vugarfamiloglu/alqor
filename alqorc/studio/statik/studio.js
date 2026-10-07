@@ -94,8 +94,10 @@ const S = {
   aktiv: null,
   kataloq: null,
   seçiliQovluq: "",
-  iş: null,            // {id, axın}
+  iş: null,            // {id, axın, debaq}
   önbaxışAçıq: false,
+  nöqtələr: {},        // yol → [sətir] (dayanma nöqtələri)
+  dbq: null,           // debaqda dayanma: {yığın, kadr, sahələr}
 };
 
 const R = new Redaktor($("#redaktor"));
@@ -348,6 +350,8 @@ function tabaKeç(yol) {
   S.aktiv = yol;
   yaddaş("aktiv", yol);
   R.yüklə(t.v.mətn, t.v);
+  R.nöqtələriQoy(S.nöqtələr[yol]);
+  R.icraSətriniQoy(dbqSətri(yol));
   tablarıÇək();
   xoşGəldin();
   ağacSeçiminiYenilə();
@@ -570,6 +574,7 @@ function altPaneliAç(ad) {
   for (const b of $$("[data-alt]")) b.classList.toggle("aktiv", b.dataset.alt === ad);
   $("#alt-cixis").hidden = ad !== "cixis";
   $("#alt-problemler").hidden = ad !== "problemler";
+  $("#alt-debaq").hidden = ad !== "debaq";
 }
 for (const b of $$("[data-alt]")) b.addEventListener("click", () => altPaneliAç(b.dataset.alt));
 
@@ -993,6 +998,8 @@ function axınıOxu(id) {
     const d = JSON.parse(h.data);
     if (d.növ === "çıxış") çıxışaYaz(d.mətn);
     else if (d.növ === "xəta") çıxışaYaz(d.mətn, "x-xəta");
+    else if (d.növ === "dayandı") debaqDayandı(d);
+    else if (d.növ === "davam") debaqDavam();
     else if (d.növ === "bitdi") {
       çıxışaYaz(`\n⊣ proses bitdi — kod ${d.kod}, ${d.müddət.toFixed(2)} san.\n`,
         d.kod === 0 ? "x-uğur" : "x-xəta");
@@ -1006,7 +1013,9 @@ function axınıOxu(id) {
 
 function işBitdi() {
   if (S.iş) S.iş.axın.close();
+  const debaqİdi = S.iş?.debaq;
   S.iş = null;
+  if (debaqİdi) debaqBitdi();
   $("#dym-dayandir").disabled = true;
   $("#dym-islet").disabled = false;
   $("#giris").disabled = true;
@@ -1026,6 +1035,167 @@ $("#giris-formu").addEventListener("submit", async (h) => {
   g.value = "";
 });
 $("#cixis-temizle").addEventListener("click", () => { $("#cixis").textContent = ""; });
+
+// ══ Debaq ════════════════════════════════════════════════════════════
+//
+// Dayanma nöqtəsi: sətir nömrəsinə klik və ya F9. 🐞 Debaq (Ctrl+F5)
+// proqramı `alqor dap` ilə işlədir; dayananda yığın və dəyişənlər
+// "Debaq" panelində görünür. F5 davam, F10 növbəti, F11 daxil ol,
+// Shift+F11 çıx.
+
+S.nöqtələr = yaddaş("nöqtələr") || {};
+
+R.on("nöqtələr", (sətirlər) => {
+  const t = cari();
+  if (!t) return;
+  if (sətirlər.length) S.nöqtələr[t.yol] = sətirlər; else delete S.nöqtələr[t.yol];
+  yaddaş("nöqtələr", S.nöqtələr);
+  if (S.iş?.debaq) {
+    API.göndər("/api/debaq/noqteler", { id: S.iş.id, nöqtələr: { [t.yol]: sətirlər } }).catch(() => {});
+  }
+});
+
+function dbqSətri(yol) {
+  const k = S.dbq?.yığın?.[S.dbq.kadr];
+  return k && k.yol === yol ? k.sətir : 0;
+}
+
+function dbqDüymələri() {
+  const aktiv = !!S.iş?.debaq, dayanıb = aktiv && !!S.dbq;
+  for (const id of ["dbq-davam", "dbq-novbeti", "dbq-daxil", "dbq-cix"]) $("#" + id).disabled = !dayanıb;
+  $("#dbq-fasile").disabled = !aktiv || dayanıb;
+  $("#dbq-dayandir").disabled = !aktiv;
+  $("#dym-debaq").disabled = aktiv;
+}
+
+async function debaqBaşlat() {
+  const t = cari();
+  if (!t) { bildir("Əvvəlcə fayl açın"); return; }
+  if (!/\.(alqor|alq)$/.test(t.yol)) { bildir("Yalnız .alq faylları debaq edilə bilər", "xəta"); return; }
+  if (çirklidir(t) && !(await saxla(t))) return;
+  if (S.iş) await dayandır();
+  $("#cixis").textContent = "";
+  altPaneliAç("debaq");
+  S.dbq = null;
+  çıxışaYaz(`🐞 ${t.yol}\n`, "x-sistem");
+  const nöqtələr = {};
+  const fayllar = new Set(bütünFayllar());
+  for (const [y, s] of Object.entries(S.nöqtələr)) if (fayllar.has(y)) nöqtələr[y] = s;
+  $("#dbq-veziyyet").textContent = Object.keys(nöqtələr).length
+    ? "İşləyir…" : "İşləyir — dayanma nöqtəsi yoxdur (⏸ ilə dayandırmaq olar)";
+  try {
+    const iş = await API.göndər("/api/debaq", { yol: t.yol, nöqtələr });
+    axınıOxu(iş.id);
+    S.iş.debaq = true;
+    dbqDüymələri();
+  } catch (x) { çıxışaYaz(`✖ ${x.message}\n`, "x-xəta"); }
+}
+
+async function debaqDayandı(d) {
+  S.dbq = { yığın: d.yığın || [], kadr: 0, sahələr: d.sahələr || [] };
+  const səbəb = { breakpoint: "dayanma nöqtəsi", step: "addım", pause: "fasilə", entry: "başlanğıc" }[d.səbəb] || d.səbəb;
+  const k = S.dbq.yığın[0];
+  $("#dbq-veziyyet").textContent = `Dayandı — ${səbəb}${k ? `: ${k.yol || "?"}:${k.sətir}` : ""}`;
+  altPaneliAç("debaq");
+  dbqDüymələri();
+  dbqÇək();
+  await kadraKeç(0, false);
+}
+
+async function kadraKeç(i, sahələriYüklə = true) {
+  if (!S.dbq) return;
+  S.dbq.kadr = i;
+  const k = S.dbq.yığın[i];
+  if (k?.yol) {
+    try {
+      if (cari()?.yol !== k.yol) await faylıAç(k.yol);
+    } catch (_) { /* layihədən kənar fayl */ }
+  }
+  R.icraSətriniQoy(dbqSətri(cari()?.yol));
+  if (sahələriYüklə && S.iş && k) {
+    try {
+      const n = await API.göndər("/api/debaq/kadr", { id: S.iş.id, kadr: k.id });
+      S.dbq.sahələr = n.sahələr;
+    } catch (x) { xəta(x); }
+  }
+  dbqÇək();
+}
+
+function dbqÇək() {
+  const d = S.dbq;
+  $("#dbq-yigin").innerHTML = d ? d.yığın.map((k, i) =>
+    `<div class="kadr${i === d.kadr ? " seçili" : ""}" data-i="${i}"><span>${qaç(k.ad)}</span>` +
+    `<span class="sönük">${qaç(k.yol || "")}:${k.sətir}</span></div>`).join("") : "";
+  $("#dbq-deyisenler").innerHTML = d ? d.sahələr.map((s) =>
+    `<div class="sönük" style="padding:2px 10px">${qaç(s.ad)}</div>` + dəyişənlərHTML(s.dəyişənlər)).join("") : "";
+}
+
+function dəyişənlərHTML(siyahı) {
+  if (!siyahı?.length) return '<ul class="dəyişənlər"><li class="sönük">—</li></ul>';
+  return '<ul class="dəyişənlər">' + siyahı.map((v) =>
+    `<li class="dəyişən" data-ref="${v.ref}"><span class="ox">${v.ref ? "▸" : ""}</span>` +
+    `<span class="d-ad">${qaç(v.ad)}</span> = <span class="d-dəyər">${qaç(v.dəyər)}</span>` +
+    `<span class="d-tip">${qaç(v.tip || "")}</span></li>`).join("") + "</ul>";
+}
+
+$("#dbq-deyisenler").addEventListener("click", async (h) => {
+  const ox = h.target.closest(".ox");
+  const li = ox?.closest("[data-ref]");
+  if (!li || !+li.dataset.ref || !S.iş) return;
+  const açıq = li.querySelector(":scope > ul");
+  if (açıq) { açıq.remove(); ox.textContent = "▸"; return; }
+  try {
+    const n = await API.göndər("/api/debaq/deyisenler", { id: S.iş.id, ref: +li.dataset.ref });
+    li.insertAdjacentHTML("beforeend", dəyişənlərHTML(n.dəyişənlər));
+    ox.textContent = "▾";
+  } catch (x) { xəta(x); }
+});
+
+$("#dbq-yigin").addEventListener("click", (h) => {
+  const d = h.target.closest("[data-i]");
+  if (d) kadraKeç(+d.dataset.i);
+});
+
+function debaqDavam() {
+  S.dbq = null;
+  R.icraSətriniQoy(0);
+  $("#dbq-veziyyet").textContent = "İşləyir…";
+  dbqÇək();
+  dbqDüymələri();
+}
+
+function debaqBitdi() {
+  S.dbq = null;
+  R.icraSətriniQoy(0);
+  $("#dbq-veziyyet").textContent = "Debaq bitdi.";
+  dbqÇək();
+  dbqDüymələri();
+}
+
+async function debaqƏmri(əmr) {
+  if (!S.iş?.debaq) return;
+  if (əmr !== "fasilə" && !S.dbq) return;
+  try { await API.göndər("/api/debaq/emr", { id: S.iş.id, əmr }); } catch (x) { xəta(x); }
+}
+
+$("#dbq-davam").addEventListener("click", () => debaqƏmri("davam"));
+$("#dbq-novbeti").addEventListener("click", () => debaqƏmri("növbəti"));
+$("#dbq-daxil").addEventListener("click", () => debaqƏmri("daxil"));
+$("#dbq-cix").addEventListener("click", () => debaqƏmri("çıx"));
+$("#dbq-fasile").addEventListener("click", () => debaqƏmri("fasilə"));
+$("#dbq-dayandir").addEventListener("click", () => dayandır());
+$("#dym-debaq").addEventListener("click", debaqBaşlat);
+
+$("#dbq-ifade-formu").addEventListener("submit", async (h) => {
+  h.preventDefault();
+  const ifadə = $("#dbq-ifade").value.trim();
+  if (!ifadə || !S.iş?.debaq) return;
+  const k = S.dbq?.yığın?.[S.dbq.kadr];
+  try {
+    const n = await API.göndər("/api/debaq/hesabla", { id: S.iş.id, ifadə, kadr: k?.id });
+    $("#dbq-netice").textContent = `${ifadə} = ${n.dəyər}` + (n.tip ? `   (${n.tip})` : "");
+  } catch (x) { $("#dbq-netice").textContent = `✖ ${x.message}`; }
+});
 
 // ══ Önbaxış ══════════════════════════════════════════════════════════
 async function önbaxışıAçBağla(aç = !S.önbaxışAçıq) {
@@ -1177,7 +1347,12 @@ document.addEventListener("keydown", (h) => {
   if (h.defaultPrevented) return;          // redaktor özü işlədib
   const ctrl = h.ctrlKey || h.metaKey;
   const a = h.key;
+  if (a === "F5" && ctrl) { h.preventDefault(); debaqBaşlat(); return; }
+  if (a === "F5" && S.dbq && !h.shiftKey) { h.preventDefault(); debaqƏmri("davam"); return; }
   if (a === "F5") { h.preventDefault(); if (h.shiftKey) dayandır(); else işlət(); return; }
+  if (a === "F9") { h.preventDefault(); if (cari()) R.nöqtəDəyiş(); return; }
+  if (a === "F10" && S.dbq) { h.preventDefault(); debaqƏmri("növbəti"); return; }
+  if (a === "F11" && S.dbq) { h.preventDefault(); debaqƏmri(h.shiftKey ? "çıx" : "daxil"); return; }
   if (a === "F6") { h.preventDefault(); önbaxışıAçBağla(); return; }
   if (a === "F8") { h.preventDefault(); növbətiProblem(); return; }
   if (ctrl && !h.shiftKey && (a === "s" || a === "S")) { h.preventDefault(); saxla(); return; }

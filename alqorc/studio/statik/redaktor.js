@@ -28,7 +28,7 @@ class Redaktor {
     qab.innerHTML =
       '<div class="r-xətlər" aria-hidden="true"><div class="r-nömrələr"></div></div>' +
       '<div class="r-sahə">' +
-      '<div class="r-fon" aria-hidden="true"><div class="r-cari"></div><div class="r-vurğular"></div></div>' +
+      '<div class="r-fon" aria-hidden="true"><div class="r-cari"></div><div class="r-icra" hidden></div><div class="r-vurğular"></div></div>' +
       '<pre class="r-örtük" aria-hidden="true"></pre>' +
       '<textarea class="r-giriş" spellcheck="false" autocapitalize="off" ' +
       'autocomplete="off" autocorrect="off" wrap="off" aria-label="Kod redaktoru"></textarea>' +
@@ -37,6 +37,7 @@ class Redaktor {
     this.örtük = qab.querySelector(".r-örtük");
     this.fon = qab.querySelector(".r-fon");
     this.cari = qab.querySelector(".r-cari");
+    this.icra = qab.querySelector(".r-icra");
     this.vurğuQabı = qab.querySelector(".r-vurğular");
     this.nömrələr = qab.querySelector(".r-nömrələr");
     this.sahə = qab.querySelector(".r-sahə");
@@ -53,6 +54,8 @@ class Redaktor {
     this._çəkmə = 0;
     this.versiya = 0;
 
+    this.nöqtələr = new Set();    // dayanma nöqtələri (sətir nömrələri)
+    this.icraSətri = 0;           // debaqda dayanılan sətir
     this.tamamlayıcı = null;      // async (kursor) → {maddələr} (LSP CompletionItem)
     this.imzaVerən = null;        // async (kursor) → LSP SignatureHelp | null
     this._tamamlaQur();
@@ -72,6 +75,13 @@ class Redaktor {
     ta.addEventListener("input", (h) => this._daxiletmə(h));
     ta.addEventListener("keydown", (h) => this._düymə(h));
     ta.addEventListener("scroll", () => this._sürüşdür());
+    // Sətir nömrəsinə klik — dayanma nöqtəsi
+    this.qab.querySelector(".r-xətlər").addEventListener("mousedown", (h) => {
+      const d = h.target.closest("[data-s]");
+      if (!d) return;
+      h.preventDefault();
+      this.nöqtəDəyiş(+d.dataset.s);
+    });
     ta.addEventListener("dblclick", () => {
       this._yay("ikiKlik", ta.selectionStart, ta.selectionEnd);
     });
@@ -535,6 +545,31 @@ class Redaktor {
 
   imzaBağla() { this.im.hidden = true; }
 
+  // ══ Debaq ══════════════════════════════════════════════════════════
+
+  nöqtəDəyiş(sətir = this.sətirSütun().sətir) {
+    if (this.nöqtələr.has(sətir)) this.nöqtələr.delete(sətir);
+    else this.nöqtələr.add(sətir);
+    this.çək();
+    this._yay("nöqtələr", [...this.nöqtələr].sort((a, b) => a - b));
+  }
+
+  nöqtələriQoy(sətirlər) {
+    this.nöqtələr = new Set(sətirlər || []);
+    this.çək();
+  }
+
+  /** Debaqda dayanılan sətir (0 — yoxdur). */
+  icraSətriniQoy(sətir) {
+    this.icraSətri = sətir || 0;
+    this.icra.hidden = !this.icraSətri;
+    if (this.icraSətri) {
+      this.icra.style.top = `${(this.icraSətri - 1) * this.sh + this.padT}px`;
+      this.sətirəKeç(this.icraSətri);
+    }
+    this.çək();
+  }
+
   /** `sonu` mövqeyində bitən söz ASCII açar sözdürsə çevirir. */
   _sözüÇevir(sonu) {
     const m = this.ta.value;
@@ -972,14 +1007,17 @@ class Redaktor {
 
     // Sətir nömrələri
     const say = sətirBaşları.length;
-    if (say !== this._sətirSayı || this._işarələr !== JSON.stringify(sətirİşarəsi)) {
+    const açar = JSON.stringify([sətirİşarəsi, [...this.nöqtələr], this.icraSətri]);
+    if (say !== this._sətirSayı || this._işarələr !== açar) {
       this._sətirSayı = say;
-      this._işarələr = JSON.stringify(sətirİşarəsi);
+      this._işarələr = açar;
       const nm = [];
       for (let s = 1; s <= say; s++) {
         const iş = sətirİşarəsi[s];
-        nm.push(iş ? `<div class="${iş === 1 ? "n-xəta" : "n-xəbərdarlıq"}">${s}</div>`
-                   : `<div>${s}</div>`);
+        let sinif = iş ? (iş === 1 ? "n-xəta" : "n-xəbərdarlıq") : "";
+        if (this.nöqtələr.has(s)) sinif += " n-nöqtə";
+        if (this.icraSətri === s) sinif += " n-icra";
+        nm.push(`<div data-s="${s}"${sinif ? ` class="${sinif.trim()}"` : ""}>${s}</div>`);
       }
       this.nömrələr.innerHTML = nm.join("");
       this.qab.style.setProperty("--xətt-eni", `${Math.max(3, String(say).length) + 2}ch`);
