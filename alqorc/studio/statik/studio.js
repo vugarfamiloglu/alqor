@@ -471,6 +471,23 @@ R.on("dəyişdi", () => {
 });
 R.on("kursor", (s, st) => { $("#st-kursor").textContent = `Sətir ${s}, Sütun ${st}`; });
 R.on("saxla", () => saxla());
+
+// ── Dil serveri (alqorls): tamamlama, imza ipucu ──
+function lspMövqe(kursor) {
+  const m = R.mətn;
+  const baş = m.lastIndexOf("\n", kursor - 1) + 1;
+  let sətir = 0;
+  for (let i = m.indexOf("\n"); i >= 0 && i < baş; i = m.indexOf("\n", i + 1)) sətir++;
+  return { sətir, sütun: kursor - baş };   // JS sətirləri UTF-16-dır — LSP ilə eyni
+}
+async function dilSorğusu(metod, kursor) {
+  const t = cari();
+  if (!t || !/\.(alqor|alq)$/.test(t.yol)) return null;
+  const n = await API.göndər("/api/dil", { metod, yol: t.yol, mətn: R.mətn, ...lspMövqe(kursor) });
+  return n.nəticə;
+}
+R.tamamlayıcı = (kursor) => dilSorğusu("tamamla", kursor);
+R.imzaVerən = (kursor) => dilSorğusu("imza", kursor);
 R.on("ikiKlik", (baş) => {
   // `vidjet.ad(` üzərində iki klik — çatışmayan kodu yaz
   const m = R.mətn;

@@ -12,6 +12,8 @@
  *   • axtar / əvəzlə
  *   • Azərbaycan klaviaturası: ASCII açar söz çevrilməsi və `;` tərkibi
  *   • diaqnostika: dalğalı xətt + sətir nişanı
+ *   • tamamlama siyahısı və imza ipucu (`tamamlayıcı`, `imzaVerən` —
+ *     Studio onları `alqorls` dil serverinə bağlayır)
  */
 "use strict";
 
@@ -50,6 +52,10 @@ class Redaktor {
     this._tərkibSon = false;
     this._çəkmə = 0;
     this.versiya = 0;
+
+    this.tamamlayıcı = null;      // async (kursor) → {maddələr} (LSP CompletionItem)
+    this.imzaVerən = null;        // async (kursor) → LSP SignatureHelp | null
+    this._tamamlaQur();
 
     this._bağla();
     this._ölç();
@@ -295,11 +301,239 @@ class Redaktor {
       if (this.ayarlar.ascii && Redaktor.SƏRHƏDLƏR.has(c)) this._sözüÇevir(k - 1);
       // 3. `yoxsa ` / `tut ` — sətri geri çək
       if (c === " " || c === "(") this._geriÇək(false);
+      this._dəyişdi();
+      this._yazıldı(c);
+      return;
     } else {
       this._tərkibSon = false;
     }
     this._dəyişdi();
+    if (this.tmV) this._süz();
   }
+
+  // ══ Tamamlama ══════════════════════════════════════════════════════
+
+  _tamamlaQur() {
+    this.tm = document.createElement("div");
+    this.tm.className = "r-tamamla";
+    this.tm.hidden = true;
+    this.tm.setAttribute("role", "listbox");
+    this.im = document.createElement("div");
+    this.im.className = "r-imza";
+    this.im.hidden = true;
+    this.qab.append(this.tm, this.im);
+    this.tmV = null;              // {hamısı, görünən, seçili}
+    this._tmTaymer = 0;
+    this._tmSorğu = 0;
+    this.tm.addEventListener("mousedown", (h) => {
+      const d = h.target.closest("[data-i]");
+      h.preventDefault();
+      if (d) this._qəbulEt(+d.dataset.i);
+    });
+    this.ta.addEventListener("blur", () => setTimeout(() => {
+      if (document.activeElement !== this.ta) { this.tamamlaBağla(); this.imzaBağla(); }
+    }, 120));
+    this.ta.addEventListener("mousedown", () => { this.tamamlaBağla(); });
+  }
+
+  /** Yazılmış simvola görə tamamlama / imza. */
+  _yazıldı(c) {
+    if (c === ".") { this.tamamla(false); }
+    else if (Redaktor.AD.test(c)) {
+      if (this.tmV) this._süz();
+      else {
+        clearTimeout(this._tmTaymer);
+        this._tmTaymer = setTimeout(() => {
+          if (this._söz().length >= 2) this.tamamla(false);
+        }, 140);
+      }
+    } else this.tamamlaBağla();
+    if (c === "(" || c === ",") this.imzaGöstər();
+    else if (c === ")") this.imzaBağla();
+  }
+
+  /** Kursordan əvvəlki ad parçası. */
+  _söz() {
+    const m = this.ta.value, k = this.ta.selectionStart;
+    let b = k;
+    while (b > 0 && Redaktor.AD.test(m[b - 1])) b--;
+    return m.slice(b, k);
+  }
+
+  async tamamla(əl = false) {
+    if (!this.tamamlayıcı) return;
+    const n = ++this._tmSorğu;
+    let r;
+    try { r = await this.tamamlayıcı(this.ta.selectionStart); } catch { return; }
+    if (n !== this._tmSorğu || document.activeElement !== this.ta) return;
+    const maddələr = (r && (r.items || r)) || [];
+    if (!maddələr.length) { this.tamamlaBağla(); return; }
+    this.tmV = { hamısı: maddələr, görünən: [], seçili: 0, əl };
+    this._süz();
+  }
+
+  _süz() {
+    const v = this.tmV;
+    if (!v) return;
+    const söz = this._söz().toLocaleLowerCase("az");
+    const m = this.ta.value, k = this.ta.selectionStart;
+    const əvvəl = m[k - söz.length - 1];
+    // Ad yazılmırsa (boşluq, mötərizə...) və `.`-dan sonra deyilsə — bağla
+    if (!söz && əvvəl !== "." && !v.əl) { this.tamamlaBağla(); return; }
+    const n = [];
+    for (const x of v.hamısı) {
+      const a = (x.filterText || x.label).toLocaleLowerCase("az");
+      let xal;
+      if (a.startsWith(söz)) xal = 0;
+      else if (a.includes(söz)) xal = 1;
+      else {
+        let i = 0;
+        for (const c of a) if (c === söz[i]) i++;
+        if (i < söz.length) continue;
+        xal = 2;
+      }
+      n.push([xal, x.sortText || x.label, x]);
+    }
+    n.sort((p, q) => p[0] - q[0] || p[1].localeCompare(q[1], "az"));
+    v.görünən = n.slice(0, 60).map((x) => x[2]);
+    if (!v.görünən.length || (v.görünən.length === 1 &&
+        (v.görünən[0].filterText || v.görünən[0].label) === this._söz())) {
+      this.tamamlaBağla();
+      return;
+    }
+    v.seçili = 0;
+    this._tamamlaÇək();
+  }
+
+  _kursorXY() {
+    const { sətir, sütun } = this.sətirSütun();
+    const ta = this.ta.getBoundingClientRect(), q = this.qab.getBoundingClientRect();
+    const sətirMətni = this.ta.value.slice(this.ta.selectionStart - sütun + 1, this.ta.selectionStart);
+    const en = sətirMətni.replace(/\t/g, "    ").length;
+    return {
+      x: ta.left - q.left + this.padL + en * this.sw - this.ta.scrollLeft,
+      y: ta.top - q.top + this.padT + (sətir - 1) * this.sh - this.ta.scrollTop,
+    };
+  }
+
+  _tamamlaÇək() {
+    const v = this.tmV;
+    const sənəd = v.görünən[v.seçili]?.documentation;
+    const izah = typeof sənəd === "string" ? sənəd : sənəd?.value || "";
+    this.tm.innerHTML = '<div class="r-t-siyahı">' + v.görünən.map((x, i) =>
+      `<div class="r-t-maddə${i === v.seçili ? " seçili" : ""}" data-i="${i}" role="option">` +
+      `<span class="r-t-növ n${x.kind || 0}">${Redaktor.NÖV_İŞARƏSİ[x.kind] || "·"}</span>` +
+      `<span class="r-t-ad">${Redaktor.qaç(x.label)}</span>` +
+      `<span class="r-t-detal">${Redaktor.qaç(x.detail || "")}</span></div>`).join("") + "</div>" +
+      (izah ? `<div class="r-t-izah">${Redaktor.qaç(izah.replace(/\*\*|`/g, ""))}</div>` : "");
+    this.tm.hidden = false;
+    const { x, y } = this._kursorXY();
+    const q = this.qab.getBoundingClientRect();
+    const h = this.tm.offsetHeight, w = this.tm.offsetWidth;
+    const aşağı = y + this.sh + h < q.height || y < h;
+    this.tm.style.top = `${aşağı ? y + this.sh : y - h}px`;
+    this.tm.style.left = `${Math.max(0, Math.min(x - 22, q.width - w - 4))}px`;
+    this.tm.querySelector(".seçili")?.scrollIntoView({ block: "nearest" });
+  }
+
+  tamamlaBağla() {
+    clearTimeout(this._tmTaymer);
+    this._tmSorğu++;
+    this.tmV = null;
+    this.tm.hidden = true;
+  }
+
+  _tamamlaDüyməsi(h) {
+    if (h.key === "Escape" && !this.im.hidden && !this.tmV) { this.imzaBağla(); h.preventDefault(); return true; }
+    const v = this.tmV;
+    if (!v || h.isComposing) return false;
+    const a = h.key;
+    if (a === "ArrowDown" || a === "ArrowUp") {
+      h.preventDefault();
+      const n = v.görünən.length;
+      v.seçili = (v.seçili + (a === "ArrowDown" ? 1 : n - 1)) % n;
+      this._tamamlaÇək();
+      return true;
+    }
+    if (a === "PageDown" || a === "PageUp") {
+      h.preventDefault();
+      v.seçili = Math.max(0, Math.min(v.görünən.length - 1, v.seçili + (a === "PageDown" ? 8 : -8)));
+      this._tamamlaÇək();
+      return true;
+    }
+    if ((a === "Enter" || a === "Tab") && !h.shiftKey && !h.ctrlKey && !h.altKey) {
+      // Söz artıq tam yazılıbsa Enter adi yeni sətirdir
+      const x = v.görünən[v.seçili];
+      if (a === "Enter" && x && (x.insertText || x.label) === this._söz()) {
+        this.tamamlaBağla();
+        return false;
+      }
+      h.preventDefault();
+      this._qəbulEt(v.seçili);
+      return true;
+    }
+    if (a === "Escape") { h.preventDefault(); this.tamamlaBağla(); return true; }
+    if (a === "ArrowLeft" || a === "ArrowRight" || a === "Home" || a === "End") this.tamamlaBağla();
+    return false;
+  }
+
+  /** Seçilmiş maddəni yazır; şablonun (`${1:x}`) ilk yerinə kursor qoyur. */
+  _qəbulEt(i) {
+    const x = this.tmV?.görünən[i];
+    if (!x) return;
+    const k = this.ta.selectionStart;
+    const baş = k - this._söz().length;
+    let mətn = x.insertText || x.label;
+    let kursor = null;
+    if (x.insertTextFormat === 2) {
+      let n = "";
+      const rx = /\$\{(\d+)(?::([^}]*))?\}|\$(\d+)/g;
+      let son = 0, t;
+      while ((t = rx.exec(mətn))) {
+        n += mətn.slice(son, t.index);
+        if (kursor === null && (t[1] || t[3]) !== "0") kursor = n.length;
+        n += t[2] || "";
+        son = rx.lastIndex;
+      }
+      mətn = n + mətn.slice(son);
+    }
+    const sətirBaşı = this.ta.value.lastIndexOf("\n", baş - 1) + 1;
+    const girinti = (this.ta.value.slice(sətirBaşı).match(/^[ \t]*/) || [""])[0];
+    if (mətn.includes("\n")) {
+      const əvvəlki = mətn;
+      mətn = mətn.replace(/\n/g, "\n" + girinti);
+      if (kursor !== null) kursor += mətn.length - əvvəlki.length
+        - (əvvəlki.slice(kursor).split("\n").length - 1) * girinti.length;
+    }
+    this.tamamlaBağla();
+    this.dəyiş(baş, k, mətn, baş + (kursor ?? mətn.length));
+    this.fokus();
+    if (mətn.endsWith("(") || mətn[kursor - 1] === "(") this.imzaGöstər();
+  }
+
+  // ══ İmza ipucu ═════════════════════════════════════════════════════
+
+  async imzaGöstər() {
+    if (!this.imzaVerən) return;
+    let r;
+    try { r = await this.imzaVerən(this.ta.selectionStart); } catch { return; }
+    const i = r?.signatures?.[0];
+    if (!i || document.activeElement !== this.ta) { this.imzaBağla(); return; }
+    const aktiv = i.parameters?.[r.activeParameter ?? 0]?.label;
+    let html = Redaktor.qaç(i.label);
+    if (aktiv) {
+      const j = i.label.indexOf(aktiv, i.label.indexOf("("));
+      if (j >= 0) html = Redaktor.qaç(i.label.slice(0, j)) + "<b>" + Redaktor.qaç(aktiv) + "</b>" +
+        Redaktor.qaç(i.label.slice(j + aktiv.length));
+    }
+    this.im.innerHTML = html;
+    this.im.hidden = false;
+    const { x, y } = this._kursorXY();
+    this.im.style.left = `${Math.max(0, x - 30)}px`;
+    this.im.style.top = `${Math.max(0, y - this.im.offsetHeight - 4)}px`;
+  }
+
+  imzaBağla() { this.im.hidden = true; }
 
   /** `sonu` mövqeyində bitən söz ASCII açar sözdürsə çevirir. */
   _sözüÇevir(sonu) {
@@ -322,6 +556,8 @@ class Redaktor {
   _düymə(h) {
     const ctrl = h.ctrlKey || h.metaKey;
     const a = h.key;
+    if (this._tamamlaDüyməsi(h)) return;
+    if (ctrl && (a === " " || h.code === "Space")) { h.preventDefault(); this.tamamla(true); return; }
     if (ctrl && !h.altKey && (a === "z" || a === "Z")) {
       h.preventDefault();
       if (h.shiftKey) this.irəliAl(); else this.geriAl();
@@ -754,6 +990,9 @@ class Redaktor {
 }
 
 Redaktor.AD = /[\p{L}\p{N}_]/u;
+// LSP CompletionItemKind → qısa işarə
+Redaktor.NÖV_İŞARƏSİ = { 2: "m", 3: "ƒ", 4: "ƒ", 5: "x", 6: "v", 7: "S", 8: "İ", 9: "M",
+  10: "x", 13: "E", 14: "★", 15: "⋯", 20: "e", 21: "c", 22: "S", 25: "T" };
 Redaktor.SƏRHƏDLƏR = new Set([..." \t()[]{},:.=<>!+-*/%&|^?"]);
 Redaktor.GERİ_SÖZLƏR = new Set(["son", "yoxsa", "nəhayət", "əks halda", "tut"]);
 Redaktor.DƏYİŞDİRİCİ = new Set(["açıq", "gizli", "qorunan", "statik", "mücərrəd",
