@@ -340,7 +340,7 @@ son
 ```
 
 Stek dərinliyi standart **8192**-dir. Aşılırsa `StekDaşmaXətası`.
-Dəyişdirmək: `layihe.alqor` → `[icra] stek_dərinliyi = 16384`.
+Dəyişdirmək: `layihe.alq` → `[icra] stek_dərinliyi = 16384`.
 
 ---
 
@@ -481,7 +481,7 @@ son
 ## 5.12 Giriş nöqtəsi
 
 ```alqor
-// əsas.alqor
+// əsas.alq
 funksiya əsas()
     yaz("Proqram başladı")
 son

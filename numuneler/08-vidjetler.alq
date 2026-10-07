@@ -1,8 +1,8 @@
 // Nümunə 8 — Hazır vidjetlər: eyni kod həm desktopda, həm vebdə
 //
-//   alqor işlət 08-vidjetler.alqor            desktop pəncərəsi
-//   alqor işlət 08-vidjetler.alqor -- veb     veb server (8081)
-//   alqor işlət 08-vidjetler.alqor -- sınaq   heç nə açmadan yoxlayır
+//   alqor işlət 08-vidjetler.alq            desktop pəncərəsi
+//   alqor işlət 08-vidjetler.alq -- veb     veb server (8081)
+//   alqor işlət 08-vidjetler.alq -- sınaq   heç nə açmadan yoxlayır
 
 gətir vidjet
 gətir pəncərə

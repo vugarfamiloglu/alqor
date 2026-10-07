@@ -53,7 +53,7 @@ FAYL_QEYDİ = re.compile(r"<!-- fayl: (\S+) -->\n")
 
 def _ayır(kod: str):
     x = XətaToplayıcı()
-    m = Mənbə.mətndən(kod, "bələdçi.alqor", x)
+    m = Mənbə.mətndən(kod, "bələdçi.alq", x)
     ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
     return ağac, x
 

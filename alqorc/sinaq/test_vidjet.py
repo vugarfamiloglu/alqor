@@ -81,7 +81,7 @@ class KataloqSınağı(unittest.TestCase):
                    + m.nümunə.replace("{ad}", "sınaqAdı")
                    + "\n    yaz(e)\nson\n")
             x = XətaToplayıcı()
-            mənbə = Mənbə.mətndən(kod, "nümunə.alqor", x)
+            mənbə = Mənbə.mətndən(kod, "nümunə.alq", x)
             Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
             self.assertTrue(x.uğurludur(),
                             f"`{m.ad}` nümunəsi ayrılmır:\n"
@@ -104,7 +104,7 @@ class KataloqSınağı(unittest.TestCase):
                    + "\n    göstər()\n        qaytar <p>a</p>\n    son\n"
                      "son\n")
             x = XətaToplayıcı()
-            mənbə = Mənbə.mətndən(kod, "skelet.alqor", x)
+            mənbə = Mənbə.mətndən(kod, "skelet.alq", x)
             Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
             self.assertTrue(x.uğurludur(),
                             f"`{m.ad}` skeleti ayrılmır:\n{gövdə}\n"
@@ -132,7 +132,7 @@ class KataloqSınağı(unittest.TestCase):
                    + "\n    göstər()\n        qaytar <p>a</p>\n    son\n"
                      "son\n")
             x = XətaToplayıcı()
-            mənbə = Mənbə.mətndən(kod, "skelet.alqor", x)
+            mənbə = Mənbə.mətndən(kod, "skelet.alq", x)
             ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
             t = XətaToplayıcı()
             TipYoxlayıcı(t).yoxla(ağac)
@@ -982,7 +982,7 @@ son
 class NümunəSınağı(unittest.TestCase):
     def test_08_vidjetler_işləyir(self):
         yol = (Path(__file__).parent.parent.parent / "numuneler"
-               / "08-vidjetler.alqor")
+               / "08-vidjetler.alq")
         if not yol.exists():
             self.skipTest("nümunə yoxdur")
 
@@ -1049,7 +1049,7 @@ class SpesifikasiyaSınağı(unittest.TestCase):
             elif b.lstrip().startswith(("p.üslub", "// Desktop")):
                 continue                # sərbəst parçalar
             x = XətaToplayıcı()
-            m = Mənbə.mətndən(kod, "s14.alqor", x)
+            m = Mənbə.mətndən(kod, "s14.alq", x)
             Parser(Lekser(m, x).leksə(), m, x).ayır()
             self.assertTrue(x.uğurludur(),
                             f"ayrılmır:\n{b}\n{x.hesabat(False)}")
@@ -1060,7 +1060,7 @@ class TapşırıqNümunəsiSınağı(unittest.TestCase):
 
     def test_09_tapsiriqlar_işləyir(self):
         yol = (Path(__file__).parent.parent.parent / "numuneler"
-               / "09-tapsiriqlar.alqor")
+               / "09-tapsiriqlar.alq")
         from alqor.icraci import İcraçı
         from alqor.lekser import Lekser
         from alqor.menbe import Mənbə

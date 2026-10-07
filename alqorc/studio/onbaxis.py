@@ -4,7 +4,7 @@ Alqor Studio — komponentin canlı önbaxışı.
 AYRICA PROSESDƏ işləyir (istifadəçi kodu sonsuz dövrə düşsə Studio
 dayanmasın):
 
-    python onbaxis.py <fayl.alqor> [KomponentAdı]
+    python onbaxis.py <fayl.alq> [KomponentAdı]
 
 Fayldakı elanlar (sinif, komponent, funksiya, `gətir`, üst-səviyyə
 dəyişənlər) icra olunur, `əsas()` İSƏ ÇAĞIRILMIR. Sonra seçilmiş

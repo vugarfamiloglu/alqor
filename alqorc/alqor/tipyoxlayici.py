@@ -7,7 +7,7 @@ Yanlış xəbərdarlıq verən yoxlayıcı heç yoxlayıcıdan pisdir. Ona gör�
 əsas qayda: **yalnız ƏMİN OLDUĞUMUZ halda xəta bildir.** Hər hansı
 operandın tipi `istənilən` və ya naməlumdursa, yoxlama atlanır.
 
-## Üç sərtlik rejimi (`layihe.alqor` → `[tip] rejim`)
+## Üç sərtlik rejimi (`layihe.alq` → `[tip] rejim`)
 
 | Rejim | Davranış |
 |---|---|
@@ -41,7 +41,7 @@ REJİMLƏR = ("sərbəst", "normal", "sərt")
 # deyil — `alqorls` analizi ardıcıl aparır)
 _QEYD_SİYAHISI: list | None = None
 
-# Fayl modulları (`gətir "./x.alqor"`): həll olunmuş yol → (açar, tip).
+# Fayl modulları (`gətir "./x.alq"`): həll olunmuş yol → (açar, tip).
 # Açar faylın vəziyyətidir (mtime/ölçü və ya redaktordakı mətn).
 _FAYL_KEŞİ: dict[str, tuple[Any, T.ModulTipi]] = {}
 _YÜKLƏNİR: set[str] = set()
@@ -62,7 +62,7 @@ class Bağlama:
     yer: Yer | None = None
     istifadə_olunub: bool = False
     elan_növü: str = "dəyişən"      # dəyişən | parametr | funksiya | sinif
-    # `gətir "./x.alqor".{f}` — idxal olunan adın həmin fayldakı elanı
+    # `gətir "./x.alq".{f}` — idxal olunan adın həmin fayldakı elanı
     mənşə: "Bağlama | None" = None
 
 
@@ -1514,7 +1514,7 @@ class TipYoxlayıcı:
                 self.x.xəbərdarlıq(
                     "ALQ-M001", "Modul tanınmır", c.yer,
                     f"`{ad}` standart kitabxanada yoxdur",
-                    "yerli fayl üçün: gətir \"./fayl.alqor\"")
+                    "yerli fayl üçün: gətir \"./fayl.alq\"")
 
         if c.hamısı:
             if modul is not None:
@@ -1543,7 +1543,7 @@ class TipYoxlayıcı:
 
     def _fayl_modulu(self, c: A.İdxal) -> T.ModulTipi | None:
         """
-        `gətir "./x.alqor" kimi m` — faylı ayırıb ayrıca yoxlayırıq;
+        `gətir "./x.alq" kimi m` — faylı ayırıb ayrıca yoxlayırıq;
         onun qlobal elanları modulun üzvləri olur (icraçıdakı kimi).
         Nisbi yol idxal edən faylın qovluğuna nisbətəndir.
         """
@@ -1556,7 +1556,7 @@ class TipYoxlayıcı:
                 return None                  # yaddaşdakı mətn — baza yoxdur
             p = Path(əsas).resolve().parent / p
         if not p.exists():
-            for uzantı in (".alqor", ".alq"):
+            for uzantı in (".alq", ".alqor"):
                 if Path(str(p) + uzantı).exists():
                     p = Path(str(p) + uzantı)
                     break

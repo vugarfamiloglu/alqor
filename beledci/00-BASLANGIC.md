@@ -121,7 +121,7 @@ Windows-da sadəcə `Studio-ac.cmd` faylına iki dəfə klikləyin.
 ## 1.4 İlk proqramınız
 
 ### Addım 1 — Fayl yaradın
-`salam.alqor` adlı fayl yaradın:
+`salam.alq` adlı fayl yaradın:
 
 ```alqor
 yaz("Salam, dünya!")
@@ -129,7 +129,7 @@ yaz("Salam, dünya!")
 
 ### Addım 2 — İşə salın
 ```bash
-alqor işlət salam.alqor
+alqor işlət salam.alq
 ```
 
 ```
@@ -327,7 +327,7 @@ s.dinlə(8080)
 ```
 
 ```bash
-alqor işlət server.alqor
+alqor işlət server.alq
 # http://localhost:8080 açın
 ```
 
@@ -398,11 +398,11 @@ alqor işlət
 Yaranan quruluş:
 ```
 mənim-layihəm/
-├── layihe.alqor          ← layihənin parametrləri
+├── layihe.alq          ← layihənin parametrləri
 ├── mənbə/
-│   └── əsas.alqor        ← kodunuz buradadır
+│   └── əsas.alq        ← kodunuz buradadır
 ├── sınaq/
-│   └── əsas_sınaq.alqor  ← sınaqlar (`alqor sına`)
+│   └── əsas_sınaq.alq  ← sınaqlar (`alqor sına`)
 ├── README.md
 └── .gitignore
 ```
@@ -421,7 +421,7 @@ nəticə verir.
 
 ```alqor
 gətir test
-gətir "../mənbə/əsas.alqor" kimi proqram
+gətir "../mənbə/əsas.alq" kimi proqram
 
 @sınaq("salamla adı yerləşdirir")
 funksiya salamlama()
@@ -432,7 +432,7 @@ son
 ```
 $ alqor sına
 
-  sınaq/əsas_sınaq.alqor
+  sınaq/əsas_sınaq.alq
     ✓ salamla adı yerləşdirir                    0.1ms
 
   Nəticə: 1 uğurlu, 0 uğursuz, 0 xəta, 0 atlanmış

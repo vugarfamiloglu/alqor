@@ -119,7 +119,7 @@ def _nümunələr(V, i) -> dict[str, dict[str, Any]]:
         "klaviş": {"düymələr": ["Ctrl", "Shift", "F"]},
         "vaxtXətti": {"elementlər": [["2024", "Başlanğıc"],
                                      ["2026", "1.0 buraxılışı"]]},
-        "ağac": {"elementlər": [["mənbə", ["əsas.alqor"]], "README.md"]},
+        "ağac": {"elementlər": [["mənbə", ["əsas.alq"]], "README.md"]},
         "siyahıQrupu": {"elementlər": [["Profil", "Ad, şəkil"],
                                        ["Təhlükəsizlik", "Şifrə"]],
                         "klik": _boş, "seçili": "Profil"},

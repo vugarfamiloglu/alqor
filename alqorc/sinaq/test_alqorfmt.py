@@ -217,7 +217,7 @@ class CLISınağı(unittest.TestCase):
 
     def test_yoxla_fərq_yaz(self):
         with tempfile.TemporaryDirectory() as q:
-            f = Path(q) / "a.alqor"
+            f = Path(q) / "a.alq"
             f.write_text("eger a onda\nyaz(1)\nson\n", encoding="utf-8")
             c = self._işlət("--yoxla", q)
             self.assertEqual(c.returncode, 1, c.stdout + c.stderr)
@@ -234,7 +234,7 @@ class CLISınağı(unittest.TestCase):
 
     def test_sintaksis_xətası_kod_2(self):
         with tempfile.TemporaryDirectory() as q:
-            f = Path(q) / "pis.alqor"
+            f = Path(q) / "pis.alq"
             f.write_text("əgər onda\n", encoding="utf-8")
             c = self._işlət(str(f))
             self.assertEqual(c.returncode, 2)

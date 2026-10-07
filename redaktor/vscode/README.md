@@ -8,7 +8,7 @@ Alqor dili üçün tam redaktor dəstəyi:
 - **Tamamlama** — `vidjet.`, `s.` kimi üzvlər; açar sözlər, şablonlar
 - **Hover** — tip, imza və `///` sənəd şərhi
 - **Təyinata keçid** (F12), **istinadlar** (Shift+F12), **ad dəyişmə** (F2) —
-  bütün layihə üzrə (`gətir "./x.alqor"`)
+  bütün layihə üzrə (`gətir "./x.alq"`)
 - **İş sahəsi simvolları** (Ctrl+T)
 - **Kod linzaları** — "N istinad", `@sınaq` funksiyaları üstündə "▶ Sına"
 - **Semantik rənglər** — sinif, funksiya, metod, xassə, parametr, sabit
@@ -29,7 +29,7 @@ Alqor dili üçün tam redaktor dəstəyi:
    npx @vscode/vsce package          # alqor-0.1.0.vsix
    code --install-extension alqor-0.1.0.vsix
    ```
-3. `.alqor` faylını açın.
+3. `.alq` faylını açın.
 
 `alqor` PATH-da deyilsə: **Parametrlər → Alqor → Server Əmri** —
 məsələn `C:\alqor\alqor.cmd` və ya `python3 /yol/alqorc/alqorc.py`.
@@ -57,7 +57,7 @@ args = ["ls", "--stdio"]
 
 [[language]]
 name = "alqor"
-scope = "source.alqor"
+scope = "source.alq"
 file-types = ["alqor"]
 comment-token = "//"
 indent = { tab-width = 4, unit = "    " }

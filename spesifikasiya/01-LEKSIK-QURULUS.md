@@ -13,8 +13,8 @@
 | BOM | İcazəlidir, oxunarkən atılır. |
 | Normalizasiya | Fayl oxunan kimi **NFC** formasına salınır. |
 | Sətir sonu | `LF` (`\n`) və ya `CRLF` (`\r\n`) — ikisi də qəbul olunur, daxildə `LF`-ə çevrilir. |
-| Fayl uzantısı | `.alqor` (əsas) və ya `.alq` (qısa) |
-| Giriş nöqtəsi | `əsas.alqor` faylındakı `funksiya əsas()` funksiyası |
+| Fayl uzantısı | `.alq` (köhnə `.alqor` da tanınır) |
+| Giriş nöqtəsi | `əsas.alq` faylındakı `funksiya əsas()` funksiyası |
 | Maksimum sətir uzunluğu | Məhdudiyyət yoxdur, `alqorfmt` 100 simvolda bölür |
 
 ### Shebang
@@ -102,7 +102,7 @@ Aşağıdakı simvollar Azərbaycan hərflərinə oxşayır, amma fərqlidir. Le
 
 Nümunə xəbərdarlıq:
 ```
-⚠ ALQ-L014  əsas.alqor:7:11
+⚠ ALQ-L014  əsas.alq:7:11
    "yaş" sözündə gizli simvol aşkarlandı: 'ä' (U+00E4)
    Avtomatik düzəliş: 'ä' → 'ə' (U+0259)
    Bu xəbərdarlığı söndürmək üçün: // alqor: homoqlif-yoxlama söndür
@@ -143,7 +143,7 @@ qiymət$     ← $ icazəli deyil
 | Funksiya, metod | `kiçikDəvəQutusu` | `məbləğHesabla()`, `faylOxu()` |
 | Sabit | `BÖYÜK_ALT_XƏTT` | `MAKSİMUM_SAY`, `PİSAYI` |
 | Sinif, interfeys, sadalama | `BöyükDəvəQutusu` | `İstifadəçi`, `ŞəbəkəXətası` |
-| Modul, fayl adı | `kiçik-defis` | `verilənlər-bazası.alqor` |
+| Modul, fayl adı | `kiçik-defis` | `verilənlər-bazası.alq` |
 | Gizli üzv | `_` ilə başlayır | `_daxiliVəziyyət` |
 
 ---
@@ -628,7 +628,7 @@ Dəstəklənən tipli bağlanışlar: `son əgər`, `son funksiya`, `son sinif`,
 ### Xəta mesajı formatı
 ```
 ✖ ALQ-L003  Bağlanmamış mətn literalı
-  ┌─ əsas.alqor:12:15
+  ┌─ əsas.alq:12:15
   │
 12│     yaz("Salam, dünya)
   │         ^^^^^^^^^^^^^^ bu mətn bağlanmayıb

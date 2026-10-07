@@ -3,7 +3,7 @@
 
     python alqorfmt.py .                 qovluqdakı bütün faylları
     python alqorfmt.py --yoxla .         CI: format lazımdırsa kod 1
-    python alqorfmt.py --fərq fayl.alqor
+    python alqorfmt.py --fərq fayl.alq
 
 `python alqorc.py format …` ilə eynidir.
 """

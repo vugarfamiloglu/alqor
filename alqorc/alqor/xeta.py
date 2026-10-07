@@ -5,7 +5,7 @@ Bütün mesajlar Azərbaycan dilindədir. Hər xətanın kodu, yeri, altından
 xətlənmiş mənbə parçası və düzəliş təklifi var.
 
     ✖ ALQ-T008  Operator `+` bu tiplərə tətbiq edilmir
-      ┌─ əsas.alqor:12:15
+      ┌─ əsas.alq:12:15
       │
     12│     yaz("Yaş: " + yaş)
       │          ^^^^^^^^^^^^ `mətn` və `tam` toplanmır

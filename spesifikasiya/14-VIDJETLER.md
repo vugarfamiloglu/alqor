@@ -1813,7 +1813,7 @@ Hadisələr: `klik`
 
 ```alqor
 vidjet.ağac(elementlər: [
-    ["mənbə", ["əsas.alqor", "model.alqor"]],
+    ["mənbə", ["əsas.alq", "model.alq"]],
     "README.md"
 ], klik: özü.ağacSeçildi)
 ```

@@ -12,7 +12,7 @@ yoxdur; `qur` Python zipapp yaradır:
 
 İşə salınanda `layihə/` qovluğu bir dəfə keş qovluğuna açılır
 (`~/.cache/alqor/<ad>-<həş>/`; `ALQOR_KES` ilə dəyişdirilir), çünki
-şablonlar, statik fayllar və `gətir "./x.alqor"` həqiqi fayl yolu
+şablonlar, statik fayllar və `gətir "./x.alq"` həqiqi fayl yolu
 gözləyir. Paketin həşi dəyişəndə yeni qovluq yaradılır.
 
     python kitab-refi.pyz             (Windows, Linux, macOS)
@@ -114,7 +114,7 @@ def qur(layihə: Layihə, alqorc_kökü: Path) -> QurmaNəticəsi:
     if not layihə.giriş.is_file():
         raise FileNotFoundError(
             f"giriş faylı tapılmadı: {layihə.giriş} "
-            "(`layihe.alqor` → [qurma] giriş)")
+            "(`layihe.alq` → [qurma] giriş)")
     çıxış = layihə.çıxış
     çıxış.mkdir(parents=True, exist_ok=True)
     hədəf = çıxış / f"{layihə.ad}.pyz"

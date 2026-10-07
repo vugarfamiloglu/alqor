@@ -4,7 +4,7 @@
 > süzgəc, təsdiq pəncərəsi, menyu, fayla saxlama. Sonda eyni kodu
 > brauzerdə də açırıq.
 >
-> Yekun proqram: [`numuneler/09-tapsiriqlar.alqor`](../numuneler/09-tapsiriqlar.alqor).
+> Yekun proqram: [`numuneler/09-tapsiriqlar.alq`](../numuneler/09-tapsiriqlar.alq).
 > Bu səhifədəki hər tam proqram avtomatik sınaqlarla yoxlanılır.
 
 **Lazım olanlar:** Python 3.12+ və Chrome, Edge, Brave və ya Chromium
@@ -39,7 +39,7 @@ buna **başsız rejim** deyilir.
 
 ## 4.2 İlk pəncərə
 
-`salam.alqor` faylı yaradın:
+`salam.alq` faylı yaradın:
 
 ```alqor
 // addım 1 — ilk pəncərə
@@ -57,7 +57,7 @@ son
 
 ```powershell
 cd alqor\alqorc
-python alqorc.py işlət salam.alqor
+python alqorc.py işlət salam.alq
 ```
 
 | Sətir | Nə edir |
@@ -524,20 +524,20 @@ son
 ```
 
 ```powershell
-python alqorc.py işlət tapşırıqlar.alqor            # desktop
-python alqorc.py işlət tapşırıqlar.alqor -- veb     # veb
+python alqorc.py işlət tapşırıqlar.alq            # desktop
+python alqorc.py işlət tapşırıqlar.alq -- veb     # veb
 ```
 
 ---
 
 ## 4.13 Yekun proqram
 
-Bütün hissələr bir yerdə: [`numuneler/09-tapsiriqlar.alqor`](../numuneler/09-tapsiriqlar.alqor).
+Bütün hissələr bir yerdə: [`numuneler/09-tapsiriqlar.alq`](../numuneler/09-tapsiriqlar.alq).
 
 ```powershell
-python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alqor
-python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alqor -- veb
-python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alqor -- sınaq
+python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alq
+python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alq -- veb
+python alqorc.py işlət ..\numuneler\09-tapsiriqlar.alq -- sınaq
 ```
 
 Və ya Windows-da `Desktop-ac.cmd`-ə iki dəfə klik (06 nümunəsini açır).

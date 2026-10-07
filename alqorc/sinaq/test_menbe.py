@@ -120,7 +120,7 @@ class Homoqliflər(unittest.TestCase):
 
 class MövqeXəritəsi(unittest.TestCase):
     def setUp(self):
-        self.m = Mənbə("sınaq.alqor", "birinci\nikinci\nüçüncü")
+        self.m = Mənbə("sınaq.alq", "birinci\nikinci\nüçüncü")
 
     def test_sətir_sayı(self):
         self.assertEqual(self.m.sətir_sayı, 3)
@@ -143,13 +143,13 @@ class MövqeXəritəsi(unittest.TestCase):
             self.assertEqual(self.m.mövqe(s, st), mövqe)
 
     def test_azərbaycan_hərfləri_sütunu_pozmur(self):
-        m = Mənbə("a.alqor", "dəyişən ışıq = 5")
+        m = Mənbə("a.alq", "dəyişən ışıq = 5")
         self.assertEqual(m.sətir_sütun(m.mətn.index("ışıq")), (1, 9))
 
 
 class XətaHesabatı(unittest.TestCase):
     def setUp(self):
-        self.m = Mənbə("əsas.alqor", 'yaz("Yaş: " + yaş)\nson')
+        self.m = Mənbə("əsas.alq", 'yaz("Yaş: " + yaş)\nson')
         self.x = XətaToplayıcı()
 
     def test_xəta_formatı(self):
@@ -158,7 +158,7 @@ class XətaHesabatı(unittest.TestCase):
                     'interpolyasiya istifadə edin: "Yaş: {yaş}"')
         h = self.x.hesabat(rəngli=False)
         self.assertIn("✖ ALQ-T008", h)
-        self.assertIn("əsas.alqor:1:6", h)
+        self.assertIn("əsas.alq:1:6", h)
         self.assertIn("^^^^^^^", h)
         self.assertIn("= kömək:", h)
         self.assertIn("= sənəd: alqor.az/xeta/ALQ-T008", h)
@@ -200,7 +200,7 @@ class XətaHesabatı(unittest.TestCase):
 
     def test_tabulyasiya_xətti_düzgün_yerləşdirir(self):
         """Tab 4 boşluğa açılır — xətt `yaz` sözünün altında olmalıdır."""
-        m = Mənbə("t.alqor", "\tyaz(x)")
+        m = Mənbə("t.alq", "\tyaz(x)")
         x = XətaToplayıcı()
         x.xəta("ALQ-L002", "test", m.yer(1, 3))      # `yaz`
         sətirlər = x.hesabat(rəngli=False).split("\n")
@@ -219,7 +219,7 @@ class XətaHesabatı(unittest.TestCase):
 class FaylOxuma(unittest.TestCase):
     def test_tapılmayan_fayl(self):
         x = XətaToplayıcı()
-        m = Mənbə.fayldan("yoxdur-belə-fayl.alqor", x)
+        m = Mənbə.fayldan("yoxdur-belə-fayl.alq", x)
         self.assertIsNone(m)
         self.assertEqual(x.xətalar[0].kod, "ALQ-R009")
 
@@ -239,7 +239,7 @@ class FaylOxuma(unittest.TestCase):
         import tempfile
         # windows-1254 (türk) `ğ ş ı` saxlayır, `ə` saxlamır —
         # alınan baytlar etibarlı UTF-8 deyil.
-        with tempfile.NamedTemporaryFile(suffix=".alqor", delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".alq", delete=False) as f:
             f.write("değişen yaş = 5".encode("windows-1254"))
             yol = f.name
         try:
@@ -255,7 +255,7 @@ class FaylOxuma(unittest.TestCase):
         kök = Path(__file__).parent.parent.parent / "numuneler"
         if not kök.exists():
             self.skipTest("nümunələr qovluğu yoxdur")
-        fayllar = sorted(kök.glob("*.alqor"))
+        fayllar = sorted(kök.glob("*.alq"))
         self.assertGreater(len(fayllar), 0)
         for f in fayllar:
             with self.subTest(fayl=f.name):

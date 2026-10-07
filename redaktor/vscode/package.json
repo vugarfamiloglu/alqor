@@ -29,6 +29,7 @@
           "alqor"
         ],
         "extensions": [
+          ".alq",
           ".alqor"
         ],
         "configuration": "./language-configuration.json",
@@ -91,7 +92,7 @@
             "properties": {
               "program": {
                 "type": "string",
-                "description": "İşlədiləcək .alqor faylı",
+                "description": "İşlədiləcək .alq faylı",
                 "default": "${file}"
               },
               "args": {

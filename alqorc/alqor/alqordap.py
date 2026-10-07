@@ -284,7 +284,7 @@ class DAPServer:
     def ə_launch(self, a: dict):
         proqram = a.get("program")
         if not proqram:
-            raise ValueError("`program` göstərilməyib (işlədiləcək .alqor faylı)")
+            raise ValueError("`program` göstərilməyib (işlədiləcək .alq faylı)")
         p = Path(proqram)
         if not p.is_file():
             raise ValueError(f'"{proqram}" faylı tapılmadı')

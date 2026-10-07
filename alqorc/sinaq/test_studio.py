@@ -44,7 +44,7 @@ class ServerSınağı(unittest.TestCase):
         cls.qovluq = Path(tempfile.mkdtemp(prefix="studio-sınaq-"))
         cls.layihə = cls.qovluq / "layihə"
         cls.layihə.mkdir()
-        (cls.layihə / "salam.alqor").write_text('yaz("salam")\n',
+        (cls.layihə / "salam.alq").write_text('yaz("salam")\n',
                                                 encoding="utf-8")
         # Layihənin YANINDA, eyni prefiksli qovluq — `startswith`
         # yoxlaması olsaydı bura çatmaq olardı
@@ -106,7 +106,7 @@ class NişanVəTəhlükəsizlik(ServerSınağı):
     def test_yanlış_nişan_rədd_edilir(self):
         kod, _, _ = self.sorğu("GET", "/api/melumat", nişan="yanlis-nisan")
         self.assertEqual(kod, 401)
-        kod, _, _ = self.sorğu("POST", "/api/fayl/oxu", {"yol": "salam.alqor"},
+        kod, _, _ = self.sorğu("POST", "/api/fayl/oxu", {"yol": "salam.alq"},
                                nişan=False)
         self.assertEqual(kod, 401)
 
@@ -143,7 +143,7 @@ class NişanVəTəhlükəsizlik(ServerSınağı):
         self.assertEqual(kod, 200)
 
     def test_post_yalnız_json(self):
-        kod, _, _ = self.sorğu("POST", "/api/fayl/oxu", {"yol": "salam.alqor"},
+        kod, _, _ = self.sorğu("POST", "/api/fayl/oxu", {"yol": "salam.alq"},
                                tip="text/plain")
         self.assertEqual(kod, 415)
 
@@ -189,14 +189,14 @@ KƏNAR_YOLLAR = [
     "\\etc\\passwd",
     "C:/Windows/win.ini",
     "c:\\windows\\win.ini",
-    "salam.alqor\x00.txt",
+    "salam.alq\x00.txt",
 ]
 
 
 class FaylAPI(ServerSınağı):
 
     def test_oxu(self):
-        kod, d = self.api("/api/fayl/oxu", {"yol": "salam.alqor"})
+        kod, d = self.api("/api/fayl/oxu", {"yol": "salam.alq"})
         self.assertEqual(kod, 200)
         self.assertEqual(d["mətn"], 'yaz("salam")\n')
 
@@ -213,14 +213,14 @@ class FaylAPI(ServerSınağı):
                     ("/api/fayl/yaz", {"yol": yol, "mətn": "PİS"}),
                     ("/api/fayl/yarat", {"yol": yol, "növ": "fayl"}),
                     ("/api/fayl/sil", {"yol": yol}),
-                    ("/api/fayl/adlandir", {"yol": "salam.alqor",
+                    ("/api/fayl/adlandir", {"yol": "salam.alq",
                                             "yeni": yol})):
                 kod, _ = self.api(api, gövdə)
                 self.assertIn(kod, (400, 403), f"{api} {yol!r}")
         self.assertEqual((self.qovluq / "kənar.txt").read_text("utf-8"),
                          "KƏNAR")
         self.assertTrue((self.qonşu / "sirr.txt").exists())
-        self.assertTrue((self.layihə / "salam.alqor").exists())
+        self.assertTrue((self.layihə / "salam.alq").exists())
 
     def test_simvolik_keçid_kənara_aparmır(self):
         keçid = self.layihə / "keçid"
@@ -244,19 +244,19 @@ class FaylAPI(ServerSınağı):
 
     def test_yarat_yaz_adlandır_sil(self):
         kod, d = self.api("/api/fayl/yarat",
-                          {"yol": "qovluq/yeni.alqor", "növ": "fayl"})
+                          {"yol": "qovluq/yeni.alq", "növ": "fayl"})
         self.assertEqual(kod, 200)
-        self.assertEqual(d["yol"], "qovluq/yeni.alqor")
-        kod, _ = self.api("/api/fayl/yaz", {"yol": "qovluq/yeni.alqor",
+        self.assertEqual(d["yol"], "qovluq/yeni.alq")
+        kod, _ = self.api("/api/fayl/yaz", {"yol": "qovluq/yeni.alq",
                                             "mətn": "yaz(\"ə\")\n"})
         self.assertEqual(kod, 200)
-        self.assertEqual((self.layihə / "qovluq/yeni.alqor").read_bytes(),
+        self.assertEqual((self.layihə / "qovluq/yeni.alq").read_bytes(),
                          'yaz("ə")\n'.encode("utf-8"))
-        kod, _ = self.api("/api/fayl/yarat", {"yol": "qovluq/yeni.alqor"})
+        kod, _ = self.api("/api/fayl/yarat", {"yol": "qovluq/yeni.alq"})
         self.assertEqual(kod, 409)
-        kod, d = self.api("/api/fayl/adlandir", {"yol": "qovluq/yeni.alqor",
-                                                 "yeni": "qovluq/köhnə.alqor"})
-        self.assertEqual((kod, d["yol"]), (200, "qovluq/köhnə.alqor"))
+        kod, d = self.api("/api/fayl/adlandir", {"yol": "qovluq/yeni.alq",
+                                                 "yeni": "qovluq/köhnə.alq"})
+        self.assertEqual((kod, d["yol"]), (200, "qovluq/köhnə.alq"))
         kod, d = self.api("/api/agac")
         adlar = [e["ad"] for e in d["uşaqlar"]]
         self.assertIn("qovluq", adlar)
@@ -276,7 +276,7 @@ class FaylAPI(ServerSınağı):
         L = Layihə(self.layihə)
         with self.assertRaises(YolXətası):
             L.yol("../kənar.txt")
-        self.assertEqual(L.yol("a/./b.alqor"), self.layihə / "a" / "b.alqor")
+        self.assertEqual(L.yol("a/./b.alq"), self.layihə / "a" / "b.alq")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -311,14 +311,14 @@ class Diaqnostika(ServerSınağı):
     def test_api_diaqnostika(self):
         kod, d = self.api("/api/yoxla", {
             "mətn": "funksiya f() -> tam\n    qaytar \"x\"\nson\n",
-            "ad": "a.alqor"})
+            "ad": "a.alq"})
         self.assertEqual(kod, 200)
         x = [p for p in d["diaqnostikalar"] if p["səviyyə"] == "xəta"]
         self.assertTrue(x)
         self.assertEqual(x[0]["sətir"], 2)
 
     def test_nümunələr_təmizdir(self):
-        for f in sorted(NÜMUNƏLƏR.glob("*.alqor")):
+        for f in sorted(NÜMUNƏLƏR.glob("*.alq")):
             d = yoxla(f.read_text(encoding="utf-8"), f.name)
             self.assertEqual(d["xəta"], 0, f.name)
 
@@ -797,9 +797,9 @@ class İcra(ServerSınağı):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        shutil.copy(NÜMUNƏLƏR / "01-salam.alqor",
-                    cls.layihə / "01-salam.alqor")
-        (cls.layihə / "sonsuz.alqor").write_text(
+        shutil.copy(NÜMUNƏLƏR / "01-salam.alq",
+                    cls.layihə / "01-salam.alq")
+        (cls.layihə / "sonsuz.alq").write_text(
             'yaz("başladı")\nhəmişə\n    dəyişən a = 1\nson\n',
             encoding="utf-8")
 
@@ -825,7 +825,7 @@ class İcra(ServerSınağı):
         return hadisələr
 
     def test_salam_nümunəsi_axınla(self):
-        kod, iş = self.api("/api/islet", {"yol": "01-salam.alqor"})
+        kod, iş = self.api("/api/islet", {"yol": "01-salam.alq"})
         self.assertEqual(kod, 200, iş)
         for s in ("Aysel", "20"):
             kod, d = self.api("/api/islet/giris", {"id": iş["id"], "mətn": s})
@@ -842,7 +842,7 @@ class İcra(ServerSınağı):
                          list(range(len(hadisələr))))
 
     def test_yenidən_qoşulma_təkrarlamır(self):
-        kod, iş = self.api("/api/islet", {"yol": "salam.alqor"})
+        kod, iş = self.api("/api/islet", {"yol": "salam.alq"})
         hamısı = self.axın(iş["id"])
         c = http.client.HTTPConnection("127.0.0.1", self.studio.port,
                                        timeout=10)
@@ -857,16 +857,16 @@ class İcra(ServerSınağı):
         self.assertEqual(qalan, [hamısı[-1]])
 
     def test_xəta_stderr_ilə_gəlir(self):
-        (self.layihə / "pis.alqor").write_text("yaz(1 / 0)\n",
+        (self.layihə / "pis.alq").write_text("yaz(1 / 0)\n",
                                                encoding="utf-8")
-        kod, iş = self.api("/api/islet", {"yol": "pis.alqor"})
+        kod, iş = self.api("/api/islet", {"yol": "pis.alq"})
         hadisələr = self.axın(iş["id"])
         xəta = "".join(h["mətn"] for h in hadisələr if h["növ"] == "xəta")
-        self.assertIn("pis.alqor:1:", xəta)
+        self.assertIn("pis.alq:1:", xəta)
         self.assertNotEqual(hadisələr[-1]["kod"], 0)
 
     def test_dayandır(self):
-        kod, iş = self.api("/api/islet", {"yol": "sonsuz.alqor"})
+        kod, iş = self.api("/api/islet", {"yol": "sonsuz.alq"})
         time.sleep(0.8)
         kod, _ = self.api("/api/islet/dayandir", {"id": iş["id"]})
         self.assertEqual(kod, 200)
@@ -889,13 +889,13 @@ class ÖnbaxışVəŞablon(ServerSınağı):
     def test_şablonlar_təmizdir(self):
         for növ in ("konsol", "veb", "desktop"):
             f = sablonlar.fayllar(növ, "Sınaq")
-            self.assertEqual(xətalar(f["əsas.alqor"]), [], növ)
+            self.assertEqual(xətalar(f["əsas.alq"]), [], növ)
 
     def test_şablon_api(self):
         kod, d = self.api("/api/sablon", {"növ": "desktop", "ad": "tətbiqim"})
         self.assertEqual(kod, 200, d)
-        self.assertEqual(d["fayl"], "tətbiqim/əsas.alqor")
-        self.assertTrue((self.layihə / "tətbiqim" / "layihe.alqor").exists())
+        self.assertEqual(d["fayl"], "tətbiqim/əsas.alq")
+        self.assertTrue((self.layihə / "tətbiqim" / "layihe.alq").exists())
         kod, _ = self.api("/api/sablon", {"növ": "desktop", "ad": "tətbiqim"})
         self.assertEqual(kod, 409)
         kod, _ = self.api("/api/sablon", {"növ": "desktop", "ad": "../x"})
@@ -903,8 +903,8 @@ class ÖnbaxışVəŞablon(ServerSınağı):
 
     def test_önbaxış(self):
         n = S.vidjet_əlavə_et("", "düymə")
-        (self.layihə / "önbaxış.alqor").write_text(n.mətn, encoding="utf-8")
-        kod, d = self.api("/api/onbaxis", {"yol": "önbaxış.alqor"})
+        (self.layihə / "önbaxış.alq").write_text(n.mətn, encoding="utf-8")
+        kod, d = self.api("/api/onbaxis", {"yol": "önbaxış.alq"})
         self.assertEqual(kod, 200)
         self.assertNotIn("xəta", d, d)
         self.assertEqual(d["komponent"], "Tətbiq")
@@ -917,7 +917,7 @@ class ÖnbaxışVəŞablon(ServerSınağı):
         self.api("/api/onbaxis/dayandir", {})
 
     def test_önbaxış_komponentsiz(self):
-        kod, d = self.api("/api/onbaxis", {"yol": "salam.alqor"})
+        kod, d = self.api("/api/onbaxis", {"yol": "salam.alq"})
         self.assertEqual(kod, 200)
         self.assertIn("komponent", d["xəta"])
 
@@ -989,12 +989,12 @@ class Brauzer(unittest.TestCase):
         if sp is None:
             raise unittest.SkipTest("playwright quraşdırılmayıb")
         cls.qovluq = Path(tempfile.mkdtemp(prefix="studio-brauzer-"))
-        (cls.qovluq / "boş.alqor").write_text("", encoding="utf-8")
-        (cls.qovluq / "panel.alqor").write_text(
+        (cls.qovluq / "boş.alq").write_text("", encoding="utf-8")
+        (cls.qovluq / "panel.alq").write_text(
             "gətir vidjet\n\nkomponent Panel\n    göstər()\n"
             '        qaytar vidjet.düymə(mətn: "Saxla", növ: "əsas")\n'
             "    son\nson\n", encoding="utf-8")
-        (cls.qovluq / "forma.alqor").write_text(
+        (cls.qovluq / "forma.alq").write_text(
             "komponent Forma\n    göstər()\n        qaytar <div>\n"
             '            {vidjet.sahə(etiket: "Ad", ad: "ad")}\n'
             "        </div>\n    son\nson\n", encoding="utf-8")
@@ -1043,7 +1043,7 @@ class Brauzer(unittest.TestCase):
         return p.locator(".r-giriş")
 
     def test_yazı_çevrilmə_və_girinti(self):
-        ta = self.aç("boş.alqor")
+        ta = self.aç("boş.alq")
         ta.click()
         self.səhifə.keyboard.type(
             'deyisen x = 5\neger x > 3 onda\nyaz("b;oy;uk")\nson\n')
@@ -1059,7 +1059,7 @@ class Brauzer(unittest.TestCase):
         self.assertTrue(ta.input_value().endswith("son\n"))
 
     def test_tamamlama_alqorls_ilə(self):
-        ta = self.aç("boş.alqor")
+        ta = self.aç("boş.alq")
         ta.fill("")
         ta.click()
         k = self.səhifə.keyboard
@@ -1090,7 +1090,7 @@ class Brauzer(unittest.TestCase):
         self.assertTrue(siyahı.is_hidden())
 
     def test_palet_iki_klik(self):
-        ta = self.aç("boş.alqor")
+        ta = self.aç("boş.alq")
         ta.fill("")
         self.səhifə.click('[data-panel="palet"]')
         self.səhifə.dblclick('[data-vidjet="tərəqqi"]')
@@ -1099,7 +1099,7 @@ class Brauzer(unittest.TestCase):
         self.assertIn("gətir vidjet", m)
 
     def test_redaktorda_iki_klik_tamamlayır(self):
-        ta = self.aç("forma.alqor")
+        ta = self.aç("forma.alq")
         # Örtükdəki `sahə` sözünün yerinə (üstündəki textarea-ya) iki klik
         yer = self.səhifə.locator(".r-örtük .t-çağırış", has_text="sahə")
         q = yer.first.bounding_box()
@@ -1111,7 +1111,7 @@ class Brauzer(unittest.TestCase):
         self.assertTrue(m.startswith("gətir vidjet\n"))
 
     def test_fayldakı_elementlər_iki_klik(self):
-        ta = self.aç("forma.alqor")
+        ta = self.aç("forma.alq")
         self.səhifə.click('[data-panel="palet"]')
         el = self.səhifə.locator(".fayl-elementi.yarımçıq",
                                  has_text="sahə")
@@ -1121,7 +1121,7 @@ class Brauzer(unittest.TestCase):
         self.səhifə.wait_for_selector(".fayl-elementi.tam")
 
     def test_palet_miniatürləri(self):
-        self.aç("boş.alqor")
+        self.aç("boş.alq")
         self.səhifə.click('[data-panel="palet"]')
         p = self.səhifə
         from alqor import vidjet as V
@@ -1148,7 +1148,7 @@ class Brauzer(unittest.TestCase):
                          .first.get_attribute("data-vidjet"), "cədvəl")
 
     def test_xüsusiyyətlər_paneli_və_canlı_önbaxış(self):
-        ta = self.aç("panel.alqor")
+        ta = self.aç("panel.alq")
         p = self.səhifə
         p.click('[data-panel="palet"]')
         p.locator(".fayl-elementi", has_text="düymə").click()
@@ -1170,7 +1170,7 @@ class Brauzer(unittest.TestCase):
         # Fayl səssiz saxlanılıb, önbaxış açılıb və yenilənib
         son = time.monotonic() + 15
         while time.monotonic() < son:
-            if '"künc": 14' in (self.qovluq / "panel.alqor").read_text(
+            if '"künc": 14' in (self.qovluq / "panel.alq").read_text(
                     encoding="utf-8"):
                 break
             p.wait_for_timeout(100)
@@ -1192,7 +1192,7 @@ class Brauzer(unittest.TestCase):
         self.assertNotIn("ölçü:", ta.input_value())
 
     def test_diaqnostika_dalğalı_xətt(self):
-        ta = self.aç("boş.alqor")
+        ta = self.aç("boş.alq")
         ta.fill('dəyişən a: tam = "x"\n')
         self.səhifə.wait_for_selector(".r-örtük .d-xəta", timeout=10000)
         self.səhifə.wait_for_selector("#problemler li.xəta",

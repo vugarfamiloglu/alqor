@@ -426,7 +426,7 @@ def _idarəedicini_ayır(arqumentlər: tuple) -> tuple[Any, list]:
 def qovluğu_həll(icraçı, qovluq) -> Path:
     """
     Nisbi qovluğu skriptin qovluğuna nisbətən həll edir. Cari iş
-    qovluğu etibarsızdır — `alqor işlət ../layihə/əsas.alqor` da
+    qovluğu etibarsızdır — `alqor işlət ../layihə/əsas.alq` da
     işləməlidir.
     """
     q = Path(qovluq)

@@ -24,7 +24,7 @@ KÖK = Path(__file__).parent.parent
 def işlət(kod: str, qovluq: str | None = None, mühit=None) -> str:
     with tempfile.TemporaryDirectory() as q:
         q = qovluq or q
-        f = Path(q) / "p.alqor"
+        f = Path(q) / "p.alq"
         f.write_text(kod, encoding="utf-8")
         r = subprocess.run(
             [sys.executable, str(KÖK / "alqorc.py"), "işlət", str(f)],

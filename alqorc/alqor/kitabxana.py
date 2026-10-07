@@ -1371,7 +1371,7 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
 
     # ── sistem ──────────────────────────────────────────────
     sistem = Modul("sistem", {
-        # Proqramın ÖZ arqumentləri — `alqor işlət f.alqor -- a b` → [a, b]
+        # Proqramın ÖZ arqumentləri — `alqor işlət f.alq -- a b` → [a, b]
         "arqumentlər": D("arqumentlər", lambda: list(
             getattr(icraçı, "proqram_arqumentləri", []))),
         "mühit": D("mühit", lambda a, s=None: os.environ.get(a, s), 1, 2),
@@ -1870,7 +1870,7 @@ def modul_yüklə(icraçı, ad: str, yer=None) -> Modul:
             return dəyər
 
     # Alt modul: `gətir pəncərə.dialoq`, `gətir veb.sınaq`
-    if "." in ad and not ad.endswith((".alqor", ".alq")):
+    if "." in ad and not ad.endswith((".alq", ".alqor")):
         hissələr = ad.split(".")
         if icraçı.qlobal.var(hissələr[0]):
             cari: Any = icraçı.qlobal.al(hissələr[0])
@@ -1888,7 +1888,7 @@ def modul_yüklə(icraçı, ad: str, yer=None) -> Modul:
         return _əlavə.icra_modulu(icraçı, ad)
 
     # Yerli fayl
-    if ad.endswith((".alqor", ".alq")) or ad.startswith((".", "/")):
+    if ad.endswith((".alq", ".alqor")) or ad.startswith((".", "/")):
         return _fayldan_modul(icraçı, ad, yer)
 
     raise AlqorXəta("ArqumentXətası",
@@ -1903,7 +1903,7 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
 
     # Nisbi yol İDXAL EDƏN FAYLIN qovluğuna nisbətəndir (prosesin cari
     # qovluğuna yox): `alqor sına` hansı qovluqdan işə salınsa da
-    # `gətir "../mənbə/əsas.alqor"` eyni faylı tapır.
+    # `gətir "../mənbə/əsas.alq"` eyni faylı tapır.
     baza = None
     mənbə = getattr(yer, "mənbə", None) if yer is not None else None
     if mənbə is not None and getattr(mənbə, "yol", None) is not None:
@@ -1914,7 +1914,7 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
     if not p.is_absolute() and baza is not None:
         p = baza / p
     if not p.exists():
-        for uzantı in (".alqor", ".alq"):
+        for uzantı in (".alq", ".alqor"):
             if Path(str(p) + uzantı).exists():
                 p = Path(str(p) + uzantı)
                 break

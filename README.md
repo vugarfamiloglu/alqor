@@ -36,7 +36,7 @@ yazmadan dəyişir; kod özü yazılır, önbaxış dərhal yenilənir:
 
 ![Xüsusiyyətlər paneli](sened/ekranlar/studio-xususiyyetler.png)
 
-**Desktop tətbiq** — `numuneler/09-tapsiriqlar.alqor` (tapşırıq meneceri),
+**Desktop tətbiq** — `numuneler/09-tapsiriqlar.alq` (tapşırıq meneceri),
 eyni kod vebdə də işləyir:
 
 ![Tapşırıq meneceri](sened/ekranlar/studio-tapsiriqlar.png)
@@ -78,12 +78,12 @@ alqor qur            # qurma/mənim-saytım.pyz — tək fayllı paket
 ```bash
 cd alqorc
 python alqorc.py söhbət                              # interaktiv rejim
-python alqorc.py işlət ../numuneler/04-siniflər.alqor
-python alqorc.py işlət ../numuneler/05-veb-server.alqor   # veb server
-python alqorc.py işlət ../numuneler/06-desktop.alqor      # desktop
-python alqorc.py işlət ../numuneler/08-vidjetler.alqor    # 118 vidjet
-python alqorc.py işlət ../numuneler/09-tapsiriqlar.alqor  # tapşırıq meneceri
-python alqorc.py işlət ../numuneler/10-kitab-refi/esas.alqor  # veb sayt
+python alqorc.py işlət ../numuneler/04-siniflər.alq
+python alqorc.py işlət ../numuneler/05-veb-server.alq   # veb server
+python alqorc.py işlət ../numuneler/06-desktop.alq      # desktop
+python alqorc.py işlət ../numuneler/08-vidjetler.alq    # 118 vidjet
+python alqorc.py işlət ../numuneler/09-tapsiriqlar.alq  # tapşırıq meneceri
+python alqorc.py işlət ../numuneler/10-kitab-refi/esas.alq  # veb sayt
 python alqorc.py studio ..                                # Alqor Studio
 python alqorfmt.py ..                                     # formatlayıcı
 python sina.py --nümunələr
@@ -120,7 +120,7 @@ Dairə: sahə = 19.63, perimetr = 15.71
 | Element | Ad |
 |---|---|
 | Dil | **Alqor** |
-| Fayl uzantısı | `.alqor` (qısa: `.alq`) |
+| Fayl uzantısı | `.alq` (köhnə `.alqor` da tanınır) |
 | CLI | `alqor` |
 | Kompilyator | `alqorc` |
 | İcra mühiti (VM) | `alqorvm` |
@@ -168,7 +168,7 @@ Dairə: sahə = 19.63, perimetr = 15.71
 | [05 — Funksiyalar](spesifikasiya/05-FUNKSIYALAR.md) | Parametrlər, lambda, qapanma, generatorlar, annotasiyalar |
 | [06 — Obyekt Yönümlü](spesifikasiya/06-OBYEKT-YONUMLU.md) | Siniflər, miras, interfeys, struktur, sadalama, genişləndirmə |
 | [07 — Xəta İdarəetməsi](spesifikasiya/07-XETA-IDAREETMESI.md) | `cəhd et`, xəta iyerarxiyası, `Nəticə` tipi, resurs idarəetməsi |
-| [08 — Modullar və Paketlər](spesifikasiya/08-MODULLAR-VE-PAKETLER.md) | `gətir`/`ixrac et`, paket quruluşu, `layihe.alqor`, `alqorpm` |
+| [08 — Modullar və Paketlər](spesifikasiya/08-MODULLAR-VE-PAKETLER.md) | `gətir`/`ixrac et`, paket quruluşu, `layihe.alq`, `alqorpm` |
 | [09 — Asinxron və Paralel](spesifikasiya/09-ASINXRON-VE-PARALEL.md) | `asinxron`/`gözlə`, saplar, kanallar, axınlar |
 | [10 — Standart Kitabxana](spesifikasiya/10-STANDART-KITABXANA.md) | Bütün modullar və funksiyalar |
 | [11 — Veb Proqramlaşdırma](spesifikasiya/11-VEB-PROQRAMLASDIRMA.md) | Server, marşrutlar, şablonlar, komponentlər, təhlükəsizlik |
@@ -199,7 +199,7 @@ avtomatik ayrılır, tip yoxlamasından keçir və icra olunur.
 ## Texniki arxitektura (planlaşdırılan)
 
 ```
-   mənbə.alqor (UTF-8)
+   mənbə.alq (UTF-8)
         │
         ▼
  ┌──────────────────┐
@@ -333,8 +333,8 @@ Dil nüvəsi tamamdır. Növbəti ən faydalı işlər:
 
 | # | İş | Nə açır |
 |---|---|---|
-| 1 | **`veb` modulu** (server) | `05-veb-server.alqor` işləyir, spesifikasiyanın 11-ci bölməsi canlanır |
-| 2 | **`pəncərə` modulu** (desktop) | `06-desktop.alqor` işləyir |
+| 1 | **`veb` modulu** (server) | `05-veb-server.alq` işləyir, spesifikasiyanın 11-ci bölməsi canlanır |
+| 2 | **`pəncərə` modulu** (desktop) | `06-desktop.alq` işləyir |
 | 3 | **`alqorfmt`** | `--ascii-düzəlt` — klaviatura həllinin üçüncü qatı |
 | ✅ | **`alqorls`** (LSP) + VS Code genişlənməsi (`redaktor/vscode/`) | VS Code / Neovim / Helix dəstəyi |
 | 5 | `alqor yeni` / `qur` / `sına` / `sənəd` | alət zəncirinin qalanı |

@@ -6,7 +6,7 @@
 > özü uyğunlaşır.
 >
 > Bütün elementlərin parametrləri: [spesifikasiya § 14.7](../spesifikasiya/14-VIDJETLER.md).
-> Canlı nümunə: [`numuneler/08-vidjetler.alqor`](../numuneler/08-vidjetler.alqor).
+> Canlı nümunə: [`numuneler/08-vidjetler.alq`](../numuneler/08-vidjetler.alq).
 
 ---
 

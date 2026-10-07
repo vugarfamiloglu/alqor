@@ -99,7 +99,7 @@ def _token_çap(t, ətraflı: bool, girinti: int) -> None:
 
 def _rejim_tap(arqumentlər: list[str]) -> str:
     """
-    Tip rejimi: əmr sətri → `layihe.alqor` → standart (`normal`).
+    Tip rejimi: əmr sətri → `layihe.alq` → standart (`normal`).
     """
     for bayraq in ("--rejim", "--rejim=", "-r"):
         for i, a in enumerate(arqumentlər):
@@ -108,9 +108,9 @@ def _rejim_tap(arqumentlər: list[str]) -> str:
             if a.startswith("--rejim="):
                 return a.split("=", 1)[1]
 
-    layihə = Path("layihe.alqor")
+    layihə = Path("layihe.alq")
     if not layihə.exists():
-        layihə = Path("..") / "layihe.alqor"
+        layihə = Path("..") / "layihe.alq"
     if layihə.exists():
         try:
             mətn = layihə.read_text(encoding="utf-8")
@@ -207,8 +207,8 @@ def _faylları_topla(arqumentlər: list[str]) -> list[str]:
             continue
         p = Path(a)
         if p.is_dir():
-            yollar.extend(str(q) for q in sorted(p.rglob("*.alqor")))
             yollar.extend(str(q) for q in sorted(p.rglob("*.alq")))
+            yollar.extend(str(q) for q in sorted(p.rglob("*.alqor")))
         else:
             yollar.append(a)
     return yollar
@@ -232,7 +232,7 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
     if fayllar:
         yol = fayllar[0]
     else:
-        # Fayl verilməyib — layihənin giriş nöqtəsi (`layihe.alqor`)
+        # Fayl verilməyib — layihənin giriş nöqtəsi (`layihe.alq`)
         from alqor.layihe import ManifestXətası, tap
         try:
             layihə = tap(".")
@@ -241,7 +241,7 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
             return 3
         if layihə is None:
             çap_xəta("`işlət` əmri üçün fayl adı lazımdır (və ya "
-                     "`layihe.alqor` olan qovluqda işlədin)")
+                     "`layihe.alq` olan qovluqda işlədin)")
             return 3
         yol = str(layihə.giriş)
     arqumentlər = öz
@@ -370,7 +370,7 @@ def əmr_format(arqumentlər: list[str]) -> int:
         return 3
     fayllar = faylları_tap(yollar_arq)
     if not fayllar:
-        çap_xəta("format ediləcək .alqor faylı tapılmadı")
+        çap_xəta("format ediləcək .alq faylı tapılmadı")
         return 4
 
     yoxla = "--yoxla" in bayraqlar
@@ -523,7 +523,7 @@ def əmr_sına(arqumentlər: list[str]) -> int:
     müddət = _t.perf_counter() - baş
     if not fayllar and len(nəticələr) == 0:
         print("  Sınaq faylı tapılmadı (`sınaq/` qovluğu və ya "
-              "`*_sınaq.alqor`).")
+              "`*_sınaq.alq`).")
         return 4
     xətalı = say["uğursuz"] + say["xəta"]
     print(f"  Nəticə: {say['uğurlu']} uğurlu, {say['uğursuz']} uğursuz, "
@@ -545,7 +545,7 @@ def əmr_sənəd(arqumentlər: list[str]) -> int:
     layihə = _layihə(yollar[0] if yollar else ".")
     if not yollar:
         if layihə is None:
-            çap_xəta("fayl/qovluq verin və ya `layihe.alqor` olan "
+            çap_xəta("fayl/qovluq verin və ya `layihe.alq` olan "
                      "qovluqda işlədin")
             return 3
         yollar = [str(layihə.giriş.parent)]
@@ -561,7 +561,7 @@ def əmr_sənəd(arqumentlər: list[str]) -> int:
             print(f"✖ {x}", file=sys.stderr)
             return 2
     if not sənədlər:
-        çap_xəta("sənədləşdiriləcək .alqor faylı tapılmadı")
+        çap_xəta("sənədləşdiriləcək .alq faylı tapılmadı")
         return 4
     çıxış.mkdir(parents=True, exist_ok=True)
     if format_ == "html":
@@ -584,7 +584,7 @@ def əmr_qur(arqumentlər: list[str]) -> int:
 
     layihə = _layihə(".")
     if layihə is None:
-        çap_xəta("`qur` `layihe.alqor` olan qovluqda işlədilir "
+        çap_xəta("`qur` `layihe.alq` olan qovluqda işlədilir "
                  "(yeni layihə: alqor yeni <ad>)")
         return 3
     if "--tip" in arqumentlər:
@@ -623,7 +623,7 @@ def əmr_təmizlə(arqumentlər: list[str]) -> int:
     from alqor import qurucu
     layihə = _layihə(".")
     if layihə is None:
-        çap_xəta("`layihe.alqor` tapılmadı")
+        çap_xəta("`layihe.alq` tapılmadı")
         return 3
     try:
         silindi = qurucu.təmizlə(layihə)
@@ -736,7 +736,7 @@ def əmr_kömək(_: list[str]) -> int:
 ƏMRLƏR:
     yeni <ad>            Yeni layihə: --şablon konsol|veb|desktop|kitabxana
     işlət [fayl]         Proqramı icra edir (fayl yoxdursa — layihənin
-                         giriş nöqtəsi, `layihe.alqor`)
+                         giriş nöqtəsi, `layihe.alq`)
                          --tip           icradan əvvəl tipləri yoxlayır
                          -- arq1 arq2    proqrama arqument ötürür
     tokenlər <fayl>      Faylı leksə edib tokenləri göstərir
@@ -765,13 +765,13 @@ def əmr_kömək(_: list[str]) -> int:
 
 NÜMUNƏLƏR:
     python alqorc.py söhbət
-    python alqorc.py işlət ../numuneler/02-dovrler.alqor
-    python alqorc.py tokenlər ../numuneler/01-salam.alqor
+    python alqorc.py işlət ../numuneler/02-dovrler.alq
+    python alqorc.py tokenlər ../numuneler/01-salam.alq
     python alqorc.py yoxla ../numuneler
     python alqorc.py hərf "ışıq İmran"
     python alqorc.py sırala zəfər ağac çay ışıq ilk
 
-TİP REJİMLƏRİ (`layihe.alqor` → [tip] rejim, və ya --rejim):
+TİP REJİMLƏRİ (`layihe.alq` → [tip] rejim, və ya --rejim):
     sərbəst    yalnız açıq yazılmış tiplər yoxlanılır
     normal     çıxarma + yoxlama (standart)
     sərt       açıq funksiya imzaları məcburi, naməlum üzvlər xətadır

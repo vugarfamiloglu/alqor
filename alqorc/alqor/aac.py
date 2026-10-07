@@ -780,10 +780,10 @@ class İdxal(Cümlə):
     `gətir riyaziyyat kimi r`
     `gətir riyaziyyat.{kök, Pİ}`
     `gətir riyaziyyat.*`
-    `gətir "./yerli.alqor" kimi y`
+    `gətir "./yerli.alq" kimi y`
     """
     yol: list[str]
-    mətn_yolu: str | None = None       # `"./fayl.alqor"` forması
+    mətn_yolu: str | None = None       # `"./fayl.alq"` forması
     ləqəb: str | None = None
     elementlər: list[İdxalElementi] = field(default_factory=list)
     hamısı: bool = False               # `.*`

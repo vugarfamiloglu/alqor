@@ -2,7 +2,7 @@
 Alqor — İnterpretator (ağac gəzən icraçı).
 
 AAC-ni birbaşa icra edir. Kompilyasiya mərhələsi yoxdur —
-`alqor işlət proqram.alqor` dərhal nəticə verir.
+`alqor işlət proqram.alq` dərhal nəticə verir.
 """
 
 from __future__ import annotations

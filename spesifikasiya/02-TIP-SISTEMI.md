@@ -19,7 +19,7 @@ dəyişən c: istənilən = 5         // tip yoxlaması söndürülüb
 | **`istənilən`** | Yoxlama yoxdur, icra zamanı həll olunur | Dinamik verilənlər, JSON |
 
 ### Sərtlik səviyyələri
-`layihe.alqor` faylında:
+`layihe.alq` faylında:
 
 ```toml
 [tip]

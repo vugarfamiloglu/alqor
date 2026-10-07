@@ -97,7 +97,7 @@ class Müştəri:
 class DAPSınağı(unittest.TestCase):
     def setUp(self):
         self._q = tempfile.TemporaryDirectory()
-        self.fayl = Path(self._q.name) / "proqram.alqor"
+        self.fayl = Path(self._q.name) / "proqram.alq"
         self.fayl.write_text(PROQRAM, encoding="utf-8")
         self.m = Müştəri()
         self.addCleanup(self._q.cleanup)
@@ -199,7 +199,7 @@ class DAPSınağı(unittest.TestCase):
         xəta = [h for h in self.m.hadisələr if h["event"] == "output"
                 and h["body"]["category"] == "stderr"]
         self.assertTrue(xəta)
-        self.assertIn("proqram.alqor:2", xəta[0]["body"]["output"])
+        self.assertIn("proqram.alq:2", xəta[0]["body"]["output"])
 
 
 if __name__ == "__main__":

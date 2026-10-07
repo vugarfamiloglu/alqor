@@ -1193,7 +1193,7 @@ def _seçim_skeleti(ad: str, tip: str = "mətn", çevir: str = "dəyər") -> str
             '])'),
     Məlumat("ağac", GÖSTƏRMƏ, "Ağac görünüşü (fayl ağacı)",
             'vidjet.ağac(elementlər: [\n'
-            '    ["mənbə", ["əsas.alqor", "model.alqor"]],\n'
+            '    ["mənbə", ["əsas.alq", "model.alq"]],\n'
             '    "README.md"\n'
             '], klik: özü.{ad}Seçildi)',
             ["klik"],

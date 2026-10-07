@@ -1,7 +1,7 @@
 // Nümunə 5 — Veb server + REST API
 //
-//   alqor işlət 05-veb-server.alqor            serveri işə salır
-//   alqor işlət 05-veb-server.alqor -- sınaq   port açmadan yoxlayır
+//   alqor işlət 05-veb-server.alq            serveri işə salır
+//   alqor işlət 05-veb-server.alq -- sınaq   port açmadan yoxlayır
 
 gətir veb
 gətir sistem

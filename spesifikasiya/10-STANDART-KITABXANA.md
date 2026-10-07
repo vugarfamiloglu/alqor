@@ -452,7 +452,7 @@ qovluq.silDərin("a")
 qovluq.vardır("a") -> məntiq
 qovluq.siyahı("a") -> siyahı[mətn]
 qovluq.siyahıDərin("a") -> siyahı[mətn]
-qovluq.axtar("a", "*.alqor") -> siyahı[mətn]
+qovluq.axtar("a", "*.alq") -> siyahı[mətn]
 qovluq.cari() -> mətn
 qovluq.dəyiş("/home")
 qovluq.ev() -> mətn
@@ -779,7 +779,7 @@ saxta.gözlə("tap").qaytarsın(istifadəçi)
 test.yoxla(saxta.çağırıldı("tap", 1))
 ```
 
-Çalışdırma: `alqortest` və ya `alqortest sınaq/istifadəçi_sınaq.alqor`
+Çalışdırma: `alqortest` və ya `alqortest sınaq/istifadəçi_sınaq.alq`
 
 ---
 

@@ -127,8 +127,8 @@ class Studio:
     # ── Layihə ayarları ───────────────────────────────────────────────
 
     def tip_rejimi(self) -> str:
-        """`layihe.alqor` → `[tip] rejim`."""
-        f = self.layihə.kök / "layihe.alqor"
+        """`layihe.alq` → `[tip] rejim`."""
+        f = self.layihə.kök / "layihe.alq"
         try:
             mətn = f.read_text(encoding="utf-8")
         except OSError:
@@ -388,7 +388,7 @@ class Studio:
         for nisbi, mətn in fayllar.items():
             self.layihə.yarat(f"{ad}/{nisbi}", "fayl", mətn)
         return {"qovluq": self.layihə.nisbi(qovluq),
-                "fayl": f"{self.layihə.nisbi(qovluq)}/əsas.alqor"}
+                "fayl": f"{self.layihə.nisbi(qovluq)}/əsas.alq"}
 
     # ── Vidjetlər ─────────────────────────────────────────────────────
 
@@ -444,7 +444,7 @@ class Studio:
         rejim = s.get("rejim") or self.tip_rejimi()
         return diaqnostika.yoxla(self._mətn(s, "mətn"),
                                  Path(self._mətn(s, "ad",
-                                                 "fayl.alqor")).name,
+                                                 "fayl.alq")).name,
                                  rejim if isinstance(rejim, str)
                                  else "normal",
                                  bool(s.get("tip", True)))
@@ -472,7 +472,7 @@ class Studio:
     def api_formatla(self, s: dict) -> dict:
         from alqor.alqorfmt import FormatXətası, formatla
         try:
-            n = formatla(self._mətn(s, "mətn"), "redaktor.alqor",
+            n = formatla(self._mətn(s, "mətn"), "redaktor.alq",
                          homoqlif_düzəlt=True)
         except FormatXətası as x:
             # Sintaksis xətası olan fayl formatlanmır — redaktor olduğu

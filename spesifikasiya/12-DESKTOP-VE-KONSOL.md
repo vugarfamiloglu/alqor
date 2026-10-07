@@ -14,8 +14,8 @@ son
 ```
 
 ```bash
-alqor işlət salam.alqor          # dərhal işlət (VM)
-alqor qur salam.alqor            # binar yarat
+alqor işlət salam.alq          # dərhal işlət (VM)
+alqor qur salam.alq            # binar yarat
 ./salam                          # işlət
 ```
 
@@ -47,7 +47,7 @@ funksiya əsas()
 son
 ```
 
-Təhlilçi proqramın **öz** arqumentlərini oxuyur (`alqor işlət f.alqor
+Təhlilçi proqramın **öz** arqumentlərini oxuyur (`alqor işlət f.alq
 -- topla 2 3` → `["topla", "2", "3"]`; `sistem.arqumentlər()` də eynidir).
 `--` sonrakı hər şeyi mövqeli sayır; `--format=json` və `-f json` eynidir.
 `--kömək` köməyi çap edib proqramı 0 kodu ilə, səhv arqument isə xəta
@@ -352,7 +352,7 @@ alqor paketlə --hamısı
 ```
 
 ### `.deb` paketi
-`layihe.alqor`:
+`layihe.alq`:
 ```toml
 [paketləmə.deb]
 ad = "menim-proqramim"
@@ -401,7 +401,7 @@ Komponent bir dəfə yazılır; hədəfi yalnız onu "quraşdıran" bir neçə
 sətir müəyyən edir.
 
 ```alqor
-// interfeys.alqor
+// interfeys.alq
 gətir vidjet
 
 komponent TapşırıqSiyahısı
@@ -455,7 +455,7 @@ hər x üçün t.tapşırıqlar içində
 son
 ```
 
-Hədəf əmr sətrindən seçilə bilər (bax: `numuneler/08-vidjetler.alqor`):
+Hədəf əmr sətrindən seçilə bilər (bax: `numuneler/08-vidjetler.alq`):
 
 ```alqor
 funksiya əsas(arqumentlər: siyahı[mətn])

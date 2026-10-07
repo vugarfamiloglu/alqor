@@ -37,7 +37,7 @@ ALQ - T - 001
 **Səbəb:** Mənbə faylı başqa kodlaşdırmadadır (məsələn Windows-1254).
 **Həll:**
 ```bash
-iconv -f WINDOWS-1254 -t UTF-8 fayl.alqor -o fayl-yeni.alqor
+iconv -f WINDOWS-1254 -t UTF-8 fayl.alq -o fayl-yeni.alq
 ```
 Redaktorunuzda standart kodlaşdırmanı UTF-8 edin.
 
@@ -257,7 +257,7 @@ Həmin üzv `ixrac et` ilə işarələnməyib.
 
 ### ✖ ALQ-M005 — Dövri modul asılılığı
 ```
-a.alqor → b.alqor → a.alqor
+a.alq → b.alq → a.alq
 ```
 **Həll:** Ortaq hissəni üçüncü modula çıxarın.
 
@@ -343,7 +343,7 @@ Parol və tokenlər yalnız HTTPS üzərindən göndərilməlidir.
 
 ```
 ✖ ALQ-T008  Operator `+` bu tiplərə tətbiq edilmir
-  ┌─ əsas.alqor:12:15
+  ┌─ əsas.alq:12:15
   │
 12│     yaz("Yaş: " + yaş)
   │          ───────┬─────
@@ -358,7 +358,7 @@ Parol və tokenlər yalnız HTTPS üzərindən göndərilməlidir.
 | Hissə | Mənası |
 |---|---|
 | `✖ ALQ-T008` | Kod və səviyyə |
-| `əsas.alqor:12:15` | Fayl : sətir : sütun |
+| `əsas.alq:12:15` | Fayl : sətir : sütun |
 | Kod parçası | Problemli yer altından xətlə |
 | `= kömək:` | Düzəliş təklifi |
 | `= sənəd:` | Ətraflı izah |
