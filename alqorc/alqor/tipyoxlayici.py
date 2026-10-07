@@ -2143,6 +2143,15 @@ class TipYoxlayıcı:
                 return T.MƏNTİQ
             return T.NAMƏLUM
 
+        # Kitabxana tiplərinin operatorları (məs. `pul + pul`)
+        from . import modullar
+        n = modullar.operator_nəticəsi(op, sol, sağ)
+        if n is not None:
+            if n is T.HEÇ:
+                self._operator_xətası(op, sol, sağ, e)
+                return T.NAMƏLUM
+            return n
+
         if op in ("<", ">", "<=", ">="):
             if not self._müqayisə_olunur(sol, sağ):
                 self._operator_xətası(op, sol, sağ, e)
@@ -2237,6 +2246,10 @@ class TipYoxlayıcı:
             return T.NAMƏLUM
         if e.op in ("-", "+"):
             if isinstance(tip, T.SinifTipi):
+                return tip
+            from . import modullar
+            if modullar.operator_nəticəsi("əks", tip, None) not in (
+                    None, T.HEÇ):
                 return tip
             if not T.ədəddir(tip):
                 self.x.xəta(

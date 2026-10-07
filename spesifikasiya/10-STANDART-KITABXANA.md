@@ -817,18 +817,65 @@ sənəd modulun tam arayışıdır.
 | `http`, `şəbəkə` | Bölmə 10.12 (WebSocket daxil) | ✅ |
 | `verilənlər` | Bölmə 10.13 (SQLite, PostgreSQL, MySQL; ORM) | ✅ |
 | `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) | ⏳ |
-| `poçt` | E-poçt göndərmə (SMTP) | ⏳ |
-| `keş` | Yaddaş və Redis keşi | ⏳ |
-| `növbə` | İş növbələri | ⏳ |
-| `planlayıcı` | Cron tipli tapşırıqlar | ⏳ |
-| `validasiya` | Giriş yoxlaması | ⏳ |
-| `lokalizasiya` | Çoxdilli dəstək | ⏳ |
-| `pul` | Dəqiq pul hesablamaları və valyuta | ⏳ |
+| `poçt` | E-poçt: məktub qurma (HTML, əlavələr), SMTP (STARTTLS/SSL), `sınaq()` qutusu, məktub oxuma | ✅ |
+| `keş` | Yaddaş (LRU + müddət), fayl və Redis keşi; `hesabla`, `artır`, `bük` | ✅ |
+| `növbə` | Fon iş növbəsi: işçilər, prioritet, gecikmə, təkrar cəhdlər | ✅ |
+| `planlayıcı` | Cron ifadələri (AZ ay/gün adları), `hər`, `sonra`, `vaxtında` | ✅ |
+| `validasiya` | Zəncirvari qaydalar, sxemlər; telefon, FİN, VÖEN, IBAN, kart | ✅ |
+| `lokalizasiya` | Tərcümələr (JSON/TOML/YAML), cəm formaları, ədəd/tarix/nisbi vaxt | ✅ |
+| `pul` | Dəqiq pul hesabı, valyutalar, bölüşdürmə, formatlama; `+ - * / <` operatorları | ✅ |
 | `qrafik` | Diaqram və qrafiklər | ⏳ |
 | `pdf` | PDF yaratma | ⏳ |
 | `ffi` | C kitabxanaları ilə əlaqə | ⏳ |
 | `veb` | Veb freymvork (Bölmə 11) | ✅ |
 | `pəncərə` | Desktop GUI (Bölmə 12) | ✅ |
+
+### `pul`, `keş`, `növbə`, `planlayıcı`, `validasiya`, `lokalizasiya`, `poçt`
+
+```alqor
+gətir pul
+dəyişən qiymət = pul.yarat("19.99", "AZN")
+dəyişən cəm = qiymət * 3 + pul.yarat(5, "AZN")      // 64.97 AZN (dəqiq)
+yaz(cəm.formatla())                                  // "64,97 ₼"
+yaz(pul.yarat(100).böl(3))                           // [33.34, 33.33, 33.33] — qəpik itmir
+
+gətir keş
+dəyişən k = keş.yaddaş(maks: 1000, müddət: 60)
+dəyişən hesabat = k.hesabla("hesabat", () => ağırHesabat())
+dəyişən r = keş.redis("redis://:parol@127.0.0.1:6379/0", ön: "tətbiq:")
+
+gətir növbə
+dəyişən n = növbə.yarat(işçilər: 4, cəhd: 3)
+dəyişən iş = n.göndər(məktubGöndər, "a@b.az")
+yaz(iş.nəticə())
+
+gətir planlayıcı
+dəyişən p = planlayıcı.yarat()
+p.cron("0 9 * * b.e-c", səhərHesabatı)               // iş günləri 09:00
+p.hər(30, yoxla)
+p.başlat()
+
+gətir validasiya
+dəyişən v = validasiya
+dəyişən s = v.sxem({"ad": v.mətn().kəs().min(2), "yaş": v.tam().aralıq(18, 120),
+                    "epoçt": v.ePoçt(), "telefon": v.telefon().ixtiyari()})
+dəyişən nəticə = s.yoxla(forma)                        // etibarlıdır(), xətalar(), dəyərlər()
+
+gətir lokalizasiya
+dəyişən t = lokalizasiya.yüklə("dillər", standart: "az")
+yaz(t.dil("ru").t("mesaj", say: 3))                  // "3 сообщения"
+yaz(lokalizasiya.tarix("2026-10-07"))                 // "7 oktyabr 2026"
+
+gətir poçt
+dəyişən m = poçt.məktub(kimdən: "bot@alqor.az", kimə: "a@b.az",
+                        mövzu: "Salam", mətn: "…", əlavələr: ["hesabat.pdf"])
+poçt.smtp("smtp.nümunə.az", istifadəçi: "…", parol: mühit("SMTP_PAROL")).göndər(m)
+```
+
+Hər modulun tam arayışı `alqorc/alqor/modullar/<modul>.py` faylının
+başındadır. Kitabxana obyektləri operator dəstəkləyə bilər
+(`alqor_operator` protokolu) — tip yoxlayıcısı `pul + pul`-u tanıyır,
+`pul + tam`-ı ALQ-T008 ilə rədd edir.
 
 ### `düyün` — XML və HTML ağacı
 

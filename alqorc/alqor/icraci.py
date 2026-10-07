@@ -969,6 +969,12 @@ class İcraçı:
                     return self.funksiya_çağır(metod.bağla(sol), [sağ], {},
                                                yer)
 
+        # Kitabxana obyektlərinin operatorları (məs. `pul`):
+        # `alqor_operator(op, digər, sağdadır)` → nəticə / NotImplemented
+        n = _kitabxana_operatoru(op, sol, sağ)
+        if n is not NotImplemented:
+            return n
+
         # Müqayisə
         if op in ("<", ">", "<=", ">=", "<=>"):
             return self._müqayisə(op, sol, sağ, yer)
@@ -1125,6 +1131,9 @@ class İcraçı:
                 metod = dəyər.sinif.metod_tap("əks")
                 if metod is not None:
                     return self.funksiya_çağır(metod.bağla(dəyər), [], {})
+            n = _kitabxana_operatoru("əks", dəyər, None)
+            if n is not NotImplemented:
+                return n
             if not self._ədəddir(dəyər):
                 raise AlqorXəta("TipXətası",
                                 f"`-` `{tip_adı(dəyər)}` tipinə tətbiq "
@@ -2287,6 +2296,18 @@ def format_spec_ümumi(dəyər: Any, spec: str) -> str:
 
 
 # ── Operator → metod uyğunluğu (Spesifikasiya § 6.4) ───────────────────
+
+def _kitabxana_operatoru(op: str, sol: Any, sağ: Any) -> Any:
+    f = getattr(type(sol), "alqor_operator", None)
+    if f is not None:
+        n = f(sol, op, sağ, False)
+        if n is not NotImplemented:
+            return n
+    f = getattr(type(sağ), "alqor_operator", None)
+    if f is not None and op != "əks":
+        return f(sağ, op, sol, True)
+    return NotImplemented
+
 
 _OPERATOR_METODLARI = {
     "+": "topla", "-": "çıx", "*": "vur", "/": "böl",
