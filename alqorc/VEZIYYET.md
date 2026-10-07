@@ -430,6 +430,7 @@ tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
 | ✅ | `alqorls` (LSP) + VS Code genişlənməsi, TextMate qrammatikası | — |
 | ◐ | Standart kitabxana: ✅ kodlaşdırma, csv, toml, yaml, xml, html, konfiq, sıxma; qalır: şifrə, http, verilənlər, şəkil, poçt, keş, növbə, planlayıcı, validasiya, lokalizasiya, pul, qrafik, pdf, ffi | böyük |
 | 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
+| 6a | **Alqor Studio — installerli Desktop tətbiqi** (istifadəçi tələbi): Windows `.exe` quraşdırıcı (Başlat menyusu, masaüstü ikonu, `.alqor` faylları Studio ilə açılır), Linux `.deb`/AppImage, macOS `.dmg`; Python daxildədir — ayrıca quraşdırmaq lazım deyil | böyük |
 | 7 | Mərhələ 6 — JS/WASM transpilyator | böyük |
 | 8 | `alqorpm` + `alqorhub` (paket meneceri və reyestr) | böyük |
 | 9 | Alqor Studio: avtomatik tamamlama (alqorls-dan), vizual dizayner | orta |
