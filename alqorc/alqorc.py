@@ -686,6 +686,15 @@ def əmr_ls(arqumentlər: list[str]) -> int:
     return işə_sal()
 
 
+def əmr_dap(arqumentlər: list[str]) -> int:
+    """`dap` — Debaq Adapter Protokolu serveri, stdin/stdout üzərindən."""
+    from alqor.alqordap import işə_sal
+    if sys.stdin.isatty():
+        print("alqordap — Alqor debaqçısı (DAP). Redaktor tərəfindən "
+              "işə salınır:\n    alqor dap", file=sys.stderr)
+    return işə_sal()
+
+
 def əmr_studio(arqumentlər: list[str]) -> int:
     """Alqor Studio — inkişaf mühiti (`studio/` paketi)."""
     from studio.server import işə_sal
@@ -746,6 +755,7 @@ def əmr_kömək(_: list[str]) -> int:
     hərf <mətn>          az-AZ böyük/kiçik çevrilməsini göstərir
     sırala <söz>...      Azərbaycan əlifba sırası ilə sıralayır
     ls                   Dil serveri (LSP) — VS Code, Neovim, Helix üçün
+    dap                  Debaqçı (DAP) — dayanma nöqtələri, addım, dəyişənlər
     studio [qovluq]      Alqor Studio — redaktor, vidjet paleti, icra
                          --port N        sabit port
                          --başsız        pəncərə açmır, ünvanı çap edir
@@ -794,7 +804,7 @@ VƏZİYYƏT:
     "hərf": əmr_hərf, "herf": əmr_hərf,
     "sırala": əmr_sırala, "sirala": əmr_sırala,
     "studio": əmr_studio,
-    "ls": əmr_ls, "lsp": əmr_ls,
+    "ls": əmr_ls, "lsp": əmr_ls, "dap": əmr_dap, "debaq": əmr_dap,
     "versiya": əmr_versiya, "--versiya": əmr_versiya, "-v": əmr_versiya,
     "kömək": əmr_kömək, "komek": əmr_kömək,
     "--kömək": əmr_kömək, "--komek": əmr_kömək, "-k": əmr_kömək,

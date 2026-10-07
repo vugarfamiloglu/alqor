@@ -44,6 +44,9 @@ class İcraçı:
         # yığını və cari korutin hər sapda müstəqil olmalıdır.
         self._yerli = _SapYerli()
         self.yığın: list[str] = []
+        # Debaqçı (`alqor dap`): hər cümlədən əvvəl `cümlə(c, m)`,
+        # funksiyaya girib-çıxanda `daxil(f, m)` / `çıx()` çağırılır
+        self.izləyici = None
         if sys.getrecursionlimit() < _PYTHON_LİMİTİ:
             sys.setrecursionlimit(_PYTHON_LİMİTİ)
 
@@ -107,6 +110,8 @@ class İcraçı:
             self._cümlə(c, m)
 
     def _cümlə(self, c: A.Cümlə, m: Mühit) -> None:
+        if self.izləyici is not None:
+            self.izləyici.cümlə(c, m)
         işləyici = _CÜMLƏLƏR.get(type(c))
         if işləyici is None:
             raise AlqorXəta("DaxiliXəta",
@@ -1538,6 +1543,10 @@ class İcraçı:
             if f.generator:
                 return AlqorGenerator(self._korutin_qur(f, m))
 
+            izləyici = self.izləyici
+            if izləyici is not None:
+                izləyici.daxil(f, m)
+
             if isinstance(f.gövdə, list):
                 self._yerli.gecikdirilmiş.append([])
                 try:
@@ -1561,6 +1570,8 @@ class İcraçı:
             return nəticə
         finally:
             self._yerli.dərinlik -= 1
+            if self.izləyici is not None and not f.generator:
+                self.izləyici.çıx(f)
 
     def _son_ifadənin_dəyəri(self, f: Funksiya, m: Mühit) -> Any:
         """`qaytar`-sız son ifadə avtomatik qaytarılır (Spes. § 5.3)."""

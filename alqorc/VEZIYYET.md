@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **118 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**1044 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**1048 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -84,7 +84,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 1044 sınaq + nümunələr
+python sina.py --nümunələr                       # 1048 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor

@@ -82,6 +82,7 @@ Azərbaycan hərfləri yazmaq çətin olanda.
 | `format` (`alqorfmt`) | ✅ § 13.3 |
 | `studio` | ✅ Alqor Studio (§ 13.9) |
 | `ls [--stdio]` | ✅ LSP serveri (§ 13.8) |
+| `dap` | ✅ Debaqçı — Debug Adapter Protocol (§ 13.8) |
 | `yeni <ad> [--şablon konsol\|veb\|desktop\|kitabxana]` | ✅ hər şablonun işləyən sınaqları var |
 | `işlət` (fayl olmadan — layihənin giriş nöqtəsi) | ✅ |
 | `sına [yol] [--filtr] [--sənəd] [--ətraflı]` | ✅ § 13.5 |
@@ -443,7 +444,7 @@ elana bağlandığını və hər `a.b` ifadəsinin tipini yadda saxlayır.
 | İş sahəsi simvolları (Ctrl+T) — `tpl` → `topla` | ✅ |
 | Kod linzaları: üst səviyyə funksiya/sinif üstündə "N istinad"; `@sınaq` üstündə "▶ Sına" | ✅ |
 | Semantik rənglər: sinif, funksiya, metod, xassə, parametr, modul, sadalama; `sabit` → readonly, daxili → defaultLibrary | ✅ |
-| DAP (debaq) | ⏳ |
+| DAP (debaq) — `alqor dap`: dayanma nöqtələri (şərtli), `stopOnEntry`, next / stepIn / stepOut / pause, çağırış yığını, yerli və qlobal dəyişənlər (siyahı, lüğət, nümunə açılır), ifadə hesablama; çıxış `output` hadisəsidir | ✅ |
 
 Fayl idxalı tip yoxlayıcısında da görünür: `gətir "./x.alqor" kimi m`
 faylı ayrıca ayrılıb yoxlanır (keşlənir, dövri idxal qorunur), onun qlobal
