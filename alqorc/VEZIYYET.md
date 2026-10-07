@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **118 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**1020 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**1034 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -84,7 +84,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 1020 sınaq + nümunələr
+python sina.py --nümunələr                       # 1034 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -398,25 +398,14 @@ Alternativ `siyahı içində hər x üçün` da əlavə edilə bilər.
 Spesifikasiya § 1.9.2 bunu xəta adlandırır, lekser isə `TAM(5)` + `OP(.)`
 buraxır (çünki `5.mətnƏt()` işləməlidir). Spesifikasiya düzəldilməlidir.
 
-### 3. Tip yoxlayıcısının əhatəsi
+### ✅ Həll olundu (3–5)
 
-Standart kitabxananın ~280 funksiyasından təxminən 200-ü imzalıdır.
-Qalanlar `?` (naməlum) qaytarır — bu, YANLIŞ XƏBƏRDARLIQ vermir, sadəcə
-həmin yerlərdə yoxlama aparılmır. `sərt` rejimdə naməlum üzvlər xəta
-sayılır, ona görə həmin rejim hələ tam istifadəyə hazır deyil.
-
-### 4. Generiklər tam yoxlanılmır
-
-`funksiya ilk[T](s: siyahı[T]) -> T?` ayrılır və `T` generik parametr
-kimi tanınır, amma tip arqumentləri çıxarılmır — `T` hər şeyə uyğun
-gəlir. Düzgün həll: unifikasiya alqoritmi.
-
----
-
-### 5. Modul tipləri annotasiyada
-
-`funksiya f() -> pəncərə.Pəncərə` — tip yoxlayıcısı modul daxilindəki
-tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
+- **Tip yoxlayıcısının əhatəsi** — icrada olan hər modul üzvünün, daxili
+  tip metodunun və kitabxana obyektinin imzası var; `sərt` rejim real
+  kodda yanlış xəta vermir. `SərtRejimƏhatəsi` sınağı bunu qoruyur.
+- **Generiklər** — `f[T](…)` çağırışında `T` unifikasiya ilə çıxarılır,
+  ziddiyyət ALQ-T004, lambda parametrləri kontekstdən tip alır.
+- **Modul tipləri annotasiyada** — `pəncərə.Pəncərə`, `http.Sorğu`.
 
 ---
 

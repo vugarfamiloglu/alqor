@@ -709,3 +709,62 @@ class ModulTipləriAnnotasiyada(unittest.TestCase):
     def test_naməlum_modul_tipi(self):
         k = kodlar("gətir pəncərə\ndəyişən x: pəncərə.Yox = 1\nyaz(x)\n")
         self.assertEqual(k.count("ALQ-T002"), 1)     # təkrar yoxdur
+
+
+class SərtRejimƏhatəsi(unittest.TestCase):
+    """İcrada olan hər üzvün tip imzası var — `sərt` rejim yanlış
+    "belə üzv yoxdur" xətası verməsin. Yeni funksiya əlavə edəndə
+    imzası da yazılmalıdır, yoxsa bu sınaq uğursuz olur."""
+
+    def test_modul_üzvləri(self):
+        from alqor.deyerler import Modul
+        from alqor.icraci import İcraçı
+        from alqor.kitabxana import _modulları_qur
+        from alqor import tipler as T, tipyoxlayici as TY
+        tiplər = TY._modullar()
+        çatmır = []
+
+        def gəz(m, t, ön):
+            for a, d in m.üzvlər.items():
+                if a not in t.üzvlər:
+                    çatmır.append(ön + a)
+                elif isinstance(d, Modul) and isinstance(t.üzvlər[a],
+                                                         T.ModulTipi):
+                    gəz(d, t.üzvlər[a], f"{ön}{a}.")
+        for ad, m in _modulları_qur(İcraçı()).items():
+            self.assertIn(ad, tiplər)
+            gəz(m, tiplər[ad], f"{ad}.")
+        self.assertEqual(çatmır, [])
+
+    def test_daxili_tip_metodları(self):
+        from alqor import kitabxana as K, tipler as T
+        from alqor.xeta import XətaToplayıcı
+        y = TipYoxlayıcı(XətaToplayıcı())
+        for py, tip in ((str, T.MƏTN), (list, T.Siyahı(T.TAM)),
+                        (dict, T.Lüğət(T.MƏTN, T.TAM)),
+                        (set, T.Dəst(T.TAM)), (int, T.TAM),
+                        (float, T.ONLUQ), (bytes, T.BAYT)):
+            icra = set(K._CƏDVƏLLƏR.get(py) or {})
+            self.assertEqual(icra - set(y._metod_cədvəli(tip) or {}),
+                             set(), py.__name__)
+
+    def test_əlavə_modul_obyektləri(self):
+        from alqor import modullar as M
+        cəd = M._obyekt_cədvəli()
+        for ad in M.adlar():
+            for v in vars(M._py(ad)).values():
+                if isinstance(v, type) and hasattr(v, "ALQOR_TİP_ADI") \
+                        and hasattr(v, "ALQOR_METODLARI"):
+                    self.assertIn(v.ALQOR_TİP_ADI, cəd, ad)
+                    self.assertEqual(set(v.ALQOR_METODLARI) -
+                                     set(cəd[v.ALQOR_TİP_ADI]), set(),
+                                     v.ALQOR_TİP_ADI)
+
+    def test_nümunələr_sərt_rejimdə_təmizdir(self):
+        from pathlib import Path
+        kök = Path(__file__).resolve().parents[2] / "numuneler"
+        for f in sorted(kök.rglob("*.alqor")):
+            with self.subTest(fayl=f.name):
+                k, t = yoxla(f.read_text(encoding="utf-8"), "sərt")
+                self.assertEqual([x for x in t.xətalar], [],
+                                 t.hesabat(False))
