@@ -366,7 +366,7 @@ function tabaKeç(yol) {
   elementləriÇək(t.elementlər);
   planlaYoxla(50);
   // Başqa faylın komponent seçimi yeni fayla aid deyil
-  $("#onbaxis-komponent").innerHTML = "";
+  komponentSeçiminiSıfırla();
   if (S.önbaxışAçıq) önbaxışıYenilə();
   X.mövqe = null;
   if (xüsusiyyətPaneliAçıqdır()) xüsusiyyətləriYüklə();
@@ -1365,8 +1365,9 @@ async function önbaxışıYenilə(canlı = false) {
   const t = cari();
   const xət = $("#onbaxis-xeta");
   const çərçivə = $("#onbaxis-cercive");
-  if (!t) { xət.hidden = false; xət.textContent = "Fayl açıq deyil."; return; }
+  if (!t) { komponentSeçiminiSıfırla(); xət.hidden = false; xət.textContent = "Fayl açıq deyil."; return; }
   if (!/\bkomponent\s+[\p{L}_]/u.test(R.mətn)) {
+    komponentSeçiminiSıfırla();
     xət.hidden = false;
     xət.textContent = "Bu faylda `komponent` yoxdur.\n\nPaletdən elementə iki dəfə klikləyin — " +
       "komponent iskeleti avtomatik yaradılacaq.";
@@ -1379,10 +1380,11 @@ async function önbaxışıYenilə(canlı = false) {
     const n = await API.göndər("/api/onbaxis", { yol: t.yol, komponent: seçim, canlı });
     if (n.xəta && seçim && /tapılmadı/.test(n.xəta)) {
       // Seçilmiş komponent bu faylda yoxdur — birincisi ilə yenidən
-      $("#onbaxis-komponent").innerHTML = "";
+      komponentSeçiminiSıfırla();
       return önbaxışıYenilə(canlı);
     }
     if (n.xəta) {
+      if (!seçim) komponentSeçiminiSıfırla();
       xət.hidden = false; xət.textContent = n.xəta;
       if (!canlı) çərçivə.src = "about:blank";
       return;
@@ -1396,9 +1398,17 @@ async function önbaxışıYenilə(canlı = false) {
     xət.hidden = true;
   } catch (x) {
     // Seçilmiş komponent artıq yoxdursa — birincisi ilə yenidən
-    if ($("#onbaxis-komponent").value) { $("#onbaxis-komponent").innerHTML = ""; return önbaxışıYenilə(); }
+    if ($("#onbaxis-komponent").value) { komponentSeçiminiSıfırla(); return önbaxışıYenilə(); }
+    komponentSeçiminiSıfırla();
     xət.textContent = x.message;
   }
+}
+
+/** Komponent seçimini boşaldır və gizlədir (boş açılan siyahı görünməsin). */
+function komponentSeçiminiSıfırla() {
+  const s = $("#onbaxis-komponent");
+  s.innerHTML = "";
+  s.hidden = true;
 }
 
 $("#onbaxis-komponent").addEventListener("change", () => { önbaxışıYenilə(); dizaynıPlanla(0); });

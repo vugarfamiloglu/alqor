@@ -1305,6 +1305,12 @@ class Brauzer(unittest.TestCase):
             '            {vidjet.sahə(etiket: "Ad", ad: "ad")}\n'
             "        </div>\n    son\nson\n", encoding="utf-8")
         (cls.qovluq / "dbq.alq").write_text(Debaq.KOD, encoding="utf-8")
+        (cls.qovluq / "iki.alq").write_text(
+            "gətir vidjet\n\nkomponent Birinci\n    göstər()\n"
+            '        qaytar vidjet.başlıq("Bir")\n    son\nson\n\n'
+            "komponent İkinci\n    göstər()\n"
+            '        qaytar vidjet.başlıq("İki")\n    son\nson\n',
+            encoding="utf-8")
         cls.studio = Studio(cls.qovluq).fonda_başlat()
         try:
             cls.pw = sp().start()
@@ -1481,7 +1487,11 @@ class Brauzer(unittest.TestCase):
             p.wait_for_timeout(100)
         el.click()
         p.wait_for_selector("#xus-forma:not([hidden]) .xüs-başlıq")
-        self.assertIn("vidjet.sahə", p.inner_text(".xüs-başlıq"))
+        # Xüsusiyyətlər paneli asinxron yenilənir — əvvəlki seçim bir an
+        # görünə bilər
+        self.gözləŞərt(lambda: "vidjet.sahə" in p.inner_text(".xüs-başlıq"),
+                       "xüsusiyyətlər sahəni göstərmədi: " +
+                       p.inner_text(".xüs-başlıq"))
         # Fayl saxlanılıb
         self.assertIn("vidjet.sətir", (self.qovluq / "dizayn.alq").read_text(
             encoding="utf-8"))
@@ -1778,6 +1788,30 @@ class Brauzer(unittest.TestCase):
         p.click('.st-düyün:has-text("göstər")')
         mövqe = ta.evaluate("t => t.value.slice(0, t.selectionStart)")
         self.assertEqual(mövqe.count("\n"), 3)
+
+    def test_önbaxış_komponent_seçimi(self):
+        p = self.səhifə
+        s = p.locator("#onbaxis-komponent")
+        self.aç("boş.alq")
+        p.keyboard.press("F6")
+        p.wait_for_selector("#onbaxis-panel", state="visible")
+        self.assertTrue(s.is_hidden())                 # komponentsiz fayl
+        self.aç("panel.alq")
+        self.gözləŞərt(lambda: p.locator("#onbaxis-cercive").get_attribute(
+            "src") not in (None, "", "about:blank"), "önbaxış yüklənmədi",
+            20)
+        self.assertTrue(s.is_hidden())                 # tək komponent
+        self.aç("iki.alq")
+        self.gözləŞərt(lambda: s.is_visible(), "seçim görünmədi", 20)
+        self.assertEqual(s.locator("option").all_inner_texts(),
+                         ["Birinci", "İkinci"])
+        əvvəl = p.locator("#onbaxis-cercive").get_attribute("src")
+        s.select_option("İkinci")
+        self.gözləŞərt(lambda: p.locator("#onbaxis-cercive").get_attribute(
+            "src") != əvvəl, "önbaxış yenilənmədi", 20)
+        self.assertEqual(s.input_value(), "İkinci")
+        self.aç("boş.alq")
+        self.gözləŞərt(lambda: s.is_hidden(), "boş seçim qaldı")
 
     def test_diaqnostika_dalğalı_xətt(self):
         ta = self.aç("boş.alq")
