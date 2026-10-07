@@ -32,7 +32,7 @@ Və `ə`, `ı`, `ş` hərfləri tam işləyir.
 |---|---|
 | **Konsol proqramları** | Hesablayıcılar, fayl emalı, avtomatlaşdırma skriptləri |
 | **Veb saytlar və API-lər** | Onlayn mağaza, bloq, REST API |
-| **Desktop tətbiqlər** | Pəncərəli proqramlar — menyu, dialoq, 57 hazır element |
+| **Desktop tətbiqlər** | Pəncərəli proqramlar — menyu, dialoq, 118 hazır element |
 | **Kitabxanalar** | Başqalarının istifadə edəcəyi paketlər |
 
 Hamısı **eyni dildə**, eyni sintaksislə.
