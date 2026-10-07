@@ -872,7 +872,11 @@ def statistika(icraçı, etiket: Any = "", dəyər: Any = "",
            _m(dəyər, icraçı)),
     ]
     if dəyişmə is not None:
-        d = _say(dəyişmə)
+        # Ədəd (12) və ya mətn ("+12%", "−3,5 %") — işarə və faiz atılır
+        d = dəyişmə if isinstance(dəyişmə, (int, float)) and \
+            not isinstance(dəyişmə, bool) else _say(
+                _m(dəyişmə, icraçı).replace("%", "").replace("−", "-")
+                .replace("+", "").strip())
         işarə = "▲" if d > 0 else ("▼" if d < 0 else "■")
         əlavəSinif = "artıb" if d > 0 else ("azalıb" if d < 0 else "sabit")
         daxili.append(_E("span", {
