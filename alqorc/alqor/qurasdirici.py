@@ -6,7 +6,7 @@ sistemi üçün quraşdırılan formaya bükür. Xarici alət TƏLƏB OLUNMUR �
 hamısı saf Python ilə yaradılır:
 
     qurma/<ad>_<versiya>_all.deb            Debian/Ubuntu (apt install ./…)
-    qurma/<ad>-<versiya>-windows.zip        Windows: "Quraşdır.cmd" — Başlat
+    qurma/<ad>-<versiya>-windows.zip        Windows: "Qurasdir.cmd" — Başlat
                                             menyusu, masaüstü ikonu, fayl
                                             əlaqələri, "Proqramlar"-da silmə
     qurma/<ad>-<versiya>-windows.iss        Inno Setup skripti (`iscc` varsa
@@ -218,6 +218,11 @@ $ErrorActionPreference = "Stop"
 $Ad = "{ad}"
 $Basliq = "{başlıq_ps}"
 $Menbe = $PSScriptRoot
+trap {{
+    Write-Host "✖ Quraşdırma alınmadı: $_" -ForegroundColor Red
+    Read-Host "Bağlamaq üçün Enter basın"
+    exit 1
+}}
 $Hedef = Join-Path $env:LOCALAPPDATA "Programs\$Ad"
 
 function Python-Tap {{
@@ -277,7 +282,7 @@ Set-ItemProperty $Sil "NoModify" 1 -Type DWord
 Set-ItemProperty $Sil "NoRepair" 1 -Type DWord
 
 Write-Host "✓ $Basliq quraşdırıldı — Başlat menyusunda və masaüstündə." -ForegroundColor Green
-Start-Sleep -Seconds 2
+Read-Host "Bağlamaq üçün Enter basın"
 '''
 
 _PS_SİL = r'''# {başlıq} — silmə
@@ -300,7 +305,7 @@ Write-Host "✓ $Basliq silindi."
 '''
 
 _CMD = '''@echo off
-rem {başlıq} — başladıcı (Alqor `qur --quraşdırıcı` yaradıb)
+rem {ad} - Alqor tetbiqi (qur --qurasdirici yaradib)
 setlocal
 set PYTHONIOENCODING=utf-8
 set PYTHONUTF8=1
@@ -309,9 +314,9 @@ if exist "%K%python\\{python_exe}" (
     {start}"%K%python\\{python_exe}" "%K%{ad}.pyz" {arq} %*
     exit /b %errorlevel%
 )
-where py >nul 2>nul
+where {py} >nul 2>nul
 if %errorlevel%==0 (
-    {start}py -3 "%K%{ad}.pyz" {arq} %*
+    {start}{py} -3 "%K%{ad}.pyz" {arq} %*
 ) else (
     {start}{python_sistem} "%K%{ad}.pyz" {arq} %*
 )
@@ -341,7 +346,7 @@ ChangesAssociations=yes
 Name: "tr"; MessagesFile: "compiler:Languages\\Turkish.isl"
 
 [Files]
-Source: "{mənbə}\\*"; DestDir: "{{app}}"; Flags: recursesubdirs ignoreversion; Excludes: "quraşdır.ps1,Quraşdır.cmd,sil.ps1"
+Source: "{mənbə}\\*"; DestDir: "{{app}}"; Flags: recursesubdirs ignoreversion; Excludes: "qurasdir.ps1,Qurasdir.cmd,sil.ps1"
 
 [Icons]
 Name: "{{group}}\\{başlıq}"; Filename: "{{app}}\\{ad}.cmd"; IconFilename: "{{app}}\\ikon.ico"; Flags: {pəncərə_iss}
@@ -390,23 +395,26 @@ def windows(t: Tətbiq, çıxış: Path, python_daxil: bool = False,
         başlıq=t.başlıq, ad=ad, arq=" ".join(t.arqumentlər),
         python_exe="pythonw.exe" if pəncərəli else "python.exe",
         python_sistem="pythonw" if pəncərəli else "python",
+        py="pyw" if pəncərəli else "py",
         start='start "" ' if pəncərəli else ""
-    ).replace("\n", "\r\n"), encoding="utf-8")
+    ).replace("\n", "\r\n"), encoding="ascii")
     uz = ", ".join(f'"{u}"' for u in t.uzantılar)
     f = dict(ad=ad, başlıq=t.başlıq, başlıq_ps=_ps(t.başlıq),
              naşir_ps=_ps(t.naşir), versiya=t.versiya_təmiz, uzantılar=uz,
              pəncərə_stili=7 if pəncərəli else 1)
     # PowerShell 5.1 UTF-8-i yalnız BOM ilə tanıyır
-    (qovluq / "quraşdır.ps1").write_text(
+    # Fayl adları ASCII-dir: cmd.exe .cmd faylını OEM kod səhifəsində
+    # oxuyur — `ş`, `ı` olan ad pozulur və skript tapılmır
+    (qovluq / "qurasdir.ps1").write_text(
         "﻿" + _PS_QURAŞDIR.format(**f).replace("\n", "\r\n"),
         encoding="utf-8")
     (qovluq / "sil.ps1").write_text(
         "﻿" + _PS_SİL.format(**f).replace("\n", "\r\n"),
         encoding="utf-8")
-    (qovluq / "Quraşdır.cmd").write_text(
+    (qovluq / "Qurasdir.cmd").write_text(
         "@echo off\r\npowershell -NoProfile -ExecutionPolicy Bypass -File "
-        '"%~dp0quraşdır.ps1"\r\nif errorlevel 1 pause\r\n',
-        encoding="utf-8")
+        '"%~dp0qurasdir.ps1"\r\nif %errorlevel% neq 0 pause\r\n',
+        encoding="ascii")
     if python_daxil:
         embed = _python_embed(keş or Path.home() / ".cache" / "alqor")
         py = qovluq / "python"
@@ -559,6 +567,11 @@ def _aç() -> Path:
 
 def main() -> int:
     kök = _aç()
+    if sys.stdout is None or sys.stderr is None:
+        # `pythonw` (konsolsuz) — çıxış jurnal faylına gedir
+        jurnal = open(kök / "studio.log", "a", encoding="utf-8")
+        sys.stdout = sys.stdout or jurnal
+        sys.stderr = sys.stderr or jurnal
     sys.path.insert(0, str(kök))
     os.environ["PYTHONIOENCODING"] = "utf-8"
     import alqorc

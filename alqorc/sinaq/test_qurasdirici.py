@@ -80,10 +80,14 @@ class QuraşdırıcıSınağı(unittest.TestCase):
     def test_windows(self):
         z = zipfile.ZipFile(self.q / "qurma" / "kitab-refi-1.2.0-windows.zip")
         adlar = set(z.namelist())
-        for f in ("kitab-refi.pyz", "kitab-refi.cmd", "Quraşdır.cmd",
-                  "quraşdır.ps1", "sil.ps1", "ikon.ico"):
+        for f in ("kitab-refi.pyz", "kitab-refi.cmd", "Qurasdir.cmd",
+                  "qurasdir.ps1", "sil.ps1", "ikon.ico"):
             self.assertIn(f"kitab-refi/{f}", adlar)
-        ps = z.read("kitab-refi/quraşdır.ps1")
+        # cmd.exe OEM kod səhifəsində oxuyur — .cmd faylları ASCII olmalıdır
+        for ad in adlar:
+            if ad.endswith(".cmd"):
+                z.read(ad).decode("ascii")
+        ps = z.read("kitab-refi/qurasdir.ps1")
         self.assertTrue(ps.startswith("﻿".encode()))      # BOM
         ps = ps.decode("utf-8-sig")
         self.assertIn('$Basliq = "Kitab Rəfi"', ps)
