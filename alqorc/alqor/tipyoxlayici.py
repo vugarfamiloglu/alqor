@@ -882,6 +882,7 @@ class TipYoxlayıcı:
         self.bağlamalar: list[Bağlama] = []
         self._son_obyekt_tipi: T.Tip | None = None
         self._generik_adlar: frozenset[str] = frozenset()
+        self._qaldırılmış_idxallar: set[int] = set()
         for ad, tip in _daxili_adlar().items():
             self.qlobal.elan(Bağlama(ad, tip, True, None, True, "daxili"))
 
@@ -907,6 +908,13 @@ class TipYoxlayıcı:
     # ── Elanların qaldırılması ────────────────────────────────────────
 
     def _elanları_qaldır(self, gövdə: list[A.Cümlə], ə: Əhatə) -> None:
+        # 0. `gətir` — modul tipləri funksiya imzalarında işlənə bilsin
+        #    (`funksiya f() -> pəncərə.Pəncərə`)
+        for c in gövdə:
+            if isinstance(c, A.İdxal):
+                self._c_idxal(c, ə)
+                self._qaldırılmış_idxallar.add(id(c))
+
         # 1. Sinif / sadalama adları (bir-birinə istinad edə bilsin)
         for c in gövdə:
             if isinstance(c, A.SinifElanı):
@@ -1098,9 +1106,22 @@ class TipYoxlayıcı:
             if b.elan_növü == "tip":
                 return b.tip
             if isinstance(b.tip, T.ModulTipi) and len(q.yol) > 1:
-                üzv = b.tip.üzvlər.get(q.yol[-1])
+                üzv: Any = b.tip
+                for h in q.yol[1:]:
+                    üzv = (üzv.üzvlər.get(h)
+                           if isinstance(üzv, T.ModulTipi) else None)
                 if isinstance(üzv, (T.SinifTipi, T.SadalamaTipi)):
                     return üzv
+                # `pəncərə.Pəncərə`, `http.Sorğu` — qurucu funksiyadır;
+                # annotasiyada onun yaratdığı obyektin tipi nəzərdə tutulur
+                if isinstance(üzv, T.FunksiyaTipi) and \
+                        q.yol[-1][:1].isupper() and \
+                        not T.naməlumdur(üzv.qaytarma):
+                    return üzv.qaytarma
+                if üzv is None and not self.sərbəstdir:
+                    self.x.xəta("ALQ-T002", "Naməlum tip", q.yer,
+                                f"`{b.tip.ad}` modulunda `{q.yol[-1]}` "
+                                "tipi yoxdur")
             return T.NAMƏLUM
 
         # Generik parametr: elan olunub (`f[Element]`) və ya qısa ad (`T`)
@@ -1414,6 +1435,8 @@ class TipYoxlayıcı:
         return False
 
     def _c_idxal(self, c: A.İdxal, ə: Əhatə) -> bool:
+        if id(c) in self._qaldırılmış_idxallar:
+            return False                     # artıq qaldırılıb
         ad = ".".join(c.yol) if c.yol else (c.mətn_yolu or "")
         modul = self.modullar.get(ad)
 
