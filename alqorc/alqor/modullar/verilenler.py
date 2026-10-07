@@ -32,9 +32,11 @@ Parametrlər: `$1, $2…` (PostgreSQL üslubu) və ya `?`. Dəyərlər
 HEÇ VAXT SQL mətninə yapışdırılmır — SQL inyeksiyası mümkün deyil.
 Sorğu qurucusunda cədvəl/sütun adları və operatorlar yoxlanılır.
 
-Hazırda SQLite (Python-un daxili `sqlite3`). `postgres://` və
-`mysql://` bağlantıları üçün sürücü planlaşdırılır. `gözlə b.sorğu(…)`
-də işləyir (adi dəyər `gözlə`-dən olduğu kimi keçir).
+Sürücülər (hamısı asılılıqsız):
+    sqlite://yol.db, sqlite::yaddaş:      Python-un daxili `sqlite3`-ü
+    postgres://u:p@host:5432/baza         PostgreSQL protokolu v3 (_vb_pg)
+    mysql://u:p@host:3306/baza            MySQL / MariaDB (_vb_mysql)
+`gözlə b.sorğu(…)` də işləyir (adi dəyər `gözlə`-dən olduğu kimi keçir).
 """
 
 from __future__ import annotations
@@ -46,6 +48,8 @@ from pathlib import Path
 from typing import Any
 
 from ..deyerler import AlqorXəta, Daxili, Nümunə, tip_adı
+from ._vb_ortaq import (MəhdudiyyətPozuldu, Nəticə, SürücüXətası,
+                        gizli_ünvan, parametrləri_gəz)
 
 
 def _xəta(mesaj: str) -> AlqorXəta:
@@ -57,11 +61,11 @@ _OPERATORLAR = {"=", "!=", "<>", "<", "<=", ">", ">=", "LIKE", "NOT LIKE",
                 "IN", "NOT IN", "IS", "IS NOT", "bənzər", "içində"}
 
 
-def _ad(x: Any, nə: str) -> str:
+def _ad(x: Any, nə: str, sitat: str = '"') -> str:
     """Cədvəl/sütun adı — yalnız hərf, rəqəm, `_` (inyeksiyaya qarşı)."""
     if not isinstance(x, str) or not all(_AD.match(h) for h in x.split(".")):
         raise _xəta(f"yanlış {nə} adı: {x!r}")
-    return ".".join(f'"{h}"' for h in x.split("."))
+    return ".".join(f"{sitat}{h}{sitat}" for h in x.split("."))
 
 
 def _dollar(sql: str) -> str:
@@ -101,28 +105,96 @@ def _dəyər(d: Any) -> Any:
                 "məntiq, bayt və ya boş olmalıdır")
 
 
-class Bağlantı:
-    ALQOR_TİP_ADI = "bağlantı"
+class _SqliteSürücü:
+    ad = "sqlite"
+    sitat = '"'
+    qaytarma = False
 
     def __init__(self, ünvan: str, yol: str):
-        self.ünvan = ünvan
-        self.yol = yol
-        self.kilid = threading.RLock()
         try:
             self.c = sqlite3.connect(yol, check_same_thread=False,
                                      isolation_level=None)
         except sqlite3.Error as x:
-            raise _xəta(f"{ünvan}: bağlantı alınmadı — {x}")
-        self.c.row_factory = sqlite3.Row
+            raise SürücüXətası(f"bağlantı alınmadı — {x}") from None
         self.c.execute("PRAGMA foreign_keys = ON")
+
+    def icra(self, sql: str, p: tuple) -> Nəticə:
+        try:
+            k = self.c.execute(_dollar(sql), p)
+        except sqlite3.IntegrityError as x:
+            raise MəhdudiyyətPozuldu(str(x)) from None
+        except sqlite3.Error as x:
+            raise SürücüXətası(str(x)) from None
+        n = Nəticə(say=k.rowcount, son_id=k.lastrowid or None)
+        if k.description:
+            n.sütunlar = [d[0] for d in k.description]
+            n.sətirlər = [tuple(r) for r in k.fetchall()]
+        return n
+
+    def skript(self, sql: str) -> list[Nəticə]:
+        try:
+            self.c.executescript(sql)
+        except sqlite3.IntegrityError as x:
+            raise MəhdudiyyətPozuldu(str(x)) from None
+        except sqlite3.Error as x:
+            raise SürücüXətası(str(x)) from None
+        return [Nəticə()]
+
+    def bağla(self) -> None:
+        self.c.close()
+
+    def limit(self, limit: int | None, atla: int | None) -> str:
+        if limit is None and atla is None:
+            return ""
+        s = f" LIMIT {int(limit) if limit is not None else -1}"
+        return s + (f" OFFSET {int(atla)}" if atla is not None else "")
+
+    def cədvəllər_sql(self) -> str:
+        return ("SELECT name FROM sqlite_master WHERE type='table' AND name "
+                "NOT LIKE 'sqlite_%' ORDER BY name")
+
+    def tip(self, növ: str, açar: bool) -> str:
+        if açar and növ == "tam":
+            return "INTEGER PRIMARY KEY AUTOINCREMENT"
+        return {"tam": "INTEGER", "onluq": "REAL", "məntiq": "BOOLEAN",
+                "bayt": "BLOB"}.get(növ, "TEXT") + \
+            (" PRIMARY KEY" if açar else "")
+
+
+class Bağlantı:
+    ALQOR_TİP_ADI = "bağlantı"
+
+    def __init__(self, ünvan: str, sürücü: Any):
+        self.ünvan = ünvan
+        self.d = sürücü
+        self.kilid = threading.RLock()
         self.tranzaksiyada = 0
         self.son_id: int | None = None
 
-    def __repr__(self) -> str:
-        return f"<bağlantı {self.ünvan}>"
+    @property
+    def sitat(self) -> str:
+        return self.d.sitat
 
-    def _icra(self, sql: str, parametrlər: tuple) -> sqlite3.Cursor:
-        if self.c is None:
+    def __repr__(self) -> str:
+        return f"<bağlantı {gizli_ünvan(self.ünvan)}>"
+
+    def ad(self, x: Any, nə: str = "sütun") -> str:
+        return _ad(x, nə, self.d.sitat)
+
+    def _hazırla(self, sql: str) -> str:
+        """PostgreSQL `?` bilmir — `$n`-siz sorğuda `?` → `$1, $2…`."""
+        if self.d.ad != "postgres" or "?" not in sql:
+            return sql
+        nömrəli = []
+        parametrləri_gəz(sql, lambda n_, i: nömrəli.append(n_) or "")
+        if "$" in nömrəli:
+            return sql
+        say = iter(range(1, 10 ** 6))
+        return parametrləri_gəz(
+            sql, lambda n_, i: f"${i}" if n_ == "$" else f"${next(say)}")
+
+    def _icra(self, sql: str, parametrlər: tuple) -> Nəticə:
+        if self.d is None:
             raise _xəta("bağlantı bağlanıb")
         if not isinstance(sql, str):
             raise AlqorXəta("TipXətası", "SQL mətn olmalıdır", None,
@@ -130,98 +202,125 @@ class Bağlantı:
         p = tuple(_dəyər(x) for x in parametrlər)
         try:
             with self.kilid:
-                k = self.c.execute(_dollar(sql), p)
-                if k.lastrowid:
-                    self.son_id = k.lastrowid
-                return k
-        except sqlite3.IntegrityError as x:
+                n = self.d.icra(self._hazırla(sql), p)
+        except MəhdudiyyətPozuldu as x:
             raise AlqorXəta("MəhdudiyyətXətası", f"məhdudiyyət pozuldu: {x}",
-                            None, "ALQ-R013")
-        except sqlite3.Error as x:
-            raise _xəta(f"{x} — SQL: {sql.strip()[:200]}")
+                            None, "ALQ-R013") from None
+        except SürücüXətası as x:
+            raise _xəta(f"{x} — SQL: {sql.strip()[:200]}") from None
+        if n.son_id:
+            self.son_id = n.son_id
+        return n
+
+    def _əmr(self, sql: str) -> None:
+        self._icra(sql, ())
 
     def sorğu(self, sql: str, *p) -> list[dict]:
-        return [dict(s) for s in self._icra(sql, p).fetchall()]
+        return self._icra(sql, p).lüğətlər()
 
     def bir_sətir(self, sql: str, *p) -> dict | None:
-        s = self._icra(sql, p).fetchone()
-        return dict(s) if s is not None else None
+        r = self._icra(sql, p).lüğətlər()
+        return r[0] if r else None
 
     def bir_dəyər(self, sql: str, *p) -> Any:
-        s = self._icra(sql, p).fetchone()
-        return s[0] if s is not None else None
+        r = self._icra(sql, p).sətirlər
+        return r[0][0] if r and r[0] else None
 
     def icra(self, sql: str, *p) -> int:
-        return self._icra(sql, p).rowcount
+        return self._icra(sql, p).say
 
     def skript(self, sql: str) -> None:
         try:
             with self.kilid:
-                self.c.executescript(sql)
-        except sqlite3.Error as x:
-            raise _xəta(str(x))
+                self.d.skript(sql)
+        except MəhdudiyyətPozuldu as x:
+            raise AlqorXəta("MəhdudiyyətXətası", f"məhdudiyyət pozuldu: {x}",
+                            None, "ALQ-R013") from None
+        except SürücüXətası as x:
+            raise _xəta(str(x)) from None
 
     def tranzaksiya(self, icraçı, f) -> Any:
+        return self._tranzaksiya(lambda: icraçı._çağır(f, [self], {}, None))
+
+    def _tranzaksiya(self, f) -> Any:
         with self.kilid:
             iç = self.tranzaksiyada > 0
             ad = f"alqor_{self.tranzaksiyada}"
-            self.c.execute(f"SAVEPOINT {ad}" if iç else "BEGIN")
+            self._əmr(f"SAVEPOINT {ad}" if iç else "BEGIN")
             self.tranzaksiyada += 1
             try:
-                n = icraçı._çağır(f, [self], {}, None)
+                n = f()
             except BaseException:
                 self.tranzaksiyada -= 1
-                self.c.execute(f"ROLLBACK TO {ad}" if iç else "ROLLBACK")
-                if iç:
-                    self.c.execute(f"RELEASE {ad}")
+                try:
+                    self._əmr(f"ROLLBACK TO SAVEPOINT {ad}" if iç
+                              else "ROLLBACK")
+                    if iç:
+                        self._əmr(f"RELEASE SAVEPOINT {ad}")
+                except AlqorXəta:
+                    pass
                 raise
             self.tranzaksiyada -= 1
-            self.c.execute(f"RELEASE {ad}" if iç else "COMMIT")
+            self._əmr(f"RELEASE SAVEPOINT {ad}" if iç else "COMMIT")
             return n
 
+    tranzaksiya_python = _tranzaksiya
+
     def cədvəllər(self) -> list[str]:
-        return [s[0] for s in self._icra(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name "
-            "NOT LIKE 'sqlite_%' ORDER BY name", ()).fetchall()]
+        return [s[0] for s in self._icra(self.d.cədvəllər_sql(), ()).sətirlər]
 
     def sütunlar(self, cədvəl: str) -> list[dict]:
-        return [{"ad": s["name"], "tip": s["type"], "boşOlaBilər":
-                 not s["notnull"], "açar": bool(s["pk"])}
-                for s in self._icra(f"PRAGMA table_info({_ad(cədvəl, 'cədvəl')})",
-                                    ()).fetchall()]
+        if self.d.ad == "sqlite":
+            return [{"ad": s["name"], "tip": s["type"], "boşOlaBilər":
+                     not s["notnull"], "açar": bool(s["pk"])}
+                    for s in self._icra(
+                        f"PRAGMA table_info({self.ad(cədvəl, 'cədvəl')})",
+                        ()).lüğətlər()]
+        _ad(cədvəl, "cədvəl")
+        return [{"ad": s["ad"], "tip": s["tip"], "boşOlaBilər": bool(s["boş"]),
+                 "açar": bool(s["açar"])}
+                for s in self._icra(self.d.sütunlar_sql(), (cədvəl,))
+                .lüğətlər()]
 
     def miqrasiya(self, qovluq: str) -> list[str]:
         q = Path(qovluq)
         if not q.is_dir():
             raise AlqorXəta("FaylTapılmadıXətası",
                             f'"{qovluq}" qovluğu tapılmadı', None, "ALQ-R009")
-        self._icra("CREATE TABLE IF NOT EXISTS _alqor_miqrasiyalar "
-                   "(ad TEXT PRIMARY KEY, vaxt TEXT DEFAULT "
-                   "CURRENT_TIMESTAMP)", ())
+        mətn_tipi = "VARCHAR(191)" if self.d.ad == "mysql" else "TEXT"
+        self._əmr("CREATE TABLE IF NOT EXISTS _alqor_miqrasiyalar "
+                  f"(ad {mətn_tipi} PRIMARY KEY, vaxt TIMESTAMP DEFAULT "
+                  "CURRENT_TIMESTAMP)")
         olan = {s["ad"] for s in self.sorğu(
             "SELECT ad FROM _alqor_miqrasiyalar")}
         tətbiq = []
         for f in sorted(q.glob("*.sql")):
             if f.name in olan:
                 continue
-            sql = f.read_text(encoding="utf-8")
+            if not re.fullmatch(r"[\w.\-]+", f.name):
+                raise _xəta(f"miqrasiya faylının adı yanlışdır: {f.name}")
+            sql = f.read_text(encoding="utf-8").strip().rstrip(";")
             with self.kilid:
                 try:
-                    self.c.executescript(
-                        "BEGIN;\n" + sql + "\n;INSERT INTO "
-                        "_alqor_miqrasiyalar (ad) VALUES ('"
-                        + f.name.replace("'", "''") + "');\nCOMMIT;")
-                except sqlite3.Error as x:
-                    if self.c.in_transaction:
-                        self.c.execute("ROLLBACK")
-                    raise _xəta(f"miqrasiya {f.name}: {x}")
+                    self.d.skript(
+                        "BEGIN;\n" + sql + ";\nINSERT INTO "
+                        "_alqor_miqrasiyalar (ad) VALUES ('" + f.name
+                        + "');\nCOMMIT;")
+                except SürücüXətası as x:
+                    try:
+                        # `skript` yox: sqlite3-ün executescript-i əvvəlcə
+                        # COMMIT edərdi
+                        self.d.icra("ROLLBACK", ())
+                    except SürücüXətası:
+                        pass
+                    raise _xəta(f"miqrasiya {f.name}: {x}") from None
             tətbiq.append(f.name)
         return tətbiq
 
     def bağla(self) -> None:
-        if self.c is not None:
-            self.c.close()
-            self.c = None
+        if self.d is not None:
+            self.d.bağla()
+            self.d = None
 
 
 # ── Sorğu qurucusu ────────────────────────────────────────────────────
@@ -231,7 +330,7 @@ class Qurucu:
 
     def __init__(self, b: Bağlantı, cədvəl: str):
         self.b = b
-        self.cədvəl = _ad(cədvəl, "cədvəl")
+        self.cədvəl = b.ad(cədvəl, "cədvəl")
         self.sütunlar = "*"
         self.şərtlər: list[tuple[str, str, list]] = []
         self.sıra: list[str] = []
@@ -247,7 +346,7 @@ class Qurucu:
 
     def seç(self, *sütunlar) -> "Qurucu":
         n = self._kopya()
-        n.sütunlar = ", ".join(_ad(s, "sütun") for s in sütunlar) or "*"
+        n.sütunlar = ", ".join(self.b.ad(s) for s in sütunlar) or "*"
         return n
 
     def harada(self, sütun: str, op: str, dəyər: Any = None,
@@ -259,7 +358,7 @@ class Qurucu:
         if op_ not in _OPERATORLAR:
             raise _xəta(f"operator tanınmır: {op!r} — "
                         "=, !=, <, <=, >, >=, LIKE, IN, IS")
-        s = _ad(sütun, "sütun")
+        s = self.b.ad(sütun)
         if op_ in ("IN", "NOT IN"):
             siyahı = list(dəyər) if isinstance(dəyər, (list, tuple, set)) \
                 else [dəyər]
@@ -283,7 +382,7 @@ class Qurucu:
              "desc": "DESC"}.get(str(istiqamət).lower())
         if i is None:
             raise _xəta("istiqamət `artan` və ya `azalan` olmalıdır")
-        n.sıra.append(f"{_ad(sütun, 'sütun')} {i}")
+        n.sıra.append(f"{self.b.ad(sütun)} {i}")
         return n
 
     def limit(self, n_: int) -> "Qurucu":
@@ -310,15 +409,12 @@ class Qurucu:
         s = f"SELECT {self.sütunlar} FROM {self.cədvəl}{h}"
         if self.sıra:
             s += " ORDER BY " + ", ".join(self.sıra)
-        if self.limit_ is not None or self.atla_ is not None:
-            s += f" LIMIT {self.limit_ if self.limit_ is not None else -1}"
-        if self.atla_ is not None:
-            s += f" OFFSET {self.atla_}"
+        s += self.b.d.limit(self.limit_, self.atla_)
         return s, p
 
     def al(self) -> list[dict]:
         s, p = self.sql()
-        return [dict(r) for r in self.b._icra(s, tuple(p)).fetchall()]
+        return self.b._icra(s, tuple(p)).lüğətlər()
 
     def ilk(self) -> dict | None:
         r = self.limit(1).al()
@@ -326,8 +422,8 @@ class Qurucu:
 
     def say(self) -> int:
         h, p = self._harada()
-        return self.b._icra(f"SELECT COUNT(*) FROM {self.cədvəl}{h}",
-                            tuple(p)).fetchone()[0]
+        return int(self.b._icra(f"SELECT COUNT(*) FROM {self.cədvəl}{h}",
+                                tuple(p)).sətirlər[0][0])
 
     def əlavə_et(self, l: Any) -> int | None:
         if isinstance(l, Nümunə):
@@ -338,10 +434,16 @@ class Qurucu:
                 if l else None
         if not isinstance(l, dict) or not l:
             raise _xəta("`əlavəEt` boş olmayan lüğət gözləyir")
-        sütunlar = ", ".join(_ad(a, "sütun") for a in l)
-        k = self.b._icra(f"INSERT INTO {self.cədvəl} ({sütunlar}) VALUES "
-                         f"({', '.join('?' * len(l))})", tuple(l.values()))
-        return k.lastrowid
+        sütunlar = ", ".join(self.b.ad(a) for a in l)
+        sql = (f"INSERT INTO {self.cədvəl} ({sütunlar}) VALUES "
+               f"({', '.join('?' * len(l))})")
+        if self.b.d.qaytarma:
+            k = self.b._icra(sql + " RETURNING *", tuple(l.values()))
+            if not k.sətirlər:
+                return None
+            r = dict(zip(k.sütunlar, k.sətirlər[0]))
+            return r.get("id", k.sətirlər[0][0])
+        return self.b._icra(sql, tuple(l.values())).son_id
 
     def yenilə(self, l: dict) -> int:
         if not isinstance(l, dict) or not l:
@@ -350,9 +452,9 @@ class Qurucu:
             raise _xəta("`yenilə` şərtsiz bütün sətirləri dəyişərdi — "
                         "`harada(…)` əlavə edin")
         h, p = self._harada()
-        təyin = ", ".join(f"{_ad(a, 'sütun')} = ?" for a in l)
+        təyin = ", ".join(f"{self.b.ad(a)} = ?" for a in l)
         return self.b._icra(f"UPDATE {self.cədvəl} SET {təyin}{h}",
-                            tuple(list(l.values()) + p)).rowcount
+                            tuple(list(l.values()) + p)).say
 
     def sil(self) -> int:
         if not self.şərtlər:
@@ -360,23 +462,7 @@ class Qurucu:
                         "`harada(…)` əlavə edin")
         h, p = self._harada()
         return self.b._icra(f"DELETE FROM {self.cədvəl}{h}",
-                            tuple(p)).rowcount
-
-
-def _tranzaksiya_python(self, f):
-    with self.kilid:
-        self.c.execute("SAVEPOINT alqor_py")
-        try:
-            n = f()
-        except BaseException:
-            self.c.execute("ROLLBACK TO alqor_py")
-            self.c.execute("RELEASE alqor_py")
-            raise
-        self.c.execute("RELEASE alqor_py")
-        return n
-
-
-Bağlantı.tranzaksiya_python = _tranzaksiya_python
+                            tuple(p)).say
 
 
 Bağlantı.ALQOR_METODLARI = {
@@ -416,22 +502,36 @@ def bağlan(ünvan: str) -> Bağlantı:
     if not isinstance(ünvan, str):
         raise AlqorXəta("TipXətası", "bağlantı ünvanı mətn olmalıdır", None,
                         "ALQ-T001")
+
+    def sqlite(yol: str) -> Bağlantı:
+        try:
+            return Bağlantı(ünvan, _SqliteSürücü(ünvan, yol))
+        except SürücüXətası as x:
+            raise _xəta(f"{ünvan}: {x}") from None
+
     if ünvan in ("sqlite::yaddaş:", "sqlite::memory:", ":yaddaş:"):
-        return Bağlantı(ünvan, ":memory:")
+        return sqlite(":memory:")
     if ünvan.startswith("sqlite://"):
         yol = ünvan[len("sqlite://"):]
         if not yol:
             raise _xəta("sqlite yolu boşdur: sqlite://./ad.db")
         Path(yol).parent.mkdir(parents=True, exist_ok=True)
-        return Bağlantı(ünvan, yol)
+        return sqlite(yol)
     if ünvan.endswith((".db", ".sqlite", ".sqlite3")) and "://" not in ünvan:
-        return Bağlantı(ünvan, ünvan)
-    sxem = ünvan.split("://")[0] if "://" in ünvan else ünvan
-    if sxem in ("postgres", "postgresql", "mysql", "mariadb"):
-        raise _xəta(f"`{sxem}` sürücüsü hələ hazır deyil — hazırda "
-                    "sqlite://yol.db dəstəklənir")
-    raise _xəta(f"bağlantı ünvanı tanınmadı: {ünvan!r} (nümunə: "
-                "sqlite://./məlumat.db)")
+        return sqlite(ünvan)
+    sxem = ünvan.split("://")[0] if "://" in ünvan else ""
+    try:
+        if sxem in ("postgres", "postgresql"):
+            from ._vb_pg import PgSürücü
+            return Bağlantı(ünvan, PgSürücü(ünvan))
+        if sxem in ("mysql", "mariadb"):
+            from ._vb_mysql import MySürücü
+            return Bağlantı(ünvan, MySürücü(ünvan))
+    except SürücüXətası as x:
+        raise AlqorXəta("BağlantıXətası", f"{gizli_ünvan(ünvan)}: {x}",
+                        None, "ALQ-R013") from None
+    raise _xəta(f"bağlantı ünvanı tanınmadı: {gizli_ünvan(ünvan)!r} "
+                "(sqlite://yol.db, postgres://…, mysql://…)")
 
 
 def qur(icraçı) -> dict[str, Any]:

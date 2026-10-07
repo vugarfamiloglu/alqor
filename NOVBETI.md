@@ -2,7 +2,7 @@
 
 > Yeni sessiyada işə buradan başlayın. İş birbaşa `main` budağında
 > aparılır; hər addımdan sonra commit + push.
-> Sınaq: `cd alqorc && python sina.py --nümunələr` (1068 sınaq keçir).
+> Sınaq: `cd alqorc && python sina.py --nümunələr` (1096 sınaq keçir).
 > Studio brauzer sınaqları Playwright ilə: `python -m unittest sinaq.test_studio`.
 
 ## ✅ Hazır olanlar
@@ -19,7 +19,7 @@
 - pəncərə (desktop), vidjet — **118 element** (veb + desktop, `üslub:`)
 - `alqorc/alqor/modullar/` (tənbəl yüklənir): kodlaşdırma, csv, toml, yaml,
   xml, html, konfiq, sıxma, şifrə (AES-256-GCM, scrypt, JWT → `tokenYarat`),
-  http (WebSocket də: `http.vebSoket`, server `s.soket`), şəbəkə (TCP/UDP), verilənlər (SQLite, sorğu qurucusu, tranzaksiya,
+  http (WebSocket də: `http.vebSoket`, server `s.soket`), şəbəkə (TCP/UDP), verilənlər (SQLite, PostgreSQL, MySQL/MariaDB, sorğu qurucusu, tranzaksiya,
   miqrasiya)
 
 **Alətlər**
@@ -47,7 +47,7 @@
 
 | İş | Nə qalıb |
 |---|---|
-| verilənlər | yalnız SQLite — PostgreSQL/MySQL sürücüsü və ORM modelləri (`@cədvəl`, `Model`) yoxdur |
+| verilənlər | ORM modelləri (`@cədvəl`, `Model`) yoxdur — SQLite/PostgreSQL/MySQL sürücüləri ✅ |
 | qur | yalnız `.pyz` — quraşdırıcı yoxdur |
 | Dil məsələləri | `hər x üçün siyahı içində` söz sırası; `5.` yazılışı spesifikasiya ilə uyğun deyil (bax `alqorc/VEZIYYET.md`) |
 
