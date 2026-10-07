@@ -48,6 +48,10 @@ QEYD: dict[str, str] = {
     "validasiya": "validasiya",
     "lokalizasiya": "lokalizasiya",
     "poçt": "poct",
+    "şəkil": "sekil",
+    "qrafik": "qrafik",
+    "pdf": "pdf",
+    "ffi": "ffi",
 }
 
 # Operator dəstəkləyən obyekt tipləri: tip adı → modul (Alqor adı).
