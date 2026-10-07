@@ -97,21 +97,21 @@ yerli = { yol = "../yerli", ixtiyari = true }
 
 class LayihəTapmaSınağı(Qovluqlu):
     def test_yuxarı_qovluqda_tapır(self):
-        self.yaz("layihe.alqor", '[paket]\nad = "x"\n[qurma]\n'
-                                 'giriş = "a/b.alqor"\n')
+        self.yaz("layihe.alq", '[paket]\nad = "x"\n[qurma]\n'
+                                 'giriş = "a/b.alq"\n')
         alt = self.q / "mənbə" / "dərin"
         alt.mkdir(parents=True)
         l = L.tap(alt)
         self.assertEqual(l.ad, "x")
-        self.assertEqual(l.giriş, self.q.resolve() / "a" / "b.alqor")
+        self.assertEqual(l.giriş, self.q.resolve() / "a" / "b.alq")
         self.assertIsNone(L.tap(Path(tempfile.gettempdir()) / "yoxdur-x"))
 
     def test_standartlar(self):
-        self.yaz("layihe.alqor", "")
+        self.yaz("layihe.alq", "")
         l = L.tap(self.q)
         self.assertEqual(l.ad, self.q.resolve().name)
         self.assertEqual(l.tip_rejimi, "normal")
-        self.assertEqual(l.giriş.name, "əsas.alqor")
+        self.assertEqual(l.giriş.name, "əsas.alq")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -149,7 +149,7 @@ class YeniSınağı(Qovluqlu):
         for ş in L.ŞABLONLAR:
             q = self.q / ş
             for f in L.yarat(q, ş, ş):
-                if f.suffix == ".alqor" and f.name != "layihe.alqor":
+                if f.suffix == ".alq" and f.name != "layihe.alq":
                     m = f.read_text(encoding="utf-8")
                     self.assertEqual(formatla(m).mətn, m, f"{ş}/{f.name}")
 
@@ -165,7 +165,7 @@ class YeniSınağı(Qovluqlu):
     def test_cli(self):
         c = cli("yeni", "tətbiq", "--şablon", "veb", qovluq=self.q)
         self.assertEqual(c.returncode, 0, c.stderr)
-        self.assertTrue((self.q / "tətbiq" / "layihe.alqor").is_file())
+        self.assertTrue((self.q / "tətbiq" / "layihe.alq").is_file())
         c = cli("sına", qovluq=self.q / "tətbiq")
         self.assertEqual(c.returncode, 0, c.stdout + c.stderr)
         self.assertIn("2 uğurlu", c.stdout)
@@ -225,13 +225,13 @@ son
 '''
 
     def test_nəticələr(self):
-        n = S.faylı_sına(self.yaz("riyazi_sınaq.alqor", self.KOD))
+        n = S.faylı_sına(self.yaz("riyazi_sınaq.alq", self.KOD))
         self.assertEqual(n.xəta, "")
         v = {r.ad: r for r in n.nəticələr}
         self.assertEqual(v["uğurlu"].vəziyyət, S.UĞURLU)
         self.assertEqual(v["uğursuz"].vəziyyət, S.UĞURSUZ)
         self.assertIn("gözlənilən: 3", v["uğursuz"].mesaj)
-        self.assertIn("riyazi_sınaq.alqor:10", v["uğursuz"].yer)
+        self.assertIn("riyazi_sınaq.alq:10", v["uğursuz"].yer)
         self.assertEqual(v["xətalı"].vəziyyət, S.XƏTA)
         self.assertIn("BölməXətası", v["xətalı"].mesaj)
         self.assertEqual(v["atlanan"].vəziyyət, S.ATLANMIŞ)
@@ -242,23 +242,23 @@ son
         self.assertEqual(len(n.nəticələr), 8)
 
     def test_filtr(self):
-        n = S.faylı_sına(self.yaz("a_sınaq.alqor", self.KOD), "KVADRAT")
+        n = S.faylı_sına(self.yaz("a_sınaq.alq", self.KOD), "KVADRAT")
         self.assertEqual(len(n.nəticələr), 3)
 
     def test_ayrılmayan_fayl(self):
-        n = S.faylı_sına(self.yaz("pis_sınaq.alqor", "əgər onda\n"))
+        n = S.faylı_sına(self.yaz("pis_sınaq.alq", "əgər onda\n"))
         self.assertIn("ALQ-P", n.xəta)
 
     def test_fayl_kəşfi(self):
-        self.yaz("sınaq/bir.alqor", "")
-        self.yaz("mənbə/iki_sınaq.alqor", "")
-        self.yaz("mənbə/adi.alqor", "")
-        self.yaz("qurma/üç_sınaq.alqor", "")
+        self.yaz("sınaq/bir.alq", "")
+        self.yaz("mənbə/iki_sınaq.alq", "")
+        self.yaz("mənbə/adi.alq", "")
+        self.yaz("qurma/üç_sınaq.alq", "")
         adlar = sorted(f.name for f in S.sınaq_faylları([self.q]))
-        self.assertEqual(adlar, ["bir.alqor", "iki_sınaq.alqor"])
+        self.assertEqual(adlar, ["bir.alq", "iki_sınaq.alq"])
 
     def test_cli_çıxış_kodu_və_hesabat(self):
-        self.yaz("sınaq/x.alqor", self.KOD)
+        self.yaz("sınaq/x.alq", self.KOD)
         c = cli("sına", str(self.q / "sınaq"), qovluq=self.q)
         self.assertEqual(c.returncode, 1)
         self.assertIn("✗ uğursuz", c.stdout)
@@ -269,7 +269,7 @@ son
 class TestModuluSınağı(unittest.TestCase):
     def _nəticə(self, gövdə: str):
         with tempfile.TemporaryDirectory() as q:
-            p = Path(q) / "t_sınaq.alqor"
+            p = Path(q) / "t_sınaq.alq"
             p.write_text("gətir test\n@sınaq\nfunksiya t()\n" + gövdə
                          + "\nson\n", encoding="utf-8")
             return S.faylı_sına(p).nəticələr[0]
@@ -344,7 +344,7 @@ son
 '''
 
     def test_elementlər_və_imzalar(self):
-        f = senedci.fayl_sənədi(self.yaz("həndəsə.alqor", self.KOD))
+        f = senedci.fayl_sənədi(self.yaz("həndəsə.alq", self.KOD))
         self.assertTrue(f.sənəd.startswith("Həndəsə modulu."))
         adlar = [e.ad for e in f.elementlər]
         self.assertEqual(adlar, ["sahə", "Nöqtə"])
@@ -358,7 +358,7 @@ son
         self.assertEqual(nöqtə.üzvlər[1].sənəd, "Məsafə.")
 
     def test_markdown_və_html(self):
-        f = senedci.fayl_sənədi(self.yaz("h.alqor", self.KOD))
+        f = senedci.fayl_sənədi(self.yaz("h.alq", self.KOD))
         md = senedci.markdown([f], "Həndəsə")
         self.assertIn("## funksiya `sahə`", md)
         h = senedci.html_sənəd([f], "Həndəsə <x>")
@@ -368,13 +368,13 @@ son
         self.assertNotIn("köməkçi", h)
 
     def test_sənəd_nümunəsi_sınanır(self):
-        n = S.sənədi_sına(self.yaz("h.alqor", self.KOD))
+        n = S.sənədi_sına(self.yaz("h.alq", self.KOD))
         self.assertEqual([r.vəziyyət for r in n.nəticələr], [S.UĞURLU])
 
     def test_cli(self):
-        self.yaz("layihe.alqor", '[paket]\nad = "həndəsə"\n'
-                                 '[qurma]\ngiriş = "mənbə/h.alqor"\n')
-        self.yaz("mənbə/h.alqor", self.KOD)
+        self.yaz("layihe.alq", '[paket]\nad = "həndəsə"\n'
+                                 '[qurma]\ngiriş = "mənbə/h.alq"\n')
+        self.yaz("mənbə/h.alq", self.KOD)
         c = cli("sənəd", qovluq=self.q)
         self.assertEqual(c.returncode, 0, c.stderr)
         self.assertTrue((self.q / "sənəd" / "indeks.html").is_file())
@@ -392,7 +392,7 @@ class QurmaSınağı(Qovluqlu):
         super().setUp()
         L.yarat(self.q / "app", "app", "konsol")
         self.l = L.tap(self.q / "app")
-        self.yaz("app/sınaq/gizli.alqor", "// paketə düşməməlidir")
+        self.yaz("app/sınaq/gizli.alq", "// paketə düşməməlidir")
 
     def test_paket_məzmunu_və_işləməsi(self):
         n = qurucu.qur(self.l, ALQORC.parent)
@@ -402,8 +402,8 @@ class QurmaSınağı(Qovluqlu):
         self.assertIn("__main__.py", adlar)
         self.assertIn("alqorc.py", adlar)
         self.assertIn("alqor/icraci.py", adlar)
-        self.assertIn("layihə/mənbə/əsas.alqor", adlar)
-        self.assertNotIn("layihə/sınaq/gizli.alqor", adlar)
+        self.assertIn("layihə/mənbə/əsas.alq", adlar)
+        self.assertNotIn("layihə/sınaq/gizli.alq", adlar)
         self.assertFalse(any(a.startswith("alqor/__pycache__")
                              for a in adlar))
         self.assertTrue(n.yol.read_bytes().startswith(b"#!/usr/bin/env"))
@@ -424,7 +424,7 @@ class QurmaSınağı(Qovluqlu):
         self.assertFalse(qurucu.təmizlə(self.l))
 
     def test_təmizlə_layihədən_kənara_çıxmır(self):
-        self.yaz("app/layihe.alqor", '[qurma]\nçıxış = "../kənar"\n')
+        self.yaz("app/layihe.alq", '[qurma]\nçıxış = "../kənar"\n')
         (self.q / "kənar").mkdir()
         with self.assertRaises(ValueError):
             qurucu.təmizlə(L.tap(self.q / "app"))
@@ -437,9 +437,9 @@ class QurmaSınağı(Qovluqlu):
 
     def test_işlət_proqram_arqumenti_bayraq_deyil(self):
         """`--`-dan sonrakı `--tip` proqramındır, tip yoxlaması deyil."""
-        self.yaz("arq.alqor", "funksiya əsas(a: siyahı[mətn])\n"
+        self.yaz("arq.alq", "funksiya əsas(a: siyahı[mətn])\n"
                               "    yaz(a)\nson\n")
-        c = cli("işlət", str(self.q / "arq.alqor"), "--", "--tip", "x")
+        c = cli("işlət", str(self.q / "arq.alq"), "--", "--tip", "x")
         self.assertEqual(c.stdout.strip(), '["--tip", "x"]')
 
 
@@ -449,19 +449,19 @@ class QurmaSınağı(Qovluqlu):
 
 class YerliİdxalSınağı(Qovluqlu):
     def test_yol_idxal_edən_fayla_nisbətəndir(self):
-        self.yaz("lib/riyazi.alqor", "funksiya iki() -> tam\n"
+        self.yaz("lib/riyazi.alq", "funksiya iki() -> tam\n"
                                      "    qaytar 2\nson\n")
-        self.yaz("app/əsas.alqor",
-                 'gətir "../lib/riyazi.alqor" kimi r\nyaz(r.iki())\n')
+        self.yaz("app/əsas.alq",
+                 'gətir "../lib/riyazi.alq" kimi r\nyaz(r.iki())\n')
         # Başqa qovluqdan işə salınır
-        c = cli("işlət", str(self.q / "app" / "əsas.alqor"),
+        c = cli("işlət", str(self.q / "app" / "əsas.alq"),
                 qovluq=Path(tempfile.gettempdir()))
         self.assertEqual(c.stdout.strip(), "2", c.stderr)
 
     def test_keş_icraçıya_bağlıdır(self):
         """İki interpretator eyni modulun vəziyyətini paylaşmır."""
         from test_icraci import işlət
-        m = self.yaz("say.alqor", "dəyişən n = 0\n"
+        m = self.yaz("say.alq", "dəyişən n = 0\n"
                                   "funksiya artır() -> tam\n"
                                   "    n += 1\n    qaytar n\nson\n")
         kod = f'gətir "{m.as_posix()}" kimi s\nyaz(s.artır())\n'

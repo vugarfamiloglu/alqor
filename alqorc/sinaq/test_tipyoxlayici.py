@@ -24,7 +24,7 @@ from alqor.xeta import XətaToplayıcı                 # noqa: E402
 def yoxla(kod: str, rejim: str = "normal"):
     """Kodu yoxlayır → (kodlar, yoxlayıcı). Ayırma xətası varsa qaldırır."""
     x = XətaToplayıcı()
-    s = Mənbə.mətndən(kod, "sınaq.alqor", x)
+    s = Mənbə.mətndən(kod, "sınaq.alq", x)
     ağac = Parser(Lekser(s, x).leksə(), s, x).ayır()
     if not x.uğurludur():
         raise AssertionError("ayırma xətası:\n" + x.hesabat(False))
@@ -52,7 +52,7 @@ def tipi(ifadə: str) -> str:
     from alqor import aac as A
     x = XətaToplayıcı()
     kod = f"dəyişən _nəticə = {ifadə}"
-    s = Mənbə.mətndən(kod, "sınaq.alqor", x)
+    s = Mənbə.mətndən(kod, "sınaq.alq", x)
     ağac = Parser(Lekser(s, x).leksə(), s, x).ayır()
     if not x.uğurludur():
         raise AssertionError(x.hesabat(False))
@@ -267,7 +267,7 @@ class YanlışXəbərdarlıqYoxdur(unittest.TestCase):
 
         # `veb` və `pəncərə` modulları hələ yoxdur — ALQ-M001 gözləniləndir
         İCAZƏLİ = {"ALQ-M001"}
-        for f in sorted(qovluq.glob("*.alqor")):
+        for f in sorted(qovluq.glob("*.alq")):
             with self.subTest(fayl=f.name):
                 x = XətaToplayıcı()
                 s = Mənbə.fayldan(f, x)
@@ -763,7 +763,7 @@ class SərtRejimƏhatəsi(unittest.TestCase):
     def test_nümunələr_sərt_rejimdə_təmizdir(self):
         from pathlib import Path
         kök = Path(__file__).resolve().parents[2] / "numuneler"
-        for f in sorted(kök.rglob("*.alqor")):
+        for f in sorted(kök.rglob("*.alq")):
             with self.subTest(fayl=f.name):
                 k, t = yoxla(f.read_text(encoding="utf-8"), "sərt")
                 self.assertEqual([x for x in t.xətalar], [],

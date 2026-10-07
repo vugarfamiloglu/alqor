@@ -44,7 +44,7 @@
 
 | İş | Nə qalıb |
 |---|---|
-| Alqor Studio | avtomatik tamamlama alqorls-a qoşulmayıb; sürüklə-burax düzülüş (vizual dizayner) yoxdur; önbaxış Studio temasını yox, OS temasını izləyir; debaq yoxdur |
+| Alqor Studio | sürüklə-burax düzülüş (vizual dizayner) yoxdur; önbaxış Studio temasını yox, OS temasını izləyir; debaq yoxdur |
 | http | WebSocket yoxdur |
 | verilənlər | yalnız SQLite — PostgreSQL/MySQL sürücüsü və ORM modelləri (`@cədvəl`, `Model`) yoxdur |
 | qur | yalnız `.pyz` — quraşdırıcı yoxdur |
@@ -58,7 +58,7 @@
 2. **Quraşdırıcı generatoru** — `.exe` (Windows), `.deb`/`.rpm`/AppImage
    (Linux), `.dmg` (macOS)
 3. **Alqor Studio — quraşdırıcılı Desktop tətbiqi** (istifadəçi tələbi):
-   Başlat menyusu, masaüstü ikonu, `.alqor` faylları Studio ilə açılır,
+   Başlat menyusu, masaüstü ikonu, `.alq` faylları Studio ilə açılır,
    Python daxildə
 4. **JS/WASM backend** — brauzerdə Python olmadan işləmək
 5. **alqorpm + alqorhub** — paket meneceri və paket deposu
@@ -66,6 +66,9 @@
 7. **Rust-a köçürmə** — istehsal kompilyatoru
 
 ## Qeydlər
+
+- Fayl sonluğu **`.alq`**-dır (`salam.alq`, manifest `layihe.alq`). Köhnə
+  `.alqor` faylları və `layihe.alqor` hələ də tanınır.
 
 - Alqor adlarında `W` hərfi ola bilməz (Azərbaycan əlifbasında yoxdur):
   `JWTYarat` → `tokenYarat`, `markdown` → `işarəliMətn`.

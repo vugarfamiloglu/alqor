@@ -449,7 +449,7 @@ son
 '''
 
     def test_xəta_yoxdur(self):
-        ts, x = leksə(self.PROQRAM, "sınaq.alqor")
+        ts, x = leksə(self.PROQRAM, "sınaq.alq")
         self.assertTrue(x.uğurludur(), x.hesabat(False))
         self.assertEqual(x.xəbərdarlıqlar, [], x.hesabat(False))
 

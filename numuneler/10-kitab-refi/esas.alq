@@ -1,7 +1,7 @@
 // Nümunə 10 — Kitab rəfi: veb dərsliyinin (bələdçi § 3) yekun proqramı.
 //
-//   alqor işlət esas.alqor             server: http://127.0.0.1:8083
-//   alqor işlət esas.alqor -- sınaq    port açmadan yoxlayır
+//   alqor işlət esas.alq             server: http://127.0.0.1:8083
+//   alqor işlət esas.alq -- sınaq    port açmadan yoxlayır
 //
 // Giriş parolu: `KITAB_PAROL` mühit dəyişəni, yoxdursa "alqor".
 

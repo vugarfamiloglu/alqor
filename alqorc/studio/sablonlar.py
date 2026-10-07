@@ -10,7 +10,7 @@ from __future__ import annotations
 KONSOL = """\
 // {ad} — konsol proqramı
 //
-//   alqor işlət əsas.alqor
+//   alqor işlət əsas.alq
 
 funksiya salamla(ad: mətn) -> mətn
     qaytar "Salam, {{ad}}!"
@@ -33,8 +33,8 @@ son
 VEB = """\
 // {ad} — veb server
 //
-//   alqor işlət əsas.alqor            serveri işə salır (port 8080)
-//   alqor işlət əsas.alqor -- sınaq   port açmadan yoxlayır
+//   alqor işlət əsas.alq            serveri işə salır (port 8080)
+//   alqor işlət əsas.alq -- sınaq   port açmadan yoxlayır
 
 gətir veb
 gətir vidjet
@@ -71,8 +71,8 @@ son
 DESKTOP = """\
 // {ad} — desktop tətbiqi
 //
-//   alqor işlət əsas.alqor            pəncərəni açır
-//   alqor işlət əsas.alqor -- sınaq   pəncərə açmadan yoxlayır
+//   alqor işlət əsas.alq            pəncərəni açır
+//   alqor işlət əsas.alq -- sınaq   pəncərə açmadan yoxlayır
 //
 // Alqor Studio: soldakı paletdən elementə İKİ DƏFƏ klikləyin —
 // lazım olan vəziyyət və idarəedici kodu avtomatik yazılır.
@@ -145,6 +145,6 @@ def fayllar(növ: str, ad: str) -> dict[str, str]:
                        f"{', '.join(ŞABLONLAR)}")
     _, mətn = ŞABLONLAR[növ]
     return {
-        "əsas.alqor": mətn.format(ad=ad),
-        "layihe.alqor": LAYİHƏ.format(ad=ad, növ=növ),
+        "əsas.alq": mətn.format(ad=ad),
+        "layihe.alq": LAYİHƏ.format(ad=ad, növ=növ),
     }

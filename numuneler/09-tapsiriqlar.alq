@@ -1,9 +1,9 @@
 // Nümunə 9 — Tapşırıq meneceri: desktop dərsliyinin (bələdçi § 4)
 // yekun proqramı. Eyni komponent desktopda və vebdə işləyir.
 //
-//   alqor işlət 09-tapsiriqlar.alqor            desktop pəncərəsi
-//   alqor işlət 09-tapsiriqlar.alqor -- veb     veb server (8082)
-//   alqor işlət 09-tapsiriqlar.alqor -- sınaq   pəncərə açmadan yoxlayır
+//   alqor işlət 09-tapsiriqlar.alq            desktop pəncərəsi
+//   alqor işlət 09-tapsiriqlar.alq -- veb     veb server (8082)
+//   alqor işlət 09-tapsiriqlar.alq -- sınaq   pəncərə açmadan yoxlayır
 
 gətir vidjet
 gətir pəncərə

@@ -4,7 +4,7 @@
 > form, giriş/çıxış, JSON API, statik fayllar və brauzerdə canlı
 > axtarış.
 >
-> Yekun proqram: [`numuneler/10-kitab-refi/`](../numuneler/10-kitab-refi/esas.alqor).
+> Yekun proqram: [`numuneler/10-kitab-refi/`](../numuneler/10-kitab-refi/esas.alq).
 > Bu səhifədəki hər tam proqram və şablon avtomatik sınaqlarla
 > yoxlanılır.
 
@@ -27,7 +27,7 @@ son
 ```
 
 ```powershell
-python alqorc.py işlət salam.alqor
+python alqorc.py işlət salam.alq
 ```
 
 Brauzerdə `http://127.0.0.1:8080` açın. Dayandırmaq: `Ctrl+C`.
@@ -100,7 +100,7 @@ HTML-i koda yazmaq əvəzinə şablon faylı işlədək. Layihənin quruluşu:
 
 ```
 kitab-rəfi/
-├── esas.alqor
+├── esas.alq
 ├── sablonlar/
 │   ├── esas.alqorhtml       ← ümumi çərçivə
 │   └── siyahi.alqorhtml     ← kitab siyahısı
@@ -483,12 +483,12 @@ son)
 
 ## 3.12 Yekun proqram və işə salma
 
-Bütün hissələr bir yerdə: [`numuneler/10-kitab-refi/esas.alqor`](../numuneler/10-kitab-refi/esas.alqor).
+Bütün hissələr bir yerdə: [`numuneler/10-kitab-refi/esas.alq`](../numuneler/10-kitab-refi/esas.alq).
 
 ```powershell
 cd alqor\alqorc
-python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alqor            # :8083
-python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alqor -- sınaq   # 16 yoxlama
+python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alq            # :8083
+python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alq -- sınaq   # 16 yoxlama
 ```
 
 Windows-da: `.\Brauzerde-ac.cmd 10`.
@@ -503,7 +503,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/srv/alqor/alqorc
-ExecStart=/usr/bin/python3 alqorc.py işlət /srv/kitab-refi/esas.alqor
+ExecStart=/usr/bin/python3 alqorc.py işlət /srv/kitab-refi/esas.alq
 Environment=PYTHONIOENCODING=utf-8
 Environment=KITAB_PAROL=…
 Restart=on-failure

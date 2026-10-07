@@ -334,10 +334,10 @@ Xəta heç yerdə tutulmasa, proqram dayanır və hesabat verilir:
   Yol:   /home/vuqar/layihe/verilən.txt
 
   Çağırış yığını:
-    1. fayl.oxu(yol: mətn)              fayl.alqor:142:9
-    2. konfiqYüklə()                     konfiq.alqor:18:21
-    3. başlat()                          əsas.alqor:7:5
-    4. əsas()                            əsas.alqor:3:1
+    1. fayl.oxu(yol: mətn)              fayl.alq:142:9
+    2. konfiqYüklə()                     konfiq.alq:18:21
+    3. başlat()                          əsas.alq:7:5
+    4. əsas()                            əsas.alq:3:1
 
   Səbəb: GirişÇıxışXətası — ENOENT (2)
 

@@ -526,7 +526,7 @@ def _sətri_qur(sətir: str, sətir_başı: int, indekslər: list[int],
 #  Fayllar
 # ═══════════════════════════════════════════════════════════════════════
 
-UZANTILAR = (".alqor", ".alq")
+UZANTILAR = (".alq", ".alqor")
 
 
 def faylları_tap(yollar: list[str]) -> list[Path]:

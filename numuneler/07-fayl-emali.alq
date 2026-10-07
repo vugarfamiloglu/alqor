@@ -17,7 +17,7 @@ son
 
 funksiya əsas(arqumentlər: siyahı[mətn])
     əgər uzunluq(arqumentlər) == 0 onda
-        yaz("İstifadə: alqor işlət 07-fayl-emali.alqor -- <fayl>")
+        yaz("İstifadə: alqor işlət 07-fayl-emali.alq -- <fayl>")
         sistem.dayan(2)
     son
 

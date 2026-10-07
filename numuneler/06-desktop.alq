@@ -1,7 +1,7 @@
 // Nümunə 6 — Desktop tətbiq
 //
-//   alqor işlət 06-desktop.alqor            pəncərəni açır
-//   alqor işlət 06-desktop.alqor -- sınaq   pəncərə açmadan yoxlayır
+//   alqor işlət 06-desktop.alq            pəncərəni açır
+//   alqor işlət 06-desktop.alq -- sınaq   pəncərə açmadan yoxlayır
 
 gətir pəncərə
 gətir pəncərə.dialoq

@@ -890,7 +890,7 @@ son
         from alqor.xeta import XətaToplayıcı
 
         x = XətaToplayıcı()
-        mənbə = Mənbə.mətndən(self.KOD, "sınaq.alqor", x)
+        mənbə = Mənbə.mətndən(self.KOD, "sınaq.alq", x)
         ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
         self.assertTrue(x.uğurludur(), x.hesabat(False))
 
@@ -1077,7 +1077,7 @@ def _json_bayt(d: dict) -> bytes:
 class NümunəSınağı(unittest.TestCase):
     def test_06_desktop_işləyir(self):
         yol = (Path(__file__).parent.parent.parent / "numuneler"
-               / "06-desktop.alqor")
+               / "06-desktop.alq")
         if not yol.exists():
             self.skipTest("nümunə yoxdur")
 

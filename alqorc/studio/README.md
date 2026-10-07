@@ -158,7 +158,7 @@ Bütün faylı birdən düzəltmək: **eger→əgər** düyməsi (lekserin
 - **Layihə paneli** — fayl ağacı, yarat / adını dəyiş / sil, bir neçə
   nişan, saxlanmamış nişan `●` ilə.
 - **İcra** (F5) — fayl `alqorc.py işlət` ilə AYRICA prosesdə işləyir;
-  çıxış Server-Sent Events ilə axır (stderr qırmızı, `fayl.alqor:12:5`
+  çıxış Server-Sent Events ilə axır (stderr qırmızı, `fayl.alq:12:5`
   yerləri klikləməli), `giriş ›` sahəsi `oxu()`-ya sətir göndərir,
   "Dayandır" (Shift+F5) proses qrupunu öldürür.
 - **Canlı önbaxış** (F6) — faylda `komponent` varsa, o, ayrıca
@@ -166,7 +166,7 @@ Bütün faylı birdən düzəltmək: **eger→əgər** düyməsi (lekserin
   çağırılmır). Düymələr, sahələr, vəziyyət həqiqi tətbiqdəki kimi
   işləyir. Saxlayanda yenilənir.
 - **Xoş gəldin ekranı** — "yeni layihə" şablonları (konsol / veb /
-  desktop), layihədəki `.alqor` faylları, qısayollar.
+  desktop), layihədəki `.alq` faylları, qısayollar.
 - Qaranlıq / açıq tema, ölçüsü dəyişən panellər (yadda qalır), status
   sətri (sətir:sütun, UTF-8, ASCII sayı, xəta/xəbərdarlıq, tip rejimi).
 - **Formatla** (Ctrl+Shift+F) — qarmaq hazırdır: `alqor.formatlayici`
@@ -272,7 +272,7 @@ məhdudlaşması (10 qaçış cəhdi × 4 əməliyyat, simvolik keçid, prefiks
 hiyləsi), diaqnostikanın sətir/sütunu, skelet (boş fayl, komponentsiz
 fayl, JSX komponent, `məzmun` siyahısı, təkrar adlar, sabit ad
 toqquşması, `gətir vidjet`, kursor yeri, 118 vidjet × 4 forma × 2 dəfə
-tip yoxlaması), tamamlama, klaviatura qaydaları, `01-salam.alqor`-un
+tip yoxlaması), tamamlama, klaviatura qaydaları, `01-salam.alq`-un
 SSE ilə işlədilməsi (stdin daxil), dayandırma, önbaxış, şablonlar,
 `studio --sınaq`.
 

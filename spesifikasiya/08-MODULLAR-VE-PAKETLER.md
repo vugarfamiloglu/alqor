@@ -4,11 +4,11 @@
 
 ## 8.1 Modul anlayışı
 
-**Hər `.alqor` faylı bir moduldur.** Modul adı fayl adından gəlir:
+**Hər `.alq` faylı bir moduldur.** Modul adı fayl adından gəlir:
 
 ```
-riyazi-alətlər.alqor   →   modul adı: riyazi_alətlər
-şəbəkə/http.alqor      →   modul adı: şəbəkə.http
+riyazi-alətlər.alq   →   modul adı: riyazi_alətlər
+şəbəkə/http.alq      →   modul adı: şəbəkə.http
 ```
 
 ---
@@ -18,7 +18,7 @@ riyazi-alətlər.alqor   →   modul adı: riyazi_alətlər
 Standart olaraq **hər şey gizlidir**. Yalnız `ixrac et` ilə işarələnən üzvlər kənardan görünür.
 
 ```alqor
-// riyazi.alqor
+// riyazi.alq
 
 ixrac et sabit Pİ = 3.14159265358979
 
@@ -100,9 +100,9 @@ gətir riyazi.standart kimi hesabla   // `ixrac et standart` elementi
 
 ### Yerli fayldan
 ```alqor
-gətir "./köməkçilər.alqor" kimi k
-gətir "../ortaq/model.alqor" kimi model
-gətir "./alt_qovluq/" kimi alt    // qovluğun `indeks.alqor` faylı
+gətir "./köməkçilər.alq" kimi k
+gətir "../ortaq/model.alq" kimi model
+gətir "./alt_qovluq/" kimi alt    // qovluğun `indeks.alq` faylı
 ```
 
 ### Paketdən
@@ -124,7 +124,7 @@ gətir pəncərə
 ### Dinamik idxal (asinxron)
 ```alqor
 asinxron funksiya yüklə()
-    dəyişən modul = gözlə gətirDinamik("./ağır-modul.alqor")
+    dəyişən modul = gözlə gətirDinamik("./ağır-modul.alq")
     modul.işlət()
 son
 ```
@@ -136,7 +136,7 @@ son
 Bir faylda bir neçə ad fəzası:
 
 ```alqor
-// həndəsə.alqor
+// həndəsə.alq
 
 ixrac et modul ikiÖlçülü
     ixrac et sinif Nöqtə
@@ -166,7 +166,7 @@ dəyişən b = yeni həndəsə.üçÖlçülü.Nöqtə()
 ## 8.5 Modulun ilkinləşdirilməsi
 
 ```alqor
-// verilənlər.alqor
+// verilənlər.alq
 
 dəyişən _bağlantı: Bağlantı?
 
@@ -190,7 +190,7 @@ Alqor dövri idxalı **aşkarlayır və xəta verir** (`ALQ-M005`):
 
 ```
 ✖ ALQ-M005  Dövri modul asılılığı
-   a.alqor → b.alqor → c.alqor → a.alqor
+   a.alq → b.alq → c.alq → a.alq
 
    = kömək: ortaq hissəni ayrıca modula çıxarın
 ```
@@ -203,19 +203,19 @@ Həlli: interfeysi ayrıca modula çıxarmaq, və ya `gətirDinamik()` istifadə
 
 ```
 mənim-layihəm/
-├── layihe.alqor              # paket manifesti
+├── layihe.alq              # paket manifesti
 ├── alqor.kilid               # dəqiq versiya kilidi (avtomatik)
 ├── mənbə/
-│   ├── əsas.alqor            # giriş nöqtəsi
+│   ├── əsas.alq            # giriş nöqtəsi
 │   ├── model/
-│   │   ├── indeks.alqor      # `gətir ./model` bunu yükləyir
-│   │   ├── istifadəçi.alqor
-│   │   └── sifariş.alqor
+│   │   ├── indeks.alq      # `gətir ./model` bunu yükləyir
+│   │   ├── istifadəçi.alq
+│   │   └── sifariş.alq
 │   └── xidmət/
-│       └── auth.alqor
+│       └── auth.alq
 ├── sınaq/
-│   ├── istifadəçi_sınaq.alqor
-│   └── auth_sınaq.alqor
+│   ├── istifadəçi_sınaq.alq
+│   └── auth_sınaq.alq
 ├── statik/                   # veb üçün statik fayllar
 │   ├── üslub.css
 │   └── şəkil/
@@ -229,7 +229,7 @@ mənim-layihəm/
 
 ---
 
-## 8.8 `layihe.alqor` — manifest faylı
+## 8.8 `layihe.alq` — manifest faylı
 
 Format TOML-a bənzəyir, amma iki fərqi var: **açarlar Azərbaycan hərfli
 ola bilər** (`açarSözlər`, `sərt_boş` — TOML 1.0-da qadağandır) və
@@ -251,7 +251,7 @@ açarSözlər = ["veb", "api"]
 alqor_versiya = ">=1.0.0"
 
 [qurma]
-giriş = "mənbə/əsas.alqor"
+giriş = "mənbə/əsas.alq"
 hədəf = ["linux-x64", "veb"]      # linux-x64 | linux-arm64 | veb | wasm | windows-x64 | macos-arm64
 çıxış = "qurma/"
 optimallaşdırma = 2                # 0=yox 1=sürətli 2=balanslı 3=maksimum
@@ -303,7 +303,7 @@ flatpak = { id = "az.numune.MenimLayihem" }
 docker = { baza = "debian:bookworm-slim" }
 
 [skriptlər]
-başlat = "alqor işlət mənbə/əsas.alqor"
+başlat = "alqor işlət mənbə/əsas.alq"
 qur = "alqor qur --buraxılış"
 sınaq = "alqortest"
 format = "alqorfmt ."
@@ -319,7 +319,7 @@ alqorpm əlavə veb                   # paket əlavə et
 alqorpm əlavə veb@2.1               # konkret versiya
 alqorpm əlavə --inkişaf sınaq_köməkçi
 alqorpm sil veb                     # paket sil
-alqorpm yüklə                       # layihe.alqor-dakı hamısını yüklə
+alqorpm yüklə                       # layihe.alq-dakı hamısını yüklə
 alqorpm yenilə                      # asılılıqları yenilə
 alqorpm yenilə veb                  # bir paketi yenilə
 alqorpm siyahı                      # quraşdırılmışları göstər
@@ -353,7 +353,7 @@ alqorpm giriş                       # alqorhub hesabına giriş
 1. Standart kitabxana modulları (`nüvə`, `mətn`, `riyaziyyat`, ...)
 2. Layihənin `mənbə/` qovluğu
 3. `paketlər/` qovluğu (yerli asılılıqlar)
-4. Qlobal keş: `~/.alqor/paketlər/`
+4. Qlobal keş: `~/.alq/paketlər/`
 5. Sistem: `/usr/lib/alqor/paketlər/`
 
 Tapılmasa: `ALQ-M001`.
@@ -406,8 +406,8 @@ son
 | `ALQ-M005` | Dövri modul asılılığı |
 | `ALQ-M006` | İdxalda ad münaqişəsi |
 | `ALQ-M007` | Versiya uyğunsuzluğu |
-| `ALQ-M008` | `layihe.alqor` tapılmadı |
-| `ALQ-M009` | `layihe.alqor` formatı pozulub |
+| `ALQ-M008` | `layihe.alq` tapılmadı |
+| `ALQ-M009` | `layihe.alq` formatı pozulub |
 | `ALQ-M010` | Paket imzası doğrulanmadı |
 | `ALQ-M011` | ⚠ İstifadə olunmayan idxal |
 | `ALQ-M012` | ⚠ `gətir *` tövsiyə olunmur |

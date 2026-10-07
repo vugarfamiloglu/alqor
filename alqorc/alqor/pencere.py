@@ -1394,7 +1394,7 @@ def _ps_mətn(m: str) -> str:
 class Sürücü:
     """
     Pəncərəni başsız idarə edir: HTML-i oxuyur, düymələri basır.
-    `06-desktop.alqor -- sınaq` və avtomatik sınaqlar bunu işlədir.
+    `06-desktop.alq -- sınaq` və avtomatik sınaqlar bunu işlədir.
 
         dəyişən s = pəncərə.sınaq.aç(p)
         s.klik("+")

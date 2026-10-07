@@ -398,8 +398,8 @@ def sənədi_sına(yol: Path) -> FaylNəticəsi:
 
 def sınaq_faylları(yollar: list[Path]) -> list[Path]:
     """
-    Qovluqda: `*_sınaq.alqor`, `*_sinaq.alqor`, `*_test.alqor` və
-    `sınaq/` (`sinaq/`, `test/`) qovluğundakı bütün `.alqor` faylları.
+    Qovluqda: `*_sınaq.alq`, `*_sinaq.alq`, `*_test.alq` və
+    `sınaq/` (`sinaq/`, `test/`) qovluğundakı bütün `.alq` faylları.
     """
     nəticə: list[Path] = []
     for p in yollar:
@@ -408,7 +408,7 @@ def sınaq_faylları(yollar: list[Path]) -> list[Path]:
             continue
         if not p.is_dir():
             continue
-        for f in sorted(p.rglob("*.alqor")):
+        for f in sorted([*p.rglob("*.alq"), *p.rglob("*.alqor")]):
             nisbi = f.relative_to(p).parts
             if any(h.startswith(".") or h in ("qurma", "paketlər")
                    for h in nisbi):

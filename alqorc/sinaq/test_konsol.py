@@ -23,7 +23,7 @@ def proqram(kod: str, arqumentlər: list[str],
     from alqor.xeta import XətaToplayıcı
 
     x = XətaToplayıcı()
-    m = Mənbə.mətndən(BAŞLIQ + kod, "sınaq.alqor", x)
+    m = Mənbə.mətndən(BAŞLIQ + kod, "sınaq.alq", x)
     ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
     assert x.uğurludur(), x.hesabat(False)
     sətirlər: list[str] = []

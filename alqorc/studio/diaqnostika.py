@@ -38,7 +38,7 @@ def _lüğət(d: Diaqnostika) -> dict[str, Any]:
     return n
 
 
-def yoxla(mətn: str, ad: str = "fayl.alqor", rejim: str = "normal",
+def yoxla(mətn: str, ad: str = "fayl.alq", rejim: str = "normal",
           tip: bool = True) -> dict[str, Any]:
     """
     Mətni yoxlayır. Leksik/sintaktik xəta yoxdursa tip yoxlaması da

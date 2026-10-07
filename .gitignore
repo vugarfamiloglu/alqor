@@ -12,7 +12,7 @@ env/
 # ─── Alqor qurma nəticələri ───────────────────────────────
 qurma/
 paketlər/
-*.alqor.o
+*.alq.o
 alqor.kilid
 
 # ─── Rust (gələcək) ───────────────────────────────────────

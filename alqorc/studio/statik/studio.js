@@ -272,9 +272,9 @@ $("#agac").addEventListener("click", async (h) => {
 
 async function yeniFayl(qovluq = S.seçiliQovluq) {
   const ad = await dialoq("Yeni fayl", { mətn: qovluq ? `Qovluq: ${qovluq}/` : "Layihənin kökündə",
-    standart: "yeni.alqor" });
+    standart: "yeni.alq" });
   if (!ad) return null;
-  const yol = (qovluq ? qovluq + "/" : "") + (/\.[\p{L}\p{N}]+$/u.test(ad) ? ad : ad + ".alqor");
+  const yol = (qovluq ? qovluq + "/" : "") + (/\.[\p{L}\p{N}]+$/u.test(ad) ? ad : ad + ".alq");
   try {
     await API.göndər("/api/fayl/yarat", { yol, növ: "fayl", mətn: "" });
     await ağacıYenilə();
@@ -424,7 +424,7 @@ function xoşGəldin() {
     const f = bütünFayllar().filter((y) => /\.(alqor|alq)$/.test(y)).slice(0, 24);
     $("#son-fayllar").innerHTML = f.length
       ? f.map((y) => `<button data-ac="${qaç(y)}">${qaç(y)}</button>`).join("")
-      : '<span class="sönük">Hələ .alqor faylı yoxdur.</span>';
+      : '<span class="sönük">Hələ .alq faylı yoxdur.</span>';
   }
 }
 
@@ -661,8 +661,8 @@ $("#palet").addEventListener("dragstart", (h) => {
 async function faylLazımdır() {
   if (cari()) return true;
   const mövcud = new Set(bütünFayllar());
-  let ad = "tətbiq.alqor", n = 2;
-  while (mövcud.has(ad)) ad = `tətbiq${n++}.alqor`;
+  let ad = "tətbiq.alq", n = 2;
+  while (mövcud.has(ad)) ad = `tətbiq${n++}.alq`;
   try {
     await API.göndər("/api/fayl/yarat", { yol: ad, növ: "fayl", mətn: "" });
     await ağacıYenilə();
@@ -942,7 +942,7 @@ function çıxışaYaz(mətn, sinif = "") {
       continue;
     }
     if (!parça) continue;
-    let h = qaç(parça).replace(/([\p{L}\p{N}_\-./]+\.alqor):(\d+):(\d+)/gu,
+    let h = qaç(parça).replace(/([\p{L}\p{N}_\-./]+\.alq(?:or)?):(\d+):(\d+)/gu,
       '<span class="keçid-yer" data-fayl="$1" data-setir="$2" data-sutun="$3">$&</span>');
     if (rəng) h = `<span style="color:${rəng}">${h}</span>`;
     html += h;
@@ -968,7 +968,7 @@ $("#cixis").addEventListener("click", (h) => {
 async function işlət() {
   const t = cari();
   if (!t) { bildir("Əvvəlcə fayl açın"); return; }
-  if (!/\.(alqor|alq)$/.test(t.yol)) { bildir("Yalnız .alqor faylları işlədilə bilər", "xəta"); return; }
+  if (!/\.(alqor|alq)$/.test(t.yol)) { bildir("Yalnız .alq faylları işlədilə bilər", "xəta"); return; }
   if (çirklidir(t) && !(await saxla(t))) return;
   if (S.iş) await dayandır();
   $("#cixis").textContent = "";

@@ -104,7 +104,7 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 .düyün:hover .əməllər { display: flex; }
 .düyün .əməllər button { padding: 0 5px; font-size: 11px; border: 0; background: none; color: var(--sönük); }
 .düyün .əməllər button:hover { color: var(--mətn); }
-.düyün.alqor .işarə { color: var(--vurğu); }
+.düyün.alq .işarə { color: var(--vurğu); }
 
 /* ── Palet ── */
 .palet { display: flex; flex-direction: column; gap: 4px; }

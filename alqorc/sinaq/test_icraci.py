@@ -18,7 +18,7 @@ from alqor.xeta import XətaToplayıcı               # noqa: E402
 def işlət(kod: str, giriş: list[str] | None = None):
     """Kodu icra edib (çıxış sətirləri, xəta) qaytarır."""
     x = XətaToplayıcı()
-    s = Mənbə.mətndən(kod, "sınaq.alqor", x)
+    s = Mənbə.mətndən(kod, "sınaq.alq", x)
     ağac = Parser(Lekser(s, x).leksə(), s, x).ayır()
     if not x.uğurludur():
         raise AssertionError("ayırma xətası:\n" + x.hesabat(False))
@@ -1135,7 +1135,7 @@ class NümunələrSınağı(unittest.TestCase):
         return Path(__file__).parent.parent.parent / "numuneler" / ad
 
     def test_salam(self):
-        yol = self._nümunə("01-salam.alqor")
+        yol = self._nümunə("01-salam.alq")
         if not yol.exists():
             self.skipTest("nümunə yoxdur")
         kod = yol.read_text(encoding="utf-8")
@@ -1143,7 +1143,7 @@ class NümunələrSınağı(unittest.TestCase):
         self.assertIn("Aysel, siz yetkinsiniz.", sətirlər)
 
     def test_dövrlər(self):
-        yol = self._nümunə("02-dovrler.alqor")
+        yol = self._nümunə("02-dovrler.alq")
         if not yol.exists():
             self.skipTest("nümunə yoxdur")
         sətirlər = çıxış(yol.read_text(encoding="utf-8"))
@@ -1151,7 +1151,7 @@ class NümunələrSınağı(unittest.TestCase):
         self.assertIn("Salam", sətirlər)
 
     def test_siniflər(self):
-        yol = self._nümunə("04-siniflər.alqor")
+        yol = self._nümunə("04-siniflər.alq")
         if not yol.exists():
             self.skipTest("nümunə yoxdur")
         sətirlər = çıxış(yol.read_text(encoding="utf-8"))

@@ -8,15 +8,15 @@
 
 ```
 veb-layihəm/
-├── layihe.alqor
+├── layihe.alq
 ├── mənbə/
-│   ├── server.alqor          # server tərəfi  → native binar
-│   ├── müştəri.alqor         # brauzer tərəfi → JS/WASM
+│   ├── server.alq          # server tərəfi  → native binar
+│   ├── müştəri.alq         # brauzer tərəfi → JS/WASM
 │   ├── ortaq/                # hər iki tərəfdə işləyən kod
-│   │   └── model.alqor
+│   │   └── model.alq
 │   └── səhifə/
-│       ├── əsas.alqor
-│       └── haqqında.alqor
+│       ├── əsas.alq
+│       └── haqqında.alq
 ├── statik/
 │   ├── üslub.css
 │   └── şəkil/
@@ -348,7 +348,7 @@ brauzer.mövzu() -> "işıqlı" | "qaranlıq"
 ## 11.5 Paylaşılan kod (server + müştəri)
 
 ```alqor
-// ortaq/model.alqor — hər iki tərəfdə işləyir
+// ortaq/model.alq — hər iki tərəfdə işləyir
 ixrac et sinif Məhsul
     xassə id: tam
     xassə ad: mətn
@@ -376,13 +376,13 @@ son
 
 ### Tipli API çağırışları
 ```alqor
-// server.alqor
+// server.alq
 @API("/api/məhsul/:id")
 asinxron funksiya məhsulAl(id: tam) -> Məhsul
     qaytar gözlə verilənlər.tap(id)
 son
 
-// müştəri.alqor — avtomatik yaradılmış müştəri
+// müştəri.alq — avtomatik yaradılmış müştəri
 dəyişən m: Məhsul = gözlə api.məhsulAl(5)
 ```
 
@@ -507,7 +507,7 @@ və ya adi HTML/JS/WASM fayllarıdır. İstənilən hostinq işlədir.
 ## 11.10 Nümunə: tam veb tətbiq
 
 ```alqor
-// mənbə/server.alqor
+// mənbə/server.alq
 gətir veb
 gətir verilənlər
 

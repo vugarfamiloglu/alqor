@@ -39,7 +39,7 @@ Quraşdırılan fayllar:
 /usr/bin/alqortest       # test işlədici
 /usr/bin/alqordoc        # sənəd generatoru
 /usr/lib/alqor/          # standart kitabxana
-~/.alqor/                # istifadəçi keşi və paketlər
+~/.alq/                # istifadəçi keşi və paketlər
 ```
 
 ---
@@ -182,7 +182,7 @@ alır.
 | `--yoxla` (kod 1 — format lazımdır), `--fərq` | ✅ |
 | 100 simvoldan uzun sətirləri bölmək | planlaşdırılır — hazırda toxunulmur |
 | Çoxsətirli siyahılara sondakı vergül | planlaşdırılır |
-| `layihe.alqor` → `[format]` | planlaşdırılır |
+| `layihe.alq` → `[format]` | planlaşdırılır |
 
 Çıxış kodları: `0` — uğurlu / format lazım deyil, `1` — `--yoxla`
 rejimində format lazımdır, `2` — format edilə bilməyən fayl var
@@ -190,7 +190,7 @@ rejimində format lazımdır, `2` — format edilə bilməyən fayl var
 
 Alqor Studio-da **Ctrl+Shift+F** eyni formatlayıcını çağırır.
 
-Konfiqurasiya — `layihe.alqor`:
+Konfiqurasiya — `layihe.alq`:
 ```toml
 [format]
 girinti = 4
@@ -236,7 +236,7 @@ maks_dərinlik = 4
 
 ```bash
 alqortest                        # bütün testlər
-alqortest sınaq/auth_sınaq.alqor # bir fayl
+alqortest sınaq/auth_sınaq.alq # bir fayl
 alqortest --filtr "istifadəçi"   # ada görə
 alqortest --örtük                # kod örtüyü hesabatı
 alqortest --izlə                 # dəyişiklikdə yenidən işlət
@@ -248,16 +248,16 @@ alqortest --təkrar 100           # flaky test axtarışı
 ```
   Alqor Test 1.0.0
 
-  sınaq/riyazi_sınaq.alqor
+  sınaq/riyazi_sınaq.alq
     ✓ toplama düzgündür                        0.3ms
     ✓ bölmə sıfıra xəta atır                   0.1ms
     ✗ kvadrat kök mənfi ədəddə                 0.2ms
 
       Gözlənilən: ƏdədDeyil
       Alınan:     0.0
-      sınaq/riyazi_sınaq.alqor:24:5
+      sınaq/riyazi_sınaq.alq:24:5
 
-  sınaq/mətn_sınaq.alqor
+  sınaq/mətn_sınaq.alq
     ✓ böyük hərf azərbaycan qaydası ilə         0.1ms
     ✓ "ışıq".böyüyə() == "IŞIQ"                 0.1ms
 
@@ -271,7 +271,7 @@ alqortest --təkrar 100           # flaky test axtarışı
 
 `alqor sına` (və ya `alqortest`): yol verilməsə layihənin `sınaq/`
 qovluğu; qovluqda `sınaq/`, `sinaq/`, `test/` altındakı və adı
-`_sınaq.alqor` ilə bitən fayllar. Hər fayl ayrı interpretatorda işləyir.
+`_sınaq.alq` ilə bitən fayllar. Hər fayl ayrı interpretatorda işləyir.
 
 | Xüsusiyyət | Vəziyyət |
 |---|---|
@@ -377,7 +377,7 @@ alqor> nəticə + 1
 | **Vəziyyət** | Dəyişən, funksiya, sinif seans boyu yaşayır |
 | **Xətadan bərpa** | Xəta seansı dayandırmır |
 | **Ləğv etmək** | İki dəfə boş Enter, `:ləğv`, və ya Ctrl+C |
-| **Tarixçə** | `~/.alqor/tarixce` — yuxarı/aşağı oxlarla |
+| **Tarixçə** | `~/.alq/tarixce` — yuxarı/aşağı oxlarla |
 | **Tab tamamlama** | Açar sözlər, tip adları, elan olunmuş adlar, `:əmrlər` |
 | **ASCII xəbərdarlığı** | `eger` yazsanız bir sətirlik xəbərdarlıq (`:ascii qapat` ilə söndürülür) |
 
@@ -391,7 +391,7 @@ alqor> nəticə + 1
 | `:siyahı` `:s` | Təyin edilmiş adlar (funksiya/sinif/dəyişən qruplarında) |
 | `:vaxt <ifadə>` `:v` | İcra müddətini ölç |
 | `:yüklə <fayl>` | Faylı seansa yüklə |
-| `:saxla <fayl>` | Seansı `.alqor` faylı kimi saxla |
+| `:saxla <fayl>` | Seansı `.alq` faylı kimi saxla |
 | `:tarixçə [n]` | Son n giriş |
 | `:təmizlə` | Bütün dəyişənləri sil |
 | `:tokenlər <kod>` | Lekserin çıxışı |
@@ -440,13 +440,13 @@ elana bağlandığını və hər `a.b` ifadəsinin tipini yadda saxlayır.
 | Formatlama (`alqorfmt`) | ✅ |
 | Sürətli düzəlişlər: `eger` → `əgər`, "bəlkə: `uzunluq`", hamısını düzəlt | ✅ |
 | Yarımçıq kod: xətalı sətirlər boşluqla əvəz olunub yenidən analiz edilir — hover/tamamlama işləməyə davam edir | ✅ |
-| Layihə üzrə: `gətir "./x.alqor"` elanına keçid, istinadlar və ad dəyişmə bütün iş sahəsində (`{f kimi g}` ləqəbi yerli qalır) | ✅ |
+| Layihə üzrə: `gətir "./x.alq"` elanına keçid, istinadlar və ad dəyişmə bütün iş sahəsində (`{f kimi g}` ləqəbi yerli qalır) | ✅ |
 | İş sahəsi simvolları (Ctrl+T) — `tpl` → `topla` | ✅ |
 | Kod linzaları: üst səviyyə funksiya/sinif üstündə "N istinad"; `@sınaq` üstündə "▶ Sına" | ✅ |
 | Semantik rənglər: sinif, funksiya, metod, xassə, parametr, modul, sadalama; `sabit` → readonly, daxili → defaultLibrary | ✅ |
 | DAP (debaq) — `alqor dap`: dayanma nöqtələri (şərtli), `stopOnEntry`, next / stepIn / stepOut / pause, çağırış yığını, yerli və qlobal dəyişənlər (siyahı, lüğət, nümunə açılır), ifadə hesablama; çıxış `output` hadisəsidir | ✅ |
 
-Fayl idxalı tip yoxlayıcısında da görünür: `gətir "./x.alqor" kimi m`
+Fayl idxalı tip yoxlayıcısında da görünür: `gətir "./x.alq" kimi m`
 faylı ayrıca ayrılıb yoxlanır (keşlənir, dövri idxal qorunur), onun qlobal
 elanları `m`-in üzvləri olur — `m.yoxdur` → ALQ-M002, tapılmayan fayl →
 ALQ-M001.
@@ -487,13 +487,13 @@ onların köhnəlmədiyini yoxlayır.
 ┌─────────────────────────────────────────────────────────────────┐
 │ Fayl  Redaktə  Görünüş  Qurma  Alətlər  Kömək    [▶] [⏸] [📦]  │
 ├──────────────┬─────────────────────────┬────────────────────────┤
-│ 📁 LAYİHƏ    │  əsas.alqor        ×    │  CANLI ÖNİZLƏMƏ        │
+│ 📁 LAYİHƏ    │  əsas.alq        ×    │  CANLI ÖNİZLƏMƏ        │
 │              │                         │  ┌──────────────────┐  │
 │ ▼ mənbə/     │ 1  gətir veb            │  │                  │  │
-│   əsas.alqor │ 2                       │  │  Salam, dünya!   │  │
+│   əsas.alq │ 2                       │  │  Salam, dünya!   │  │
 │   model.alq  │ 3  funksiya əsas()      │  │                  │  │
 │ ▼ sınaq/     │ 4      dəyişən s =      │  │  [Bas mənə]      │  │
-│   test.alqor │ 5          yeni Server()│  │                  │  │
+│   test.alq │ 5          yeni Server()│  │                  │  │
 │ ▶ statik/    │ 6      s.dinlə(8080)    │  └──────────────────┘  │
 │   layihe.alq │ 7  son                  │  🔄 Avtomatik yenilənir │
 │              │                         │                        │
@@ -528,7 +528,7 @@ Texnologiya: Tauri + CodeMirror 6. Ölçü: ~15 MB (Electron ekvivalenti ~150 MB
 ## 13.10 Debaq
 
 ```bash
-alqor debaq əsas.alqor
+alqor debaq əsas.alq
 ```
 
 ```alqor
@@ -550,7 +550,7 @@ alqor-debaq> dəyişənlər       # cari əhatədəki dəyişənlər
 alqor-debaq> yığın            # çağırış yığını
 alqor-debaq> çap x
 alqor-debaq> qoy x = 5
-alqor-debaq> dayanNöqtəsi əsas.alqor:42
+alqor-debaq> dayanNöqtəsi əsas.alq:42
 alqor-debaq> sil 1
 ```
 
@@ -559,7 +559,7 @@ alqor-debaq> sil 1
 ## 13.11 Profil və performans
 
 ```bash
-alqor profil əsas.alqor
+alqor profil əsas.alq
 alqor profil --yaddaş
 alqor profil --alov-qrafiki     # flame graph
 ```

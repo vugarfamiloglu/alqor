@@ -624,7 +624,7 @@ son
 
 ## Dərs 14 — Modullar
 
-### `riyazi.alqor`
+### `riyazi.alq`
 ```alqor
 ixrac et funksiya kvadrat(x: onluq) -> onluq
     qaytar x * x
@@ -637,9 +637,9 @@ funksiya gizliKöməkçi()      // ixrac olunmur
 son
 ```
 
-### `əsas.alqor`
+### `əsas.alq`
 ```alqor
-gətir "./riyazi.alqor" kimi r
+gətir "./riyazi.alq" kimi r
 
 yaz(r.kvadrat(5))            // 25.0
 yaz(r.Pİ)
@@ -647,7 +647,7 @@ yaz(r.Pİ)
 
 Və ya:
 ```alqor
-gətir "./riyazi.alqor".{kvadrat, Pİ}
+gətir "./riyazi.alq".{kvadrat, Pİ}
 
 yaz(kvadrat(5))
 ```
@@ -656,10 +656,10 @@ yaz(kvadrat(5))
 
 ## Dərs 15 — Testlər
 
-### `sınaq/riyazi_sınaq.alqor`
+### `sınaq/riyazi_sınaq.alq`
 ```alqor
 gətir test
-gətir "../mənbə/riyazi.alqor".{kvadrat}
+gətir "../mənbə/riyazi.alq".{kvadrat}
 
 @sınaq
 funksiya kvadratDüzgündür()
@@ -785,7 +785,7 @@ son
 ```
 
 ```bash
-alqor işlət tapşırıq.alqor
+alqor işlət tapşırıq.alq
 ```
 
 ---

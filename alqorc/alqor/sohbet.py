@@ -428,11 +428,11 @@ class Söhbət:
 
     def m_yüklə(self, arq: str) -> None:
         if not arq:
-            print(self.b.sarı("  istifadə: :yüklə <fayl.alqor>"))
+            print(self.b.sarı("  istifadə: :yüklə <fayl.alq>"))
             return
         yol = Path(arq)
         if not yol.exists():
-            for uzantı in (".alqor", ".alq"):
+            for uzantı in (".alq", ".alqor"):
                 if Path(arq + uzantı).exists():
                     yol = Path(arq + uzantı)
                     break
@@ -503,10 +503,10 @@ class Söhbət:
 
     def m_saxla(self, arq: str) -> None:
         if not arq:
-            print(self.b.sarı("  istifadə: :saxla <fayl.alqor>"))
+            print(self.b.sarı("  istifadə: :saxla <fayl.alq>"))
             return
-        yol = Path(arq if arq.endswith((".alqor", ".alq"))
-                   else arq + ".alqor")
+        yol = Path(arq if arq.endswith((".alq", ".alqor"))
+                   else arq + ".alq")
         məzmun = ("// Alqor söhbət seansı\n\n"
                   + "\n\n".join(self.tarixçə) + "\n")
         try:
@@ -608,7 +608,7 @@ KÖMƏK_MƏTNİ = [
     ("siyahı", "təyin edilmiş adlar  (:s)"),
     ("vaxt <ifadə>", "icra müddətini ölç  (:v)"),
     ("yüklə <fayl>", "faylı seansa yüklə"),
-    ("saxla <fayl>", "seansı `.alqor` faylı kimi saxla"),
+    ("saxla <fayl>", "seansı `.alq` faylı kimi saxla"),
     ("tarixçə [n]", "son n giriş"),
     ("təmizlə", "bütün dəyişənləri sil"),
     ("tokenlər <kod>", "lekserin çıxışını göstər"),

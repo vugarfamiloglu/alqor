@@ -410,7 +410,7 @@ def hədəfi_tap(a: Analiz, ofset: int) -> Hədəf | None:
 
 def _mənşəyə(b):
     """
-    `gətir "./x.alqor".{f}` — ləqəbsiz idxal olunan ad həmin fayldakı
+    `gətir "./x.alq".{f}` — ləqəbsiz idxal olunan ad həmin fayldakı
     elanın özüdür (keçid, istinad, ad dəyişmə onun üzərindən gedir).
     `{f kimi g}` isə yerli addır.
     """
@@ -478,7 +478,7 @@ def fayl_istinadları(a: Analiz, açar: tuple, ad: str, elan_daxil: bool
             yer = a.üzv_adı_yeri(e)
             if yer:
                 nəticə.append(yer)
-    # `gətir "./x.alqor".{f, f kimi g}` — idxal siyahısındakı ad
+    # `gətir "./x.alq".{f, f kimi g}` — idxal siyahısındakı ad
     for b in a.bağlamalar:
         m = getattr(b, "mənşə", None)
         if m is not None and bağlama_açarı(m) == açar and _yerlidir(a, b):
@@ -1372,7 +1372,7 @@ class Server:
         return Path(yol).resolve().as_uri()
 
     def layihə_faylları(self) -> list[Path]:
-        """Açıq sənədlər + iş sahəsindəki bütün `.alqor` faylları."""
+        """Açıq sənədlər + iş sahəsindəki bütün `.alq` faylları."""
         görülən: set[str] = set()
         n: list[Path] = []
 
@@ -1736,7 +1736,7 @@ _GİZLİ_QOVLUQLAR = {"node_modules", "__pycache__", "hədəf", "hedef",
 def _alqor_faylları(kök: Path, hədd: int = 2000) -> list[Path]:
     n: list[Path] = []
     try:
-        for p in sorted(kök.rglob("*.alqor")):
+        for p in sorted([*kök.rglob("*.alq"), *kök.rglob("*.alqor")]):
             hissələr = p.relative_to(kök).parts[:-1]
             if any(h.startswith(".") or h in _GİZLİ_QOVLUQLAR
                    for h in hissələr):

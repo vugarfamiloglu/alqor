@@ -15,8 +15,8 @@ from studio.server import Studio
 from playwright.sync_api import sync_playwright
 ç = Path(__file__).resolve().parent
 q = Path(tempfile.mkdtemp(prefix="alqor-ekran-"))
-shutil.copy(ç / "idarə-paneli.alqor", q)
-shutil.copy(KÖK / "numuneler" / "09-tapsiriqlar.alqor", q)
+shutil.copy(ç / "idarə-paneli.alq", q)
+shutil.copy(KÖK / "numuneler" / "09-tapsiriqlar.alq", q)
 s = Studio(q).fonda_başlat()
 
 def gözlə_çərçivə(p, seçici, müddət=25):
@@ -36,7 +36,7 @@ with sync_playwright() as pw:
     p.goto(s.ünvan()); p.wait_for_selector(".düyün")
     while p.get_attribute("html", "data-tema") != "qaranlıq":
         p.click("#dym-tema"); p.wait_for_timeout(150)
-    p.click('.düyün[data-yol="idarə-paneli.alqor"]'); p.wait_for_selector(".tab.aktiv")
+    p.click('.düyün[data-yol="idarə-paneli.alq"]'); p.wait_for_selector(".tab.aktiv")
     p.click('[data-panel="palet"]'); p.wait_for_timeout(300)
     p.click("#dym-onbaxis")
     gözlə_çərçivə(p, ".v-qrafik")
@@ -52,7 +52,7 @@ with sync_playwright() as pw:
     p.screenshot(path=str(ç / "studio-xususiyyetler.png"))
     # 09 nümunəsi — tapşırıq meneceri
     p.click('[data-panel="layihe"]')
-    p.click('.düyün[data-yol="09-tapsiriqlar.alqor"]'); p.wait_for_timeout(500)
+    p.click('.düyün[data-yol="09-tapsiriqlar.alq"]'); p.wait_for_timeout(500)
     gözlə_çərçivə(p, ".v-düymə")
     p.wait_for_timeout(1200)
     p.screenshot(path=str(ç / "studio-tapsiriqlar.png"))

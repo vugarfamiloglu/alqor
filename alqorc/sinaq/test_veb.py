@@ -688,7 +688,7 @@ class StatikVəŞablonCavabı(unittest.TestCase):
         from alqor.xeta import XətaToplayıcı
 
         x = XətaToplayıcı()
-        mənbə = Mənbə.mətndən(BAŞLIQ + kod, "sınaq.alqor", x)
+        mənbə = Mənbə.mətndən(BAŞLIQ + kod, "sınaq.alq", x)
         ağac = Parser(Lekser(mənbə, x).leksə(), mənbə, x).ayır()
         self.assertTrue(x.uğurludur(), x.hesabat(False))
 
@@ -1082,7 +1082,7 @@ class KitabRəfiSınağı(unittest.TestCase):
         from alqor.xeta import XətaToplayıcı
 
         yol = (Path(__file__).parent.parent.parent / "numuneler"
-               / "10-kitab-refi" / "esas.alqor")
+               / "10-kitab-refi" / "esas.alq")
         x = XətaToplayıcı()
         m = Mənbə.fayldan(yol, x)
         ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
@@ -1103,7 +1103,7 @@ class KitabRəfiSınağı(unittest.TestCase):
 class NümunəSınağı(unittest.TestCase):
     def test_05_veb_serveri_işləyir(self):
         yol = (Path(__file__).parent.parent.parent / "numuneler"
-               / "05-veb-server.alqor")
+               / "05-veb-server.alq")
         if not yol.exists():
             self.skipTest("nümunə yoxdur")
 

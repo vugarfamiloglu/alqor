@@ -1,11 +1,11 @@
 """
-Alqor — layihə: `layihe.alqor` manifesti və `alqor yeni` şablonları.
+Alqor — layihə: `layihe.alq` manifesti və `alqor yeni` şablonları.
 
 Spesifikasiya § 8.8, § 13.2.
 
 NİYƏ ÖZ PARSERİMİZ?
 ───────────────────
-`layihe.alqor` TOML-a bənzəyir, amma TOML 1.0 deyil: açarlar
+`layihe.alq` TOML-a bənzəyir, amma TOML 1.0 deyil: açarlar
 Azərbaycan hərfli ola bilər (`açarSözlər`, `sərt_boş`) və məntiqi
 dəyərlər `doğru`/`yanlış` yazılır. Python-un `tomllib` modulu ikisini
 də rədd edir. Bu modul həmin alt çoxluğu oxuyur:
@@ -26,7 +26,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-MANİFEST = "layihe.alqor"
+MANİFEST = "layihe.alq"
+KÖHNƏ_MANİFEST = "layihe.alqor"           # əvvəlki sonluq — hələ də tanınır
 
 
 class ManifestXətası(Exception):
@@ -239,7 +240,7 @@ class Layihə:
     @property
     def giriş(self) -> Path:
         return self.kök / str(self._al("qurma", "giriş",
-                                       "mənbə/əsas.alqor"))
+                                       "mənbə/əsas.alq"))
 
     @property
     def çıxış(self) -> Path:
@@ -262,14 +263,15 @@ class Layihə:
 
 
 def tap(başlanğıc: Path | str = ".") -> Layihə | None:
-    """`layihe.alqor`-u cari və yuxarı qovluqlarda axtarır."""
+    """`layihe.alq`-u cari və yuxarı qovluqlarda axtarır."""
     p = Path(başlanğıc).resolve()
     if p.is_file():
         p = p.parent
     for q in (p, *p.parents):
-        m = q / MANİFEST
-        if m.is_file():
-            return Layihə(q, oxu(m.read_text(encoding="utf-8")))
+        for ad in (MANİFEST, KÖHNƏ_MANİFEST):
+            m = q / ad
+            if m.is_file():
+                return Layihə(q, oxu(m.read_text(encoding="utf-8")))
     return None
 
 
@@ -287,7 +289,7 @@ təsvir = "{təsvir}"
 lisenziya = "MIT"
 
 [qurma]
-giriş = "mənbə/əsas.alqor"
+giriş = "mənbə/əsas.alq"
 çıxış = "qurma/"
 
 [tip]
@@ -417,7 +419,7 @@ son
 _SINAQ = {
     "konsol": '''\
 gətir test
-gətir "../mənbə/əsas.alqor" kimi proqram
+gətir "../mənbə/əsas.alq" kimi proqram
 
 @sınaq("salamla adı yerləşdirir")
 funksiya salamlama()
@@ -427,7 +429,7 @@ son
     "veb": '''\
 gətir test
 gətir veb
-gətir "../mənbə/əsas.alqor" kimi proqram
+gətir "../mənbə/əsas.alq" kimi proqram
 
 @sınaq("ana səhifə açılır")
 funksiya anaSəhifə()
@@ -444,7 +446,7 @@ son
     "desktop": '''\
 gətir test
 gətir pəncərə
-gətir "../mənbə/əsas.alqor" kimi proqram
+gətir "../mənbə/əsas.alq" kimi proqram
 
 @sınaq("düymə sayğacı artırır")
 funksiya sayğac()
@@ -458,7 +460,7 @@ son
 ''',
     "kitabxana": '''\
 gətir test
-gətir "../mənbə/əsas.alqor" kimi proqram
+gətir "../mənbə/əsas.alq" kimi proqram
 
 @sınaq
 funksiya toplama()
@@ -513,8 +515,8 @@ def yarat(qovluq: Path, ad: str, şablon: str = "konsol") -> list[Path]:
     təsvir = _TƏSVİRLƏR[şablon]
     fayllar = {
         MANİFEST: _MANİFEST_ŞABLONU.format(ad=ad, təsvir=təsvir),
-        "mənbə/əsas.alqor": _ƏSAS[şablon].format(ad=ad),
-        "sınaq/əsas_sınaq.alqor": _SINAQ[şablon],
+        "mənbə/əsas.alq": _ƏSAS[şablon].format(ad=ad),
+        "sınaq/əsas_sınaq.alq": _SINAQ[şablon],
         ".gitignore": _GITIGNORE,
         "README.md": _README.format(ad=ad, təsvir=təsvir),
     }

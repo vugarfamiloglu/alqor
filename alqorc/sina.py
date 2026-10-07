@@ -23,7 +23,7 @@ sys.path.insert(0, str(KÖK))
 
 
 def nümunələri_yoxla() -> int:
-    """Bütün `numuneler/*.alqor` fayllarını leksə edir."""
+    """Bütün `numuneler/*.alq` fayllarını leksə edir."""
     from alqor.lekser import faylı_leksə
 
     qovluq = KÖK.parent / "numuneler"
@@ -31,7 +31,7 @@ def nümunələri_yoxla() -> int:
         print("⚠ nümunələr qovluğu tapılmadı")
         return 0
 
-    fayllar = sorted(qovluq.glob("*.alqor"))
+    fayllar = sorted(qovluq.glob("*.alq"))
     print(f"\n── Nümunə proqramlar ({len(fayllar)}) " + "─" * 30)
 
     xəta_sayı = 0

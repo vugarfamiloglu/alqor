@@ -51,7 +51,7 @@ alqorc/
 │   ├── alqorls.py        LSP serveri (§ 13.8) — `alqor ls --stdio`
 │   ├── modullar/         əlavə standart modullar (§ 10.17), tənbəl yüklənir
 │   ├── qrammatika.py     VS Code TextMate qrammatikası (açar sözlərdən)
-│   ├── layihe.py         `layihe.alqor` parseri + `yeni` şablonları
+│   ├── layihe.py         `layihe.alq` parseri + `yeni` şablonları
 │   ├── sinaqci.py        `test` modulu + `sına` işlədicisi
 │   ├── senedci.py        `sənəd` — HTML/Markdown API sənədi
 │   └── qurucu.py         `qur` — tək fayllı `.pyz` paket
@@ -83,26 +83,26 @@ cd alqorc
 
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
-python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
+python alqorc.py işlət fayl.alq --tip          # icradan əvvəl yoxla
 python sina.py --nümunələr                       # 1048 sınaq + nümunələr
-python alqorc.py işlət ../numuneler/02-dovrler.alqor
-python alqorc.py işlət ../numuneler/04-siniflər.alqor
-python alqorc.py tokenlər ../numuneler/01-salam.alqor
+python alqorc.py işlət ../numuneler/02-dovrler.alq
+python alqorc.py işlət ../numuneler/04-siniflər.alq
+python alqorc.py tokenlər ../numuneler/01-salam.alq
 python alqorc.py yoxla ../numuneler
 python alqorc.py hərf "ışıq İmran"
 
 # Veb server
-python alqorc.py işlət ../numuneler/05-veb-server.alqor          # port 8080
-python alqorc.py işlət ../numuneler/05-veb-server.alqor -- sınaq # port açmadan
+python alqorc.py işlət ../numuneler/05-veb-server.alq          # port 8080
+python alqorc.py işlət ../numuneler/05-veb-server.alq -- sınaq # port açmadan
 
 # Desktop tətbiq
-python alqorc.py işlət ../numuneler/06-desktop.alqor             # pəncərə açır
-python alqorc.py işlət ../numuneler/06-desktop.alqor -- sınaq    # başsız
+python alqorc.py işlət ../numuneler/06-desktop.alq             # pəncərə açır
+python alqorc.py işlət ../numuneler/06-desktop.alq -- sınaq    # başsız
 
 # Hazır vidjetlər — eyni kod hər üç hədəfdə
-python alqorc.py işlət ../numuneler/08-vidjetler.alqor           # desktop
-python alqorc.py işlət ../numuneler/08-vidjetler.alqor -- veb    # veb :8081
-python alqorc.py işlət ../numuneler/08-vidjetler.alqor -- sınaq  # başsız
+python alqorc.py işlət ../numuneler/08-vidjetler.alq           # desktop
+python alqorc.py işlət ../numuneler/08-vidjetler.alq -- veb    # veb :8081
+python alqorc.py işlət ../numuneler/08-vidjetler.alq -- sınaq  # başsız
 ```
 
 ---
@@ -221,7 +221,7 @@ modullarının yoxluğu bildirilir — bu, doğrudur).
 | `normal` | Çıxarma + yoxlama (standart) |
 | `sərt` | Açıq funksiya imzaları məcburi, naməlum üzvlər xətadır |
 
-Rejim `layihe.alqor` → `[tip] rejim`, və ya `--rejim` bayrağı ilə.
+Rejim `layihe.alq` → `[tip] rejim`, və ya `--rejim` bayrağı ilə.
 
 **Tutulan 25 xəta kodu:** ALQ-T001 (tip uyğunsuzluğu), T002 (naməlum
 tip), T003/T004 (arqument sayı/tipi), T005 (qaytarma), T006 (naməlum
@@ -371,18 +371,18 @@ kodu düzəltdik (və ya spesifikasiyanı, əgər o səhv idisə).
 | 28 | IDE skeletləri `tamEn` tipi yazırdı (toplu ad dəyişikliyi) | düzəldildi; skeletlər tip yoxlamasından keçir |
 | 29 | Qısa qurucudan sonra `göstər()` gövdəyə düşür, `son` sinfi bağlayırdı | girinti qaydası (§ 6.3.1) |
 | 30 | JSX `{…}`, mətn `"{…}"` və şablon `{{ … }}` artıq tokenləri səssizcə atırdı | xəta + CSS üçün xam mətn məsləhəti |
-| 31 | `sistem.arqumentlər()` `["işlət", "fayl.alqor", …]` qaytarırdı | proqramın öz arqumentləri |
+| 31 | `sistem.arqumentlər()` `["işlət", "fayl.alq", …]` qaytarırdı | proqramın öz arqumentləri |
 | 32 | `konsol.soruş` `input()`-u birbaşa çağırırdı — sınaqda işləmirdi | icraçının giriş axını |
 | 33 | `tut x` — `x` gövdənin ilk cümləsi sayılırdı | istənilən xətanı bağlayır |
 | 34 | Şablonda uşaq blokun xətası valideynin faylı ilə bildirilirdi; blok və ifadə keşi toqquşurdu | qovşaq faylı daşıyır; iki keş |
 | 35 | Sınaq sürücüsü qutucuğa `"doğru"` mətni göndərirdi; cədvəl sətrini tapa bilmirdi | brauzer kimi `məntiq`; başlanğıc uyğunluğu |
 | 36 | `cədvəl(sətirKlik:)` hansı sətrin basıldığını ötürmürdü | sətir indeksi |
 | 37 | Spesifikasiya `veb.ön`, `p.ölçü`, `faylAçÇoxlu`, WebKitGTK təsvir edirdi | § 12 həqiqi API ilə; olmayanlar "planlaşdırılır" |
-| 38 | `gətir "./x.alqor"` prosesin cari qovluğuna nisbətən axtarılırdı | idxal edən fayla nisbətən; keş icraçıya bağlı |
+| 38 | `gətir "./x.alq"` prosesin cari qovluğuna nisbətən axtarılırdı | idxal edən fayla nisbətən; keş icraçıya bağlı |
 | 39 | `ixrac et` olan elanın `///` sənədi itirdi; `//!` ilk `///` ilə birləşirdi; sənəddəki kodun girintisi silinirdi | sənəd elan açar sözünə bağlanır |
 | 40 | `@annotasiya modul …` səssizcə atılırdı | `ModulElanı.annotasiyalar` |
 | 41 | Kitabxana funksiyasının xətası yersiz çap olunurdu | çağırışın yeri qoşulur |
-| 42 | `işlət f.alqor -- --tip` tip yoxlamasını işə salırdı | `--`-dan sonrası proqramındır |
+| 42 | `işlət f.alq -- --tip` tip yoxlamasını işə salırdı | `--`-dan sonrası proqramındır |
 
 ## 🟡 AÇIQ QALAN MƏSƏLƏLƏR
 
@@ -419,7 +419,7 @@ buraxır (çünki `5.mətnƏt()` işləməlidir). Spesifikasiya düzəldilməlid
 | ✅ | `alqorls` (LSP) + VS Code genişlənməsi, TextMate qrammatikası | — |
 | ◐ | Standart kitabxana: ✅ kodlaşdırma, csv, toml, yaml, xml, html, konfiq, sıxma, şifrə, http, şəbəkə, verilənlər; qalır: şəkil, poçt, keş, növbə, planlayıcı, validasiya, lokalizasiya, pul, qrafik, pdf, ffi | böyük |
 | 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
-| 6a | **Alqor Studio — installerli Desktop tətbiqi** (istifadəçi tələbi): Windows `.exe` quraşdırıcı (Başlat menyusu, masaüstü ikonu, `.alqor` faylları Studio ilə açılır), Linux `.deb`/AppImage, macOS `.dmg`; Python daxildədir — ayrıca quraşdırmaq lazım deyil | böyük |
+| 6a | **Alqor Studio — installerli Desktop tətbiqi** (istifadəçi tələbi): Windows `.exe` quraşdırıcı (Başlat menyusu, masaüstü ikonu, `.alq` faylları Studio ilə açılır), Linux `.deb`/AppImage, macOS `.dmg`; Python daxildədir — ayrıca quraşdırmaq lazım deyil | böyük |
 | 7 | Mərhələ 6 — JS/WASM transpilyator | böyük |
 | 8 | `alqorpm` + `alqorhub` (paket meneceri və reyestr) | böyük |
 | ✅ | Alqor Studio: vidjet miniatürləri, Xüsusiyyətlər paneli (üslub, mətn, növ …), canlı önbaxış | — |

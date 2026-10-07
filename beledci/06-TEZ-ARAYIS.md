@@ -193,7 +193,7 @@ gətir riyaziyyat
 gətir riyaziyyat kimi r
 gətir riyaziyyat.{kök, Pİ}
 gətir riyaziyyat.{kök kimi k}
-gətir "./yerli.alqor" kimi y
+gətir "./yerli.alq" kimi y
 
 ixrac et funksiya f() ... son
 ixrac et {a, b}

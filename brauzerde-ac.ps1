@@ -85,11 +85,11 @@ if ($Numune -eq "studio") {
 
 # ── 3. Nümunə və port ──────────────────────────────────────────────────
 $Numuneler = @{
-    "05" = @{ Fayl = "05-veb-server.alqor"; Arq = @();        Port = 8080 }
-    "06" = @{ Fayl = "06-desktop.alqor";    Arq = @();        Port = 0 }
-    "08" = @{ Fayl = "08-vidjetler.alqor";  Arq = @("--", "veb"); Port = 8081 }
-    "09" = @{ Fayl = "09-tapsiriqlar.alqor"; Arq = @();       Port = 0 }
-    "10" = @{ Fayl = "10-kitab-refi\esas.alqor"; Arq = @();   Port = 8083 }
+    "05" = @{ Fayl = "05-veb-server.alq"; Arq = @();        Port = 8080 }
+    "06" = @{ Fayl = "06-desktop.alq";    Arq = @();        Port = 0 }
+    "08" = @{ Fayl = "08-vidjetler.alq";  Arq = @("--", "veb"); Port = 8081 }
+    "09" = @{ Fayl = "09-tapsiriqlar.alq"; Arq = @();       Port = 0 }
+    "10" = @{ Fayl = "10-kitab-refi\esas.alq"; Arq = @();   Port = 8083 }
 }
 $N = $Numuneler[$Numune]
 $Fayl = Join-Path $Kok "numuneler\$($N.Fayl)"

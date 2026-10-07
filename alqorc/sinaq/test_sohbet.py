@@ -270,7 +270,7 @@ class FaylƏməliyyatları(unittest.TestCase):
     def test_yüklə_və_saxla(self):
         import tempfile
         qovluq = Path(tempfile.mkdtemp())
-        mənbə = qovluq / "modul.alqor"
+        mənbə = qovluq / "modul.alq"
         mənbə.write_text(
             "funksiya salam() -> mətn\n    qaytar \"salam\"\nson\n",
             encoding="utf-8")
@@ -278,7 +278,7 @@ class FaylƏməliyyatları(unittest.TestCase):
             out, _ = seans([f":yüklə {mənbə}", "salam()"])
             self.assertIn("salam", out)
 
-            hədəf = qovluq / "seans.alqor"
+            hədəf = qovluq / "seans.alq"
             out, _ = seans(["dəyişən a = 1", f":saxla {hədəf}"])
             self.assertIn("saxlanıldı", out)
             self.assertTrue(hədəf.exists())
@@ -289,7 +289,7 @@ class FaylƏməliyyatları(unittest.TestCase):
             shutil.rmtree(qovluq, ignore_errors=True)
 
     def test_yüklə_tapılmayan_fayl(self):
-        out, _ = seans([":yüklə yoxdur-belə-fayl.alqor"])
+        out, _ = seans([":yüklə yoxdur-belə-fayl.alq"])
         self.assertIn("tapılmadı", out)
 
 
