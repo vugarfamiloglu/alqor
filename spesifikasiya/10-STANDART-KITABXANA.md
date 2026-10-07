@@ -758,27 +758,58 @@ test.yoxla(saxta.çağırıldı("tap", 1))
 
 ## 10.17 Digər modullar
 
-| Modul | Təyinatı |
-|---|---|
-| `jurnal` | Loglama |
-| `konfiq` | Konfiqurasiya faylları (TOML, YAML, ENV) |
-| `kodlaşdırma` | Base64, hex, URL, UTF-8 çevirmələri |
-| `sıxma` | gzip, zip, tar |
-| `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) |
-| `csv` | CSV oxuma/yazma |
-| `xml` | XML parser |
-| `yaml` | YAML parser |
-| `toml` | TOML parser |
-| `html` | HTML parser və generator |
-| `poçt` | E-poçt göndərmə (SMTP) |
-| `keş` | Yaddaş və Redis keşi |
-| `növbə` | İş növbələri |
-| `planlayıcı` | Cron tipli tapşırıqlar |
-| `validasiya` | Giriş yoxlaması |
-| `lokalizasiya` | Çoxdilli dəstək |
-| `pul` | Dəqiq pul hesablamaları və valyuta |
-| `qrafik` | Diaqram və qrafiklər |
-| `pdf` | PDF yaratma |
-| `ffi` | C kitabxanaları ilə əlaqə |
-| `veb` | Veb freymvork (Bölmə 11) |
-| `pəncərə` | Desktop GUI (Bölmə 12) |
+Etalon implementasiyada hər modul `alqorc/alqor/modullar/` daxilində
+ayrıca fayldır və yalnız `gətir` olunanda yüklənir. Faylın başındakı
+sənəd modulun tam arayışıdır.
+
+| Modul | Təyinatı | Vəziyyət |
+|---|---|---|
+| `jurnal` | Loglama | ✅ |
+| `kodlaşdırma` | Base64, hex, URL, sorğu sətri, HTML, UTF-8, CRC32, `slug` | ✅ |
+| `csv` | CSV oxuma/yazma — `ayırıcı: "avto"`, `çevir:`, Excel üçün `bom:` | ✅ |
+| `toml` | TOML 1.0 oxuma + yazma | ✅ |
+| `yaml` | YAML 1.2 (bloklar, axın, `\|` `>`, ankor/alias, `<<`, çox sənəd) | ✅ |
+| `xml` | XML → `düyün` ağacı, CSS seçicisi, lüğətə/lüğətdən; `<!ENTITY>` rədd edilir | ✅ |
+| `html` | HTML ayırıcı (`tap`, `tapHamısı`), `mətnə`, XSS `təmizlə` | ✅ |
+| `konfiq` | TOML/YAML/JSON/ENV/INI, fayl birləşdirmə, mühit dəyişəni ilə əvəzləmə | ✅ |
+| `sıxma` | gzip, zlib, zip, tar (zip-slip və keçid hücumlarına qarşı yoxlama) | ✅ |
+| `şifrə` | Bölmə 10.14 | ⏳ |
+| `http`, `şəbəkə` | Bölmə 10.12 | ⏳ |
+| `verilənlər` | Bölmə 10.13 | ⏳ |
+| `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) | ⏳ |
+| `poçt` | E-poçt göndərmə (SMTP) | ⏳ |
+| `keş` | Yaddaş və Redis keşi | ⏳ |
+| `növbə` | İş növbələri | ⏳ |
+| `planlayıcı` | Cron tipli tapşırıqlar | ⏳ |
+| `validasiya` | Giriş yoxlaması | ⏳ |
+| `lokalizasiya` | Çoxdilli dəstək | ⏳ |
+| `pul` | Dəqiq pul hesablamaları və valyuta | ⏳ |
+| `qrafik` | Diaqram və qrafiklər | ⏳ |
+| `pdf` | PDF yaratma | ⏳ |
+| `ffi` | C kitabxanaları ilə əlaqə | ⏳ |
+| `veb` | Veb freymvork (Bölmə 11) | ✅ |
+| `pəncərə` | Desktop GUI (Bölmə 12) | ✅ |
+
+### `düyün` — XML və HTML ağacı
+
+```alqor
+gətir html
+
+dəyişən s = html.oxu(mətn)
+dəyişən başlıq = s.tap("title")?.mətn() ?? "başlıqsız"
+hər a üçün s.tapHamısı("nav > a[href]") içində
+    yaz(a.mətn(), a.atribut("href"))
+son
+```
+
+Metodlar: `ad()`, `atribut(ad, standart?)`, `atributlar()`,
+`atributQoy(ad, d)`, `mətn()`, `uşaqlar()`, `valideyn()`, `tap(seçici)`
+→ `düyün?`, `tapHamısı(seçici)`, `əlavəEt(u)`, `xml(gözəl?)`, `html()`,
+`lüğət()`. Seçici: `teq`, `.sinif`, `#id`, `[atr]`, `[atr=d]`
+(`^=` `$=` `*=` `~=` `|=`), nəsil, `>`, `,`.
+
+### Yeni xəta tipləri
+
+`CSVXətası`, `TOMLXətası`, `YAMLXətası`, `XMLXətası`, `SıxmaXətası`,
+`KodlaşdırmaXətası` — hamısı `FormatXətası`-nın alt növüdür;
+`KonfiqXətası` — `Xəta`-nın.
