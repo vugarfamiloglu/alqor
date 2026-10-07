@@ -342,6 +342,252 @@ class SıxmaSınağı(unittest.TestCase):
                 sixma.tar_aç(str(q / "pis.tar"), str(q / "h"))
 
 
+class ŞifrəSınağı(unittest.TestCase):
+    def test_aes_fips197(self):
+        from alqor.modullar.sifre import _AES
+        p = bytes.fromhex("00112233445566778899aabbccddeeff")
+        self.assertEqual(_AES(bytes(range(32))).blok(p).hex(),
+                         "8ea2b7ca516745bfeafc49904b496089")
+        self.assertEqual(_AES(bytes(range(16))).blok(p).hex(),
+                         "69c4e0d86a7b0430d8cdb78070b4c55a")
+
+    def test_gcm_nist(self):
+        from alqor.modullar.sifre import gcm_şifrələ
+        _, t = gcm_şifrələ(bytes(32), bytes(12), b"")
+        self.assertEqual(t.hex(), "530f8afbc74536b9a963b4f1c4cb738b")
+        c, t = gcm_şifrələ(bytes(32), bytes(12), bytes(16))
+        self.assertEqual(c.hex(), "cea7403d4d606b6e074ec5d3baf39d18")
+        self.assertEqual(t.hex(), "d0d1c8a799996bf0265b98b5d48ab919")
+
+    def test_gcm_cryptography_ilə_eynidir(self):
+        try:
+            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        except ImportError:
+            self.skipTest("cryptography quraşdırılmayıb")
+        from alqor.modullar.sifre import gcm_şifrələ
+        for n in (0, 1, 15, 16, 17, 333):
+            for nl in (12, 16):
+                k, iv, pt = os.urandom(32), os.urandom(nl), os.urandom(n)
+                c, t = gcm_şifrələ(k, iv, pt, b"aad")
+                self.assertEqual(c + t, AESGCM(k).encrypt(iv, pt, b"aad"))
+
+    def test_şifrələ_aç_və_dəyişiklik(self):
+        from alqor.modullar import sifre as Ş
+        açar = os.urandom(32)
+        ş = Ş.şifrələ("məxfi ə", açar)
+        self.assertEqual(Ş.şifrə_aç(ş, açar).decode(), "məxfi ə")
+        self.assertNotEqual(ş, Ş.şifrələ("məxfi ə", açar))   # nonce
+        pis = bytearray(ş)
+        pis[20] ^= 1
+        with self.assertRaises(AlqorXəta):
+            Ş.şifrə_aç(bytes(pis), açar)
+        with self.assertRaises(AlqorXəta):
+            Ş.şifrə_aç(ş, os.urandom(32))
+        with self.assertRaises(AlqorXəta):
+            Ş.şifrələ("x", "mətn açar")
+
+    def test_parol(self):
+        from alqor.modullar import sifre as Ş
+        h = Ş.parol_heş("gizli")
+        self.assertTrue(h.startswith("$scrypt$"))
+        self.assertTrue(Ş.parol_yoxla("gizli", h))
+        self.assertFalse(Ş.parol_yoxla("Gizli", h))
+        self.assertFalse(Ş.parol_yoxla("gizli", "$scrypt$pozuq"))
+        self.assertNotEqual(h, Ş.parol_heş("gizli"))          # duz
+
+    def test_jwt(self):
+        from alqor.modullar import sifre as Ş
+        t = Ş.jwt_yarat({"id": 5, "ad": "Aysel"}, "a", müddət=60)
+        self.assertEqual(Ş.jwt_oxu(t, "a")["ad"], "Aysel")
+        for pis in (t, Ş.jwt_yarat({"id": 1}, "a", müddət=-10)):
+            with self.assertRaises(AlqorXəta):
+                Ş.jwt_oxu(pis, "b" if pis is t else "a")
+        # alg: none hücumu
+        b, g, _ = t.split(".")
+        import base64
+        none = base64.urlsafe_b64encode(
+            b'{"alg":"none"}').decode().rstrip("=")
+        with self.assertRaises(AlqorXəta):
+            Ş.jwt_oxu(f"{none}.{g}.", "a")
+
+    def test_heş(self):
+        from alqor.modullar import sifre as Ş
+        self.assertEqual(Ş.heş("abc"), "ba7816bf8f01cfea414140de5dae2223"
+                                       "b00361a396177a9cb410ff61f20015ad")
+        self.assertEqual(len(Ş.heş("abc", "sha512")), 128)
+        with self.assertRaises(AlqorXəta):
+            Ş.heş("x", "md4")
+
+
+class HTTPSınağı(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        import http.server
+        import json
+        import threading
+
+        class H(http.server.BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def _cavab(self, kod, b, növ="application/json"):
+                self.send_response(kod)
+                self.send_header("Content-Type", növ)
+                self.send_header("Content-Length", str(len(b)))
+                self.end_headers()
+                try:
+                    self.wfile.write(b)
+                except BrokenPipeError:          # müştəri vaxtı bitib getdi
+                    pass
+
+            def do_GET(self):
+                if self.path == "/y":
+                    self.send_response(302)
+                    self.send_header("Location", "/j")
+                    self.end_headers()
+                elif self.path == "/404":
+                    self._cavab(404, b"yox", "text/plain")
+                elif self.path == "/yavas":
+                    import time
+                    time.sleep(1.5)
+                    self._cavab(200, b"{}")
+                else:
+                    self._cavab(200, json.dumps({
+                        "yol": self.path,
+                        "a": self.headers.get("X-A")}).encode())
+
+            def do_POST(self):
+                n = int(self.headers.get("Content-Length", 0))
+                self._cavab(201, json.dumps({
+                    "n": self.headers.get("Content-Type"),
+                    "g": self.rfile.read(n).decode()}).encode())
+            do_PUT = do_PATCH = do_DELETE = do_POST
+
+        cls.s = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+        cls.U = f"http://127.0.0.1:{cls.s.server_port}"
+        threading.Thread(target=cls.s.serve_forever, daemon=True).start()
+        os.environ["NO_PROXY"] = "127.0.0.1,localhost"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.s.shutdown()
+        cls.s.server_close()
+
+    def m(self):
+        from alqor.modullar import http_
+        return http_
+
+    def test_al_göndər(self):
+        H = self.m()
+        c = H._sorğu("GET", self.U + "/a", parametrlər={"q": "çay"},
+                     başlıqlar={"X-A": "1"}).icra()
+        self.assertEqual(c.kod, 200)
+        self.assertEqual(c.json(), {"yol": "/a?q=%C3%A7ay", "a": "1"})
+        c = H._sorğu("POST", self.U + "/b", json={"ad": "Ə"}).icra()
+        self.assertEqual(c.kod, 201)
+        self.assertEqual(c.json()["g"], '{"ad": "Ə"}')
+        c = H._sorğu("PUT", self.U + "/b", forma={"a": "ə b"}).icra()
+        self.assertEqual(c.json()["g"], "a=%C9%99+b")
+
+    def test_yönləndirmə_404_vaxt(self):
+        H = self.m()
+        self.assertTrue(H._sorğu("GET", self.U + "/y").icra().url
+                        .endswith("/j"))
+        c = H._sorğu("GET", self.U + "/404").icra()
+        self.assertEqual((c.kod, c.uğurlu()), (404, False))
+        with self.assertRaises(AlqorXəta) as k:
+            c.yoxla()
+        self.assertEqual(k.exception.tip, "HTTPXətası")
+        with self.assertRaises(AlqorXəta) as k:
+            H._sorğu("GET", self.U + "/yavas", vaxtLimiti=200).icra()
+        self.assertEqual(k.exception.tip, "VaxtBitdiXətası")
+        with self.assertRaises(AlqorXəta) as k:
+            H._sorğu("GET", "http://127.0.0.1:1/").icra()
+        self.assertEqual(k.exception.tip, "BağlantıXətası")
+
+    def test_yalnız_http(self):
+        H = self.m()
+        for u in ("file:///etc/passwd", "ftp://x.az/a", "javascript:1"):
+            with self.assertRaises(AlqorXəta):
+                H.Sorğu("AL", u)
+
+
+class VerilənlərSınağı(unittest.TestCase):
+    def setUp(self):
+        from alqor.modullar import verilenler as V
+        self.V = V
+        self.b = V.bağlan("sqlite::yaddaş:")
+        self.b.icra("CREATE TABLE t (id INTEGER PRIMARY KEY, ad TEXT "
+                    "UNIQUE, bal INTEGER CHECK (bal >= 0))")
+        q = V.Qurucu(self.b, "t")
+        for ad, bal in (("Aysel", 95), ("Kamran", 88), ("Elşən", 60)):
+            q.əlavə_et({"ad": ad, "bal": bal})
+        self.q = q
+
+    def test_parametrlər_və_inyeksiya(self):
+        self.assertEqual(self.b.bir_dəyər(
+            "SELECT bal FROM t WHERE ad = $1", "Aysel"), 95)
+        self.assertEqual(self.b.sorğu(
+            "SELECT ad FROM t WHERE ad = $1", "x' OR '1'='1"), [])
+        self.assertEqual(self.V._dollar("SELECT '$1', $2"),
+                         "SELECT '$1', ?2")
+        with self.assertRaises(AlqorXəta):
+            self.V.Qurucu(self.b, "t; DROP TABLE t")
+        with self.assertRaises(AlqorXəta):
+            self.q.harada("bal", "; DROP", 1)
+
+    def test_qurucu(self):
+        q = self.q
+        self.assertEqual([s["ad"] for s in q.harada("bal", ">", 70)
+                          .sırala("bal", "azalan").al()],
+                         ["Aysel", "Kamran"])
+        self.assertEqual(q.harada("ad", "içində", ["Aysel", "X"]).say(), 1)
+        self.assertEqual(q.harada("ad", "bənzər", "K%").ilk()["bal"], 88)
+        self.assertEqual(q.sırala("id").limit(1).atla(1).al()[0]["ad"],
+                         "Kamran")
+        self.assertEqual(q.harada("ad", "=", "Elşən").yenilə({"bal": 1}), 1)
+        self.assertEqual(q.harada("bal", "<", 10).sil(), 1)
+        with self.assertRaises(AlqorXəta):
+            q.sil()
+        with self.assertRaises(AlqorXəta):
+            q.yenilə({"bal": 0})
+
+    def test_məhdudiyyət(self):
+        with self.assertRaises(AlqorXəta) as k:
+            self.q.əlavə_et({"ad": "Aysel", "bal": 1})
+        self.assertEqual(k.exception.tip, "MəhdudiyyətXətası")
+
+    def test_miqrasiya(self):
+        with tempfile.TemporaryDirectory() as q:
+            Path(q, "001_a.sql").write_text(
+                "CREATE TABLE a (x INT);", encoding="utf-8")
+            Path(q, "002_pis.sql").write_text(
+                "INSERT INTO a VALUES (1); CREATE TABL;", encoding="utf-8")
+            with self.assertRaises(AlqorXəta):
+                self.b.miqrasiya(q)
+            # 001 tətbiq olundu, 002 tam geri qaytarıldı
+            self.assertEqual(self.b.bir_dəyər("SELECT COUNT(*) FROM a"), 0)
+            Path(q, "002_pis.sql").write_text(
+                "INSERT INTO a VALUES (1);", encoding="utf-8")
+            self.assertEqual(self.b.miqrasiya(q), ["002_pis.sql"])
+            self.assertEqual(self.b.miqrasiya(q), [])
+
+
+class ŞəbəkəSınağı(unittest.TestCase):
+    def test_tcp_udp(self):
+        ç = işlət('gətir şəbəkə\n'
+                  'dəyişən s = şəbəkə.TCPServer(0, (k) => '
+                  'k.göndər("Salam, " + k.sətirAl() + "\\n")).başlat()\n'
+                  'dəyişən k = şəbəkə.TCPBağlan("127.0.0.1", s.port())\n'
+                  'k.göndər("Aysel\\n")\nyaz(k.sətirAl())\n'
+                  'k.bağla()\ns.dayandır()\n'
+                  'dəyişən a = şəbəkə.UDPSoket()\n'
+                  'dəyişən b = şəbəkə.UDPSoket()\n'
+                  'a.göndər("ping", "127.0.0.1", b.port())\n'
+                  'yaz(b.al()["verilən"])\n')
+        self.assertEqual(ç.split("\n")[:2], ["Salam, Aysel", 'b"ping"'])
+
+
 class AlqorKoduSınağı(unittest.TestCase):
     def test_gətir_və_istifadə(self):
         ç = işlət('gətir csv\ngətir yaml\ngətir html\n'

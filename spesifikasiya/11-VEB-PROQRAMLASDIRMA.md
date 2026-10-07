@@ -445,8 +445,8 @@ son
 server.al("/panel", [girişTələbOlunur], panel)
 
 // JWT
-dəyişən token = auth.JWTYarat({"id": i.id}, müddət: "7g")
-server.ara(auth.JWT(gizli: AÇAR))
+dəyişən token = auth.tokenYarat({"id": i.id}, müddət: "7g")
+server.ara(auth.token(gizli: AÇAR))
 ```
 
 ---

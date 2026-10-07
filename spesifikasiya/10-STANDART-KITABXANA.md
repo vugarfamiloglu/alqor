@@ -572,7 +572,11 @@ dəyişən c = gözlə sorğu.göndər()
 gözlə http.faylYüklə(url, "yüklənən.zip", (faiz) => yaz("{faiz}%"))
 gözlə http.faylGöndər(url, "sənəd.pdf")
 
-// WebSocket
+// Cavab: c.kod(), c.uğurlu(), c.yoxla() (4xx/5xx → HTTPXətası),
+//        c.mətn(), c.json(), c.bayt(), c.başlıq(ad), c.başlıqlar(), c.url()
+// Xətalar: BağlantıXətası, VaxtBitdiXətası. Yalnız http(s):// — file:// yox.
+
+// WebSocket (planlaşdırılır)
 dəyişən ws = gözlə http.websocket("wss://nümunə.az/soket")
 ws.hadisə("mesaj", (m) => yaz(m))
 ws.göndər("salam")
@@ -595,6 +599,9 @@ gətir verilənlər
 dəyişən b = gözlə verilənlər.bağlan("postgres://user:pass@localhost/db")
 dəyişən b = gözlə verilənlər.bağlan("sqlite://./məlumat.db")
 dəyişən b = gözlə verilənlər.bağlan("mysql://...")
+
+// Etalon implementasiya: sqlite (+ "sqlite::yaddaş:"); postgres/mysql —
+// sürücü planlaşdırılır. Funksiyalar sinxrondur, `gözlə` də işləyir.
 
 // Sorğu
 dəyişən sətirlər = gözlə b.sorğu("SELECT * FROM istifadəçilər WHERE yaş > $1", 18)
@@ -621,7 +628,10 @@ dəyişən istifadəçilər = gözlə b.cədvəl("istifadəçilər")
     .limit(10)
     .al()
 
-// Model
+// Yaradılan sətir: b.cədvəl("t").əlavəEt({...}) -> id; şərtsiz yenilə/sil
+// qadağandır (təsadüfən bütün cədvəli silməyin qarşısı alınır)
+
+// Model (planlaşdırılır)
 @cədvəl("istifadəçilər")
 sinif İstifadəçi miras verilənlər.Model
     @açar
@@ -638,9 +648,9 @@ gözlə i.saxla()
 gözlə i.sil()
 dəyişən hamısı = gözlə İstifadəçi.harada("yaş", ">", 18).al()
 
-// Miqrasiya
-gözlə verilənlər.miqrasiya.yenilə()
-gözlə verilənlər.miqrasiya.geriQaytar()
+// Miqrasiya: qovluqdakı 001_*.sql, 002_*.sql … ardıcıl, hər biri bir dəfə,
+// tranzaksiyada (yarımçıq qalmır)
+b.miqrasiyaEt("miqrasiyalar/")
 ```
 
 ---
@@ -650,18 +660,35 @@ gözlə verilənlər.miqrasiya.geriQaytar()
 ```alqor
 gətir şifrə
 
-şifrə.heş("mətn", "sha256") -> mətn
-şifrə.heş("mətn", "sha512") -> mətn
-şifrə.parolHeş("parol") -> mətn           // Argon2id
-şifrə.parolYoxla("parol", heş) -> məntiq
+şifrə.heş("mətn") -> mətn                         // sha256, hex
+şifrə.heş("mətn", "sha512") -> mətn               // + sha1, sha3_256, blake2b …
 şifrə.HMAC("mesaj", "açar") -> mətn
-şifrə.şifrələ(verilən, açar) -> siyahı[bayt]    // AES-256-GCM
-şifrə.şifrəAç(şifrəli, açar) -> siyahı[bayt]
-şifrə.açarYarat() -> siyahı[bayt]
+şifrə.parolHeş("parol") -> mətn                   // "$scrypt$…" (duzlu)
+şifrə.parolYoxla("parol", heş) -> məntiq          // sabit zamanlı
+şifrə.açarYarat() -> bayt                         // 32 bayt
+şifrə.parolAçarı(parol, duz) -> bayt              // paroldan AES açarı
+şifrə.şifrələ(verilən, açar) -> bayt              // AES-256-GCM
+şifrə.şifrəAç(şifrəli, açar) -> bayt              // dəyişdirilibsə xəta
+şifrə.şifrəAçMətn(şifrəli, açar) -> mətn
+şifrə.təsadüfiBayt(32) -> bayt
+şifrə.təsadüfiMətn(32) -> mətn                    // URL-təhlükəsiz
 şifrə.UUID() -> mətn
-şifrə.JWTYarat(verilənlər, açar) -> mətn
-şifrə.JWTOxu(token, açar) -> lüğət
+şifrə.bərabərdir(a, b) -> məntiq                  // sabit zamanlı müqayisə
+şifrə.tokenYarat(verilənlər, açar, müddət: 3600) -> mətn    // JWT HS256
+şifrə.tokenOxu(token, açar) -> lüğət              // imza + exp yoxlanılır
 ```
+
+Qeydlər:
+
+- **Ad:** `JWTYarat` yox, `tokenYarat` — Azərbaycan əlifbasında `W`
+  yoxdur, ona görə Alqor adlarında da işlənə bilməz (§ 1.2).
+- **Parol heşi:** etalon implementasiyada scrypt (N=2¹⁵, r=8, p=1);
+  Python-un standart kitabxanasında Argon2 yoxdur. Format özünü
+  təsvir edir, ona görə gələcəkdə Argon2id-ə keçid köhnə heşləri
+  pozmur.
+- **Şifrəli format:** `01 | nonce(12) | şifrəli | etiket(16)`.
+- `tokenOxu` yalnız `HS256/384/512` qəbul edir — `alg: none` rədd
+  edilir. Xətalar: `ŞifrələməXətası`, `JWTXətası`.
 
 ---
 
@@ -773,9 +800,9 @@ sənəd modulun tam arayışıdır.
 | `html` | HTML ayırıcı (`tap`, `tapHamısı`), `mətnə`, XSS `təmizlə` | ✅ |
 | `konfiq` | TOML/YAML/JSON/ENV/INI, fayl birləşdirmə, mühit dəyişəni ilə əvəzləmə | ✅ |
 | `sıxma` | gzip, zlib, zip, tar (zip-slip və keçid hücumlarına qarşı yoxlama) | ✅ |
-| `şifrə` | Bölmə 10.14 | ⏳ |
-| `http`, `şəbəkə` | Bölmə 10.12 | ⏳ |
-| `verilənlər` | Bölmə 10.13 | ⏳ |
+| `şifrə` | Bölmə 10.14 | ✅ |
+| `http`, `şəbəkə` | Bölmə 10.12 (WebSocket ⏳) | ✅ |
+| `verilənlər` | Bölmə 10.13 (SQLite; ORM modeli ⏳) | ✅ |
 | `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) | ⏳ |
 | `poçt` | E-poçt göndərmə (SMTP) | ⏳ |
 | `keş` | Yaddaş və Redis keşi | ⏳ |
@@ -812,4 +839,5 @@ Metodlar: `ad()`, `atribut(ad, standart?)`, `atributlar()`,
 
 `CSVXətası`, `TOMLXətası`, `YAMLXətası`, `XMLXətası`, `SıxmaXətası`,
 `KodlaşdırmaXətası` — hamısı `FormatXətası`-nın alt növüdür;
-`KonfiqXətası` — `Xəta`-nın.
+`KonfiqXətası`, `ŞifrələməXətası` (→ `JWTXətası`), `VerilənlərXətası`
+(→ `MəhdudiyyətXətası`) — `Xəta`-nın; `HTTPXətası` — `ŞəbəkəXətası`-nın.

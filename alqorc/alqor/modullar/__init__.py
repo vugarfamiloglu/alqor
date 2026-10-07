@@ -37,6 +37,10 @@ QEYD: dict[str, str] = {
     "html": "html_",
     "konfiq": "konfiq",
     "sıxma": "sixma",
+    "şifrə": "sifre",
+    "http": "http_",
+    "şəbəkə": "sebeke",
+    "verilənlər": "verilenler",
 }
 
 
