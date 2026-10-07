@@ -68,8 +68,11 @@ class ApiXətası(Exception):
 # ═══════════════════════════════════════════════════════════════════════
 
 class Studio:
-    def __init__(self, qovluq: str | Path, port: int = 0):
+    def __init__(self, qovluq: str | Path, port: int = 0,
+                 ilk_fayl: str | None = None):
         self.layihə = Layihə(qovluq)
+        # Fayl əlaqəsi (`.alq` iki klik): Studio bu faylı açıb başlayır
+        self.ilk_fayl = ilk_fayl
         self.nişan = secrets.token_urlsafe(24)
         self.icra = İcraMeneceri()
         self._önbaxış: subprocess.Popen | None = None
@@ -92,7 +95,10 @@ class Studio:
 
     def ünvan(self) -> str:
         """Pəncərənin açdığı ünvan — nişan sorğu sətrindədir."""
-        return f"{self.kök_ünvan}/?t={self.nişan}"
+        ünvan = f"{self.kök_ünvan}/?t={self.nişan}"
+        if self.ilk_fayl:
+            ünvan += "&fayl=" + urllib.parse.quote(self.ilk_fayl)
+        return ünvan
 
     def host_icazəlidir(self, host: str | None) -> bool:
         return host in (f"127.0.0.1:{self.port}", f"localhost:{self.port}")
@@ -908,10 +914,10 @@ def _özünü_yoxla(studio: Studio) -> list[tuple[str, bool]]:
 
 
 def işə_sal(qovluq: str | Path, port: int = 0, başsız: bool | None = None,
-            sınaq: bool = False) -> int:
-    """`python alqorc.py studio [qovluq]` — giriş nöqtəsi."""
+            sınaq: bool = False, ilk_fayl: str | None = None) -> int:
+    """`python alqorc.py studio [qovluq] [--fayl ad]` — giriş nöqtəsi."""
     try:
-        studio = Studio(qovluq, port).fonda_başlat()
+        studio = Studio(qovluq, port, ilk_fayl).fonda_başlat()
     except YolXətası as x:
         print(f"✖ {x}", file=sys.stderr)
         return 4

@@ -135,7 +135,10 @@ async function başla() {
   const açıqlar = yaddaş("tablar") || [];
   for (const yol of açıqlar) await faylıAç(yol, false).catch(() => {});
   const aktiv = yaddaş("aktiv");
-  if (aktiv && S.tablar.some((t) => t.yol === aktiv)) tabaKeç(aktiv);
+  // `.alq` faylına iki klik — Studio həmin faylla açılır
+  const ilk = new URLSearchParams(location.search).get("fayl");
+  if (ilk && bütünFayllar().includes(ilk)) await faylıAç(ilk).catch(() => {});
+  else if (aktiv && S.tablar.some((t) => t.yol === aktiv)) tabaKeç(aktiv);
   else if (S.tablar.length) tabaKeç(S.tablar[0].yol);
   xoşGəldin();
   setInterval(() => API.göndər("/api/nebz").catch(() => {}), 5000);

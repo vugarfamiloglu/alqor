@@ -2,7 +2,7 @@
 
 > Yeni sessiyada işə buradan başlayın. İş birbaşa `main` budağında
 > aparılır; hər addımdan sonra commit + push.
-> Sınaq: `cd alqorc && python sina.py --nümunələr` (1105 sınaq keçir).
+> Sınaq: `cd alqorc && python sina.py --nümunələr` (1110 sınaq keçir).
 > Studio brauzer sınaqları Playwright ilə: `python -m unittest sinaq.test_studio`.
 
 ## ✅ Hazır olanlar
@@ -27,7 +27,9 @@
 - `alqorfmt` (formatlayıcı), `alqorls` (LSP: layihə üzrə keçid/istinad/ad
   dəyişmə, iş sahəsi simvolları, kod linzaları, semantik rənglər),
   `alqor dap` (debaqçı) + VS Code genişlənməsi (`redaktor/vscode/`, F5 debaq)
-- `qur` → tək fayllı `.pyz` paketi
+- `qur` → tək fayllı `.pyz` paketi; `qur --quraşdırıcı` → `.deb`, Windows
+  (zip + Inno Setup `.iss`), macOS `.app`; `qur --studio` → Alqor Studio-nun
+  quraşdırıcıları (`.alq` əlaqəsi, menyu/masaüstü ikonu, `--python-daxil`)
 
 **Alqor Studio** (`alqorc/studio/`)
 - Redaktor, Azərbaycan klaviaturası, diaqnostika, F5 icra, F6 önbaxış
@@ -45,24 +47,19 @@
 
 ## 🟡 Yarımçıq qalanlar
 
-| İş | Nə qalıb |
-|---|---|
-| qur | yalnız `.pyz` — quraşdırıcı yoxdur |
+Hazırda yoxdur. Qeyd: Windows/macOS quraşdırıcıları Linux-da yaradılır və
+quruluşu sınanır — həqiqi Windows/macOS-da əl ilə yoxlamaq lazımdır;
+`.AppImage`, `.rpm`, `.dmg` hələ yoxdur.
 
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 
 1. **Standart kitabxana, qalan modullar**: keş, növbə, planlayıcı,
    validasiya, pul, lokalizasiya, poçt → sonra şəkil, qrafik (fayla),
    pdf, ffi
-2. **Quraşdırıcı generatoru** — `.exe` (Windows), `.deb`/`.rpm`/AppImage
-   (Linux), `.dmg` (macOS)
-3. **Alqor Studio — quraşdırıcılı Desktop tətbiqi** (istifadəçi tələbi):
-   Başlat menyusu, masaüstü ikonu, `.alq` faylları Studio ilə açılır,
-   Python daxildə
-4. **JS/WASM backend** — brauzerdə Python olmadan işləmək
-5. **alqorpm + alqorhub** — paket meneceri və paket deposu
-6. **alqorlint** — linter
-7. **Rust-a köçürmə** — istehsal kompilyatoru
+2. **JS/WASM backend** — brauzerdə Python olmadan işləmək
+3. **alqorpm + alqorhub** — paket meneceri və paket deposu
+4. **alqorlint** — linter
+5. **Rust-a köçürmə** — istehsal kompilyatoru
 
 ## Qeydlər
 

@@ -1378,6 +1378,13 @@ class Brauzer(unittest.TestCase):
         self.assertIn("vidjet.sətir", (self.qovluq / "dizayn.alq").read_text(
             encoding="utf-8"))
 
+    def test_fayl_parametri_ilə_açılır(self):
+        p = self.səhifə
+        p.goto(self.studio.ünvan() + "&fayl=forma.alq")
+        p.wait_for_selector('.tab.aktiv[data-yol="forma.alq"]')
+        self.assertIn("komponent Forma",
+                      p.locator(".r-giriş").input_value())
+
     def test_palet_iki_klik(self):
         ta = self.aç("boş.alq")
         ta.fill("")
