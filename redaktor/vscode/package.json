@@ -23,9 +23,18 @@
     "languages": [
       {
         "id": "alqor",
-        "aliases": ["Alqor", "alqor"],
-        "extensions": [".alqor"],
-        "configuration": "./language-configuration.json"
+        "aliases": [
+          "Alqor",
+          "alqor"
+        ],
+        "extensions": [
+          ".alqor"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./alqor-fayl.svg",
+          "dark": "./alqor-fayl.svg"
+        }
       }
     ],
     "grammars": [
@@ -45,7 +54,11 @@
         },
         "alqor.tipRejimi": {
           "type": "string",
-          "enum": ["sərbəst", "normal", "sərt"],
+          "enum": [
+            "sərbəst",
+            "normal",
+            "sərt"
+          ],
           "default": "normal",
           "description": "Tip yoxlamasının sərtliyi (faylda `// alqor: tip sərt` direktivi üstünlük təşkil edir)."
         }
@@ -60,5 +73,10 @@
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
+  },
+  "icon": "ikon.png",
+  "galleryBanner": {
+    "color": "#1e3a8a",
+    "theme": "dark"
   }
 }
