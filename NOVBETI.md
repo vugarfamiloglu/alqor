@@ -23,7 +23,9 @@
   miqrasiya), pul (dəqiq pul hesabı, valyuta, operatorlar), keş (yaddaş,
   fayl, Redis), növbə (fon işləri), planlayıcı (cron), validasiya (sxemlər;
   telefon, FİN, VÖEN, IBAN, kart), lokalizasiya (tərcümə, cəm formaları,
-  tarix/ədəd formatı), poçt (SMTP, əlavələr)
+  tarix/ədəd formatı), poçt (SMTP, əlavələr), şəkil (PNG/JPEG/GIF/BMP/PPM,
+  filtrlər, çəkmə), qrafik (SVG diaqramlar), pdf (TrueType alt dəsti,
+  cədvəllər, şəkillər), ffi (C kitabxanaları)
 
 **Alətlər**
 - `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls / dap`
@@ -60,12 +62,10 @@ quruluşu sınanır — həqiqi Windows/macOS-da əl ilə yoxlamaq lazımdır;
 
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 
-1. **Standart kitabxana, qalan modullar**: şəkil, qrafik (fayla),
-   pdf, ffi
-2. **JS/WASM backend** — brauzerdə Python olmadan işləmək
-3. **alqorpm + alqorhub** — paket meneceri və paket deposu
-4. **alqorlint** — linter
-5. **Rust-a köçürmə** — istehsal kompilyatoru
+1. **JS/WASM backend** — brauzerdə Python olmadan işləmək
+2. **alqorpm + alqorhub** — paket meneceri və paket deposu
+3. **alqorlint** — linter
+4. **Rust-a köçürmə** — istehsal kompilyatoru
 
 ## Qeydlər
 

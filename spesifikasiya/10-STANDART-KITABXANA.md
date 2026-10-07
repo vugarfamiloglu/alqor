@@ -816,7 +816,7 @@ sənəd modulun tam arayışıdır.
 | `şifrə` | Bölmə 10.14 | ✅ |
 | `http`, `şəbəkə` | Bölmə 10.12 (WebSocket daxil) | ✅ |
 | `verilənlər` | Bölmə 10.13 (SQLite, PostgreSQL, MySQL; ORM) | ✅ |
-| `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) | ⏳ |
+| `şəkil` | PNG/JPEG/GIF/BMP/PPM oxuma-yazma (xarici kitabxanasız), ölçü, kəsmə, döndərmə, filtrlər, çəkmə, EXIF istiqaməti | ✅ |
 | `poçt` | E-poçt: məktub qurma (HTML, əlavələr), SMTP (STARTTLS/SSL), `sınaq()` qutusu, məktub oxuma | ✅ |
 | `keş` | Yaddaş (LRU + müddət), fayl və Redis keşi; `hesabla`, `artır`, `bük` | ✅ |
 | `növbə` | Fon iş növbəsi: işçilər, prioritet, gecikmə, təkrar cəhdlər | ✅ |
@@ -824,11 +824,42 @@ sənəd modulun tam arayışıdır.
 | `validasiya` | Zəncirvari qaydalar, sxemlər; telefon, FİN, VÖEN, IBAN, kart | ✅ |
 | `lokalizasiya` | Tərcümələr (JSON/TOML/YAML), cəm formaları, ədəd/tarix/nisbi vaxt | ✅ |
 | `pul` | Dəqiq pul hesabı, valyutalar, bölüşdürmə, formatlama; `+ - * / <` operatorları | ✅ |
-| `qrafik` | Diaqram və qrafiklər | ⏳ |
-| `pdf` | PDF yaratma | ⏳ |
-| `ffi` | C kitabxanaları ilə əlaqə | ⏳ |
+| `qrafik` | SVG/HTML diaqramlar: sütun, zolaq, xətt, sahə, dairə, halqa, nöqtə, histogram | ✅ |
+| `pdf` | PDF: başlıq, abzas (`**qalın**`, `*kursiv*`), siyahı, cədvəl, şəkil, səhifə nömrələri; TrueType alt dəst (ə ğ ş ı İ ₼) | ✅ |
+| `ffi` | C kitabxanaları: funksiyalar, strukturlar, buferlər, geri çağırışlar | ✅ |
 | `veb` | Veb freymvork (Bölmə 11) | ✅ |
 | `pəncərə` | Desktop GUI (Bölmə 12) | ✅ |
+
+### `şəkil`, `qrafik`, `pdf`, `ffi`
+
+```alqor
+gətir şəkil
+şəkil.aç("foto.jpg").miniatür(300, 300).saxla("kiçik.jpg", keyfiyyət: 85)
+şəkil.aç("foto.jpg").kəs(10, 10, 200, 100).boz().bulanıq(2).saxla("parça.png")
+dəyişən kətan = şəkil.yarat(400, 200, "ağ").düzbucaqlı(20, 20, 160, 80, "mavi")
+
+gətir qrafik
+qrafik.sütun(etiketlər: ["Yan", "Fev"], seriyalar: [{"ad": "Satış", "dəyərlər": [12, 19]}],
+             başlıq: "Aylıq satış").saxla("satış.svg")
+qrafik.halqa(etiketlər: ["Bitib", "Qalıb"], dəyərlər: [72, 28], mərkəz: "72%")
+
+gətir pdf
+dəyişən s = pdf.sənəd(başlıq: "Hesabat")
+s.başlıq("Aylıq hesabat")
+s.abzas("Satış **12%** artıb.")
+s.cədvəl([["Məhsul", "Qiymət"], ["Alma", "1,20 ₼"]], zolaqlı: doğru)
+s.səhifəNömrələri("Səhifə [n] / [cəm]")
+s.saxla("hesabat.pdf")
+
+gətir ffi
+dəyişən strlen = ffi.yüklə("c").funksiya("strlen", qaytarır: "ölçü", parametrlər: ["mətn"])
+yaz(strlen("salam"))                                  // 5
+```
+
+`şəkil` və `pdf` təmiz Python-dadır: böyük fotolarda (10+ meqapiksel)
+əməliyyatlar saniyələr çəkə bilər. `pdf` sistemin TrueType şriftini
+(DejaVu, Arial, Liberation, Noto, Segoe UI) daxil edir; əsas şriftdə
+olmayan simvollar (məs. ₼) ehtiyat şriftdən götürülür.
 
 ### `pul`, `keş`, `növbə`, `planlayıcı`, `validasiya`, `lokalizasiya`, `poçt`
 
