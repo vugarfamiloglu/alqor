@@ -849,7 +849,14 @@ def _modullar() -> dict[str, T.ModulTipi]:
         "json": json_m, "naxış": naxış, "sistem": sistem,
         "konsol": konsol, "jurnal": jurnal, "test": test,
         "paralel": paralel, "sap": sap,
+        **_əlavə_modullar(),
     }
+
+
+def _əlavə_modullar() -> dict[str, T.ModulTipi]:
+    """`alqor/modullar/` paketindəki modulların tipləri."""
+    from . import modullar
+    return {ad: modullar.modul_tipi(ad) for ad in modullar.adlar()}
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -2307,6 +2314,9 @@ class TipYoxlayıcı:
             return _sürücü_metodları()
         if t == MÜŞTƏRİ:
             return _müştəri_metodları()
+        if isinstance(t, T.Sadə):
+            from . import modullar
+            return modullar.obyekt_metodları(t.ad)
         return None
 
     def _e_çağırış(self, e: A.Çağırış, ə: Əhatə) -> T.Tip:

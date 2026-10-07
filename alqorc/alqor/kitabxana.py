@@ -1882,6 +1882,11 @@ def modul_yüklə(icraçı, ad: str, yer=None) -> Modul:
             if isinstance(cari, Modul):
                 return cari
 
+    # Əlavə standart modullar (`alqor/modullar/`) — tənbəl yüklənir
+    from . import modullar as _əlavə
+    if ad in _əlavə.QEYD:
+        return _əlavə.icra_modulu(icraçı, ad)
+
     # Yerli fayl
     if ad.endswith((".alqor", ".alq")) or ad.startswith((".", "/")):
         return _fayldan_modul(icraçı, ad, yer)
