@@ -1695,7 +1695,10 @@ class Parser:
         tok = self._bax()
         yer = tok.yer
 
-        if tok.acardır("funksiyaTipi"):
+        # `funksiyaTipi` açar söz deyil, tip adıdır (AD tokeni)
+        if (tok.acardır("funksiyaTipi") or (
+                tok.növ is Növ.AD and tok.dəyər == "funksiyaTipi"
+                and self._bax(1).opdur("("))):
             self._al()
             self._tələb_op("(", "funksiya tipi")
             parametrlər: list[A.TipQovşağı] = []
