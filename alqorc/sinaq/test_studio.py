@@ -175,6 +175,114 @@ class NişanVəTəhlükəsizlik(ServerSınağı):
         self.assertEqual(kod, 404)
 
 
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Layihədə axtarış və dil əməliyyatları (istinadlar, simvollar, ad dəyiş)
+# ═══════════════════════════════════════════════════════════════════════
+
+class AxtarışVəDil(ServerSınağı):
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        (cls.layihə / "alt").mkdir()
+        (cls.layihə / "alt" / "riyazi.alq").write_text(
+            "funksiya cəm(a: tam, b: tam) -> tam\n    qaytar a + b\nson\n",
+            encoding="utf-8")
+        (cls.layihə / "esas.alq").write_text(
+            'gətir "alt/riyazi.alq" kimi r\nyaz(r.cəm(1, 2))\n'
+            "yaz(r.cəm(3, 4))\n", encoding="utf-8")
+        (cls.layihə / "qeyd.txt").write_text("Salam Dünya\nsalam\n",
+                                             encoding="utf-8")
+        (cls.layihə / ".gizli").mkdir()
+        (cls.layihə / ".gizli" / "x.txt").write_text("salam",
+                                                     encoding="utf-8")
+
+    def test_axtar_seçimlər(self):
+        kod, d = self.api("/api/axtar", {"sorğu": "salam"})
+        self.assertEqual(kod, 200, d)
+        yollar = {f["yol"] for f in d["fayllar"]}
+        self.assertIn("qeyd.txt", yollar)
+        self.assertIn("salam.alq", yollar)
+        self.assertNotIn(".gizli/x.txt", yollar)
+        # hərf həssaslığı
+        _, d2 = self.api("/api/axtar", {"sorğu": "Salam", "hərf": True})
+        self.assertEqual(d2["say"], 1)
+        # filtr
+        _, d3 = self.api("/api/axtar", {"sorğu": "salam", "filtr": "*.txt"})
+        self.assertEqual([f["yol"] for f in d3["fayllar"]], ["qeyd.txt"])
+        # regex və sütun
+        _, d4 = self.api("/api/axtar", {"sorğu": r"cəm\(\d", "regex": True})
+        s = d4["fayllar"][0]["sətirlər"][0]
+        self.assertEqual((s["no"], s["sütun"], s["uzunluq"]), (2, 7, 5))
+        # tam söz
+        _, d5 = self.api("/api/axtar", {"sorğu": "cə", "söz": True})
+        self.assertEqual(d5["say"], 0)
+
+    def test_axtar_açıq_mətn_nəzərə_alınır(self):
+        _, d = self.api("/api/axtar", {
+            "sorğu": "yadda", "açıqlar": {"salam.alq": "yaddaşda\n"}})
+        self.assertEqual(d["say"], 1)
+        kod, _ = self.api("/api/axtar", {
+            "sorğu": "x", "açıqlar": {"../kənar.txt": "x"}})
+        self.assertEqual(kod, 403)
+
+    def test_axtar_xətalar(self):
+        self.assertEqual(self.api("/api/axtar", {"sorğu": ""})[0], 400)
+        self.assertEqual(self.api("/api/axtar",
+                                  {"sorğu": "(", "regex": True})[0], 400)
+
+    def test_əvəzlə(self):
+        (self.layihə / "dəyiş.txt").write_text("a-1 a-2\n", encoding="utf-8")
+        kod, d = self.api("/api/axtar/evezle", {
+            "sorğu": r"a-(\d)", "regex": True, "əvəz": r"b\1",
+            "filtr": "dəyiş.txt"})
+        self.assertEqual(kod, 200, d)
+        self.assertEqual(d["say"], 2)
+        self.assertEqual((self.layihə / "dəyiş.txt").read_text(
+            encoding="utf-8"), "b1 b2\n")
+        # regex olmayanda tərs xətt hərfi qalır
+        self.api("/api/axtar/evezle", {"sorğu": "b1", "əvəz": r"c\1",
+                                       "filtr": "dəyiş.txt"})
+        self.assertEqual((self.layihə / "dəyiş.txt").read_text(
+            encoding="utf-8"), "c\\1 b2\n")
+
+    def _dil(self, metod, yol, sətir, sütun, **əlavə):
+        mətn = (self.layihə / yol).read_text(encoding="utf-8")
+        return self.api("/api/dil", {"metod": metod, "yol": yol,
+                                     "mətn": mətn, "sətir": sətir,
+                                     "sütun": sütun, **əlavə})
+
+    def test_simvollar(self):
+        kod, d = self._dil("simvollar", "alt/riyazi.alq", 0, 0)
+        self.assertEqual(kod, 200, d)
+        self.assertIn("cəm", [x["name"] for x in d["nəticə"]])
+
+    def test_istinadlar_layihə_üzrə(self):
+        kod, d = self._dil("istinadlar", "alt/riyazi.alq", 0, 10)
+        self.assertEqual(kod, 200, d)
+        yollar = sorted(x["yol"] for x in d["nəticə"])
+        self.assertEqual(yollar.count("esas.alq"), 2)
+        self.assertIn("alt/riyazi.alq", yollar)
+
+    def test_ad_dəyiş(self):
+        kod, d = self._dil("adDəyiş", "alt/riyazi.alq", 0, 10,
+                           yeniAd="topla")
+        self.assertEqual(kod, 200, d)
+        n = d["nəticə"]
+        self.assertIn("funksiya topla(", n["alt/riyazi.alq"])
+        self.assertEqual(n["esas.alq"].count("r.topla("), 2)
+        # disk dəyişmir — Studio özü yazır
+        self.assertIn("cəm", (self.layihə / "esas.alq").read_text(
+            encoding="utf-8"))
+        kod, _ = self._dil("adDəyiş", "alt/riyazi.alq", 0, 10,
+                           yeniAd="1yanlış")
+        self.assertEqual(kod, 400)
+
+    def test_naməlum_metod(self):
+        self.assertEqual(self._dil("nəsə", "salam.alq", 0, 0)[0], 400)
+
+
 # ═══════════════════════════════════════════════════════════════════════
 #  2. Fayl API — layihə qovluğu ilə məhdudlaşma
 # ═══════════════════════════════════════════════════════════════════════
@@ -1504,6 +1612,172 @@ class Brauzer(unittest.TestCase):
         while "ölçü:" in ta.input_value() and time.monotonic() < son:
             p.wait_for_timeout(100)
         self.assertNotIn("ölçü:", ta.input_value())
+
+    # ── IDE qabığı: menyu sətri, kontekst menyular, palitra, dok ─────
+
+    def gözləŞərt(self, f, mesaj, müddət=10.0):
+        son = time.monotonic() + müddət
+        while time.monotonic() < son:
+            if f():
+                return
+            self.səhifə.wait_for_timeout(100)
+        self.fail(mesaj)
+
+    def test_menyu_sətri(self):
+        p = self.səhifə
+        başlıqlar = p.locator("#menyu-setri .m-başlıq").all_inner_texts()
+        for ad in ("Fayl", "Redaktə", "Seçim", "Görünüş", "Keç", "İşlət",
+                   "Debaq", "Alətlər", "Kömək"):
+            self.assertIn(ad, başlıqlar)
+        p.click('#menyu-setri .m-başlıq:has-text("Fayl")')
+        menyu = p.locator(".menyu-qutu").first
+        menyu.wait_for(state="visible")
+        self.assertIn("Yeni fayl", menyu.inner_text())
+        self.assertTrue(menyu.locator(".m-element svg").count())  # ikonlar
+        # açıq menyuda üzərinə gəlmək qonşu menyunu açır
+        p.hover('#menyu-setri .m-başlıq:has-text("Görünüş")')
+        self.assertIn("Əmr palitrası", p.locator(".menyu-qutu").first
+                      .inner_text())
+        # alt menyu
+        p.hover('.menyu-qutu .m-element:has-text("Panellər")')
+        p.locator(".menyu-qutu").nth(1).wait_for(state="visible")
+        self.assertIn("Struktur", p.locator(".menyu-qutu").nth(1)
+                      .inner_text())
+        p.keyboard.press("Escape")
+        p.keyboard.press("Escape")
+        self.gözləŞərt(lambda: p.locator(".menyu-qutu").count() == 0,
+                       "menyu bağlanmadı")
+        # Alt+hərf
+        p.keyboard.press("Alt+k")
+        p.locator(".menyu-qutu").first.wait_for(state="visible")
+        self.assertIn("Sətrə keç", p.locator(".menyu-qutu").first
+                      .inner_text())
+        p.keyboard.press("Escape")
+
+    def test_redaktor_kontekst_menyusu(self):
+        p = self.səhifə
+        ta = self.aç("panel.alq")
+        ta.click(button="right")
+        m = p.locator(".menyu-qutu").first
+        m.wait_for(state="visible")
+        mətn = m.inner_text()
+        for ad in ("Təyinata keç", "Bütün istinadlar", "Kəs", "Kopyala",
+                   "Hamısını seç", "Sənədi formatla"):
+            self.assertIn(ad, mətn)
+        m.locator('.m-element:has-text("Hamısını seç")').click()
+        self.assertEqual(p.locator(".menyu-qutu").count(), 0)
+        uz = len(ta.input_value())
+        self.assertEqual(ta.evaluate("t => t.selectionEnd - t.selectionStart"),
+                         uz)
+
+    def test_ağac_və_tab_kontekst_menyusu(self):
+        p = self.səhifə
+        self.aç("forma.alq")
+        p.click('.düyün[data-yol="panel.alq"]', button="right")
+        m = p.locator(".menyu-qutu").first
+        self.assertIn("Adını dəyiş", m.inner_text())
+        m.locator('.m-element:has-text("Aç")').first.click()
+        p.wait_for_selector('.tab.aktiv[data-yol="panel.alq"]')
+        p.click('.tab[data-yol="panel.alq"]', button="right")
+        p.locator('.menyu-qutu .m-element:has-text("Digərlərini bağla")'
+                  ).click()
+        self.gözləŞərt(lambda: p.locator(".tab").count() == 1,
+                       "digər tablar bağlanmadı")
+
+    def test_əmr_palitrası(self):
+        p = self.səhifə
+        ta = self.aç("panel.alq")
+        ta.click()
+        p.keyboard.press("Control+Shift+P")
+        g = p.locator(".palitra-giriş")
+        g.wait_for(state="visible")
+        self.assertEqual(g.input_value(), ">")
+        g.type("struktur")
+        self.assertIn("Struktur", p.inner_text(".palitra-siyahı"))
+        # fayl rejimi
+        g.fill("form")
+        p.wait_for_selector('.palitra-element:has-text("forma.alq")')
+        p.keyboard.press("Enter")
+        p.wait_for_selector('.tab.aktiv[data-yol="forma.alq"]')
+        # sətrə keç
+        p.keyboard.press("Control+Shift+P")
+        g.fill(":3")
+        p.keyboard.press("Enter")
+        self.gözləŞərt(lambda: p.locator(".palitra").is_hidden(),
+                       "palitra bağlanmadı")
+        mövqe = ta.evaluate("t => t.value.slice(0, t.selectionStart)")
+        self.assertEqual(mövqe.count("\n"), 2)
+
+    def test_panel_köçürmə_üzən_və_saxlanma(self):
+        p = self.səhifə
+        sağ = '.dok[data-dok="sağ"] .dok-nişan[data-panel="cixis"]'
+        p.click('.dok-nişan[data-panel="cixis"]', button="right")
+        p.locator('.menyu-qutu .m-element:has-text("Sağa yerləşdir")'
+                  ).click()
+        p.wait_for_selector(sağ)
+        self.assertTrue(p.locator("#alt-cixis").is_visible())
+        # üzən pəncərə
+        p.click(sağ, button="right")
+        p.locator('.menyu-qutu .m-element:has-text("Üzən pəncərə et")'
+                  ).click()
+        p.wait_for_selector("#uzenler .üzən #alt-cixis")
+        w = p.locator("#uzenler .üzən").first
+        b0 = w.bounding_box()
+        h = p.locator("#uzenler .üzən-başlıq").first.bounding_box()
+        p.mouse.move(h["x"] + 40, h["y"] + h["height"] / 2)
+        p.mouse.down()
+        p.mouse.move(h["x"] + 140, h["y"] + 80, steps=5)
+        p.mouse.up()
+        b1 = w.bounding_box()
+        self.assertGreater(b1["x"], b0["x"] + 50)
+        # düzülüş yenidən yükləmədə saxlanır
+        p.reload()
+        p.wait_for_selector("#uzenler .üzən #alt-cixis")
+        # yenidən yerləşdir → alt zonaya qayıdır
+        p.click('#uzenler .üzən-başlıq', button="right")
+        p.locator('.menyu-qutu .m-element:has-text("Aşağıya yerləşdir")'
+                  ).click()
+        p.wait_for_selector(
+            '.dok[data-dok="alt"] .dok-nişan[data-panel="cixis"]')
+        self.assertEqual(p.locator("#uzenler .üzən").count(), 0)
+
+    def test_fəaliyyət_zolağı(self):
+        p = self.səhifə
+        p.click('[data-fealiyyet="axtar"]')
+        self.assertTrue(p.locator("#panel-axtar").is_visible())
+        self.assertFalse(p.locator("#panel-layihe").is_visible())
+        # aktiv panelə yenidən klik — yan zonanı gizlədir
+        p.click('[data-fealiyyet="axtar"]')
+        self.gözləŞərt(lambda: not p.locator("#panel-axtar").is_visible(),
+                       "yan zona gizlənmədi")
+        p.click('[data-fealiyyet="layihe"]')
+        self.assertTrue(p.locator("#panel-layihe").is_visible())
+
+    def test_layihədə_axtarış_paneli(self):
+        p = self.səhifə
+        self.aç("boş.alq")
+        p.keyboard.press("Control+Shift+F")
+        g = p.locator("#lay-axtar")
+        g.wait_for(state="visible")
+        g.type("Saxla")
+        p.wait_for_selector(".ax-sətir")
+        self.assertIn("1 nəticə", p.inner_text("#lay-axtar-say"))
+        p.click(".ax-sətir")
+        p.wait_for_selector('.tab.aktiv[data-yol="panel.alq"]')
+        ta = p.locator(".r-giriş")
+        self.assertEqual(ta.evaluate(
+            "t => t.value.slice(t.selectionStart, t.selectionEnd)"), "Saxla")
+
+    def test_struktur_paneli(self):
+        p = self.səhifə
+        ta = self.aç("panel.alq")
+        p.click('[data-fealiyyet="struktur"]')
+        p.wait_for_selector('.st-düyün:has-text("Panel")', timeout=10000)
+        p.fill("#struktur-suzgec", "göstər")
+        p.wait_for_selector('.st-düyün:has-text("göstər")')
+        p.click('.st-düyün:has-text("göstər")')
+        mövqe = ta.evaluate("t => t.value.slice(0, t.selectionStart)")
+        self.assertEqual(mövqe.count("\n"), 3)
 
     def test_diaqnostika_dalğalı_xətt(self):
         ta = self.aç("boş.alq")

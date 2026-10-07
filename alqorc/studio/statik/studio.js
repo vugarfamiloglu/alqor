@@ -158,7 +158,7 @@ function temaQur(t) {
   yaddaş("tema", t);
   if (S.kataloq) miniatürləriÇək();
   const ç = $("#onbaxis-cercive");
-  if (ç && sonÖnbaxışÜnvanı && !$("#onbaxis-panel").hidden) ç.src = önbaxışÜnvanı(sonÖnbaxışÜnvanı, true);
+  if (ç && sonÖnbaxışÜnvanı && S.önbaxışAçıq) ç.src = önbaxışÜnvanı(sonÖnbaxışÜnvanı, true);
 }
 
 function ölçüləriBərpaEt() {
@@ -183,7 +183,7 @@ function ayarlarıSaxla() {
 function bölücüləriQur() {
   const xəritə = {
     yan: { dəyişən: "--yan-en", ox: "x", min: 160, işarə: 1 },
-    onbaxis: { dəyişən: "--önbaxış-en", ox: "x", min: 220, işarə: -1 },
+    sag: { dəyişən: "--sag-en", ox: "x", min: 220, işarə: -1 },
     alt: { dəyişən: "--alt-hündürlük", ox: "y", min: 60, işarə: -1 },
   };
   for (const b of $$(".bölücü")) {
@@ -370,6 +370,7 @@ function tabaKeç(yol) {
   if (S.önbaxışAçıq) önbaxışıYenilə();
   X.mövqe = null;
   if (xüsusiyyətPaneliAçıqdır()) xüsusiyyətləriYüklə();
+  if (typeof strukturuYenilə === "function") strukturuYenilə();
   R.fokus();
 }
 
@@ -548,7 +549,7 @@ function diaqnostikaNəticəsi(d) {
   R.diaqnostikaQoy(siyahı);
   $("#st-ascii").textContent = `ASCII: ${d ? d.ascii : 0}`;
   $("#st-diaq").textContent = d ? `✖ ${d.xəta}  ⚠ ${d.xəbərdarlıq}` : "";
-  $("#problem-sayi").textContent = siyahı.length ? `(${siyahı.length})` : "";
+  Dok.say("problemler", siyahı.length || "");
   const işarə = { xəta: "✖", xəbərdarlıq: "⚠", məlumat: "ℹ" };
   $("#problemler").innerHTML = siyahı.length ? siyahı.map((p, i) =>
     `<li class="${p.səviyyə}" data-i="${i}"><span class="işarə">${işarə[p.səviyyə] || "•"}</span>` +
@@ -578,13 +579,7 @@ function növbətiProblem() {
   bildir(`${p.kod}: ${p.mesaj}${p.qeyd ? " — " + p.qeyd : ""}`, p.səviyyə === "xəta" ? "xəta" : "");
 }
 
-function altPaneliAç(ad) {
-  for (const b of $$("[data-alt]")) b.classList.toggle("aktiv", b.dataset.alt === ad);
-  $("#alt-cixis").hidden = ad !== "cixis";
-  $("#alt-problemler").hidden = ad !== "problemler";
-  $("#alt-debaq").hidden = ad !== "debaq";
-}
-for (const b of $$("[data-alt]")) b.addEventListener("click", () => altPaneliAç(b.dataset.alt));
+function altPaneliAç(ad) { Dok.aç(ad); }
 
 // ══ Palet ════════════════════════════════════════════════════════════
 function paletiQur() {
@@ -754,20 +749,7 @@ $("#elementler").addEventListener("dblclick", (h) => {
   if (e) vidjetiTamamla(e.mövqe);
 });
 
-for (const b of $$(".yan-panel > .panel-nişanları button")) {
-  b.addEventListener("click", () => {
-    for (const x of $$(".yan-panel > .panel-nişanları button")) x.classList.toggle("aktiv", x === b);
-    $("#panel-layihe").hidden = b.dataset.panel !== "layihe";
-    $("#panel-palet").hidden = b.dataset.panel !== "palet";
-    $("#panel-xususiyyet").hidden = b.dataset.panel !== "xususiyyet";
-    if (b.dataset.panel === "palet") $("#palet-axtar").focus();
-    if (b.dataset.panel === "xususiyyet") xüsusiyyətləriYüklə();
-  });
-}
-
-function panelAç(ad) {
-  $(`.yan-panel > .panel-nişanları button[data-panel="${ad}"]`)?.click();
-}
+function panelAç(ad) { Dok.aç(ad); }
 
 // ══ Xüsusiyyətlər paneli ═════════════════════════════════════════════
 //
@@ -1357,13 +1339,15 @@ $("#dym-dizayn").addEventListener("click", () => dizaynıAçBağla());
 
 // ══ Önbaxış ══════════════════════════════════════════════════════════
 async function önbaxışıAçBağla(aç = !S.önbaxışAçıq) {
+  if (S.önbaxışAçıq === aç) { if (aç) Dok.aç("onbaxis"); return; }
   S.önbaxışAçıq = aç;
   if (!aç && S.dizayn) { S.dizayn = false; $("#dizayn").hidden = true; $("#dym-dizayn").classList.remove("vurğulu"); }
-  $("#onbaxis-panel").hidden = !aç;
-  $("#onbaxis-bolucu").hidden = !aç;
   $("#dym-onbaxis").classList.toggle("vurğulu", aç);
-  if (aç) await önbaxışıYenilə();
-  else {
+  if (aç) {
+    Dok.aç("onbaxis");
+    await önbaxışıYenilə();
+  } else {
+    Dok.gizlət("onbaxis");
     $("#onbaxis-cercive").src = "about:blank";
     API.göndər("/api/onbaxis/dayandir").catch(() => {});
   }
@@ -1501,28 +1485,4 @@ $("#dym-tema").addEventListener("click", () =>
 $("#ayar-ascii").addEventListener("change", ayarlarıSaxla);
 $("#ayar-terkib").addEventListener("change", ayarlarıSaxla);
 
-// ══ Qısayollar ═══════════════════════════════════════════════════════
-document.addEventListener("keydown", (h) => {
-  if (h.defaultPrevented) return;          // redaktor özü işlədib
-  const ctrl = h.ctrlKey || h.metaKey;
-  const a = h.key;
-  if (a === "F5" && ctrl) { h.preventDefault(); debaqBaşlat(); return; }
-  if (a === "F5" && S.dbq && !h.shiftKey) { h.preventDefault(); debaqƏmri("davam"); return; }
-  if (a === "F5") { h.preventDefault(); if (h.shiftKey) dayandır(); else işlət(); return; }
-  if (a === "F9") { h.preventDefault(); if (cari()) R.nöqtəDəyiş(); return; }
-  if (a === "F10" && S.dbq) { h.preventDefault(); debaqƏmri("növbəti"); return; }
-  if (a === "F11" && S.dbq) { h.preventDefault(); debaqƏmri(h.shiftKey ? "çıx" : "daxil"); return; }
-  if (a === "F6") { h.preventDefault(); önbaxışıAçBağla(); return; }
-  if (a === "F7") { h.preventDefault(); dizaynıAçBağla(); return; }
-  if (a === "F8") { h.preventDefault(); növbətiProblem(); return; }
-  if (ctrl && !h.shiftKey && (a === "s" || a === "S")) { h.preventDefault(); saxla(); return; }
-  if (ctrl && h.shiftKey && (a === "f" || a === "F")) { h.preventDefault(); formatla(); return; }
-  if (ctrl && !h.shiftKey && (a === "f" || a === "F")) { h.preventDefault(); if (cari()) axtarışıAç(false); return; }
-  if (ctrl && (a === "h" || a === "H")) { h.preventDefault(); if (cari()) axtarışıAç(true); return; }
-  if (h.altKey && (a === "n" || a === "N")) { h.preventDefault(); yeniFayl(); return; }
-  if (h.altKey && (a === "w" || a === "W")) { h.preventDefault(); if (S.aktiv) tabıBağla(S.aktiv); return; }
-  if (a === "Escape" && !$("#axtaris").hidden) axtarışıBağla();
-});
-
-bölücüləriQur();
-başla();
+// Qısayollar, menyular, panellər və başlanğıc — `qur.js`

@@ -282,6 +282,8 @@ class Studio:
             ("POST", "/api/vidjet/xususiyyet"): self.api_xüsusiyyət_qoy,
             ("POST", "/api/yoxla"): self.api_yoxla,
             ("POST", "/api/dil"): self.api_dil,
+            ("POST", "/api/axtar"): self.api_axtar,
+            ("POST", "/api/axtar/evezle"): self.api_axtar_əvəzlə,
             ("POST", "/api/dizayn/agac"): self.api_dizayn_ağac,
             ("POST", "/api/dizayn/emeliyyat"): self.api_dizayn_əməliyyat,
             ("POST", "/api/debaq"): self.api_debaq,
@@ -473,10 +475,43 @@ class Studio:
         if sətir is None or sütun is None:
             raise ApiXətası("`sətir` və `sütun` lazımdır")
         try:
+            yeni_ad = s.get("yeniAd")
             return {"nəticə": self._dil.sorğu(
                 self._mətn(s, "metod"), yol, self._mətn(s, "mətn"),
-                sətir, sütun)}
+                sətir, sütun,
+                yeni_ad if isinstance(yeni_ad, str) else None)}
         except ValueError as x:
+            raise ApiXətası(str(x)) from None
+
+    def _axtarış_naxışı(self, s: dict):
+        from . import axtaris
+        try:
+            return axtaris.naxış(self._mətn(s, "sorğu"), bool(s.get("hərf")),
+                                 bool(s.get("söz")), bool(s.get("regex")))
+        except axtaris.AxtarışXətası as x:
+            raise ApiXətası(str(x)) from None
+
+    def _açıqlar(self, s: dict) -> dict[str, str]:
+        a = s.get("açıqlar") or {}
+        if not isinstance(a, dict):
+            raise ApiXətası("`açıqlar` lüğət olmalıdır")
+        for yol in a:
+            self.layihə.yol(yol)
+        return {k: v for k, v in a.items() if isinstance(v, str)}
+
+    def api_axtar(self, s: dict) -> dict:
+        from . import axtaris
+        return axtaris.axtar(self.layihə, self._axtarış_naxışı(s),
+                             self._mətn(s, "filtr", ""), self._açıqlar(s))
+
+    def api_axtar_əvəzlə(self, s: dict) -> dict:
+        from . import axtaris
+        try:
+            return axtaris.əvəzlə(self.layihə, self._axtarış_naxışı(s),
+                                  self._mətn(s, "əvəz", ""),
+                                  bool(s.get("regex")),
+                                  self._mətn(s, "filtr", ""), self._açıqlar(s))
+        except axtaris.AxtarışXətası as x:
             raise ApiXətası(str(x)) from None
 
     def api_ascii(self, s: dict) -> dict:

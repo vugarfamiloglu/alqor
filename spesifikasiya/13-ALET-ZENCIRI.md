@@ -503,7 +503,7 @@ onların köhnəlmədiyini yoxlayır.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Fayl  Redaktə  Görünüş  Qurma  Alətlər  Kömək    [▶] [⏸] [📦]  │
+│ Fayl Redaktə Seçim Görünüş Keç İşlət Debaq Alətlər Kömək  [⌕]   │
 ├──────────────┬─────────────────────────┬────────────────────────┤
 │ 📁 LAYİHƏ    │  əsas.alq        ×    │  CANLI ÖNİZLƏMƏ        │
 │              │                         │  ┌──────────────────┐  │
@@ -527,6 +527,11 @@ onların köhnəlmədiyini yoxlayır.
 ### Əsas xüsusiyyətlər
 | Xüsusiyyət | Təsvir |
 |---|---|
+| **Menyu sətri** | İkon + yazı ilə 9 menyu: Fayl, Redaktə, Seçim, Görünüş (Panellər alt menyusu), Keç, İşlət, Debaq, Alətlər, Kömək; Alt+hərf, ox düymələri, qısayollar menyuda göstərilir ✅ |
+| **Kontekst menyular** | Redaktor (təyinat, istinadlar, ad dəyiş, kəs/kopyala, sətir əməliyyatları…), layihə ağacı, nişanlar, dizayner, palet, çıxış, panel başlıqları ✅ |
+| **Əmr palitrası** | Ctrl+Shift+P: `>` əmrlər, fayl adı (Ctrl+P), `:` sətrə keç (Ctrl+G), `@` simvola keç (Ctrl+Shift+O) ✅ |
+| **Naviqasiya paneli** | Fəaliyyət zolağı (sol kənarda ikonlar): Layihə, Axtarış (layihə üzrə, regex / hərf / tam söz / filtr, hamısını əvəzlə), Elementlər, Xüsusiyyətlər, Struktur (sənəd simvolları, süzgəc) ✅ |
+| **Yerləşdirilən / üzən pəncərələr** | Hər panel sola / sağa / aşağıya köçürülür (nişanı sürüklə və ya sağ klik), mərkəzə buraxanda üzən pəncərə olur (sürüklənir, ölçüsü dəyişir); zonaları gizlət / göstər (Ctrl+B, Ctrl+J, Ctrl+Alt+B); düzülüş yadda saxlanır, «Düzülüşü sıfırla» ✅ |
 | **Canlı önizləmə** | Veb / desktop / konsol çıxışı yan paneldə, hər dəyişiklikdə yenilənir |
 | **Azərbaycan klaviaturası** | Avtomatik çevirmə, `;` kompozisiya, hərf paneli |
 | **Tam Azərbaycan interfeysi** | Menyular, mesajlar, sənədlər |

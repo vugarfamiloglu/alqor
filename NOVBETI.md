@@ -40,6 +40,10 @@
 - Avtomatik tamamlama və imza ipucu (`alqorls`)
 - Debaq: dayanma nöqtələri, addımlar, yığın, dəyişənlər, ifadə hesablama
 - Vizual dizayner (⊞ Dizayn): sürüklə-burax, daşı, sil — kod yenilənir
+- IDE qabığı: ikonlu menyu sətri (9 menyu, alt menyular, Alt+hərf),
+  kontekst menyular, əmr palitrası (Ctrl+Shift+P, fayl, `:` sətir, `@`
+  simvol), fəaliyyət zolağı, layihədə axtarış/əvəzləmə, Struktur paneli,
+  layihə üzrə istinadlar və ad dəyişmə, yerləşdirilən / üzən panellər
 
 **Tip yoxlayıcısı**: generiklərin çıxarılması, modul tipləri annotasiyada, `sərt` rejim tam əhatə ilə
 

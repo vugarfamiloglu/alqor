@@ -545,6 +545,89 @@ class Redaktor {
 
   imzaBağla() { this.im.hidden = true; }
 
+  // ══ Sətir əməliyyatları (Seçim menyusu) ════════════════════════════
+
+  /** Seçimin əhatə etdiyi tam sətirlər: [baş, son) ofsetləri. */
+  _sətirAralığı() {
+    const m = this.ta.value;
+    let b = this.ta.selectionStart, e = this.ta.selectionEnd;
+    if (e > b && m[e - 1] === "\n") e--;
+    b = m.lastIndexOf("\n", b - 1) + 1;
+    let son = m.indexOf("\n", e);
+    if (son < 0) son = m.length;
+    return [b, son];
+  }
+
+  sətriDaşı(istiqamət) {
+    const m = this.ta.value;
+    const [b, e] = this._sətirAralığı();
+    const blok = m.slice(b, e);
+    const s0 = this.ta.selectionStart - b, s1 = this.ta.selectionEnd - b;
+    if (istiqamət < 0) {
+      if (b === 0) return;
+      const əb = m.lastIndexOf("\n", b - 2) + 1;
+      const əvvəlki = m.slice(əb, b - 1);
+      this._qeyd(null);
+      this.ta.setRangeText(blok + "\n" + əvvəlki, əb, e, "preserve");
+      this.ta.setSelectionRange(əb + s0, əb + s1);
+    } else {
+      if (e >= m.length) return;
+      let ns = m.indexOf("\n", e + 1);
+      if (ns < 0) ns = m.length;
+      const sonrakı = m.slice(e + 1, ns);
+      this._qeyd(null);
+      this.ta.setRangeText(sonrakı + "\n" + blok, b, ns, "preserve");
+      const y = b + sonrakı.length + 1;
+      this.ta.setSelectionRange(y + s0, y + s1);
+    }
+    this._dəyişdi();
+  }
+
+  sətriTəkrarla(istiqamət = 1) {
+    const [b, e] = this._sətirAralığı();
+    const blok = this.ta.value.slice(b, e);
+    const s0 = this.ta.selectionStart, s1 = this.ta.selectionEnd;
+    this._qeyd(null);
+    this.ta.setRangeText(blok + "\n" + blok, b, e, "preserve");
+    const f = istiqamət > 0 ? blok.length + 1 : 0;
+    this.ta.setSelectionRange(s0 + f, s1 + f);
+    this._dəyişdi();
+  }
+
+  sətriSil() {
+    const m = this.ta.value;
+    let [b, e] = this._sətirAralığı();
+    if (e < m.length) e++; else if (b > 0) b--;
+    this.dəyiş(b, e, "", Math.min(b + (b > 0 && e >= m.length ? 1 : 0), m.length - (e - b)));
+  }
+
+  sətriSeç() {
+    const [b, e] = this._sətirAralığı();
+    this.ta.setSelectionRange(b, Math.min(e + 1, this.ta.value.length));
+    this._kursorDəyişdi();
+  }
+
+  hamısınıSeç() { this.ta.select(); this._kursorDəyişdi(); }
+
+  seçilmiş() { return this.ta.value.slice(this.ta.selectionStart, this.ta.selectionEnd); }
+
+  /** Kursordakı söz (təyinat, ad dəyişmə üçün). */
+  kursordakıSöz() {
+    const m = this.ta.value, k = this.ta.selectionStart;
+    let b = k, e = k;
+    while (b > 0 && Redaktor.AD.test(m[b - 1])) b--;
+    while (e < m.length && Redaktor.AD.test(m[e])) e++;
+    return m.slice(b, e);
+  }
+
+  /** Şrift ölçüsü dəyişəndə ölçüləri yenidən hesabla. */
+  yenidənÖlç() {
+    this._ölç();
+    this._işarələr = null;
+    this.çək();
+    this._kursorDəyişdi();
+  }
+
   // ══ Debaq ══════════════════════════════════════════════════════════
 
   nöqtəDəyiş(sətir = this.sətirSütun().sətir) {
