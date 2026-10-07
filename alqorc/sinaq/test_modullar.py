@@ -512,6 +512,45 @@ class HTTPSınağı(unittest.TestCase):
                 H.Sorğu("AL", u)
 
 
+class ORMSınağı(unittest.TestCase):
+    def test_model_sqlite(self):
+        sys.path.insert(0, str(Path(__file__).parent))
+        from test_verilenler_suruculer import _Ortaq
+        with tempfile.TemporaryDirectory() as q:
+            kod = _Ortaq.ORM.replace("ÜNVAN", "sqlite://./orm.db")
+            n = işlət(kod, q).splitlines()
+            self.assertEqual(n[:8], [
+                "1", "Kamran Əliyev yanlış boş", "a@x.az", "2",
+                "Aysel 30.0", "2 Kamran Əliyev", "doğru 1", "boş"])
+            self.assertEqual(n[8], '{"id": 1, "ad": "Aysel", "poçt": '
+                                   '"a@x.az", "aktiv": doğru}')
+
+    def test_model_tip_yoxlaması_sərt(self):
+        from test_verilenler_suruculer import _Ortaq
+        with tempfile.TemporaryDirectory() as q:
+            f = Path(q) / "m.alq"
+            f.write_text(_Ortaq.ORM.replace("ÜNVAN", "sqlite::yaddaş:"),
+                         encoding="utf-8")
+            r = subprocess.run(
+                [sys.executable, str(KÖK / "alqorc.py"), "yoxla", "--rejim",
+                 "sərt", str(f)], capture_output=True, text=True,
+                encoding="utf-8",
+                env={**os.environ, "PYTHONIOENCODING": "utf-8"})
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_modelsiz_və_bağlantısız_xətalar(self):
+        with self.assertRaises(AssertionError) as k:
+            işlət("gətir verilənlər\nsinif A miras verilənlər.Model\n"
+                  "    xassə id: tam\nson\nA.tap(1)\n")
+        self.assertIn("bağlantısı yoxdur", str(k.exception))
+        with self.assertRaises(AssertionError) as k:
+            işlət("gətir verilənlər\nsinif A miras verilənlər.Model\n"
+                  "    xassə ad: mətn\nson\n"
+                  "A.istifadəEt(verilənlər.bağlan(\"sqlite::yaddaş:\"))\n"
+                  "A.tap(1)\n")
+        self.assertIn("açar yoxdur", str(k.exception))
+
+
 class VerilənlərSınağı(unittest.TestCase):
     def setUp(self):
         from alqor.modullar import verilenler as V

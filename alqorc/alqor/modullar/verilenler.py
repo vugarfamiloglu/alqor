@@ -535,13 +535,32 @@ def bağlan(ünvan: str) -> Bağlantı:
 
 
 def qur(icraçı) -> dict[str, Any]:
-    return {"bağlan": Daxili("bağlan", bağlan, 1, 1)}
+    from ._vb_model import MODEL
+    return {"bağlan": Daxili("bağlan", bağlan, 1, 1), "Model": MODEL}
 
 
 def tiplər() -> dict:
     from .. import tipler as T
     from ..tipyoxlayici import F
-    return {"bağlan": F(T.MƏTN, qaytarır=T.Sadə("bağlantı"))}
+    m, e, i = T.MƏTN, T.İSTƏNİLƏN, T.TAM
+    MS = T.Sadə("modelSorğusu")
+    model = T.SinifTipi(
+        "Model",
+        statiklər={
+            "istifadəEt": F(T.Sadə("bağlantı"), qaytarır=T.HEÇ),
+            "tap": F(e, qaytarır=e),
+            "hamısı": F(qaytarır=T.Siyahı(e)),
+            "harada": F(m, m, e, qaytarır=MS, standart=1),
+            "sırala": F(m, m, qaytarır=MS, standart=1),
+            "say": F(qaytarır=i),
+            "yarat": F(T.Lüğət(m, e), qaytarır=e, standart=1),
+            "cədvəlYarat": F(qaytarır=T.HEÇ),
+        },
+        metodlar={
+            "saxla": F(qaytarır=e), "sil": F(qaytarır=T.MƏNTİQ),
+            "yüklə": F(m, qaytarır=e), "lüğət": F(qaytarır=T.Lüğət(m, e)),
+        })
+    return {"bağlan": F(m, qaytarır=T.Sadə("bağlantı")), "Model": model}
 
 
 def obyekt_tipləri() -> dict:
@@ -563,6 +582,18 @@ def obyekt_tipləri() -> dict:
             "sütunlar": F(m, qaytarır=T.Siyahı(sət)),
             "miqrasiyaEt": F(m, qaytarır=T.Siyahı(m)),
             "bağla": F(qaytarır=T.HEÇ),
+        },
+        "modelSorğusu": {
+            "harada": F(m, m, e, qaytarır=T.Sadə("modelSorğusu"), standart=1),
+            "vəHarada": F(m, m, e, qaytarır=T.Sadə("modelSorğusu"),
+                          standart=1),
+            "yaHarada": F(m, m, e, qaytarır=T.Sadə("modelSorğusu"),
+                          standart=1),
+            "sırala": F(m, m, qaytarır=T.Sadə("modelSorğusu"), standart=1),
+            "limit": F(i, qaytarır=T.Sadə("modelSorğusu")),
+            "atla": F(i, qaytarır=T.Sadə("modelSorğusu")),
+            "al": F(qaytarır=T.Siyahı(e)), "ilk": F(qaytarır=e),
+            "say": F(qaytarır=i), "sil": F(qaytarır=i),
         },
         "sorğuQurucusu": {
             "seç": Fsərbəst(Q),

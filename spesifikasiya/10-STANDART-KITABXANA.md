@@ -634,22 +634,32 @@ dəyişən istifadəçilər = gözlə b.cədvəl("istifadəçilər")
 // Yaradılan sətir: b.cədvəl("t").əlavəEt({...}) -> id; şərtsiz yenilə/sil
 // qadağandır (təsadüfən bütün cədvəli silməyin qarşısı alınır)
 
-// Model (planlaşdırılır)
-@cədvəl("istifadəçilər")
+// Model (ORM) — bütün sürücülərdə işləyir
+@cədvəl("istifadəçilər")                // yoxdursa — sinif adı
 sinif İstifadəçi miras verilənlər.Model
-    @açar
+    @açar                               // yoxdursa — `id` xassəsi
     xassə id: tam
-    @sütun("ad")
+    @sütun("tam_ad")                    // bazadakı sütunun adı fərqlidirsə
     xassə ad: mətn
-    xassə email: mətn
-    @əlaqə(çox: Sifariş)
-    xassə sifarişlər: siyahı[Sifariş]
+    xassə poçt: mətn?
+    @keçici                             // bazada saxlanılmır
+    xassə seçilib: məntiq = yanlış
+    @əlaqə(çox: Sifariş)                // Sifariş.istifadəçiId → id
+    xassə sifarişlər: siyahı[Sifariş] = []
 son
+// @əlaqə(bir: İstifadəçi, açar: "istifadəçiId") — əks istiqamət
 
-dəyişən i = gözlə İstifadəçi.tap(5)
-gözlə i.saxla()
-gözlə i.sil()
-dəyişən hamısı = gözlə İstifadəçi.harada("yaş", ">", 18).al()
+İstifadəçi.istifadəEt(b)                // və ya verilənlər.Model.istifadəEt(b)
+İstifadəçi.cədvəlYarat()                // CREATE TABLE IF NOT EXISTS (tiplərdən)
+dəyişən i = İstifadəçi.yarat({"ad": "Aysel"})   // INSERT, id doldurulur
+i.ad = "Aysel Məmmədova"
+i.saxla()                               // id 0/boş → INSERT, yoxsa UPDATE
+dəyişən t = İstifadəçi.tap(5)           // nümunə və ya boş
+dəyişən hamısı = İstifadəçi.harada("ad", "bənzər", "A%").sırala("ad").al()
+İstifadəçi.hamısı(); İstifadəçi.say()
+i.yüklə("sifarişlər")                   // əlaqəni doldurur və qaytarır
+i.lüğət()                               // {"id": …, "ad": …}
+i.sil()
 
 // Miqrasiya: qovluqdakı 001_*.sql, 002_*.sql … ardıcıl, hər biri bir dəfə,
 // tranzaksiyada (yarımçıq qalmır)
@@ -805,7 +815,7 @@ sənəd modulun tam arayışıdır.
 | `sıxma` | gzip, zlib, zip, tar (zip-slip və keçid hücumlarına qarşı yoxlama) | ✅ |
 | `şifrə` | Bölmə 10.14 | ✅ |
 | `http`, `şəbəkə` | Bölmə 10.12 (WebSocket daxil) | ✅ |
-| `verilənlər` | Bölmə 10.13 (SQLite; ORM modeli ⏳) | ✅ |
+| `verilənlər` | Bölmə 10.13 (SQLite, PostgreSQL, MySQL; ORM) | ✅ |
 | `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) | ⏳ |
 | `poçt` | E-poçt göndərmə (SMTP) | ⏳ |
 | `keş` | Yaddaş və Redis keşi | ⏳ |
