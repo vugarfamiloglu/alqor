@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="loqo/alqor-loqo-qaranliq.svg">
+    <img src="loqo/alqor-loqo.svg" alt="Alqor" height="96">
+  </picture>
+</p>
+
 # Alqor
 
 **Azərbaycan dilində proqramlaşdırma dili.**
