@@ -101,6 +101,24 @@ faylları keş qovluğuna açılır (`ALQOR_KES` ilə dəyişdirilir).
 `python ad.pyz` (Windows) və ya `./ad.pyz` (Linux/macOS) ilə işləyir.
 `--tip` — paketdən əvvəl tip yoxlaması. Aşağıdakı `--hədəf` seçimləri
 yerli kompilyatorla gələcək.
+
+**Quraşdırıcılar** — `alqor qur --quraşdırıcı` (`--platforma
+linux,windows,macos`, `--python-daxil`). Xarici alət tələb olunmur:
+
+| Fayl | Nədir |
+|---|---|
+| `<ad>_<v>_all.deb` | Debian/Ubuntu: `/usr/bin/<ad>`, menyu (`.desktop`), ikon, fayl növləri (MIME) |
+| `<ad>-<v>-windows.zip` | `Quraşdır.cmd`: `%LOCALAPPDATA%\Programs`, Başlat menyusu, masaüstü ikonu, fayl əlaqələri, "Proqramlar"-da silmə — idarəçi hüququ lazım deyil |
+| `<ad>-<v>-windows.iss` | Inno Setup skripti; `iscc` PATH-dadırsa `…-setup.exe` də qurulur |
+| `<ad>-<v>-macos.zip` | `.app` paketi (Info.plist, sənəd növləri) |
+
+`--python-daxil` Windows paketinə Python-un rəsmi embeddable paylamasını
+qoyur (bir dəfə endirilir). Manifestdə `[quraşdırıcı]`: `başlıq`, `naşir`,
+`ikon`, `konsol = yanlış` (pəncərəli tətbiq), `uzantılar = [".kitab"]`.
+
+`alqor qur --studio [qovluq]` — **Alqor Studio**-nun özünün quraşdırıcıları:
+`.alq` faylları Studio ilə açılır (`alqor studio fayl.alq` faylı açıb
+başlayır), menyuda və masaüstündə "Alqor Studio" ikonu.
 | `paketlə`, `yerləşdir` | planlaşdırılır |
 
 ### `alqor qur` seçimləri
@@ -518,7 +536,7 @@ onların köhnəlmədiyini yoxlayır.
 | **Vidjet paleti** | 118 element (beynəlxalq adlarla: Button, Breadcrumb …), hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
 | **Xüsusiyyətlər paneli** | Seçilmiş elementin mətni, növü, ölçüsü və görünüşü (rəng, fon, kənar, künc, şrift… — `üslub:`, § 14.8); dəyişiklik koda yazılır, önbaxış dərhal yenilənir ✅ |
 | **Vizual qurucu** | ⊞ Dizayn (F7): komponentin vidjet ağacı qutular şəklində; paletdən istənilən konteynerin istənilən yerinə sürüklə-burax, elementləri daşımaq (başqa konteynerə də), silmək (✕ / Delete), seçmək → xüsusiyyətlər. Hər əməliyyat KODU dəyişir (şərhlər elementlə qalır), önbaxış canlı yenilənir ✅ |
-| **Bir klikdə paketləmə** | `.deb`, `.AppImage`, veb bundle |
+| **Bir klikdə paketləmə** | `alqor qur --quraşdırıcı`: `.deb`, Windows (zip + Inno Setup), macOS `.app` ✅; `.AppImage`, `.rpm` ⏳ |
 | **Daxili terminal** | |
 | **Git inteqrasiyası** | |
 | **Dərslik rejimi** | Yeni başlayanlar üçün addım-addım təlimlər |

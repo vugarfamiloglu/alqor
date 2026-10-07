@@ -577,10 +577,60 @@ def əmr_sənəd(arqumentlər: list[str]) -> int:
     return 0
 
 
+def _platformalar(arqumentlər: list[str]) -> tuple[str, ...] | None:
+    from alqor.qurasdirici import PLATFORMALAR
+    for i, a in enumerate(arqumentlər):
+        if a.startswith("--platforma"):
+            d = a.split("=", 1)[1] if "=" in a else (
+                arqumentlər[i + 1] if i + 1 < len(arqumentlər) else "")
+            p = tuple(x.strip() for x in d.split(",") if x.strip())
+            pis = [x for x in p if x not in PLATFORMALAR]
+            if pis or not p:
+                çap_xəta(f"platforma: {', '.join(PLATFORMALAR)} "
+                         f"(verilən: {d!r})")
+                return None
+            return p
+    return PLATFORMALAR
+
+
+def _quraşdırıcıları_çap(fayllar: list[Path]) -> None:
+    for f in fayllar:
+        try:
+            g = f.relative_to(Path.cwd())
+        except ValueError:
+            g = f
+        print(f"  ✓ {g}  ({f.stat().st_size / 1024:.0f} KB)")
+
+
 def əmr_qur(arqumentlər: list[str]) -> int:
-    """`qur [--tip]` — `qurma/<ad>.pyz` tək fayllı paket."""
-    from alqor import qurucu
+    """
+    `qur [--tip]` — `qurma/<ad>.pyz` tək fayllı paket.
+    `qur --quraşdırıcı [--platforma linux,windows,macos] [--python-daxil]`
+    — həm də .deb, Windows (zip + Inno Setup), macOS .app.
+    `qur --studio [çıxış]` — Alqor Studio-nun öz quraşdırıcıları.
+    """
+    from alqor import qurasdirici, qurucu
     from alqor.alqorfmt import faylları_tap
+
+    quraşdırıcı = bool({"--quraşdırıcı", "--qurasdirici"} & set(arqumentlər))
+    python_daxil = "--python-daxil" in arqumentlər
+    platformalar = _platformalar(arqumentlər)
+    if platformalar is None:
+        return 3
+    kök = Path(__file__).resolve().parent
+    if "--studio" in arqumentlər:
+        sərbəst = [a for a in arqumentlər if not a.startswith("-")
+                   and a not in (platformalar or ())]
+        çıxış = Path(sərbəst[0]) if sərbəst else Path("qurma")
+        try:
+            n = qurasdirici.studio(kök, çıxış.resolve(), platformalar,
+                                   python_daxil)
+        except OSError as x:
+            çap_xəta(f"Studio quraşdırıcısı qurulmadı: {x}")
+            return 4
+        print("✓ Alqor Studio quraşdırıcıları:")
+        _quraşdırıcıları_çap(n)
+        return 0
 
     layihə = _layihə(".")
     if layihə is None:
@@ -616,6 +666,16 @@ def əmr_qur(arqumentlər: list[str]) -> int:
         göstər = n.yol
     print(f"✓ {göstər}  ({n.ölçü / 1024:.0f} KB, {n.fayl_sayı} fayl)")
     print(f"  İşlətmək: python {göstər}")
+    if quraşdırıcı:
+        try:
+            t = qurasdirici.layihədən(layihə, n.yol, kök)
+            fayllar = qurasdirici.qur(t, layihə.çıxış, platformalar,
+                                      python_daxil)
+        except (OSError, RuntimeError) as x:
+            çap_xəta(f"quraşdırıcı qurulmadı: {x}")
+            return 4
+        print("✓ Quraşdırıcılar:")
+        _quraşdırıcıları_çap(fayllar)
     return 0
 
 
@@ -700,10 +760,15 @@ def əmr_studio(arqumentlər: list[str]) -> int:
     from studio.server import işə_sal
     port = 0
     qovluq = "."
+    ilk_fayl = None
     atla = False
     for i, a in enumerate(arqumentlər):
         if atla:
             atla = False
+            continue
+        if a == "--fayl" and i + 1 < len(arqumentlər):
+            ilk_fayl = arqumentlər[i + 1]
+            atla = True
             continue
         if a == "--port" and i + 1 < len(arqumentlər):
             try:
@@ -714,9 +779,13 @@ def əmr_studio(arqumentlər: list[str]) -> int:
             atla = True
         elif not a.startswith("-"):
             qovluq = a
+    # `alqor studio fayl.alq` — qovluğu açıb faylı göstərir
+    if Path(qovluq).is_file():
+        ilk_fayl = ilk_fayl or Path(qovluq).name
+        qovluq = str(Path(qovluq).resolve().parent)
     başsız = True if {"--başsız", "--bassiz"} & set(arqumentlər) else None
     sınaq = bool({"--sınaq", "--sinaq"} & set(arqumentlər))
-    return işə_sal(qovluq, port, başsız, sınaq)
+    return işə_sal(qovluq, port, başsız, sınaq, ilk_fayl)
 
 
 def əmr_versiya(_: list[str]) -> int:
@@ -749,6 +818,9 @@ def əmr_kömək(_: list[str]) -> int:
     sına [yol]           Sınaqlar (@sınaq): --filtr söz  --sənəd  --ətraflı
     sənəd [yol]          API sənədi (///): --format html|markdown  --çıxış q
     qur [--tip]          qurma/<ad>.pyz — tək fayllı paket
+                         --quraşdırıcı   + .deb, Windows (zip/Inno Setup), macOS .app
+                         --platforma linux,windows,macos   --python-daxil
+                         --studio        Alqor Studio-nun quraşdırıcıları
     təmizlə              qurma/ qovluğunu silir
     tip <fayl|qovluq>    Yalnız tip yoxlaması
                          --rejim sərbəst|normal|sərt
