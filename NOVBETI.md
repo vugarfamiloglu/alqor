@@ -20,7 +20,10 @@
 - `alqorc/alqor/modullar/` (tənbəl yüklənir): kodlaşdırma, csv, toml, yaml,
   xml, html, konfiq, sıxma, şifrə (AES-256-GCM, scrypt, JWT → `tokenYarat`),
   http (WebSocket də: `http.vebSoket`, server `s.soket`), şəbəkə (TCP/UDP), verilənlər (SQLite, PostgreSQL, MySQL/MariaDB, ORM `Model`, sorğu qurucusu, tranzaksiya,
-  miqrasiya)
+  miqrasiya), pul (dəqiq pul hesabı, valyuta, operatorlar), keş (yaddaş,
+  fayl, Redis), növbə (fon işləri), planlayıcı (cron), validasiya (sxemlər;
+  telefon, FİN, VÖEN, IBAN, kart), lokalizasiya (tərcümə, cəm formaları,
+  tarix/ədəd formatı), poçt (SMTP, əlavələr)
 
 **Alətlər**
 - `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls / dap`
@@ -57,8 +60,7 @@ quruluşu sınanır — həqiqi Windows/macOS-da əl ilə yoxlamaq lazımdır;
 
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 
-1. **Standart kitabxana, qalan modullar**: keş, növbə, planlayıcı,
-   validasiya, pul, lokalizasiya, poçt → sonra şəkil, qrafik (fayla),
+1. **Standart kitabxana, qalan modullar**: şəkil, qrafik (fayla),
    pdf, ffi
 2. **JS/WASM backend** — brauzerdə Python olmadan işləmək
 3. **alqorpm + alqorhub** — paket meneceri və paket deposu

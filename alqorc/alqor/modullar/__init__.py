@@ -41,7 +41,27 @@ QEYD: dict[str, str] = {
     "http": "http_",
     "şəbəkə": "sebeke",
     "verilənlər": "verilenler",
+    "pul": "pul",
+    "keş": "kes",
+    "növbə": "novbe",
+    "planlayıcı": "planlayici",
+    "validasiya": "validasiya",
+    "lokalizasiya": "lokalizasiya",
+    "poçt": "poct",
 }
+
+# Operator dəstəkləyən obyekt tipləri: tip adı → modul (Alqor adı).
+# Modul `operator_tipi(op, sol, sağ) -> T.Tip | None` verir; `T.HEÇ`
+# "bu tiplərə tətbiq edilmir" deməkdir.
+OPERATORLU: dict[str, str] = {"pul": "pul"}
+
+
+def operator_nəticəsi(op: str, sol, sağ):
+    from .. import tipler as T
+    for t in (sol, sağ):
+        if isinstance(t, T.Sadə) and t.ad in OPERATORLU:
+            return _py(OPERATORLU[t.ad]).operator_tipi(op, sol, sağ)
+    return None
 
 
 def adlar() -> list[str]:
