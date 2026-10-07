@@ -2,7 +2,7 @@
 
 > Yeni sessiyada işə buradan başlayın. İş birbaşa `main` budağında
 > aparılır; hər addımdan sonra commit + push.
-> Sınaq: `cd alqorc && python sina.py --nümunələr` (1051 sınaq keçir).
+> Sınaq: `cd alqorc && python sina.py --nümunələr` (1058 sınaq keçir).
 > Studio brauzer sınaqları Playwright ilə: `python -m unittest sinaq.test_studio`.
 
 ## ✅ Hazır olanlar
@@ -37,6 +37,7 @@
   → kod avtomatik yazılır, önbaxış canlı yenilənir (Studio temasını izləyir)
 - Avtomatik tamamlama və imza ipucu (`alqorls`)
 - Debaq: dayanma nöqtələri, addımlar, yığın, dəyişənlər, ifadə hesablama
+- Vizual dizayner (⊞ Dizayn): sürüklə-burax, daşı, sil — kod yenilənir
 
 **Tip yoxlayıcısı**: generiklərin çıxarılması, modul tipləri annotasiyada, `sərt` rejim tam əhatə ilə
 
@@ -46,7 +47,6 @@
 
 | İş | Nə qalıb |
 |---|---|
-| Alqor Studio | sürüklə-burax düzülüş (vizual dizayner) yoxdur |
 | http | WebSocket yoxdur |
 | verilənlər | yalnız SQLite — PostgreSQL/MySQL sürücüsü və ORM modelləri (`@cədvəl`, `Model`) yoxdur |
 | qur | yalnız `.pyz` — quraşdırıcı yoxdur |

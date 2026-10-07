@@ -517,7 +517,7 @@ onların köhnəlmədiyini yoxlayır.
 | **Önbaxış teması** | Studio-nun açıq/qaranlıq temasını izləyir ✅ |
 | **Vidjet paleti** | 118 element (beynəlxalq adlarla: Button, Breadcrumb …), hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
 | **Xüsusiyyətlər paneli** | Seçilmiş elementin mətni, növü, ölçüsü və görünüşü (rəng, fon, kənar, künc, şrift… — `üslub:`, § 14.8); dəyişiklik koda yazılır, önbaxış dərhal yenilənir ✅ |
-| **Vizual qurucu** | Desktop UI-ni sürüklə-burax ilə düzəltmək |
+| **Vizual qurucu** | ⊞ Dizayn (F7): komponentin vidjet ağacı qutular şəklində; paletdən istənilən konteynerin istənilən yerinə sürüklə-burax, elementləri daşımaq (başqa konteynerə də), silmək (✕ / Delete), seçmək → xüsusiyyətlər. Hər əməliyyat KODU dəyişir (şərhlər elementlə qalır), önbaxış canlı yenilənir ✅ |
 | **Bir klikdə paketləmə** | `.deb`, `.AppImage`, veb bundle |
 | **Daxili terminal** | |
 | **Git inteqrasiyası** | |

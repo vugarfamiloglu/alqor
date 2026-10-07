@@ -276,6 +276,8 @@ class Studio:
             ("POST", "/api/vidjet/xususiyyet"): self.api_xüsusiyyət_qoy,
             ("POST", "/api/yoxla"): self.api_yoxla,
             ("POST", "/api/dil"): self.api_dil,
+            ("POST", "/api/dizayn/agac"): self.api_dizayn_ağac,
+            ("POST", "/api/dizayn/emeliyyat"): self.api_dizayn_əməliyyat,
             ("POST", "/api/debaq"): self.api_debaq,
             ("POST", "/api/debaq/emr"): self.api_debaq_əmr,
             ("POST", "/api/debaq/noqteler"): self.api_debaq_nöqtələr,
@@ -499,6 +501,45 @@ class Studio:
         iş = self.icra.başlat(yol, [str(a) for a in arq],
                               self.layihə.nisbi(yol), bool(s.get("tip")))
         return iş.lüğət()
+
+    # ── Vizual dizayner ───────────────────────────────────────────────
+
+    @staticmethod
+    def _yol_siyahısı(s: dict, ad: str) -> list[int]:
+        d = s.get(ad)
+        if not isinstance(d, list) or not all(
+                isinstance(x, int) and not isinstance(x, bool) and x >= 0
+                for x in d):
+            raise ApiXətası(f"`{ad}` tam ədədlər siyahısı olmalıdır")
+        return d
+
+    def api_dizayn_ağac(self, s: dict) -> dict:
+        from . import dizayner
+        try:
+            return dizayner.ağac(self._mətn(s, "mətn"), self._tam(s, "kursor"),
+                                 s.get("komponent") or None)
+        except dizayner.DizaynXətası as x:
+            return {"xəta": str(x)}
+
+    def api_dizayn_əməliyyat(self, s: dict) -> dict:
+        from . import dizayner as D
+        mətn = self._mətn(s, "mətn")
+        komp = s.get("komponent") or None
+        növ = self._mətn(s, "əməliyyat")
+        try:
+            if növ == "sil":
+                return D.sil(mətn, self._yol_siyahısı(s, "yol"), komp)
+            indeks = self._tam(s, "indeks") or 0
+            hədəf = self._yol_siyahısı(s, "hədəf")
+            if növ == "köçür":
+                return D.köçür(mətn, self._yol_siyahısı(s, "yol"), hədəf,
+                               indeks, komp)
+            if növ == "əlavə":
+                return D.əlavə_et(mətn, self._mətn(s, "vidjet"), hədəf,
+                                  indeks, komp)
+        except skelet.SkeletXətası as x:
+            raise ApiXətası(str(x), 422) from None
+        raise ApiXətası(f"naməlum əməliyyat: {növ}")
 
     # ── Debaq ─────────────────────────────────────────────────────────
 
