@@ -209,7 +209,8 @@ def dil_konfiqurasiyası() -> dict:
                 rf"^\s*{mod}(?:{_alt(_BLOK_AÇAN)})(?![\p{{L}}\p{{N}}_])"
                 r"(?!.*(?:→|=>|\bson\s*$|\bqaytar\b))"
                 r"(?!.*\bmücərrəd\b)(?!.*\bxassə(?![\p{L}\p{N}_])).*$"
-                r"|^\s*(?:oxu|yaz)\s*$"),
+                r"|^\s*(?:oxu|yaz)\s*$"
+                r"|\siçində\s+hər\s.*\süçün\b(?!.*\bson\s*$).*$"),
             "decreaseIndentPattern": _rx(
                 rf"^\s*(?:{_alt(_BLOK_BAĞLAYAN)})(?![\p{{L}}\p{{N}}_])"),
         },

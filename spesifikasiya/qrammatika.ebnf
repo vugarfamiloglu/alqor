@@ -353,7 +353,10 @@ təkrarlaCümləsi = [ etiket , ":" ] , "təkrarla" ,
 hərCümləsi      = [ etiket , ":" ] , "hər" , bağlamaSiyahısı , "üçün" ,
                   ifadə , [ "addım" , ifadə ] , "içində" , [ "gözlə" ] ,
                   [ "əgər" , ifadə ] , blok ,
-                  [ "yoxsa" , blok ] , son ;
+                  [ "yoxsa" , blok ] , son
+                (* alternativ söz sırası; `əgər` filtri `üçün` ilə eyni sətirdə *)
+                | ifadə , "içində" , "hər" , bağlamaSiyahısı , "üçün" ,
+                  [ "əgər" , ifadə ] , blok , [ "yoxsa" , blok ] , son ;
 
 etiket          = identifikator ;
 dayanCümləsi    = "dayan" , [ etiket ] ;

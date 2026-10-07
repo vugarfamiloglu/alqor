@@ -657,6 +657,8 @@ class Redaktor {
     if (sözlər.length > 1 && sonSöz === "son") return false;     // bir sətirlik
     if (["onda", "et", "yoxsa", "nəhayət", "halda", "içində", "dəfə"].includes(sonSöz))
       return true;
+    // Alternativ dövr: `siyahı içində hər x üçün [əgər …]`
+    if (/(^|\s)içində\s+hər\s/u.test(kod)) return true;
     if (/\bfunksiya\s*\([^)]*\)(\s*->\s*\S+)?$/u.test(kod)) return true;
     let i = 0;
     while (i < sözlər.length - 1 && (Redaktor.DƏYİŞDİRİCİ.has(sözlər[i])

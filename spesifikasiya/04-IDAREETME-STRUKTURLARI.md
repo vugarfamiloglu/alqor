@@ -283,6 +283,22 @@ hər <bağlama> üçün <ifadə> içində
 son
 ```
 
+Alternativ söz sırası — kolleksiya əvvəldə (Azərbaycan dilində daha
+təbii oxunur: "meyvələr içində hər meyvə üçün"):
+```alqor
+meyvələr içində hər meyvə üçün
+    yaz(meyvə)
+son
+
+sifarişlər içində hər s üçün əgər s.ödənilib     // filtr — eyni sətirdə
+    yaz(s.məbləğ)
+yoxsa
+    yaz("ödənilmiş sifariş yoxdur")
+son
+```
+Hər iki forma eyni `Hər` qovşağına çevrilir; alternativ formada `addım`
+və asinxron `gözlə` yoxdur (onlar üçün əsas forma işlədilir).
+
 ### Siyahı üzərində
 ```alqor
 dəyişən meyvələr = ["alma", "armud", "üzüm"]

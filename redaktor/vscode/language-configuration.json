@@ -78,7 +78,7 @@
   },
   "indentationRules": {
     "increaseIndentPattern": {
-      "pattern": "^\\s*(?:(?:generator|asinxron|ixrac\\s+et|qorunan|statik|tenbel|tənbəl|gizli|aciq|açıq|evez|əvəz|son)\\s+)*(?:diger\\s+hallarda|digər\\s+hallarda|ne\\s+qeder\\s+ki|nə\\s+qədər\\s+ki|baslangic|başlanğıc|interfeys|komponent|funksiya|sadalama|struktur|tekrarla|təkrarla|cehd\\s+et|cəhd\\s+et|nehayet|nəhayət|hemise|həmişə|magaza|mağaza|obyekt|qurucu|bitis|bitiş|metod|modul|sinif|yoxsa|eger|əgər|hal|her|hər|sec|seç|tut)(?![\\p{L}\\p{N}_])(?!.*(?:→|=>|\\bson\\s*$|\\bqaytar\\b))(?!.*\\bmücərrəd\\b)(?!.*\\bxassə(?![\\p{L}\\p{N}_])).*$|^\\s*(?:oxu|yaz)\\s*$",
+      "pattern": "^\\s*(?:(?:generator|asinxron|ixrac\\s+et|qorunan|statik|tenbel|tənbəl|gizli|aciq|açıq|evez|əvəz|son)\\s+)*(?:diger\\s+hallarda|digər\\s+hallarda|ne\\s+qeder\\s+ki|nə\\s+qədər\\s+ki|baslangic|başlanğıc|interfeys|komponent|funksiya|sadalama|struktur|tekrarla|təkrarla|cehd\\s+et|cəhd\\s+et|nehayet|nəhayət|hemise|həmişə|magaza|mağaza|obyekt|qurucu|bitis|bitiş|metod|modul|sinif|yoxsa|eger|əgər|hal|her|hər|sec|seç|tut)(?![\\p{L}\\p{N}_])(?!.*(?:→|=>|\\bson\\s*$|\\bqaytar\\b))(?!.*\\bmücərrəd\\b)(?!.*\\bxassə(?![\\p{L}\\p{N}_])).*$|^\\s*(?:oxu|yaz)\\s*$|\\siçində\\s+hər\\s.*\\süçün\\b(?!.*\\bson\\s*$).*$",
       "flags": "u"
     },
     "decreaseIndentPattern": {

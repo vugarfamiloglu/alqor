@@ -1159,5 +1159,29 @@ class NümunələrSınağı(unittest.TestCase):
         self.assertTrue(any("Ən böyük" in s for s in sətirlər))
 
 
+
+class AlternativDövrSınağı(unittest.TestCase):
+    def test_siyahı_içində_hər_x_üçün(self):
+        self.assertEqual(çıxış("""
+dəyişən meyvələr = ["alma", "armud"]
+meyvələr içində hər m üçün
+    yaz(m)
+son
+{"a": 1, "b": 2} içində hər a, d üçün əgər d > 1
+    yaz(a, d)
+son
+[] içində hər x üçün
+    yaz(x)
+yoxsa
+    yaz("boş")
+son
+1..3 içində hər i üçün
+    əgər i == 2 onda
+        davam
+    son
+    yaz(i)
+son
+"""), ["alma", "armud", "b 2", "boş", "1", "3"])
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -60,6 +60,18 @@ class ƏdədSınaqları(unittest.TestCase):
         self.assertEqual(dəyərlər("5.mətnƏt()"),
                          [5, ".", "mətnƏt", "(", ")"])
 
+    def test_nöqtə_ilə_bitən_ədəd_xətadır(self):
+        """§ 1.9.2: `5.` xətadır — `5.0` yazılmalıdır."""
+        for kod in ("5.", "yaz(5.)", "x = 5.\nyaz(1)", "5. + 1"):
+            _, x = tokenlər(kod)
+            self.assertEqual([d.kod for d in x.xətalar], ["ALQ-L006"], kod)
+            self.assertIn("5.0", " ".join(x.xətalar[0].köməklər))
+
+    def test_iç_içə_kortej_indeksi(self):
+        """`t.1.0` — iki kortej indeksi, `1.0` onluq deyil."""
+        self.assertEqual(dəyərlər("t.1.0"), ["t", ".", 1, ".", 0])
+        self.assertEqual(dəyərlər("1..2.5"), [1, "..", 2.5])
+
     def test_ədəd_hərflə_birləşə_bilməz(self):
         _, x = tokenlər("5abc")
         self.assertFalse(x.uğurludur())
