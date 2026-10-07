@@ -576,11 +576,12 @@ gözlə http.faylGöndər(url, "sənəd.pdf")
 //        c.mətn(), c.json(), c.bayt(), c.başlıq(ad), c.başlıqlar(), c.url()
 // Xətalar: BağlantıXətası, VaxtBitdiXətası. Yalnız http(s):// — file:// yox.
 
-// WebSocket (planlaşdırılır)
-dəyişən ws = gözlə http.websocket("wss://nümunə.az/soket")
-ws.hadisə("mesaj", (m) => yaz(m))
-ws.göndər("salam")
-ws.bağla()
+// WebSocket (RFC 6455) — `ws://` və `wss://`
+dəyişən sk = gözlə http.vebSoket("wss://nümunə.az/soket")   // başlıqlar, vaxtLimiti
+sk.hadisə("mesaj", (m) => yaz(m))     // və ya hadisəsiz: sk.al(5000)
+sk.hadisə("bağlandı", (kod, səbəb) => yaz("bağlandı {kod}"))
+sk.göndər("salam")                    // mətn; bayt → ikili; siyahı/lüğət → JSON
+sk.bağla()
 
 // Aşağı səviyyə TCP/UDP
 gətir şəbəkə
@@ -801,7 +802,7 @@ sənəd modulun tam arayışıdır.
 | `konfiq` | TOML/YAML/JSON/ENV/INI, fayl birləşdirmə, mühit dəyişəni ilə əvəzləmə | ✅ |
 | `sıxma` | gzip, zlib, zip, tar (zip-slip və keçid hücumlarına qarşı yoxlama) | ✅ |
 | `şifrə` | Bölmə 10.14 | ✅ |
-| `http`, `şəbəkə` | Bölmə 10.12 (WebSocket ⏳) | ✅ |
+| `http`, `şəbəkə` | Bölmə 10.12 (WebSocket daxil) | ✅ |
 | `verilənlər` | Bölmə 10.13 (SQLite; ORM modeli ⏳) | ✅ |
 | `şəkil` | Şəkil emalı (ölçü dəyişmə, format çevirmə) | ⏳ |
 | `poçt` | E-poçt göndərmə (SMTP) | ⏳ |

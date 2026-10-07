@@ -73,6 +73,9 @@ class İcraçı:
                     arq = [list(arqumentlər or [])] \
                         if self._əsas_arqument_alır(əsas) else []
                     nəticə = əsas.çağır(self, arq, {}, None)
+                    # `asinxron funksiya əsas()` — nəticəsi gözlənilir
+                    if isinstance(nəticə, Gələcək):
+                        nəticə = nəticə.al()
                     if isinstance(nəticə, int) and not isinstance(nəticə, bool):
                         return nəticə
             return 0

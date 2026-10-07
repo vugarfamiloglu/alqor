@@ -896,6 +896,7 @@ _SERVER: dict[str, Callable] = {
     "tapılmadı": lambda i, s, f: s.tapılmadı(f),
     "dinlə": lambda i, s, port=8080, host="127.0.0.1": s.dinlə(
         port, host),
+    "soket": lambda i, s, n, f: s.soket(n, f),
     "dayandır": lambda i, s: (s.dayandır(), None)[1],
     "marşrutlar": lambda i, s: [list(m) for m in s.marşrutlar()],
     "mətnƏt": lambda i, s: repr(s),

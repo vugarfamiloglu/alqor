@@ -407,11 +407,21 @@ server.soket("/çat", funksiya(soket)
     son)
 son)
 
-// Müştəri
-dəyişən soket = veb.soketBağlan("/çat")
+// Müştəri (Alqor proqramından) — § 10.12
+dəyişən soket = gözlə http.vebSoket("ws://127.0.0.1:8080/çat")
 soket.göndər("Salam hamıya!")
 soket.hadisə("mesaj", (m) => yaz(m))
 ```
+
+İdarəedici hər qoşulmada çağırılır, sonra `qoşuldu` hadisəsi yayılır.
+Yolda parametrlər ola bilər: `s.soket("/otaq/:ad", …)` →
+`soket.sorğu().parametr("ad")`. Soket metodları: `göndər`, `hadisə`
+(`mesaj`, `qoşuldu`, `bağlandı`, `xəta`), `al(ms)`, `bağla(kod, səbəb)`,
+`açıqdır`, `kimlik`, `otağaQoşul`, `otaqdanÇıx`, `otağaYayımla(otaq, x)`
+(özündən başqa hamıya; `özünə: doğru` ilə özünə də), `yayımla(x)` — bu
+yolun bütün bağlantılarına. Brauzerdə standart `WebSocket` API-si ilə
+qoşulmaq olar. Ping-ə avtomatik pong, parçalanmış mesajlar birləşir,
+mesaj ölçüsü ≤ 16 MB.
 
 ---
 
