@@ -1484,6 +1484,11 @@ KATALOQ: list[Məlumat] = [
             ["bağlandı"]),
 ]
 
+# Əlavə elementlər (`vidjet_elave.py`) — eyni kataloqa qoşulur
+from .vidjet_elave import ƏLAVƏ_ADLAR, ƏLAVƏ_KATALOQ, ƏLAVƏLƏR  # noqa: E402
+globals().update(ƏLAVƏLƏR)
+KATALOQ.extend(ƏLAVƏ_KATALOQ)
+
 _KATALOQ_XƏRİTƏSİ = {m.ad: m for m in KATALOQ}
 
 # Kataloq tək həqiqət mənbəyidir: modulun ixrac etdiyi vidjetlərin
@@ -1520,6 +1525,7 @@ BEYNƏLXALQ_ADLAR: dict[str, str] = {
     "çörəkQırıntıları": "Breadcrumb", "modal": "Modal",
     "yanPanel": "Drawer", "ipucu": "Tooltip",
     "bildirişQutusu": "Toast",
+    **ƏLAVƏ_ADLAR,
 }
 
 
@@ -1980,6 +1986,10 @@ def _standart_ad(vidjet_adı: str) -> str:
  max-width:min(380px,92vw);box-shadow:0 8px 28px rgba(0,0,0,.22);
  border-radius:var(--v-radius)}
 """
+
+
+from .vidjet_elave import ƏLAVƏ_ÜSLUB  # noqa: E402
+ÜSLUB += ƏLAVƏ_ÜSLUB
 
 
 def üslub(icraçı) -> str:
