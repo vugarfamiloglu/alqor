@@ -4,7 +4,6 @@
 //   alqor işlət 05-veb-server.alq -- sınaq   port açmadan yoxlayır
 
 gətir veb
-gətir sistem
 
 sinif Tapşırıq
     qurucu(açıq xassə id: tam,

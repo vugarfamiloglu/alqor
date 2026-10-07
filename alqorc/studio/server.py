@@ -463,7 +463,13 @@ class Studio:
                                                  "fayl.alq")).name,
                                  rejim if isinstance(rejim, str)
                                  else "normal",
-                                 bool(s.get("tip", True)))
+                                 bool(s.get("tip", True)),
+                                 self._lint_ayarı() if s.get("lint", True)
+                                 else None)
+
+    def _lint_ayarı(self) -> dict:
+        from alqor.alqorlint import ayar_oxu
+        return ayar_oxu(self.layihə.kök)
 
     def api_dil(self, s: dict) -> dict:
         """Tamamlama / imza / hover / təyinat — `alqorls` vasitəsilə."""

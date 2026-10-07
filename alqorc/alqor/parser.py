@@ -1842,8 +1842,11 @@ class Parser:
             return A.TəkOperand(yer, tok.dəyər, self._tək_operand())
 
         if tok.acardır(*TƏK_ACARLAR):
+            # § 3.4: `deyil a == b` → `deyil (a == b)` — `deyil` müqayisədən
+            # zəif, `və`-dən güclü bağlayır
             yer = self._al().yer
-            return A.TəkOperand(yer, "deyil", self._tək_operand())
+            return A.TəkOperand(yer, "deyil",
+                                self._ifadə(PRIORITET["=="][0]))
 
         if tok.acardır("gözlə"):
             yer = self._al().yer
