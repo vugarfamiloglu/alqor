@@ -9,7 +9,7 @@ lekser · parser · interpretator · standart kitabxana · REPL ·
 **57 hazır vidjet** (veb və desktopda interaktiv) · **`konsol`** ·
 **Alqor Studio (IDE)**
 
-**1001 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
+**1016 sınaq keçir** (Studio-nun 5 brauzer sınağı Playwright ilə
 ayrıca). 10 nümunə proqramın **hamısı** ayrılır, tip yoxlamasından
 keçir və icra olunur. Bələdçinin 3 dərsliyindəki hər tam proqram
 avtomatik icra olunur (`test_beledci.py`).
@@ -72,7 +72,7 @@ alqorc/
     ├── test_beledci.py       (3)    dərsliklərdəki bütün kod işləyir
     ├── test_alqorfmt.py      (32)   formatlayıcı + doğrulama + CLI
     ├── test_alqorls.py       (36)   LSP: protokol, naviqasiya, tamamlama, qrammatika
-    ├── test_modullar.py      (33)   csv, toml, yaml, xml, html, konfiq, sıxma, kodlaşdırma
+    ├── test_modullar.py      (48)   12 modul: format, şifrə (NIST), http, verilənlər, şəbəkə
     └── test_layihe.py        (27)   manifest, yeni, sına, sənəd, qur
 ```
 
@@ -84,7 +84,7 @@ cd alqorc
 python alqorc.py söhbət                          # interaktiv rejim
 python alqorc.py tip ../numuneler                # tip yoxlaması
 python alqorc.py işlət fayl.alqor --tip          # icradan əvvəl yoxla
-python sina.py --nümunələr                       # 1001 sınaq + nümunələr
+python sina.py --nümunələr                       # 1016 sınaq + nümunələr
 python alqorc.py işlət ../numuneler/02-dovrler.alqor
 python alqorc.py işlət ../numuneler/04-siniflər.alqor
 python alqorc.py tokenlər ../numuneler/01-salam.alqor
@@ -428,7 +428,7 @@ tipi tanımır (ALQ-T002). Hazırda `istənilən` yazılır.
 | ✅ | `alqorfmt` — parserdən girinti, doğrulama zəmanəti, Studio-da Ctrl+Shift+F | — |
 | ✅ | `yeni` (4 şablon) / `sına` / `sənəd` / `qur` (`.pyz`) / `təmizlə` | — |
 | ✅ | `alqorls` (LSP) + VS Code genişlənməsi, TextMate qrammatikası | — |
-| ◐ | Standart kitabxana: ✅ kodlaşdırma, csv, toml, yaml, xml, html, konfiq, sıxma; qalır: şifrə, http, verilənlər, şəkil, poçt, keş, növbə, planlayıcı, validasiya, lokalizasiya, pul, qrafik, pdf, ffi | böyük |
+| ◐ | Standart kitabxana: ✅ kodlaşdırma, csv, toml, yaml, xml, html, konfiq, sıxma, şifrə, http, şəbəkə, verilənlər; qalır: şəkil, poçt, keş, növbə, planlayıcı, validasiya, lokalizasiya, pul, qrafik, pdf, ffi | böyük |
 | 6 | `alqor qur` → installer (`.deb`/`.rpm`/AppImage/`.exe`) | böyük |
 | 6a | **Alqor Studio — installerli Desktop tətbiqi** (istifadəçi tələbi): Windows `.exe` quraşdırıcı (Başlat menyusu, masaüstü ikonu, `.alqor` faylları Studio ilə açılır), Linux `.deb`/AppImage, macOS `.dmg`; Python daxildədir — ayrıca quraşdırmaq lazım deyil | böyük |
 | 7 | Mərhələ 6 — JS/WASM transpilyator | böyük |
