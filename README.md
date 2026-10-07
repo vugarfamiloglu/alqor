@@ -31,6 +31,12 @@ canlı önbaxış:
 
 ![Alqor Studio — qaranlıq tema](sened/ekranlar/studio-qaranliq.png)
 
+**IDE qabığı** — ikonlu menyu sətri (Fayl, Redaktə, Seçim, Görünüş, Keç,
+İşlət, Debaq, Alətlər, Kömək; Alt+hərf), kontekst menyular, əmr palitrası
+(Ctrl+Shift+P), fəaliyyət zolağı, yerləşdirilən / üzən panellər:
+
+![Menyu sətri və üzən panel](sened/ekranlar/studio-menyu.png)
+
 **Xüsusiyyətlər paneli** — elementin mətni, rəngi, kənarı, şrifti kod
 yazmadan dəyişir; kod özü yazılır, önbaxış dərhal yenilənir:
 

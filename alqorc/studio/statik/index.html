@@ -9,73 +9,39 @@
 </head>
 <body>
 
-<header class="üst-sətir">
-  <div class="loqo" title="Alqor Studio"><img src="/statik/ikon.svg" alt=""><b>Alqor</b> Studio</div>
+<header class="başlıq-sətri">
+  <div class="loqo" title="Alqor Studio"><img src="/statik/ikon.svg" alt=""></div>
+  <nav class="menyu-sətri" id="menyu-setri" role="menubar" aria-label="Əsas menyu"></nav>
   <div class="layihə-adı" id="layihe-adi"></div>
-  <div class="alətlər">
-    <button id="dym-yeni" title="Yeni fayl (Alt+N)">＋ Fayl</button>
-    <button id="dym-saxla" title="Saxla (Ctrl+S)">Saxla</button>
-    <span class="ayırıcı-xətt"></span>
-    <button id="dym-islet" class="vurğulu" title="İşlət (F5)">▶ İşlət</button>
-    <button id="dym-dayandir" title="Dayandır (Shift+F5)" disabled>■ Dayandır</button>
-    <button id="dym-debaq" title="Debaq: dayanma nöqtələri ilə işlət (Ctrl+F5). Nöqtə: sətir nömrəsinə klik və ya F9">🐞 Debaq</button>
-    <button id="dym-onbaxis" title="Komponentin canlı önbaxışı (F6)">◧ Önbaxış</button>
-    <button id="dym-dizayn" title="Vizual dizayner — sürüklə-burax düzülüş (F7)">⊞ Dizayn</button>
-    <span class="ayırıcı-xətt"></span>
-    <button id="dym-ascii" title="Fayldakı bütün ASCII açar sözləri düzəlt (eger → əgər)">eger→əgər</button>
-    <button id="dym-formatla" title="Formatla (Ctrl+Shift+F)">Formatla</button>
-  </div>
-  <div class="sağ-alətlər">
-    <label class="keçid" title="ASCII açar sözləri yazarkən avtomatik çevir: eger → əgər">
-      <input type="checkbox" id="ayar-ascii" checked><span>ASCII→az</span></label>
-    <label class="keçid" title="; tərkibi: ;e → ə, ;s → ş, ;I → İ, ;; → ;">
-      <input type="checkbox" id="ayar-terkib" checked><span>;e→ə</span></label>
-    <button id="dym-tema" title="Açıq / qaranlıq tema">◐</button>
-  </div>
+  <span class="boşluq"></span>
+  <button class="palitra-düymə" id="dym-palitra" title="Əmr palitrası (Ctrl+Shift+P)">
+    <span class="pd-ikon"></span><span>Əmr və ya fayl axtar…</span><kbd>Ctrl+Shift+P</kbd></button>
 </header>
 
+<div class="alət-sətri" role="toolbar" aria-label="Alətlər">
+  <button id="dym-yeni" data-ikon="fayl-yeni" title="Yeni fayl (Alt+N)">Fayl</button>
+  <button id="dym-saxla" data-ikon="saxla" title="Saxla (Ctrl+S)">Saxla</button>
+  <span class="ayırıcı-xətt"></span>
+  <button id="dym-islet" data-ikon="işlət" class="vurğulu" title="İşlət (F5)">İşlət</button>
+  <button id="dym-dayandir" data-ikon="dayandır" title="Dayandır (Shift+F5)" disabled>Dayandır</button>
+  <button id="dym-debaq" data-ikon="debaq" title="Debaq: dayanma nöqtələri ilə işlət (Ctrl+F5). Nöqtə: sətir nömrəsinə klik və ya F9">Debaq</button>
+  <span class="ayırıcı-xətt"></span>
+  <button id="dym-onbaxis" data-ikon="önbaxış" title="Komponentin canlı önbaxışı (F6)">Önbaxış</button>
+  <button id="dym-dizayn" data-ikon="dizayn" title="Vizual dizayner — sürüklə-burax düzülüş (F7)">Dizayn</button>
+  <span class="ayırıcı-xətt"></span>
+  <button id="dym-formatla" data-ikon="formatla" title="Formatla (Shift+Alt+F)">Formatla</button>
+  <button id="dym-ascii" data-ikon="ascii" title="Fayldakı bütün ASCII açar sözləri düzəlt (eger → əgər)">eger→əgər</button>
+  <span class="boşluq"></span>
+  <label class="keçid" title="ASCII açar sözləri yazarkən avtomatik çevir: eger → əgər">
+    <input type="checkbox" id="ayar-ascii" checked><span>ASCII→az</span></label>
+  <label class="keçid" title="; tərkibi: ;e → ə, ;s → ş, ;I → İ, ;; → ;">
+    <input type="checkbox" id="ayar-terkib" checked><span>;e→ə</span></label>
+  <button id="dym-tema" data-ikon="tema" title="Açıq / qaranlıq tema"></button>
+</div>
+
 <main class="iş-sahəsi" id="is-sahesi">
-  <aside class="yan-panel" id="yan-panel">
-    <nav class="panel-nişanları" role="tablist">
-      <button class="aktiv" data-panel="layihe" role="tab">Layihə</button>
-      <button data-panel="palet" role="tab">Elementlər</button>
-      <button data-panel="xususiyyet" role="tab" title="Seçilmiş elementin xüsusiyyətləri">Xüsusiyyətlər</button>
-    </nav>
-
-    <section class="panel" id="panel-layihe">
-      <div class="panel-alətləri">
-        <button id="dym-yeni-fayl" title="Yeni fayl">＋ fayl</button>
-        <button id="dym-yeni-qovluq" title="Yeni qovluq">＋ qovluq</button>
-        <button id="dym-agac-yenile" title="Yenilə">⟳</button>
-      </div>
-      <div class="ağac" id="agac" role="tree"></div>
-    </section>
-
-    <section class="panel" id="panel-palet" hidden>
-      <input type="search" id="palet-axtar" placeholder="Element axtar… (Button, Table, cədvəl…)"
-             autocomplete="off" spellcheck="false">
-      <details class="fayl-elementləri" id="fayl-elementleri" open>
-        <summary>Fayldakı elementlər <span class="say" id="element-sayi"></span></summary>
-        <p class="ipucu-mətni">⚡ — yarımçıq: <b>iki klik</b> çatışmayan vəziyyət və
-          idarəedicini yazır</p>
-        <div class="elementlər" id="elementler"></div>
-      </details>
-      <p class="ipucu-mətni">Bir klik — kursora qoyur · <b>iki klik</b> — işləməsi üçün
-        lazım olan bütün kodu yazır · redaktora sürükləmək də olar</p>
-      <div class="palet" id="palet"></div>
-    </section>
-
-    <section class="panel" id="panel-xususiyyet" hidden>
-      <div class="xüs-boş" id="xus-bos">
-        <p><b>Element seçin</b></p>
-        <p class="ipucu-mətni">Redaktorda kursoru <code>vidjet.…(…)</code> çağırışının
-          içinə qoyun və ya <b>Elementlər → Fayldakı elementlər</b> siyahısında
-          elementə klikləyin. Mətn, rəng, kənar, ölçü və bütün parametrlər
-          burada dəyişir — önbaxış dərhal yenilənir.</p>
-      </div>
-      <div id="xus-forma" hidden></div>
-    </section>
-  </aside>
+  <nav class="fəaliyyət" id="fealiyyet" aria-label="Naviqasiya"></nav>
+  <aside class="dok" data-dok="sol"><div class="dok-nişanlar" role="tablist"></div><div class="dok-gövdə"></div></aside>
   <div class="bölücü şaquli" data-bolucu="yan"></div>
 
   <section class="mərkəz">
@@ -107,68 +73,136 @@
           <div class="son-fayllar" id="son-fayllar"></div>
           <h3>Qısayollar</h3>
           <dl class="qısayollar">
+            <dt>Ctrl+Shift+P</dt><dd>əmr palitrası</dd><dt>Ctrl+P</dt><dd>fayla keç</dd>
             <dt>Ctrl+S</dt><dd>saxla</dd><dt>F5</dt><dd>işlət</dd>
-            <dt>F6</dt><dd>önbaxış</dd><dt>Ctrl+F / Ctrl+H</dt><dd>axtar / əvəzlə</dd>
-            <dt>Ctrl+/</dt><dd>şərh</dd><dt>F8</dt><dd>növbəti problem</dd>
+            <dt>F6 / F7</dt><dd>önbaxış / dizayn</dd><dt>Ctrl+F / Ctrl+H</dt><dd>axtar / əvəzlə</dd>
+            <dt>Ctrl+Shift+F</dt><dd>fayllarda axtar</dd><dt>F12 / F2</dt><dd>təyinat / ad dəyiş</dd>
+            <dt>Ctrl+B / Ctrl+J</dt><dd>yan / alt panel</dd><dt>Ctrl+/</dt><dd>şərh</dd>
             <dt>;e ;i ;s ;c ;g ;o ;u</dt><dd>ə ı ş ç ğ ö ü</dd>
-            <dt>Alt+N / Alt+W</dt><dd>yeni fayl / nişanı bağla</dd>
           </dl>
         </div>
       </div>
     </div>
     <div class="hərf-paneli" id="herf-paneli" title="Azərbaycan hərfləri"></div>
     <div class="bölücü üfüqi" data-bolucu="alt"></div>
-    <section class="alt-panel" id="alt-panel">
-      <nav class="panel-nişanları alt-nişanlar">
-        <button class="aktiv" data-alt="cixis">Çıxış</button>
-        <button data-alt="problemler">Problemlər <span id="problem-sayi" class="say"></span></button>
-        <button data-alt="debaq">Debaq</button>
-        <span class="boşluq"></span>
-        <button id="cixis-temizle" title="Çıxışı təmizlə">Təmizlə</button>
-      </nav>
-      <div class="alt-məzmun" id="alt-cixis">
-        <pre class="çıxış" id="cixis" aria-live="polite"></pre>
-        <form class="giriş-sətri" id="giris-formu" autocomplete="off">
-          <span class="sönük">giriş ›</span>
-          <input id="giris" placeholder="Proqrama mətn göndər (oxu)…" spellcheck="false" disabled>
-        </form>
-      </div>
-      <div class="alt-məzmun" id="alt-debaq" hidden>
-        <div class="debaq-alətləri">
-          <button id="dbq-davam" title="Davam et (F5)" disabled>▶ Davam</button>
-          <button id="dbq-fasile" title="Fasilə" disabled>⏸</button>
-          <button id="dbq-novbeti" title="Növbəti sətir (F10)" disabled>⤼ Növbəti</button>
-          <button id="dbq-daxil" title="Funksiyaya gir (F11)" disabled>⤓ Daxil ol</button>
-          <button id="dbq-cix" title="Funksiyadan çıx (Shift+F11)" disabled>⤒ Çıx</button>
-          <button id="dbq-dayandir" title="Debaqı dayandır" disabled>■</button>
-          <span class="debaq-vəziyyəti" id="dbq-veziyyet">Sətir nömrəsinə klikləyib dayanma nöqtəsi qoyun, sonra 🐞 Debaq.</span>
-        </div>
-        <div class="debaq-gövdə">
-          <div class="debaq-yığın"><h4>Çağırış yığını</h4><div id="dbq-yigin"></div></div>
-          <div><h4>Dəyişənlər</h4><div id="dbq-deyisenler"></div></div>
-        </div>
-        <form class="debaq-ifadə" id="dbq-ifade-formu" autocomplete="off">
-          <input id="dbq-ifade" placeholder="İfadə hesabla (məs. x * 2)…" spellcheck="false">
-        </form>
-        <div class="debaq-nəticə" id="dbq-netice"></div>
-      </div>
-      <div class="alt-məzmun" id="alt-problemler" hidden>
-        <ul class="problemlər" id="problemler"></ul>
-      </div>
-    </section>
+    <section class="dok" data-dok="alt"><div class="dok-nişanlar" role="tablist"></div><div class="dok-gövdə"></div></section>
   </section>
 
-  <div class="bölücü şaquli" data-bolucu="onbaxis" id="onbaxis-bolucu" hidden></div>
-  <aside class="önbaxış-panel" id="onbaxis-panel" hidden>
+  <div class="bölücü şaquli" data-bolucu="sag"></div>
+  <aside class="dok" data-dok="sağ"><div class="dok-nişanlar" role="tablist"></div><div class="dok-gövdə"></div></aside>
+
+  <div class="dok-hədəf sol" data-hedef-dok="sol">Sola yerləşdir</div>
+  <div class="dok-hədəf sağ" data-hedef-dok="sağ">Sağa yerləşdir</div>
+  <div class="dok-hədəf alt" data-hedef-dok="alt">Aşağıya yerləşdir</div>
+</main>
+
+<div id="uzenler"></div>
+
+<div id="panel-anbari" hidden>
+  <section class="panel" id="panel-layihe">
+    <div class="panel-alətləri">
+      <button id="dym-yeni-fayl" data-ikon="fayl-yeni" title="Yeni fayl"></button>
+      <button id="dym-yeni-qovluq" data-ikon="qovluq-yeni" title="Yeni qovluq"></button>
+      <button id="dym-agac-yenile" data-ikon="yenilə" title="Yenilə"></button>
+      <button id="dym-agac-yigis" data-ikon="sətir-yuxarı" title="Bütün qovluqları yığ"></button>
+    </div>
+    <div class="ağac" id="agac" role="tree"></div>
+  </section>
+
+  <section class="panel" id="panel-axtar">
+    <form class="axtar-forma" id="axtar-formu" autocomplete="off">
+      <input type="search" id="lay-axtar" placeholder="Bütün layihədə axtar…" spellcheck="false">
+      <div class="axtar-seçimlər">
+        <label title="Böyük/kiçik hərf fərqi"><input type="checkbox" id="lay-herf">Aa</label>
+        <label title="Bütöv söz"><input type="checkbox" id="lay-soz">ab|</label>
+        <label title="Müntəzəm ifadə"><input type="checkbox" id="lay-regex">.*</label>
+        <input id="lay-filtr" placeholder="fayllar: *.alq" spellcheck="false">
+      </div>
+      <div class="axtar-seçimlər">
+        <input id="lay-evezle" placeholder="Əvəzlə (bütün tapılanlar)" spellcheck="false">
+        <button type="button" id="lay-evezle-dym" title="Hamısını əvəzlə">Əvəzlə</button>
+      </div>
+    </form>
+    <div class="say" id="lay-axtar-say"></div>
+    <div class="axtar-nəticələr" id="lay-axtar-netice"></div>
+  </section>
+
+  <section class="panel" id="panel-palet">
+    <input type="search" id="palet-axtar" placeholder="Element axtar… (Button, Table, cədvəl…)"
+           autocomplete="off" spellcheck="false">
+    <details class="fayl-elementləri" id="fayl-elementleri" open>
+      <summary>Fayldakı elementlər <span class="say" id="element-sayi"></span></summary>
+      <p class="ipucu-mətni">⚡ — yarımçıq: <b>iki klik</b> çatışmayan vəziyyət və
+        idarəedicini yazır</p>
+      <div class="elementlər" id="elementler"></div>
+    </details>
+    <p class="ipucu-mətni">Bir klik — kursora qoyur · <b>iki klik</b> — işləməsi üçün
+      lazım olan bütün kodu yazır · redaktora və ya dizaynerə sürükləmək də olar</p>
+    <div class="palet" id="palet"></div>
+  </section>
+
+  <section class="panel" id="panel-xususiyyet">
+    <div class="xüs-boş" id="xus-bos">
+      <p><b>Element seçin</b></p>
+      <p class="ipucu-mətni">Redaktorda kursoru <code>vidjet.…(…)</code> çağırışının
+        içinə qoyun və ya <b>Elementlər → Fayldakı elementlər</b> siyahısında
+        elementə klikləyin. Mətn, rəng, kənar, ölçü və bütün parametrlər
+        burada dəyişir — önbaxış dərhal yenilənir.</p>
+    </div>
+    <div id="xus-forma" hidden></div>
+  </section>
+
+  <section class="panel" id="panel-struktur">
+    <div class="panel-alətləri">
+      <input type="search" id="struktur-suzgec" placeholder="Simvol süz…" spellcheck="false">
+    </div>
+    <div class="struktur" id="struktur"></div>
+  </section>
+
+  <div class="alt-məzmun" id="alt-cixis">
+    <div class="panel-alətləri kiçik">
+      <span class="sönük">Proqramın çıxışı</span><span class="boşluq"></span>
+      <button id="cixis-temizle" data-ikon="sil" title="Çıxışı təmizlə">Təmizlə</button>
+    </div>
+    <pre class="çıxış" id="cixis" aria-live="polite"></pre>
+    <form class="giriş-sətri" id="giris-formu" autocomplete="off">
+      <span class="sönük">giriş ›</span>
+      <input id="giris" placeholder="Proqrama mətn göndər (oxu)…" spellcheck="false" disabled>
+    </form>
+  </div>
+  <div class="alt-məzmun" id="alt-problemler">
+    <ul class="problemlər" id="problemler"></ul>
+  </div>
+  <div class="alt-məzmun" id="alt-debaq">
+    <div class="debaq-alətləri">
+      <button id="dbq-davam" data-ikon="işlət" title="Davam et (F5)" disabled>Davam</button>
+      <button id="dbq-fasile" data-ikon="fasilə" title="Fasilə" disabled></button>
+      <button id="dbq-novbeti" data-ikon="addım-üstündən" title="Növbəti sətir (F10)" disabled>Növbəti</button>
+      <button id="dbq-daxil" data-ikon="addım-daxil" title="Funksiyaya gir (F11)" disabled>Daxil ol</button>
+      <button id="dbq-cix" data-ikon="addım-çıx" title="Funksiyadan çıx (Shift+F11)" disabled>Çıx</button>
+      <button id="dbq-dayandir" data-ikon="dayandır" title="Debaqı dayandır" disabled></button>
+      <span class="debaq-vəziyyəti" id="dbq-veziyyet">Sətir nömrəsinə klikləyib dayanma nöqtəsi qoyun, sonra Debaq.</span>
+    </div>
+    <div class="debaq-gövdə">
+      <div class="debaq-yığın"><h4>Çağırış yığını</h4><div id="dbq-yigin"></div></div>
+      <div><h4>Dəyişənlər</h4><div id="dbq-deyisenler"></div></div>
+    </div>
+    <form class="debaq-ifadə" id="dbq-ifade-formu" autocomplete="off">
+      <input id="dbq-ifade" placeholder="İfadə hesabla (məs. x * 2)…" spellcheck="false">
+    </form>
+    <div class="debaq-nəticə" id="dbq-netice"></div>
+  </div>
+
+  <div class="önbaxış-panel" id="onbaxis-panel">
     <div class="önbaxış-başlığı">
-      <b>Önbaxış</b>
       <select id="onbaxis-komponent" title="Komponent"></select>
       <span class="boşluq"></span>
-      <button id="onbaxis-yenile" title="Yenilə">⟳</button>
-      <button id="onbaxis-bagla" title="Bağla">✕</button>
+      <button id="onbaxis-dizayn" data-ikon="dizayn" title="Dizayneri göstər/gizlət (F7)"></button>
+      <button id="onbaxis-yenile" data-ikon="yenilə" title="Yenilə"></button>
+      <button id="onbaxis-bagla" data-ikon="bağla" title="Önbaxışı bağla"></button>
     </div>
     <div class="dizayn" id="dizayn" hidden tabindex="0" aria-label="Vizual dizayner">
-      <div class="dz-ipucu">Elementləri paletdən bura sürükləyin · daşımaq üçün tutub çəkin · Delete — sil</div>
+      <div class="dz-ipucu">Elementləri paletdən bura sürükləyin · daşımaq üçün tutub çəkin · Delete — sil · sağ klik — menyu</div>
       <div id="dizayn-agac"></div>
     </div>
     <div class="önbaxış-məzmun">
@@ -176,8 +210,8 @@
       <iframe id="onbaxis-cercive" title="Komponent önbaxışı"></iframe>
       <pre class="önbaxış-xəta" id="onbaxis-xeta" hidden></pre>
     </div>
-  </aside>
-</main>
+  </div>
+</div>
 
 <footer class="status-sətri">
   <span id="st-kursor">Sətir 1, Sütun 1</span>
@@ -204,8 +238,12 @@
   </form>
 </dialog>
 
+<script src="/statik/ikonlar.js"></script>
+<script src="/statik/menyu.js"></script>
+<script src="/statik/dok.js"></script>
 <script src="/statik/dil.js"></script>
 <script src="/statik/redaktor.js"></script>
 <script src="/statik/studio.js"></script>
+<script src="/statik/qur.js"></script>
 </body>
 </html>

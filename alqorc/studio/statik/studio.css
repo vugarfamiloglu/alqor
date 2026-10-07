@@ -6,7 +6,8 @@
   --ui-şrift: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --yan-en: 270px;
   --alt-hündürlük: 210px;
-  --önbaxış-en: 420px;
+  --sag-en: 440px;
+  --şrift-ölçü: 13.5px;
 }
 
 :root[data-tema="qaranlıq"] {
@@ -57,10 +58,6 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 [hidden] { display: none !important; }
 
 /* ── Üst sətir ── */
-.üst-sətir {
-  display: flex; align-items: center; gap: 12px; padding: 6px 10px;
-  background: var(--panel); border-bottom: 1px solid var(--kənar); flex: none;
-}
 .loqo { display: flex; align-items: center; gap: 6px; font-size: 14px; white-space: nowrap; }
 .loqo img { width: 20px; height: 20px; }
 .layihə-adı { color: var(--sönük); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 22vw; }
@@ -72,11 +69,13 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 
 /* ── İş sahəsi ── */
 .iş-sahəsi { flex: 1; display: flex; min-height: 0; }
-.yan-panel { width: var(--yan-en); flex: none; display: flex; flex-direction: column;
-  background: var(--panel); min-width: 160px; }
+.dok { flex: none; display: flex; flex-direction: column; background: var(--panel); min-width: 0; min-height: 0; }
+.dok[data-dok="sol"] { width: var(--yan-en); min-width: 160px; }
+.dok[data-dok="sağ"] { width: var(--sag-en); min-width: 220px; }
+.dok[data-dok="alt"] { height: var(--alt-hündürlük); min-height: 60px; }
 .mərkəz { flex: 1; display: flex; flex-direction: column; min-width: 240px; }
-.önbaxış-panel { width: var(--önbaxış-en); flex: none; display: flex; flex-direction: column;
-  background: var(--panel); min-width: 220px; }
+.önbaxış-panel { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.önbaxış-panel[hidden] { display: none; }
 .bölücü { flex: none; background: var(--kənar); }
 .bölücü.şaquli { width: 4px; cursor: col-resize; }
 .bölücü.üfüqi { height: 4px; cursor: row-resize; }
@@ -184,7 +183,7 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 /* ── Redaktor ── */
 .redaktor-qabı { flex: 1; position: relative; min-height: 0; background: var(--fon); }
 #redaktor { position: absolute; inset: 0; }
-.redaktor { display: flex; font: 13.5px/21px var(--kod-şrift); --xətt-eni: 5ch; }
+.redaktor { display: flex; font: var(--şrift-ölçü)/1.556 var(--kod-şrift); --xətt-eni: 5ch; }
 .r-xətlər { width: var(--xətt-eni); flex: none; overflow: hidden; background: var(--fon); color: var(--sönük);
   text-align: right; border-right: 1px solid var(--kənar); user-select: none; }
 .r-nömrələr { padding: 8px 8px 8px 0; opacity: .7; }
@@ -250,8 +249,6 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 .hərf-paneli button { font-family: var(--kod-şrift); padding: 0 8px; min-width: 26px; }
 
 /* ── Alt panel ── */
-.alt-panel { height: var(--alt-hündürlük); flex: none; display: flex; flex-direction: column; background: var(--panel); min-height: 60px; }
-.alt-nişanlar button#cixis-temizle { border-radius: 6px; font-size: 12px; margin-bottom: 3px; }
 .alt-məzmun { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .çıxış { flex: 1; margin: 0; padding: 8px 12px; overflow: auto; font: 12.5px/1.5 var(--kod-şrift); white-space: pre-wrap; word-break: break-word; background: var(--fon); }
 .çıxış .x-xəta { color: var(--xəta); }
@@ -383,3 +380,124 @@ body.sürüklənir iframe { pointer-events: none; }
 body.dz-sürüklə .dz-yer { background: color-mix(in srgb, var(--vurğu) 18%, transparent); }
 body.dz-sürüklə .dz-yer.üstündə { background: var(--vurğu); }
 .dz-element.sürüklənir, .dz-konteyner.sürüklənir { opacity: .4; }
+
+/* ══ IDE düzülüşü: başlıq + menyu, alət sətri, fəaliyyət zolağı, dok, üzən ══ */
+.başlıq-sətri { display: flex; align-items: center; gap: 4px; padding: 0 8px; height: 34px; flex: none;
+  background: var(--panel); border-bottom: 1px solid var(--kənar); user-select: none; }
+.başlıq-sətri .loqo img { width: 20px; height: 20px; display: block; }
+.menyu-sətri { display: flex; align-items: center; gap: 1px; }
+.m-başlıq { border: 0; background: none; padding: 4px 9px; border-radius: 5px; color: var(--mətn); font-size: 13px; }
+.m-başlıq u { text-decoration: none; }
+body.alt-basılıb .m-başlıq u { text-decoration: underline; }
+.m-başlıq:hover, .m-başlıq.açıq { background: var(--fon-3); }
+.palitra-düymə { display: flex; align-items: center; gap: 8px; min-width: 280px; max-width: 420px; flex: 0 1 380px;
+  color: var(--sönük); background: var(--fon); border: 1px solid var(--kənar); border-radius: 6px; padding: 3px 10px; font-size: 12px; }
+.palitra-düymə kbd { margin-left: auto; font-family: var(--ui-şrift); font-size: 11px; opacity: .75; }
+.palitra-düymə .pd-ikon { display: inline-flex; }
+.alət-sətri { display: flex; align-items: center; gap: 4px; padding: 4px 8px; flex: none;
+  background: var(--panel); border-bottom: 1px solid var(--kənar); overflow-x: auto; }
+.alət-sətri button { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; }
+.alət-sətri button .ikon { flex: none; }
+
+button[data-ikon] { display: inline-flex; align-items: center; gap: 5px; }
+.ikon { flex: none; vertical-align: middle; }
+.ikon.boş { display: inline-block; width: 16px; height: 16px; }
+
+.iş-sahəsi { position: relative; }
+.fəaliyyət { width: 44px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 0; background: var(--fon-2); border-right: 1px solid var(--kənar); }
+.f-düymə { position: relative; width: 38px; height: 38px; display: grid; place-items: center; border: 0;
+  background: none; color: var(--sönük); border-radius: 8px; padding: 0; }
+.f-düymə:hover { color: var(--mətn); background: var(--fon-3); }
+.f-düymə.aktiv { color: var(--mətn); }
+.f-düymə.aktiv::before { content: ""; position: absolute; left: -3px; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--vurğu); }
+.f-say { position: absolute; right: 2px; bottom: 2px; min-width: 15px; height: 15px; border-radius: 8px; padding: 0 3px;
+  background: var(--vurğu); color: var(--vurğu-mətn); font-size: 10px; line-height: 15px; text-align: center; }
+
+.dok[hidden], .bölücü[hidden] { display: none !important; }
+.dok-nişanlar { display: flex; align-items: center; gap: 1px; padding: 0 4px; height: 32px; flex: none;
+  border-bottom: 1px solid var(--kənar); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.dok-nişan { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--sönük);
+  padding: 4px 9px; border-radius: 6px; white-space: nowrap; font-size: 12.5px; cursor: pointer; }
+.dok-nişan:hover { color: var(--mətn); background: var(--fon-3); }
+.dok-nişan.aktiv { color: var(--mətn); background: var(--fon); box-shadow: inset 0 -2px 0 var(--vurğu); border-radius: 6px 6px 0 0; }
+.dok-düymə { border: 0; background: none; color: var(--sönük); padding: 2px 6px; border-radius: 5px; display: inline-flex; align-items: center; }
+.dok-düymə:hover { color: var(--mətn); background: var(--fon-3); }
+.dok-gövdə { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.dok-gövdə > * { flex: 1; min-height: 0; }
+.dok-gövdə > .panel { overflow: auto; }
+.dok.üstündə, .dok-hədəf.üstündə { outline: 2px dashed var(--vurğu); outline-offset: -3px; }
+.dok-hədəf { display: none; position: absolute; z-index: 30; place-items: center; color: var(--vurğu);
+  background: color-mix(in srgb, var(--vurğu) 14%, transparent); border: 2px dashed var(--vurğu); border-radius: 8px; font-size: 12px; }
+body.panel-sürüklə .dok-hədəf { display: grid; }
+.dok-hədəf.sol { left: 50px; top: 40%; width: 110px; height: 90px; }
+.dok-hədəf.sağ { right: 8px; top: 40%; width: 110px; height: 90px; }
+.dok-hədəf.alt { left: 45%; bottom: 8px; width: 160px; height: 60px; }
+.panel-alətləri.kiçik { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-bottom: 1px solid var(--kənar); font-size: 12px; }
+.alt-məzmun[hidden], .panel[hidden] { display: none !important; }
+
+.üzən { position: fixed; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--kənar);
+  border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.35); overflow: hidden; resize: both; min-width: 220px; min-height: 140px; }
+.üzən-başlıq { display: flex; align-items: center; gap: 6px; padding: 5px 6px 5px 10px; background: var(--fon-2);
+  border-bottom: 1px solid var(--kənar); cursor: move; user-select: none; font-size: 12.5px; }
+.üzən-gövdə { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.üzən-gövdə > * { flex: 1; min-height: 0; }
+.üzən-gövdə > .panel { overflow: auto; }
+
+/* ── Menyular ── */
+.menyu-qutu { position: fixed; z-index: 100; min-width: 230px; max-width: 380px; padding: 4px; background: var(--panel);
+  border: 1px solid var(--kənar); border-radius: 8px; box-shadow: 0 12px 34px rgba(0,0,0,.32); font-size: 13px;
+  max-height: calc(100vh - 16px); overflow-y: auto; }
+.m-element { display: flex; align-items: center; gap: 9px; padding: 5px 10px 5px 8px; border-radius: 5px; cursor: default; white-space: nowrap; }
+.m-element.seçili { background: var(--vurğu); color: var(--vurğu-mətn); }
+.m-element.sönük { opacity: .45; }
+.m-element.seçili.sönük { background: var(--fon-3); color: var(--mətn); }
+.m-ad { flex: 1; }
+.m-qısayol { color: var(--sönük); font-size: 11.5px; margin-left: 18px; display: inline-flex; }
+.m-element.seçili .m-qısayol { color: inherit; opacity: .85; }
+.m-ayırıcı { height: 1px; background: var(--kənar); margin: 4px 6px; }
+
+/* ── Əmr palitrası ── */
+.palitra { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.25); display: flex; justify-content: center; align-items: flex-start; padding-top: 70px; }
+.palitra[hidden] { display: none; }
+.palitra-qutu { width: min(640px, 92vw); background: var(--panel); border: 1px solid var(--kənar); border-radius: 10px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.4); overflow: hidden; }
+.palitra-giriş { width: 100%; border: 0 !important; border-bottom: 1px solid var(--kənar) !important; border-radius: 0 !important;
+  padding: 10px 14px !important; font-size: 14px; outline: none !important; background: var(--fon) !important; }
+.palitra-siyahı { max-height: 50vh; overflow-y: auto; padding: 4px; }
+.palitra-element { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.palitra-element .sönük { margin-left: auto; font-size: 11.5px; }
+.palitra-element.seçili { background: var(--seçim); }
+.palitra-boş, .palitra-ipucu { padding: 8px 14px; color: var(--sönük); font-size: 12px; }
+.palitra-ipucu { border-top: 1px solid var(--kənar); }
+
+/* ── Layihədə axtarış ── */
+.axtar-forma { display: flex; flex-direction: column; gap: 5px; }
+.axtar-forma input[type="search"], .axtar-forma #lay-evezle { width: 100%; }
+.axtar-seçimlər { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--sönük); }
+.axtar-seçimlər label { display: inline-flex; align-items: center; gap: 2px; cursor: pointer; font-family: var(--kod-şrift); }
+.axtar-seçimlər #lay-filtr { flex: 1; min-width: 0; font-size: 12px; }
+.axtar-seçimlər #lay-evezle { flex: 1; }
+.axtar-nəticələr { font-size: 12.5px; }
+.ax-fayl { display: flex; align-items: center; gap: 6px; padding: 3px 2px; font-weight: 600; cursor: pointer; }
+.ax-fayl .say { font-weight: 400; margin-left: auto; }
+.ax-sətir { display: flex; gap: 8px; padding: 2px 4px 2px 20px; border-radius: 4px; cursor: pointer;
+  font-family: var(--kod-şrift); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ax-sətir:hover { background: var(--fon-3); }
+.ax-sətir .ax-no { color: var(--sönük); flex: none; min-width: 26px; text-align: right; }
+.ax-sətir mark { background: color-mix(in srgb, var(--xəbərdarlıq) 45%, transparent); color: inherit; border-radius: 2px; }
+
+/* ── Struktur ── */
+.struktur { font-size: 12.5px; }
+.st-düyün { display: flex; align-items: center; gap: 6px; padding: 2px 4px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.st-düyün:hover { background: var(--fon-3); }
+.st-düyün .st-növ { width: 16px; text-align: center; font-size: 11px; font-weight: 700; flex: none; }
+.st-düyün .sönük { font-family: var(--kod-şrift); font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+.st-n5 { color: var(--t-sinif); } .st-n12, .st-n6, .st-n9 { color: var(--t-çağırış); } .st-n2 { color: var(--t-tip); }
+.st-n13, .st-n14 { color: var(--t-özü); } .st-n10, .st-n22 { color: var(--t-sinif); } .st-n8, .st-n7 { color: var(--t-özü); }
+
+.tab.sürüklənir { opacity: .4; }
+/* Dar zonalarda aktiv olmayan nişanlar yalnız ikonla */
+.dok[data-dok="sol"] .dok-nişan:not(.aktiv) .dn-ad,
+.dok[data-dok="sağ"] .dok-nişan:not(.aktiv) .dn-ad { display: none; }
+.ax-qrup.yığılıb .ax-sətir { display: none; }
