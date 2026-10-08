@@ -823,6 +823,16 @@ def əmr_studio(arqumentlər: list[str]) -> int:
     return işə_sal(qovluq, port, başsız, sınaq, ilk_fayl)
 
 
+def əmr_pm(arqumentlər: list[str]) -> int:
+    from alqor.alqorpm import əsas as pm_əsas
+    return pm_əsas(arqumentlər)
+
+
+def əmr_hub(arqumentlər: list[str]) -> int:
+    from alqor.alqorhub import əsas as hub_əsas
+    return hub_əsas(arqumentlər)
+
+
 def əmr_lint(arqumentlər: list[str]) -> int:
     from alqor.alqorlint import əsas as lint_əsas
     return lint_əsas(arqumentlər)
@@ -855,6 +865,9 @@ def əmr_kömək(_: list[str]) -> int:
     format <fayl|qovluq> Kodu format edir (alqorfmt): girinti, boşluqlar,
                          ASCII açar sözlər → `əgər`
                          --yoxla  --fərq  --ascii-saxla  --homoqlif-düzəlt
+    pm <əmr>             Paket meneceri (alqorpm): əlavə, sil, yüklə,
+                         yenilə, siyahı, ağac, axtar, yayımla, yoxla …
+    hub                  Paket deposu serveri (alqorhub): --port --qovluq
     lint <fayl|qovluq>   Statik təhlil (alqorlint): üslub, təhlükəsizlik,
                          mürəkkəblik --düzəlt --sərtlik S --json --qaydalar
     sına [yol]           Sınaqlar (@sınaq): --filtr söz  --sənəd  --ətraflı
@@ -913,6 +926,8 @@ VƏZİYYƏT:
     "tip": əmr_tip, "tiplər": əmr_tip, "tipler": əmr_tip,
     "format": əmr_format, "formatla": əmr_format, "fmt": əmr_format,
     "lint": əmr_lint, "alqorlint": əmr_lint,
+    "pm": əmr_pm, "alqorpm": əmr_pm, "paket": əmr_pm,
+    "hub": əmr_hub, "alqorhub": əmr_hub,
     "yeni": əmr_yeni, "new": əmr_yeni,
     "sına": əmr_sına, "sina": əmr_sına, "test": əmr_sına,
     "sənəd": əmr_sənəd, "sened": əmr_sənəd, "doc": əmr_sənəd,

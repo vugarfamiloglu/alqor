@@ -1892,8 +1892,25 @@ def modul_yüklə(icraçı, ad: str, yer=None) -> Modul:
     if ad.endswith((".alq", ".alqor")) or ad.startswith((".", "/")):
         return _fayldan_modul(icraçı, ad, yer)
 
+    # Paket: mənbə/, paketlər/, ~/.alq/paketlər/ (§ 8.10)
+    from .paketler import paket_tap
+    tapılan = paket_tap(ad, _idxal_bazası(icraçı, yer))
+    if tapılan is not None:
+        m = _fayldan_modul(icraçı, str(tapılan), yer)
+        m.ad = ad.rsplit("/", 1)[-1].split(".")[-1]
+        return m
+
     raise AlqorXəta("ArqumentXətası",
                     f"`{ad}` modulu tapılmadı", yer, "ALQ-M001")
+
+
+def _idxal_bazası(icraçı, yer) -> Path | None:
+    mənbə = getattr(yer, "mənbə", None) if yer is not None else None
+    if mənbə is not None and getattr(mənbə, "yol", None) is not None:
+        return Path(mənbə.yol).resolve().parent
+    if getattr(icraçı, "əsas_qovluq", None) is not None:
+        return Path(icraçı.əsas_qovluq)
+    return Path.cwd()
 
 
 def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
