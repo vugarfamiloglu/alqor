@@ -35,8 +35,8 @@
 - `alqorfmt` (formatlayıcı), `alqorls` (LSP: layihə üzrə keçid/istinad/ad
   dəyişmə, iş sahəsi simvolları, kod linzaları, semantik rənglər),
   `alqor dap` (debaqçı) + VS Code genişlənməsi (`redaktor/vscode/`, F5 debaq)
-- `qur` → tək fayllı `.pyz` paketi; `qur --quraşdırıcı` → `.deb`, Windows
-  (zip + Inno Setup `.iss`), macOS `.app`; `qur --studio` → Alqor Studio-nun
+- `qur` → tək fayllı `.pyz` paketi; `qur --quraşdırıcı` → `.deb`, `.rpm`,
+  `.AppImage`, Windows (zip + Inno Setup `.iss`), macOS `.app` və `.dmg`; `qur --studio` → Alqor Studio-nun
   quraşdırıcıları (`.alq` əlaqəsi, menyu/masaüstü ikonu, `--python-daxil`)
 
 **Alqor Studio** (`alqorc/studio/`)
@@ -60,8 +60,11 @@
 ## 🟡 Yarımçıq qalanlar
 
 Hazırda yoxdur. Qeyd: Windows/macOS quraşdırıcıları Linux-da yaradılır və
-quruluşu sınanır — həqiqi Windows/macOS-da əl ilə yoxlamaq lazımdır;
-`.AppImage`, `.rpm`, `.dmg` hələ yoxdur.
+quruluşu sınanır (`.rpm` — `rpm` aləti ilə, `.dmg` — `dmg2img`/`7z` ilə,
+AppImage — rəsmi runtime ilə) — həqiqi Windows/macOS-da əl ilə yoxlamaq
+lazımdır. `.dmg` macOS xaricində ISO 9660 + Rock Ridge ilə qurulur
+(macOS-da `hdiutil` varsa HFS+); paketlər imzasızdır (Gatekeeper:
+sağ klik → Aç).
 
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 

@@ -6,16 +6,20 @@ sistemi üçün quraşdırılan formaya bükür. Xarici alət TƏLƏB OLUNMUR �
 hamısı saf Python ilə yaradılır:
 
     qurma/<ad>_<versiya>_all.deb            Debian/Ubuntu (apt install ./…)
+    qurma/<ad>-<versiya>-1.noarch.rpm       Fedora/RHEL/openSUSE (dnf install)
+    qurma/<Ad>-<versiya>-x86_64.AppImage    istənilən Linux (runtime bir dəfə
+                                            endirilir, keşlənir)
     qurma/<ad>-<versiya>-windows.zip        Windows: "Qurasdir.cmd" — Başlat
                                             menyusu, masaüstü ikonu, fayl
                                             əlaqələri, "Proqramlar"-da silmə
     qurma/<ad>-<versiya>-windows.iss        Inno Setup skripti (`iscc` varsa
                                             avtomatik `…-setup.exe` qurulur)
     qurma/<ad>-<versiya>-macos.zip          macOS `.app` paketi
+    qurma/<ad>-<versiya>.dmg                macOS disk imajı (.app + Applications)
 
-`--python-daxil` Windows paketinə Python-un rəsmi "embeddable" paylamasını
-qoyur (python.org-dan bir dəfə endirilir, keşlənir) — hədəf kompüterdə
-Python quraşdırmaq lazım olmur.
+`--python-daxil` Windows paketinə Python-un rəsmi "embeddable" paylamasını,
+AppImage-ə python-build-standalone paylamasını qoyur (bir dəfə endirilir,
+keşlənir) — hədəf kompüterdə Python quraşdırmaq lazım olmur.
 
 Manifest (`layihe.alq`):
 
@@ -143,7 +147,34 @@ def _ar(üzvlər: list[tuple[str, bytes]]) -> bytes:
     return n
 
 
-def deb(t: Tətbiq, çıxış: Path) -> Path:
+def _mime_növləri(t: Tətbiq) -> list[str]:
+    return [f"application/x-{t.sistem_adı}{u.replace('.', '-')}"
+            for u in t.uzantılar]
+
+
+def _desktop(t: Tətbiq, exec_: str, ikon: str) -> bytes:
+    mime = "".join(f"{m};" for m in _mime_növləri(t))
+    return ("[Desktop Entry]\nType=Application\n"
+            f"Name={t.başlıq}\nComment={t.təsvir or t.başlıq}\n"
+            f"Exec={exec_} %F\nIcon={ikon}\n"
+            f"Terminal={'true' if t.konsol else 'false'}\n"
+            "Categories=Utility;Development;\n"
+            + (f"MimeType={mime}\n" if mime else "")).encode("utf-8")
+
+
+def _mime_xml(t: Tətbiq) -> bytes:
+    növlər = "".join(
+        f'  <mime-type type="{m}">\n'
+        f'    <comment>{_xml(t.başlıq)} faylı</comment>\n'
+        f'    <glob pattern="*{u}"/>\n  </mime-type>\n'
+        for m, u in zip(_mime_növləri(t), t.uzantılar))
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n<mime-info xmlns='
+            '"http://www.freedesktop.org/standards/shared-mime-info">\n'
+            + növlər + "</mime-info>\n").encode("utf-8")
+
+
+def _linux_fayllar(t: Tətbiq) -> dict[str, tuple[bytes, int]]:
+    """`.deb` və `.rpm` üçün ortaq fayl düzülüşü (/usr altında)."""
     ad = t.sistem_adı
     lib = f"usr/lib/{ad}"
     başladıcı = (f'#!/bin/sh\nexec python3 /{lib}/{ad}.pyz '
@@ -155,26 +186,24 @@ def deb(t: Tətbiq, çıxış: Path) -> Path:
     if t.png and t.png.is_file():
         fayllar[f"usr/share/icons/hicolor/256x256/apps/{ad}.png"] = (
             t.png.read_bytes(), 0o644)
-    mime = ""
     if t.uzantılar:
-        növlər = "".join(
-            f'  <mime-type type="application/x-{ad}{u.replace(".", "-")}">\n'
-            f'    <comment>{_xml(t.başlıq)} faylı</comment>\n'
-            f'    <glob pattern="*{u}"/>\n  </mime-type>\n'
-            for u in t.uzantılar)
-        fayllar[f"usr/share/mime/packages/{ad}.xml"] = (
-            ('<?xml version="1.0" encoding="UTF-8"?>\n<mime-info xmlns='
-             '"http://www.freedesktop.org/standards/shared-mime-info">\n'
-             + növlər + "</mime-info>\n").encode("utf-8"), 0o644)
-        mime = "MimeType=" + "".join(
-            f"application/x-{ad}{u.replace('.', '-')};"
-            for u in t.uzantılar) + "\n"
-    fayllar[f"usr/share/applications/{ad}.desktop"] = ((
-        "[Desktop Entry]\nType=Application\n"
-        f"Name={t.başlıq}\nComment={t.təsvir or t.başlıq}\n"
-        f"Exec={ad} %F\nIcon={ad}\n"
-        f"Terminal={'true' if t.konsol else 'false'}\n"
-        "Categories=Utility;Development;\n" + mime).encode("utf-8"), 0o644)
+        fayllar[f"usr/share/mime/packages/{ad}.xml"] = (_mime_xml(t), 0o644)
+    fayllar[f"usr/share/applications/{ad}.desktop"] = (
+        _desktop(t, ad, ad), 0o644)
+    return fayllar
+
+
+_YENİLƏ_SKRİPTİ = ("#!/bin/sh\n"
+                   "command -v update-desktop-database >/dev/null 2>&1 && "
+                   "update-desktop-database -q || true\n"
+                   "command -v update-mime-database >/dev/null 2>&1 && "
+                   "update-mime-database /usr/share/mime || true\n"
+                   "exit 0\n")
+
+
+def deb(t: Tətbiq, çıxış: Path) -> Path:
+    ad = t.sistem_adı
+    fayllar = _linux_fayllar(t)
 
     ölçü = sum(len(d) for d, _ in fayllar.values()) // 1024 + 1
     control = (
@@ -184,11 +213,7 @@ def deb(t: Tətbiq, çıxış: Path) -> Path:
         f"Installed-Size: {ölçü}\nSection: misc\nPriority: optional\n"
         f"Description: {(t.təsvir or t.başlıq).splitlines()[0]}\n"
         f" Alqor ilə yazılmış tətbiq ({t.başlıq}).\n")
-    skript = ("#!/bin/sh\nset -e\n"
-              "command -v update-desktop-database >/dev/null 2>&1 && "
-              "update-desktop-database -q || true\n"
-              "command -v update-mime-database >/dev/null 2>&1 && "
-              "update-mime-database /usr/share/mime || true\n")
+    skript = _YENİLƏ_SKRİPTİ
     nəzarət = {"control": (control.encode("utf-8"), 0o644),
                "postinst": (skript.encode(), 0o755),
                "postrm": (skript.encode(), 0o755)}
@@ -199,6 +224,138 @@ def deb(t: Tətbiq, çıxış: Path) -> Path:
     hədəf.write_bytes(_ar([("debian-binary", b"2.0\n"),
                            ("control.tar.gz", _tar(nəzarət)),
                            ("data.tar.gz", _tar(fayllar))]))
+    return hədəf
+
+
+def rpm(t: Tətbiq, çıxış: Path) -> Path:
+    """Fedora / RHEL / openSUSE: `sudo dnf install ./…rpm`."""
+    from ._qur_rpm import rpm as rpm_yaz
+    ad = t.sistem_adı
+    v = t.versiya_təmiz.replace("-", "_").replace("~", "_")
+    fayllar = {"/" + y: d for y, d in _linux_fayllar(t).items()}
+    skript = _YENİLƏ_SKRİPTİ.split("\n", 1)[1]           # shebang-sız
+    data = rpm_yaz(ad, v, (t.təsvir or t.başlıq).splitlines()[0],
+                   f"{t.təsvir or t.başlıq}\n\nAlqor ilə yazılmış tətbiq "
+                   f"({t.başlıq}).", t.naşir, fayllar, [f"/usr/lib/{ad}"],
+                   [("python3", "3.12", 4 | 8)], postin=skript,
+                   postun=skript)
+    hədəf = çıxış / f"{ad}-{v}-1.noarch.rpm"
+    hədəf.write_bytes(data)
+    return hədəf
+
+
+# ── AppImage ──────────────────────────────────────────────────────────
+
+APPIMAGE_RUNTIME = ("https://github.com/AppImage/type2-runtime/releases/"
+                    "download/continuous/runtime-{arx}")
+PBS_BURAXILIŞ = "20241016"
+PBS_URL = ("https://github.com/astral-sh/python-build-standalone/releases/"
+           "download/{b}/cpython-{v}+{b}-{arx}-unknown-linux-gnu-"
+           "install_only.tar.gz")
+ARXİTEKTURALAR = ("x86_64", "aarch64")
+
+
+def _endir(url: str, yol: Path, yoxla) -> Path:
+    """Bir dəfə endirir və keşləyir; `yoxla(məzmun_yolu)` doğrulayır."""
+    if yol.is_file():
+        return yol
+    yol.parent.mkdir(parents=True, exist_ok=True)
+    müvəqqəti = yol.with_suffix(yol.suffix + ".yeni")
+    with urllib.request.urlopen(url, timeout=300) as c, \
+            open(müvəqqəti, "wb") as f:
+        shutil.copyfileobj(c, f)
+    yoxla(müvəqqəti)
+    müvəqqəti.replace(yol)
+    return yol
+
+
+def _appimage_runtime(keş: Path, arx: str) -> bytes:
+    öz = os.environ.get("ALQOR_APPIMAGE_RUNTIME")
+    if öz:
+        return Path(öz).read_bytes()
+
+    def yoxla(p: Path) -> None:
+        if p.read_bytes()[:4] != b"\x7fELF":
+            raise RuntimeError("endirilən AppImage runtime ELF deyil")
+    return _endir(APPIMAGE_RUNTIME.format(arx=arx),
+                  keş / f"appimage-runtime-{arx}", yoxla).read_bytes()
+
+
+def _python_müstəqil(keş: Path, arx: str
+                     ) -> tuple[dict[str, tuple[bytes, int]], dict[str, str]]:
+    """python-build-standalone → ({"usr/python/…": (məzmun, rejim)},
+    {simvolik keçid: hədəf})"""
+    def yoxla(p: Path) -> None:
+        with tarfile.open(p) as t:
+            if "python/bin/python3" not in t.getnames():
+                raise RuntimeError("endirilən fayl Python paylaması deyil")
+    v = PYTHON_VERSİYASI
+    tar = _endir(PBS_URL.format(b=PBS_BURAXILIŞ, v=v, arx=arx),
+                 keş / f"python-{v}-{arx}-linux.tar.gz", yoxla)
+    n: dict[str, tuple[bytes, int]] = {}
+    keçidlər: dict[str, str] = {}
+    with tarfile.open(tar) as t:
+        for m in t.getmembers():
+            ad = m.name
+            if not ad.startswith("python/") or ".." in ad.split("/"):
+                continue
+            # sınaqlar və idle lazım deyil — ölçü yarıya enir
+            if any(h in ad for h in ("/test/", "/idlelib/", "/tkinter/test",
+                                     "/__pycache__/", "/ensurepip/")):
+                continue
+            hədəf = "usr/" + ad
+            if m.issym():
+                keçidlər[hədəf] = m.linkname
+            elif m.isfile():
+                n[hədəf] = (t.extractfile(m).read(), m.mode & 0o777)
+    return n, keçidlər
+
+
+_APPRUN = """#!/bin/sh
+# {başlıq} — AppImage başladıcısı (Alqor)
+HERE="$(dirname "$(readlink -f "$0")")"
+export PYTHONIOENCODING=utf-8
+for p in "$HERE/usr/python/bin/python3" python3.13 python3.12 python3; do
+  if command -v "$p" >/dev/null 2>&1 && "$p" -c \
+      'import sys; sys.exit(sys.version_info < (3, 12))' 2>/dev/null; then
+    exec "$p" "$HERE/usr/lib/{ad}/{ad}.pyz" {arq} "$@"
+  fi
+done
+msg="{başlıq} üçün Python 3.12+ lazımdır: https://www.python.org/downloads/"
+echo "$msg" >&2
+command -v zenity >/dev/null 2>&1 && zenity --error --text="$msg"
+command -v kdialog >/dev/null 2>&1 && kdialog --error "$msg"
+exit 1
+"""
+
+
+def appimage(t: Tətbiq, çıxış: Path, arx: str = "x86_64",
+             python_daxil: bool = False, keş: Path | None = None) -> Path:
+    """Universal Linux paketi: `chmod +x …AppImage && ./…AppImage`."""
+    from ._qur_squashfs import squashfs
+    if arx not in ARXİTEKTURALAR:
+        raise ValueError(f"arxitektura: {', '.join(ARXİTEKTURALAR)}")
+    keş = keş or Path.home() / ".cache" / "alqor"
+    ad = t.sistem_adı
+    fayllar = _linux_fayllar(t)
+    del fayllar[f"usr/bin/{ad}"]
+    fayllar["AppRun"] = (_APPRUN.format(
+        başlıq=t.başlıq, ad=ad, arq=" ".join(t.arqumentlər)).encode(), 0o755)
+    fayllar[f"{ad}.desktop"] = (_desktop(t, ad, ad), 0o644)
+    keçidlər = {}
+    if t.png and t.png.is_file():
+        fayllar[f"{ad}.png"] = (t.png.read_bytes(), 0o644)
+        keçidlər[".DirIcon"] = f"{ad}.png"
+    if python_daxil:
+        py, py_keçidlər = _python_müstəqil(keş, arx)
+        fayllar.update(py)
+        keçidlər.update(py_keçidlər)
+    imaj = squashfs(fayllar, keçidlər)
+    hədəf = çıxış / (re.sub(r"[^A-Za-z0-9._-]+", "_",
+                            t.başlıq.translate(_TRANSLİT)).strip("_")
+                     + f"-{t.versiya_təmiz}-{arx}.AppImage")
+    hədəf.write_bytes(_appimage_runtime(keş, arx) + imaj)
+    hədəf.chmod(0o755)
     return hədəf
 
 
@@ -469,7 +626,8 @@ def windows(t: Tətbiq, çıxış: Path, python_daxil: bool = False,
 #  macOS — .app
 # ═══════════════════════════════════════════════════════════════════════
 
-def macos(t: Tətbiq, çıxış: Path) -> Path:
+def _app_fayllar(t: Tətbiq) -> dict[str, tuple[bytes, int]]:
+    """macOS `.app` paketinin faylları: {yol: (məzmun, rejim)}"""
     ad = t.sistem_adı
     app = f"{t.başlıq}.app/Contents"
     başladıcı = (
@@ -505,34 +663,92 @@ def macos(t: Tətbiq, çıxış: Path) -> Path:
         + (f"  <key>CFBundleDocumentTypes</key><array>\n{sənəd_növləri}"
            "  </array>\n" if t.uzantılar else "")
         + "</dict></plist>\n")
-    hədəf = çıxış / f"{ad}-{t.versiya_təmiz}-macos.zip"
+    n = {f"{app}/Info.plist": (plist.encode("utf-8"), 0o644),
+         f"{app}/MacOS/{ad}": (başladıcı.encode(), 0o755),
+         f"{app}/Resources/{ad}.pyz": (t.pyz.read_bytes(), 0o644)}
+    if t.png and t.png.is_file():
+        n[f"{app}/Resources/ikon.png"] = (t.png.read_bytes(), 0o644)
+    return n
+
+
+def macos(t: Tətbiq, çıxış: Path) -> Path:
+    """`.app` paketi zip-də (macOS Finder açır, icazələr saxlanır)."""
+    hədəf = çıxış / f"{t.sistem_adı}-{t.versiya_təmiz}-macos.zip"
     with zipfile.ZipFile(hədəf, "w", zipfile.ZIP_DEFLATED) as z:
-        def yaz(yol: str, d: bytes, rejim: int = 0o644) -> None:
+        for yol, (d, rejim) in _app_fayllar(t).items():
             i = zipfile.ZipInfo(yol, time.localtime()[:6])
             i.external_attr = (stat.S_IFREG | rejim) << 16
             i.compress_type = zipfile.ZIP_DEFLATED
             z.writestr(i, d)
-        yaz(f"{app}/Info.plist", plist.encode("utf-8"))
-        yaz(f"{app}/MacOS/{ad}", başladıcı.encode(), 0o755)
-        yaz(f"{app}/Resources/{ad}.pyz", t.pyz.read_bytes())
-        if t.png and t.png.is_file():
-            yaz(f"{app}/Resources/ikon.png", t.png.read_bytes())
+    return hədəf
+
+
+def dmg(t: Tətbiq, çıxış: Path) -> Path:
+    """macOS disk imajı: `.app` + «Applications» keçidi (sürüklə-burax).
+
+    macOS-da `hdiutil` varsa onunla (HFS+), başqa sistemlərdə saf Python
+    ilə (ISO 9660 + Rock Ridge, UDIF zlib) yaradılır."""
+    hədəf = çıxış / f"{t.sistem_adı}-{t.versiya_təmiz}.dmg"
+    fayllar = _app_fayllar(t)
+    cild = re.sub(r"[^A-Z0-9_]", "_",
+                  t.başlıq.translate(_TRANSLİT).upper())[:32] or "ALQOR"
+    hdiutil = shutil.which("hdiutil")
+    if hdiutil and os.environ.get("ALQOR_DMG_SAF") != "1":
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as q:
+            for yol, (d, rejim) in fayllar.items():
+                f = Path(q) / yol
+                f.parent.mkdir(parents=True, exist_ok=True)
+                f.write_bytes(d)
+                f.chmod(rejim)
+            os.symlink("/Applications", Path(q) / "Applications")
+            hədəf.unlink(missing_ok=True)
+            subprocess.run([hdiutil, "create", "-volname", t.başlıq,
+                            "-srcfolder", q, "-ov", "-format", "UDZO",
+                            str(hədəf)], check=True, capture_output=True)
+        return hədəf
+    from ._qur_dmg import iso9660, udif
+    imaj = iso9660(fayllar, {"Applications": "/Applications"}, cild)
+    hədəf.write_bytes(udif(imaj, t.başlıq))
     return hədəf
 
 
 PLATFORMALAR = ("linux", "windows", "macos")
+# Platforma → formatlar (`--format` ilə daraltmaq olar)
+FORMATLAR = {"linux": ("deb", "rpm", "appimage"),
+             "windows": ("windows",), "macos": ("app", "dmg")}
 
 
 def qur(t: Tətbiq, çıxış: Path, platformalar: tuple[str, ...] = PLATFORMALAR,
-        python_daxil: bool = False) -> list[Path]:
+        python_daxil: bool = False,
+        formatlar: tuple[str, ...] | None = None,
+        xəbərdarlıq=None) -> list[Path]:
+    """Quraşdırıcıları yaradır. Endirmə tələb edən format (AppImage
+    runtime) alınmasa digərləri yenə qurulur, `xəbərdarlıq` çağırılır."""
     çıxış.mkdir(parents=True, exist_ok=True)
+    seçilən = [f for p in platformalar for f in FORMATLAR.get(p, ())
+               if formatlar is None or f in formatlar]
     n: list[Path] = []
-    if "linux" in platformalar:
-        n.append(deb(t, çıxış))
-    if "windows" in platformalar:
-        n += windows(t, çıxış, python_daxil)
-    if "macos" in platformalar:
-        n.append(macos(t, çıxış))
+    for f in seçilən:
+        if f == "deb":
+            n.append(deb(t, çıxış))
+        elif f == "rpm":
+            n.append(rpm(t, çıxış))
+        elif f == "appimage":
+            try:
+                n.append(appimage(t, çıxış, python_daxil=python_daxil))
+            except (OSError, RuntimeError) as x:
+                if xəbərdarlıq is None:
+                    raise
+                xəbərdarlıq(f"AppImage qurulmadı (runtime endirilmədi: {x}) "
+                            "— ALQOR_APPIMAGE_RUNTIME ilə yerli fayl verin")
+        elif f == "windows":
+            n += windows(t, çıxış, python_daxil)
+        elif f == "app":
+            n.append(macos(t, çıxış))
+        elif f == "dmg":
+            n.append(dmg(t, çıxış))
     return n
 
 
@@ -608,7 +824,9 @@ def studio_pyz(alqorc_kökü: Path, hədəf: Path) -> Path:
 
 def studio(alqorc_kökü: Path, çıxış: Path,
            platformalar: tuple[str, ...] = PLATFORMALAR,
-           python_daxil: bool = False) -> list[Path]:
+           python_daxil: bool = False,
+           formatlar: tuple[str, ...] | None = None,
+           xəbərdarlıq=None) -> list[Path]:
     from studio import VERSIYA as versiya
     res = alqorc_kökü / "alqor" / "resurslar"
     pyz = studio_pyz(alqorc_kökü, çıxış / "alqor-studio.pyz")
@@ -616,4 +834,4 @@ def studio(alqorc_kökü: Path, çıxış: Path,
                pyz=pyz, təsvir="Alqor proqramlaşdırma dili üçün IDE",
                naşir="Alqor", png=res / "ikon-256.png", ico=res / "alqor.ico",
                konsol=False, uzantılar=[".alq", ".alqor"])
-    return qur(t, çıxış, platformalar, python_daxil)
+    return qur(t, çıxış, platformalar, python_daxil, formatlar, xəbərdarlıq)
