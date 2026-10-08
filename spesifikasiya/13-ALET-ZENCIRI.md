@@ -592,7 +592,7 @@ onların köhnəlmədiyini yoxlayır.
 | **Vidjet paleti** | 118 element (beynəlxalq adlarla: Button, Breadcrumb …), hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
 | **Xüsusiyyətlər paneli** | Seçilmiş elementin mətni, növü, ölçüsü və görünüşü (rəng, fon, kənar, künc, şrift… — `üslub:`, § 14.8); dəyişiklik koda yazılır, önbaxış dərhal yenilənir ✅ |
 | **Vizual qurucu** | ⊞ Dizayn (F7): komponentin vidjet ağacı qutular şəklində; paletdən istənilən konteynerin istənilən yerinə sürüklə-burax, elementləri daşımaq (başqa konteynerə də), silmək (✕ / Delete), seçmək → xüsusiyyətlər. Hər əməliyyat KODU dəyişir (şərhlər elementlə qalır), önbaxış canlı yenilənir ✅ |
-| **Bir klikdə paketləmə** | `alqor qur --quraşdırıcı`: `.deb`, Windows (zip + Inno Setup), macOS `.app` ✅; `.AppImage`, `.rpm` ⏳ |
+| **Bir klikdə paketləmə** | `alqor qur --quraşdırıcı`: `.deb`, `.rpm`, `.AppImage`, Windows (zip + Inno Setup), macOS `.app` və `.dmg` — hamısı xarici alətsiz, istənilən sistemdə; `--format deb,rpm,appimage,windows,app,dmg`, `--python-daxil` (Windows və AppImage-ə Python daxil edilir) ✅ |
 | **Daxili terminal** | |
 | **Git inteqrasiyası** | |
 | **Dərslik rejimi** | Yeni başlayanlar üçün addım-addım təlimlər |

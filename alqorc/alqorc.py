@@ -593,6 +593,28 @@ def _platformalar(arqumentlər: list[str]) -> tuple[str, ...] | None:
     return PLATFORMALAR
 
 
+def _formatlar(arqumentlər: list[str]) -> tuple[str, ...] | None | bool:
+    """`--format deb,rpm,appimage,windows,app,dmg` → tuple; yoxdursa None;
+    yanlışdırsa False."""
+    from alqor.qurasdirici import FORMATLAR
+    hamısı = {f for v in FORMATLAR.values() for f in v}
+    for i, a in enumerate(arqumentlər):
+        if a.startswith("--format"):
+            d = a.split("=", 1)[1] if "=" in a else (
+                arqumentlər[i + 1] if i + 1 < len(arqumentlər) else "")
+            f = tuple(x.strip().lower() for x in d.split(",") if x.strip())
+            if not f or any(x not in hamısı for x in f):
+                çap_xəta(f"format: {', '.join(sorted(hamısı))} "
+                         f"(verilən: {d!r})")
+                return False
+            return f
+    return None
+
+
+def _xəbərdar(mesaj: str) -> None:
+    print(f"⚠ {mesaj}", file=sys.stderr)
+
+
 def _quraşdırıcıları_çap(fayllar: list[Path]) -> None:
     for f in fayllar:
         try:
@@ -617,15 +639,28 @@ def əmr_qur(arqumentlər: list[str]) -> int:
     platformalar = _platformalar(arqumentlər)
     if platformalar is None:
         return 3
+    formatlar = _formatlar(arqumentlər)
+    if formatlar is False:
+        return 3
+    if formatlar:
+        from alqor.qurasdirici import FORMATLAR
+        # `--format dmg` tək verilibsə platforma avtomatik seçilir
+        if not any(a.startswith("--platforma") for a in arqumentlər):
+            platformalar = tuple(p for p, f in FORMATLAR.items()
+                                 if set(f) & set(formatlar))
     kök = Path(__file__).resolve().parent
     if "--studio" in arqumentlər:
+        dəyərlər = set()
+        for i, a in enumerate(arqumentlər):
+            if a in ("--platforma", "--format") and i + 1 < len(arqumentlər):
+                dəyərlər.add(arqumentlər[i + 1])
         sərbəst = [a for a in arqumentlər if not a.startswith("-")
-                   and a not in (platformalar or ())]
+                   and a not in dəyərlər]
         çıxış = Path(sərbəst[0]) if sərbəst else Path("qurma")
         try:
             n = qurasdirici.studio(kök, çıxış.resolve(), platformalar,
-                                   python_daxil)
-        except OSError as x:
+                                   python_daxil, formatlar, _xəbərdar)
+        except (OSError, RuntimeError) as x:
             çap_xəta(f"Studio quraşdırıcısı qurulmadı: {x}")
             return 4
         print("✓ Alqor Studio quraşdırıcıları:")
@@ -670,7 +705,7 @@ def əmr_qur(arqumentlər: list[str]) -> int:
         try:
             t = qurasdirici.layihədən(layihə, n.yol, kök)
             fayllar = qurasdirici.qur(t, layihə.çıxış, platformalar,
-                                      python_daxil)
+                                      python_daxil, formatlar, _xəbərdar)
         except (OSError, RuntimeError) as x:
             çap_xəta(f"quraşdırıcı qurulmadı: {x}")
             return 4
@@ -825,8 +860,10 @@ def əmr_kömək(_: list[str]) -> int:
     sına [yol]           Sınaqlar (@sınaq): --filtr söz  --sənəd  --ətraflı
     sənəd [yol]          API sənədi (///): --format html|markdown  --çıxış q
     qur [--tip]          qurma/<ad>.pyz — tək fayllı paket
-                         --quraşdırıcı   + .deb, Windows (zip/Inno Setup), macOS .app
+                         --quraşdırıcı   + .deb, .rpm, .AppImage, Windows
+                                         (zip/Inno Setup), macOS .app və .dmg
                          --platforma linux,windows,macos   --python-daxil
+                         --format deb,rpm,appimage,windows,app,dmg
                          --studio        Alqor Studio-nun quraşdırıcıları
     təmizlə              qurma/ qovluğunu silir
     tip <fayl|qovluq>    Yalnız tip yoxlaması
