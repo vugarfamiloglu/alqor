@@ -1,0 +1,4 @@
+#!/bin/sh
+# alqorpm — Alqor
+export PYTHONIOENCODING=utf-8
+exec python3 "$(dirname "$(readlink -f "$0")")/alqorc/alqorc.py" pm "$@"

@@ -1525,8 +1525,11 @@ class TipYoxlayıcı:
             return False                     # artıq qaldırılıb
         ad = ".".join(c.yol) if c.yol else (c.mətn_yolu or "")
         modul = self.modullar.get(ad)
-        if modul is None and c.mətn_yolu is not None:
+        if modul is None and c.mətn_yolu is not None and \
+                not c.mətn_yolu.startswith("@"):
             modul = self._fayl_modulu(c)
+        if modul is None and ad:
+            modul = self._paket_modulu(c, ad)
 
         if modul is None and c.mətn_yolu is None and not c.elementlər \
                 and not c.hamısı and ad and ad not in self.modullar:
@@ -1560,6 +1563,20 @@ class TipYoxlayıcı:
         ə.elan(Bağlama(yerli_ad, modul or T.ModulTipi(yerli_ad), True,
                        c.yer, False, "modul"))
         return False
+
+    def _paket_modulu(self, c: A.İdxal, ad: str) -> T.ModulTipi | None:
+        """`gətir tarix_alətləri` — quraşdırılmış paket (§ 8.10)."""
+        from pathlib import Path
+        from .paketler import paket_tap
+        if c.mətn_yolu is not None and not c.mətn_yolu.startswith("@"):
+            return None
+        əsas = getattr(getattr(c.yer, "mənbə", None), "yol", None)
+        baza = Path(əsas).resolve().parent if əsas else Path.cwd()
+        try:
+            p = paket_tap(ad, baza)
+        except OSError:
+            return None
+        return fayl_modulu(p.resolve(), self.rejim) if p else None
 
     def _fayl_modulu(self, c: A.İdxal) -> T.ModulTipi | None:
         """

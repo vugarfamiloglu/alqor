@@ -311,7 +311,7 @@ format = "alqorfmt ."
 
 ---
 
-## 8.9 `alqorpm` — paket meneceri
+## 8.9 `alqorpm` — paket meneceri ✅
 
 ```bash
 alqorpm başlat                      # yeni layihə yarat
@@ -332,11 +332,47 @@ alqorpm yayımla                     # alqorhub-a göndər
 alqorpm giriş                       # alqorhub hesabına giriş
 ```
 
+Əlavə əmrlər: `alqorpm paketlə` (arxivi yayımlamadan yoxlamaq),
+`alqorpm qeydiyyat` / `çıxış`, `alqorpm geri-çək ad@1.0.1` (versiya
+silinmir, yeni layihələr onu seçmir), `alqorpm versiya patch|minor|major`,
+`alqorpm işlət <skript>` (`[skriptlər]` bölməsi). `alqor pm …` də eynidir.
+
+Yol və qit asılılıqları:
+
+```bash
+alqorpm əlavə yerli --yol ../yerli
+alqorpm əlavə util --qit https://github.com/a/b --teq v1.0
+```
+
+**Kilid faylı** (`alqor.kilid`) hər paketin dəqiq versiyasını, mənbəyini
+və arxivin SHA256 həzmini saxlayır; `alqorpm yüklə` başqa kompüterdə də
+eyni versiyaları quraşdırır, həzm uyğun gəlməsə `ALQ-M010` verir.
+Ziddiyyətli tələblər (`b` → `a ^1`, `c` → `a ^2`) kimin nəyi tələb
+etdiyini göstərən `ALQ-M007` ilə bitir.
+
+**Depo ünvanı**: `--depo URL` › `ALQORHUB` › `layihe.alq` `[alqorpm] depo`
+› `~/.alq/ayarlar.json` › `https://hub.alqor.az`.
+
+### `alqorhub` — paket deposu ✅
+
+```bash
+alqor hub --qovluq hub-məlumat --port 8790 --admin aysel
+```
+
+Xarici asılılıqsız server (SQLite + fayllar): veb səhifələr (axtarış,
+README, versiyalar), JSON API (`/api/paketlər`, `/api/paket/<ad>`,
+`/api/paket/<ad>/<versiya>/fayl`, `PUT` ilə yayım, `geri-çək`, `sahib`,
+`qeydiyyat`, `giriş`, `xəbərdarlıqlar`). Qaydalar: versiya dəyişməzdir
+(təkrar yayım 409), ilk yayımlayan sahibdir, arxivdəki manifest URL ilə
+üst-üstə düşməlidir, `..`/keçid/cihaz faylı rədd edilir, parollar scrypt
+ilə saxlanır.
+
 ### Versiya sintaksisi
 
 | Yazılış | Mənası |
 |---|---|
-| `1.2.3` | dəqiq bu versiya |
+| `=1.2.3` | dəqiq bu versiya |
+| `1.2.3`, `1.2` | `^` kimi (uyğun yeniləmələr) |
 | `^1.2.3` | `>=1.2.3 <2.0.0` (uyğun yeniləmələr) |
 | `~1.2.3` | `>=1.2.3 <1.3.0` (yalnız yamaqlar) |
 | `>=1.2` | bu və daha yuxarı |

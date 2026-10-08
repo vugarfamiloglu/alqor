@@ -29,6 +29,9 @@
 
 **Alətlər**
 - `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls / dap`
+- `alqorpm` (paket meneceri: semver aralıqları, həlledici, `alqor.kilid`,
+  SHA256, yol/qit asılılıqları, audit) + `alqorhub` (paket deposu serveri,
+  veb səhifələr, API); `gətir paket` `paketlər/`-dan yüklənir
 - `alqorlint` (35 qayda: istifadəsiz, adlandırma, mürəkkəblik, potensial
   xəta, performans, təhlükəsizlik, üslub, əlçatanlıq; `--düzəlt`, LSP-də
   və Studio-da görünür)
@@ -69,8 +72,7 @@ sağ klik → Aç).
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 
 1. **JS/WASM backend** — brauzerdə Python olmadan işləmək
-2. **alqorpm + alqorhub** — paket meneceri və paket deposu
-3. **Rust-a köçürmə** — istehsal kompilyatoru
+2. **Rust-a köçürmə** — istehsal kompilyatoru
 
 ## Qeydlər
 
