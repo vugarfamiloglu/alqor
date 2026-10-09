@@ -2,7 +2,7 @@
 
 > Yeni sessiyada işə buradan başlayın. İş birbaşa `main` budağında
 > aparılır; hər addımdan sonra commit + push.
-> Sınaq: `cd alqorc && python sina.py --nümunələr` (1110 sınaq keçir).
+> Sınaq: `cd alqorc && python sina.py --nümunələr` (1219 sınaq keçir).
 > Studio brauzer sınaqları Playwright ilə: `python -m unittest sinaq.test_studio`.
 
 ## ✅ Hazır olanlar
@@ -60,21 +60,69 @@
 
 **Sənədlər**: spesifikasiya (§ 1–14), bələdçi dərslikləri, 10 nümunə proqram
 
-## 🟡 Yarımçıq qalanlar
+## 🎯 Hədəf
 
-Hazırda yoxdur. Qeyd: Windows/macOS quraşdırıcıları Linux-da yaradılır və
-quruluşu sınanır (`.rpm` — `rpm` aləti ilə, `.dmg` — `dmg2img`/`7z` ilə,
-AppImage — rəsmi runtime ilə) — həqiqi Windows/macOS-da əl ilə yoxlamaq
-lazımdır. `.dmg` macOS xaricində ISO 9660 + Rock Ridge ilə qurulur
-(macOS-da `hdiutil` varsa HFS+); paketlər imzasızdır (Gatekeeper:
-sağ klik → Aç).
+İstifadəçi **Windows** (ilk növbədə), **Linux** və ya **macOS**-da bir
+quraşdırıcı ilə Alqor-u qurur, Studio-da və ya terminalda kod yazır, proqramı
+**kompilyasiya edib** (tək fayllı tətbiq / quraşdırıcı) paylaşır və ya
+**vebə yerləşdirir**. Aşağıdakı sıra bu yolu açan işlərdir.
 
-## ⬜ Heç başlanmayanlar (növbə ilə)
+## 🗺 Yol xəritəsi (növbə ilə)
 
-1. **Rust-a köçürmə** — istehsal kompilyatoru
+### Mərhələ 1 — Windows: "endir → qur → yaz → işlət" ⬜
+1. **Vahid Alqor quraşdırıcısı (`AlqorQurasdirici.exe`)** — Inno Setup
+   ilə həqiqi `.exe`: daxili Python (həmişə), `alqor`, `alqorpm`,
+   `alqorlint`, `alqorfmt`, `alqorls` əmrləri **PATH**-a, Alqor Studio,
+   bələdçilər və nümunələr; `.alq` fayl əlaqəsi, Başlat menyusu,
+   silmə proqramı, istifadəçi səviyyəsində (admin hüququ tələb etmir).
+2. **Studio — ilk açılış**: "Yeni layihə" sehrbazı (konsol / veb /
+   desktop şablonları), Sənədlər/Alqor qovluğu, nümunələr qalereyası.
+3. **GitHub Actions**: hər push-da Windows + Linux + macOS-da sınaqlar;
+   `v*` teqində quraşdırıcılar avtomatik qurulub **Releases**-ə yüklənir.
+4. **Windows-da avtomatik tüstü sınağı**: CI quraşdırıcını səssiz qurur,
+   `alqor yeni → işlət → qur` zəncirini yoxlayır, sonra silir.
 
-✅ **JS backend** hazırdır: `alqor işlət --js`, `alqor qur --hədəf js|veb`
-(spes. § 13.14). WASM hədəfi Rust portu ilə gələcək.
+### Mərhələ 2 — Kompilyasiya: proqramı paylaşmaq ⬜
+5. **`alqor qur --exe`** — istifadəçinin proqramı Alqor quraşdırılmamış
+   kompüterdə işləyən **tək `.exe`** (Windows), Linux binarı və macOS
+   `.app` olur (daxili icra mühiti ilə).
+6. **Studio-da "Qur" düyməsi** — hədəf seçimi: `.exe`, quraşdırıcı,
+   veb səhifə (JS), Node.js; nəticə qovluğu açılır.
+7. `alqor qur --quraşdırıcı` — istifadəçi layihəsi üçün öz Windows
+   quraşdırıcısı (bu gün zip + PowerShell → həqiqi `.exe`).
+
+### Mərhələ 3 — Vebə yerləşdirmə ⬜
+8. **`alqor yerləşdir`**:
+   - statik / brauzer proqramları (JS hədəfi ✅) → GitHub Pages,
+     Netlify, Cloudflare Pages üçün hazır qovluq;
+   - `veb` serverli tətbiqlər → avtomatik `Dockerfile` + `alqor
+     yerləşdir --docker`; Render / Fly.io / VPS üçün addım-addım bələdçi.
+9. **JS hədəfini genişləndirmək**: `vidjet` və komponentlər brauzerdə
+   (veb tətbiqləri serversiz işləsin), `http` müştərisi (`fetch`).
+10. **Onlayn sınaq meydançası** (`alqor.az/meydança`) — JS hədəfi ilə
+    brauzerdə quraşdırmadan kod yazıb işlətmək.
+
+### Mərhələ 4 — Linux və macOS quraşdırıcıları ⬜
+11. `.deb`, `.rpm`, `.AppImage` — Mərhələ 1-dəki kimi CLI əmrləri
+    PATH-da (`/usr/bin/alqor`), Studio, fayl əlaqəsi.
+12. macOS `.pkg` (+ `.dmg`) — `/usr/local/bin/alqor`, Apple Silicon və
+    Intel; həqiqi Mac-da yoxlama (CI `macos-latest`).
+13. İmza: Windows Authenticode, macOS notarizasiya — **sertifikat
+    tələb edir, sahibin qərarıdır** (imzasız da işləyir, xəbərdarlıqla).
+
+### Mərhələ 5 — Ekosistem ⬜
+14. **alqorhub ictimai server** (`hub.alqor.az`) — `alqor pm əlavə`
+    başqalarının paketlərini tapsın.
+15. **VS Code genişlənməsi** Marketplace-də (`.vsix` CI-da qurulur).
+16. **Sənəd saytı** `alqor.az` — spesifikasiya, bələdçilər, API.
+
+### Mərhələ 6 — Rust kompilyatoru (sürət və tək binar) 🟡
+17. `alqor-rs/`: lekser + AAC hazırdır; parser, icraçı, standart
+    kitabxana. Sınaq: Python etalonu ilə eyni çıxış (JS hədəfindəki
+    müqayisə qoşqusu ilə). Sonra: native binar və WASM.
+
+✅ Bu sessiyada hazır olanlar: JS hədəfi (`alqor işlət --js`,
+`alqor qur --hədəf js|veb`, spes. § 13.14), ifadəsiz `seç`-də şərt halları.
 
 ## Qeydlər
 
