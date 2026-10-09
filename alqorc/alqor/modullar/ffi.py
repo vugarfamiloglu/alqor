@@ -174,7 +174,15 @@ class Kitabxana:
         try:
             f = getattr(self.c, str(ad))
         except AttributeError:
-            raise _xəta(f"`{self.ad}` kitabxanasında `{ad}` simvolu yoxdur")
+            # Windows C kitabxanası POSIX adlarını `_` ilə ixrac edir:
+            # snprintf → _snprintf, strdup → _strdup
+            try:
+                if sys.platform != "win32":
+                    raise
+                f = getattr(self.c, "_" + str(ad))
+            except AttributeError:
+                raise _xəta(f"`{self.ad}` kitabxanasında `{ad}` simvolu "
+                            "yoxdur")
         p = list(parametrlər or [])
         f.restype = _tip(qaytarır)
         if not variadik:

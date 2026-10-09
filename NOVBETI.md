@@ -90,7 +90,13 @@ kompilyasiya, quraşdırma, PATH, `alqor islet` və silmə yoxlanılıb.
 4. **Windows-da avtomatik tüstü sınağı**: CI quraşdırıcını səssiz qurur,
    `alqor yeni → işlət → qur` zəncirini yoxlayır, sonra silir.
 
-### Mərhələ 2 — Kompilyasiya: proqramı paylaşmaq ⬜
+### Mərhələ 2 — Kompilyasiya: proqramı paylaşmaq ✅
+
+Hazırdır: `alqor qur --exe [fayl.alq]` → tək `.exe` (Rust başladıcısı
+`alqor-rs/baslatici/` + sıxılmış Python + tətbiq; konsol/pəncərə avtomatik),
+xətalı proqram qurulmur; Studio **İşlət → Qur** (`.exe`, veb, JS, `.pyz`,
+quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
+
 5. **`alqor qur --exe`** — istifadəçinin proqramı Alqor quraşdırılmamış
    kompüterdə işləyən **tək `.exe`** (Windows), Linux binarı və macOS
    `.app` olur (daxili icra mühiti ilə).

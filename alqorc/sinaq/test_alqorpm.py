@@ -71,7 +71,7 @@ def _paket(q: Path, ad: str, versiya: str, ası: dict | None = None,
 class HubSınağı(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.q = Path(tempfile.mkdtemp(prefix="alqorpm-"))
+        cls.q = Path(tempfile.mkdtemp(prefix="alqorpm-")).resolve()
         cls.hub = H.Hub(cls.q / "hub", adminlər={"admin"})
         cls.s = H.server(cls.hub, port=0)
         threading.Thread(target=cls.s.serve_forever, daemon=True).start()

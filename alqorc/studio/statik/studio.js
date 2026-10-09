@@ -977,6 +977,23 @@ async function işlət() {
   } catch (x) { çıxışaYaz(`✖ ${x.message}\n`, "x-xəta"); }
 }
 
+async function qur(hədəf) {
+  const t = cari();
+  if (!t) { bildir("Əvvəlcə proqram faylını açın"); return; }
+  if (!/\.(alqor|alq)$/.test(t.yol)) { bildir("Yalnız .alq faylları qurula bilər", "xəta"); return; }
+  if (çirklidir(t) && !(await saxla(t))) return;
+  if (S.iş) await dayandır();
+  $("#cixis").textContent = "";
+  altPaneliAç("cixis");
+  const adlar = { exe: "tək .exe (Windows)", veb: "veb səhifə", js: "JavaScript",
+                  pyz: "Alqor paketi (.pyz)", "quraşdırıcı": "Windows quraşdırıcısı" };
+  çıxışaYaz(`⚙ Qurulur: ${adlar[hədəf]} — ${t.yol}\n`, "x-sistem");
+  try {
+    const iş = await API.göndər("/api/qur", { yol: t.yol, hədəf });
+    axınıOxu(iş.id);
+  } catch (x) { çıxışaYaz(`✖ ${x.message}\n`, "x-xəta"); }
+}
+
 function axınıOxu(id) {
   const axın = new EventSource(`/api/islet/axin?id=${encodeURIComponent(id)}&t=${encodeURIComponent(API.nişan)}`);
   S.iş = { id, axın };
