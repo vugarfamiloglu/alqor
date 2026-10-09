@@ -1,0 +1,28 @@
+name: Sınaqlar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sinaq:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Sınaqlar
+        working-directory: alqorc
+        run: python sina.py --nümunələr

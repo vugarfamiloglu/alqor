@@ -69,7 +69,15 @@ quraşdırıcı ilə Alqor-u qurur, Studio-da və ya terminalda kod yazır, proq
 
 ## 🗺 Yol xəritəsi (növbə ilə)
 
-### Mərhələ 1 — Windows: "endir → qur → yaz → işlət" ⬜
+### Mərhələ 1 — Windows: "endir → qur → yaz → işlət" ✅ (həqiqi Windows-da CI yoxlaması gözlənilir)
+
+Hazırdır: `alqor qur --alqor` → `AlqorQurasdirici-<v>.exe` (Inno Setup,
+daxili Python 3.12, `alqor*` əmrləri PATH-da, `.alq` əlaqəsi, Başlat
+menyusu, silmə), portativ zip, **oflayn sənəd mərkəzi** (`alqor
+sənədlər`, Studio-da F1), `.github/workflows/buraxilis.yml` (teqdə qurur,
+səssiz quraşdırıb yoxlayır, Releases-ə yükləyir). Wine altında
+kompilyasiya, quraşdırma, PATH, `alqor islet` və silmə yoxlanılıb.
+
 1. **Vahid Alqor quraşdırıcısı (`AlqorQurasdirici.exe`)** — Inno Setup
    ilə həqiqi `.exe`: daxili Python (həmişə), `alqor`, `alqorpm`,
    `alqorlint`, `alqorfmt`, `alqorls` əmrləri **PATH**-a, Alqor Studio,

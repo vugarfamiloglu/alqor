@@ -1,0 +1,90 @@
+name: Buraxılış (Windows quraşdırıcısı)
+
+# `v0.1.0` kimi teq push ediləndə quraşdırıcı qurulur, Windows-da səssiz
+# quraşdırılıb yoxlanır və GitHub Releases-ə yüklənir. Əl ilə də işə
+# salmaq olar (Actions → Buraxılış → Run workflow) — onda yalnız artefakt.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Paylama və quraşdırıcı
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          python alqorc/alqorc.py qur --alqor qurma
+          if (-not (Test-Path qurma/AlqorQurasdirici-*.exe)) {
+            Push-Location qurma
+            & $iscc /Q (Get-ChildItem alqor-*.iss).Name
+            Pop-Location
+          }
+          Get-ChildItem qurma | Format-Table Name, Length
+
+      - name: Tüstü sınağı — səssiz quraşdır, işlət, sil
+        shell: pwsh
+        run: |
+          $exe = (Get-ChildItem qurma/AlqorQurasdirici-*.exe).FullName
+          Start-Process $exe -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES","/CURRENTUSER","/TASKS=path,assoc","/LOG=quras.log" -Wait
+          $kok = "$env:LOCALAPPDATA\Programs\Alqor"
+          if (-not (Test-Path "$kok\bin\alqor.cmd")) { Get-Content quras.log; throw "quraşdırılmadı" }
+          $yol = [Environment]::GetEnvironmentVariable("Path", "User")
+          if ($yol -notlike "*Alqor\bin*") { throw "PATH-a yazılmayıb: $yol" }
+          if (-not (Test-Path "$kok\sened\index.html")) { throw "sənədlər yoxdur" }
+          $env:Path = "$kok\bin;$env:Path"
+          Set-Location $env:RUNNER_TEMP
+          alqor yeni sinaq-layihesi --şablon konsol
+          if ($LASTEXITCODE) { throw "alqor yeni" }
+          Set-Location sinaq-layihesi
+          alqor sına
+          if ($LASTEXITCODE) { throw "alqor sına" }
+          alqor qur
+          if ($LASTEXITCODE) { throw "alqor qur" }
+          "yaz(`"Salam, Windows!`")" | Out-File -Encoding utf8 s.alq
+          $c = alqor işlət s.alq
+          if ($c -ne "Salam, Windows!") { throw "işlət: $c" }
+          Start-Process "$kok\unins000.exe" -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES" -Wait
+          Start-Sleep 3
+          if (Test-Path "$kok\bin") { throw "silinmədi" }
+          Write-Host "✓ quraşdır → yeni → sına → qur → işlət → sil"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alqor-windows
+          path: |
+            qurma/AlqorQurasdirici-*.exe
+            qurma/alqor-*-windows-portativ.zip
+
+      - name: GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            qurma/AlqorQurasdirici-*.exe
+            qurma/alqor-*-windows-portativ.zip
+          body: |
+            ## Alqor ${{ github.ref_name }}
+
+            **AlqorQurasdirici-*.exe** — endirin və işə salın. İdarəçi hüququ
+            lazım deyil, Python daxildir. Quraşdırmadan sonra Başlat menyusunda
+            **Alqor Studio**, **Alqor terminalı** və **Alqor sənədləri** görünür;
+            terminalda `alqor kömək` yazın.
+
+            **alqor-*-windows-portativ.zip** — quraşdırmasız versiya: açın,
+            `bin\alqor.cmd` və ya `bin\studio.pyw` işlədin.

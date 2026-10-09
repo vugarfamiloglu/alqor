@@ -318,6 +318,28 @@ def _js_işlət(ağac, yol: str, proqram_arqumentləri: list[str]) -> int:
                                 *proqram_arqumentləri])
 
 
+def _alqor_windows(arqumentlər: list[str]) -> int:
+    """`qur --alqor [çıxış]` — Alqor-un öz Windows quraşdırıcısı."""
+    from alqor import windows_paylama
+    sərbəst = [a for a in arqumentlər if not a.startswith("-")]
+    çıxış = Path(sərbəst[0]) if sərbəst else Path("qurma")
+    python_zip = os.environ.get("ALQOR_PYTHON_EMBED")
+    try:
+        n = windows_paylama.qur(
+            Path(__file__).resolve().parent, çıxış.resolve(),
+            python_zip=Path(python_zip) if python_zip else None)
+    except (OSError, RuntimeError) as x:
+        çap_xəta(f"Windows quraşdırıcısı qurulmadı: {x}")
+        return 4
+    print("✓ Alqor Windows paylaması:")
+    for p in n:
+        print(f"  {p}")
+    if not any(p.suffix == ".exe" for p in n):
+        print("  .exe üçün Inno Setup lazımdır (https://jrsoftware.org/isdl.php):"
+              f"\n    iscc {n[-1].name}")
+    return 0
+
+
 def _js_qur(arqumentlər: list[str]) -> int:
     """`qur --hədəf js|veb [fayl] [--çıxış yol]`"""
     from alqor.js import KompilyasiyaXətası, node_faylı, veb_səhifəsi
@@ -718,6 +740,8 @@ def əmr_qur(arqumentlər: list[str]) -> int:
 
     if "--hədəf" in arqumentlər:
         return _js_qur(arqumentlər)
+    if "--alqor" in arqumentlər:
+        return _alqor_windows(arqumentlər)
 
     quraşdırıcı = bool({"--quraşdırıcı", "--qurasdirici"} & set(arqumentlər))
     python_daxil = "--python-daxil" in arqumentlər
@@ -923,6 +947,24 @@ def əmr_lint(arqumentlər: list[str]) -> int:
     return lint_əsas(arqumentlər)
 
 
+def əmr_sənədlər(arqumentlər: list[str]) -> int:
+    """`alqor sənədlər` — oflayn sənəd mərkəzini brauzerdə açır."""
+    from alqor import sened_merkezi
+    kök = Path(__file__).resolve().parent
+    if "--qur" in arqumentlər:
+        sərbəst = [a for a in arqumentlər if not a.startswith("-")]
+        çıxış = Path(sərbəst[0]) if sərbəst else Path("qurma") / "sened"
+        indeks = sened_merkezi.qur(kök.parent, çıxış.resolve())
+        print(f"✓ {indeks}")
+        return 0
+    indeks = sened_merkezi.sənəd_qovluğu(kök) / "index.html"
+    print(f"Alqor sənədləri: {indeks}")
+    if "--açma" not in arqumentlər:
+        import webbrowser
+        webbrowser.open(indeks.as_uri())
+    return 0
+
+
 def əmr_versiya(_: list[str]) -> int:
     print(f"Alqor {VERSIYA}")
     print(f"Etalon implementasiya — Python {sys.version.split()[0]}")
@@ -964,6 +1006,8 @@ def əmr_kömək(_: list[str]) -> int:
                          --platforma linux,windows,macos   --python-daxil
                          --format deb,rpm,appimage,windows,app,dmg
                          --studio        Alqor Studio-nun quraşdırıcıları
+                         --alqor         Alqor-un Windows quraşdırıcısı
+                                         (Studio + əmrlər + daxili Python)
                          --hədəf js [fayl]   qurma/<ad>.js (Node.js)
                          --hədəf veb [fayl]  qurma/veb/index.html (brauzer)
     təmizlə              qurma/ qovluğunu silir
@@ -977,6 +1021,8 @@ def əmr_kömək(_: list[str]) -> int:
                          --port N        sabit port
                          --başsız        pəncərə açmır, ünvanı çap edir
                          --sınaq         özünü yoxlayıb çıxır
+    sənədlər             Sənədləri (dərsliklər, arayış, nümunələr) brauzerdə
+                         açır — internetsiz; --qur [çıxış] statik sayt
     versiya              Versiya məlumatı
     kömək                Bu mətn
 
@@ -1019,6 +1065,8 @@ VƏZİYYƏT:
     "yeni": əmr_yeni, "new": əmr_yeni,
     "sına": əmr_sına, "sina": əmr_sına, "test": əmr_sına,
     "sənəd": əmr_sənəd, "sened": əmr_sənəd, "doc": əmr_sənəd,
+    "sənədlər": əmr_sənədlər, "senedler": əmr_sənədlər, "docs": əmr_sənədlər,
+    "dərslik": əmr_sənədlər,
     "qur": əmr_qur, "build": əmr_qur,
     "təmizlə": əmr_təmizlə, "temizle": əmr_təmizlə, "clean": əmr_təmizlə,
     "hərf": əmr_hərf, "herf": əmr_hərf,

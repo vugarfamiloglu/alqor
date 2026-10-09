@@ -376,8 +376,16 @@ function nişanaKeç(d) {
 
 // Kömək
 ƏQ("kömək.qısayollar", "Klaviatura qısayolları", "klaviatura", "Ctrl+K Ctrl+S", qısayollarıGöstər);
-ƏQ("kömək.sənədlər", "Alqor sənədləri", "kitab", null, () => window.open("https://github.com/vugarfamiloglu/alqor/tree/main/beledci", "_blank"));
-ƏQ("kömək.spesifikasiya", "Dil spesifikasiyası", "kitab", null, () => window.open("https://github.com/vugarfamiloglu/alqor/tree/main/spesifikasiya", "_blank"));
+// Sənədlər Studio-nun öz serverindən gəlir — internet lazım deyil
+const sənədAç = (səhifə) => window.open(`/sened/${səhifə}`, "_blank");
+ƏQ("kömək.sənədlər", "Alqor sənədləri", "kitab", "F1", () => sənədAç("index.html"));
+ƏQ("kömək.ilk", "İlk addımlar", "kitab", null, () => sənədAç("ilk-addimlar.html"));
+ƏQ("kömək.dərslik", "Dil dərsliyi", "kitab", null, () => sənədAç("beledci-01-dil-dersliyi.html"));
+ƏQ("kömək.arayış", "Tez arayış", "kitab", null, () => sənədAç("beledci-06-tez-arayis.html"));
+ƏQ("kömək.əmrlər", "Əmrlər arayışı", "kitab", null, () => sənədAç("emrler.html"));
+ƏQ("kömək.xətalar", "Xəta lüğəti", "kitab", null, () => sənədAç("beledci-05-xeta-lugeti.html"));
+ƏQ("kömək.nümunələr", "Nümunə proqramlar", "kitab", null, () => sənədAç("numuneler.html"));
+ƏQ("kömək.spesifikasiya", "Dil spesifikasiyası", "kitab", null, () => sənədAç("spes-01-leksik-qurulus.html"));
 ƏQ("kömək.haqqında", "Alqor Studio haqqında", "məlumat", null, () =>
   dialoq("Alqor Studio", { mətn: `Versiya ${S.məlumat?.versiya || ""} · Azərbaycan dilində proqramlaşdırma dili Alqor üçün IDE.`, giriş: false }));
 
@@ -410,7 +418,7 @@ MenyuSətri.qur($("#menyu-setri"), [
     "debaq.növbəti", "debaq.daxil", "debaq.çıx", "-", "debaq.nöqtə", "debaq.nöqtələriSil"] },
   { ad: "Alətlər", hərf: "A", elementlər: ["redaktə.formatla", "redaktə.ascii", "-", "alətlər.asciiAvto", "alətlər.tərkib", "-",
     "görünüş.palitra"] },
-  { ad: "Kömək", hərf: "M", elementlər: ["kömək.qısayollar", "-", "kömək.sənədlər", "kömək.spesifikasiya", "-", "kömək.haqqında"] },
+  { ad: "Kömək", hərf: "M", elementlər: ["kömək.sənədlər", "kömək.ilk", "-", "kömək.dərslik", "kömək.arayış", "kömək.əmrlər", "kömək.xətalar", "kömək.nümunələr", "kömək.spesifikasiya", "-", "kömək.qısayollar", "kömək.haqqında"] },
 ]);
 
 // ══ Əmr palitrasının mənbələri ═══════════════════════════════════════
