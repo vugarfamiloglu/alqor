@@ -54,7 +54,7 @@ class ExeQurucu(unittest.TestCase):
             py = q / "python"
             (py / "Lib" / "__pycache__").mkdir(parents=True)
             (py / "python.exe").write_bytes(b"MZ" + b"\0" * 100)
-            (py / "Lib" / "os.py").write_text("x = 1\n" * 200)
+            (py / "Lib" / "os.py").write_bytes(b"x = 1\n" * 200)
             (py / "Lib" / "__pycache__" / "os.pyc").write_bytes(b"atla")
             (py / "python.pdb").write_bytes(b"atla")
             pyz = q / "t.pyz"
