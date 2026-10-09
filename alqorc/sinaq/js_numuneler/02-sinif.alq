@@ -1,0 +1,72 @@
+sinif Heyvan
+    xassə ad: mətn
+    xassə yaş: tam = 1
+    qurucu(ad: mətn)
+        özü.ad = ad
+    son
+    metod səs() -> mətn
+        qaytar "..."
+    son
+    metod təqdim() -> mətn
+        qaytar "{özü.ad} deyir: {özü.səs()}"
+    son
+    statik metod növ() qaytar "heyvan" son
+son
+sinif İt miras Heyvan
+    qurucu(ad: mətn, cins: mətn)
+        üst(ad)
+        özü.cins = cins
+    son
+    əvəz et metod səs() -> mətn
+        qaytar "Hav! " + üst.səs()
+    son
+son
+dəyişən i = İt("Bobik", "çoban")
+yaz(i.təqdim())
+yaz(i)
+yaz(i.yaş, i.cins)
+yaz(İt.növ(), Heyvan.növ())
+yaz(i tipidir Heyvan, i tipidir İt, i tipidir mətn)
+struktur Nöqtə
+    xassə x: onluq
+    xassə y: onluq
+son
+dəyişən a = Nöqtə(x: 1, y: 2)
+dəyişən b = a
+b.x = 10
+yaz(a, b, a == b)
+yaz(a.x + 1)
+sinif Sayğac
+    xassə dəyər: tam = 0
+    hesablanan ikiqat: tam
+        qaytar özü.dəyər * 2
+    son
+    metod artır() özü.dəyər += 1 son
+son
+dəyişən s = Sayğac()
+s.artır()
+s.artır()
+yaz(s.dəyər, s.ikiqat)
+cəhd et
+    s.ikiqat = 5
+tut x
+    yaz(x.tip)
+son
+obyekt Konfiq
+    xassə ad = "alqor"
+    metod salam() qaytar "salam " + özü.ad son
+son
+yaz(Konfiq.salam())
+sinif V
+    xassə x: tam
+    xassə y: tam
+    qurucu(x: tam, y: tam)
+        özü.x = x
+        özü.y = y
+    son
+    metod topla(d: V) qaytar V(özü.x + d.x, özü.y + d.y) son
+    metod mətnƏt() qaytar "V({özü.x}, {özü.y})" son
+    metod bərabərdir(d) qaytar özü.x == d.x və özü.y == d.y son
+son
+yaz(V(1, 2) + V(3, 4))
+yaz(V(1, 2) == V(1, 2), [V(1, 1)])

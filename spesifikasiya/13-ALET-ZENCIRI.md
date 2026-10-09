@@ -705,6 +705,45 @@ Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ` və
 
 ---
 
+## 13.14 JavaScript hədəfi ✅
+
+Alqor proqramı Python olmadan — Node.js-də və ya brauzerdə — işləyə bilər.
+Kompilyator (`alqor/js/derleyici.py`) AAC-ni ES2020 JavaScript-ə çevirir,
+icra mühiti (`alqor/js/icra.js`) nəticəyə daxil edilir: tək fayl alınır.
+
+```
+alqor işlət --js proqram.alq           # çevirib node ilə dərhal işlədir
+alqor qur --hədəf js  proqram.alq      # → qurma/proqram.js   (node proqram.js)
+alqor qur --hədəf veb proqram.alq      # → qurma/veb/index.html
+alqor qur --hədəf js --çıxış a.js      # layihə qovluğunda: giriş faylı
+```
+
+| Alqor | JavaScript |
+|-------|-----------|
+| `tam` | `BigInt` — Python-dakı kimi hədsiz dəqiqlik |
+| `onluq` | `number`; `mətnə` Python formatı ilə (`5.0`, `1e-05`, `sonsuz`) |
+| `lüğət`, `dəst` | açarları dəyərə görə müqayisə edən `Map` sarğısı |
+| `generator funksiya` | JS generatoru (tənbəl, sonsuz ola bilər) |
+| `asinxron` / `gözlə` | tənbəl `Gələcək` — gövdə `gözlə` ilə işə düşür |
+| `oxu()` | node: stdin; brauzer: `prompt()` |
+| `yaz()` | node: stdout; brauzer: səhifədəki çıxış sahəsi |
+
+Semantika etalon icraçı ilə eynidir: `sinaq/test_js.py` `test_icraci`-dəki
+bütün kod parçalarını və `sinaq/js_numuneler/` proqramlarını hər iki
+icrada işlədib çıxışı sətir-sətir müqayisə edir. Hesablama ağır
+proqramlarda JS hədəfi ~10 dəfə sürətlidir.
+
+**Dəstəklənən modullar:** `riyaziyyat`, `mətn`, `təsadüfi`, `vaxt`, `json`,
+`naxış`, `sistem`, `jurnal`, `paralel` (ardıcıl), `fayl`/`qovluq`/`yol`
+(yalnız node), yerli fayllar (`gətir "./x.alq"`) və `paketlər/` paketləri —
+hamısı bir fayla yığılır. `veb`, `pəncərə`, `vidjet`, `konsol`, `sap` və
+`alqor/modullar/` modulları **kompilyasiya xətası** verir.
+
+Fərqlər: `paralel` əməliyyatları ardıcıl işləyir; `vaxt.gözlə` brauzerdə
+məşğul gözləmədir; JS stek həddi aşılarsa `StekDaşmaXətası` atılır.
+
+---
+
 ## 13.15 Konsol kodlaşdırması (vacib)
 
 Alqor alətləri işə düşərkən standart çıxışı məcburi **UTF-8**-ə keçirir.

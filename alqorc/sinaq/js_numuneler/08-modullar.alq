@@ -1,0 +1,14 @@
+gətir riyaziyyat
+gətir riyaziyyat.{kök, Pİ kimi pi}
+gətir json
+gətir mətn kimi m
+yaz(kök(16), pi > 3, riyaziyyat.ƏBOB(12, 18), riyaziyyat.faktorial(20))
+yaz(riyaziyyat.yuvarlaqlaşdır(2.675, 2), riyaziyyat.median([3, 1, 2]), riyaziyyat.maks(1, 9, 3))
+yaz(riyaziyyat.sadədir(97), riyaziyyat.sadəBölənlər(360), riyaziyyat.loq10(1000))
+dəyişən d = json.oxu(x"""{"ad": "Ali", "yaş": 30, "bal": [1.5, 2], "aktiv": true, "x": null}""")
+yaz(d, d["yaş"] + 1, tip(d["bal"][0]))
+yaz(json.yaz({"a": [1, 2.5, "ə"], "b": doğru, "c": boş}))
+yaz(json.yazGözəl({"a": 1, "b": [1, 2]}))
+yaz(m.yerliƏdəd(1234567.891), m.yerliPul(1500), m.şəkilçi("kitab", "lar"), m.şəkilçi("ev", "lar"))
+gətir naxış
+yaz(naxış.uyğundur("\\d+", "abc123"), naxış.hamısınıTap("\\d+", "a1b22c333"), naxış.əvəz("\\s+", "a  b   c", "-"))

@@ -1,0 +1,66 @@
+funksiya yoxla(n: tam)
+    əgər n < 0 onda at DəyərXətası("mənfi: {n}", kod: "X1") son
+    qaytar n
+son
+cəhd et
+    yoxla(-3)
+tut (e: TipXətası)
+    yaz("tip", e.mesaj)
+tut (e: ArqumentXətası)
+    yaz("arqument", e.mesaj, e.kod, e.tip)
+nəhayət
+    yaz("son")
+son
+cəhd et
+    dəyişən s = [1, 2]
+    yaz(s[5])
+tut e
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    yaz(1 ~/ 0)
+tut (e: RiyaziXəta)
+    yaz("riyazi", e.mesaj)
+son
+cəhd et
+    yaz({"a": 1}["b"])
+tut (e: KolleksiyaXətası)
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    at "sadə"
+tut e
+    yaz(e)
+son
+funksiya dərin(n) qaytar dərin(n + 1) son
+cəhd et
+    dərin(0)
+tut e
+    yaz(e.tip)
+son
+cəhd et
+    iddia 1 > 2, "pozuldu!"
+tut e
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    yaz("a" + 1)
+tut e
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    dəyişən x: tam? = boş
+    yaz(x!)
+tut e
+    yaz(e.tip)
+son
+yaz(boş ?? 5, 3 ?? 5)
+dəyişən q = boş
+yaz(q?.uzunluq)
+funksiya f()
+    gecikdir yaz("gecikmiş 1")
+    gecikdir yaz("gecikmiş 2")
+    yaz("gövdə")
+    qaytar 1
+son
+yaz(f())

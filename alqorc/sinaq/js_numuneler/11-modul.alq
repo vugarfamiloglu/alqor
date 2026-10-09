@@ -1,0 +1,11 @@
+gətir "./yardimci.alq" kimi y
+gətir "./yardimci.alq".{kvadrat}
+yaz(y.kvadrat(7), kvadrat(3), y.SABİT, y.Nöqtə(1, 2))
+modul həndəsə
+    funksiya sahə(r) qaytar 3 * r * r son
+son
+yaz(həndəsə.sahə(2))
+genişlət mətn
+    metod nida() qaytar özü + "!" son
+son
+yaz("salam".nida())

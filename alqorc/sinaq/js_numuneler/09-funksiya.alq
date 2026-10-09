@@ -1,0 +1,58 @@
+funksiya salamla(ad: mətn, nida: mətn = "!", *, böyük: məntiq = yanlış)
+    dəyişən s = "Salam, {ad}{nida}"
+    əgər böyük onda qaytar s.böyüyə() son
+    qaytar s
+son
+yaz(salamla("Ali"), salamla("Aysel", "?"), salamla("x", böyük: doğru), salamla(nida: ".", ad: "Y"))
+funksiya cəmlə(...ədədlər) qaytar ədədlər.cəm() son
+yaz(cəmlə(), cəmlə(1, 2, 3), cəmlə(...[4, 5]))
+funksiya seçimlər(**xassələr) qaytar xassələr son
+yaz(seçimlər(a: 1, b: "x"))
+funksiya böl(a, b) qaytar a ~/ b, a % b son
+dəyişən q, r = böl(17, 5)
+yaz(q, r, böl(9, 2))
+dəyişən kvadrat = (x) => x * x
+yaz([1, 2, 3].çevir(kvadrat), 5 |> kvadrat)
+funksiya sayğacYarat()
+    dəyişən say = 0
+    qaytar () => blok
+        say += 1
+        ver say
+    son
+son
+dəyişən c = sayğacYarat()
+c()
+c()
+yaz(c())
+@yaddaşla
+funksiya fib(n: tam) -> tam
+    əgər n < 2 onda qaytar n son
+    qaytar fib(n - 1) + fib(n - 2)
+son
+yaz(fib(80))
+funksiya ikiqat(x) x * 2 son
+yaz(ikiqat(21))
+dəyişən x = 10
+funksiya oxu_x() qaytar x son
+x = 20
+yaz(oxu_x())
+funksiya f(n: onluq) qaytar n son
+yaz(f(3))
+cəhd et
+    salamla()
+tut e
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    salamla("a", "b", "c")
+tut e
+    yaz(e.tip, e.mesaj)
+son
+asinxron funksiya yüklə(n: tam) -> tam
+    yaz("yüklənir", n)
+    qaytar n * 10
+son
+dəyişən gələcək = yüklə(1)
+yaz("hələ başlamayıb")
+yaz(gözlə gələcək)
+yaz(gözlə [yüklə(2), yüklə(3)])

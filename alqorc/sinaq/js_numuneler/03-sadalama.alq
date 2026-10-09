@@ -1,0 +1,34 @@
+sadalama Rəng
+    Qırmızı
+    Yaşıl
+    Mavi
+son
+yaz(Rəng.Yaşıl, Rəng.hamısı(), Rəng.Mavi.sıra())
+sadalama Status: tam
+    Aktiv = 1
+    Passiv
+    Silinib = 10
+    Arxiv
+son
+hər s üçün Status içində
+    yaz(s.adı(), s.dəyər())
+son
+sadalama Nəticə
+    Uğur(dəyər: tam)
+    Səhv(mesaj: mətn)
+son
+funksiya böl(a: tam, b: tam)
+    əgər b == 0 onda qaytar Nəticə.Səhv("sıfır") son
+    qaytar Nəticə.Uğur(a ~/ b)
+son
+hər r üçün [böl(10, 2), böl(1, 0)] içində
+    seç r
+        hal Nəticə.Uğur(d) → yaz("uğur", d)
+        hal Nəticə.Səhv(m) → yaz("səhv", m)
+    son
+son
+yaz(böl(9, 3))
+seç Rəng.Mavi
+    hal Rəng.Qırmızı → yaz("q")
+    hal Rəng.Mavi → yaz("m")
+son

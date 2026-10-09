@@ -1,0 +1,41 @@
+funksiya təsvir(x)
+    seç x
+        hal 0 → qaytar "sıfır"
+        hal 1, 2, 3 → qaytar "kiçik"
+        hal 4..9 → qaytar "orta"
+        hal [a, b] → qaytar "cüt {a} {b}"
+        hal [ilk, ...qalan] → qaytar "siyahı {ilk} + {qalan}"
+        hal (a, b) → qaytar "kortej {a},{b}"
+        hal _ → qaytar "digər"
+    son
+son
+hər v üçün [0, 2, 7, -5, "a", [1, 2], [1, 2, 3], (5, 6), 100, 3.5] içində
+    yaz(təsvir(v))
+son
+dəyişən n = 2
+seç n
+    hal 1
+        yaz("bir")
+    hal 2
+        yaz("iki")
+        keç
+    hal 3
+        yaz("üç")
+    digər hallarda
+        yaz("digər")
+son
+dəyişən t = 25
+seç
+    hal t < 10 → yaz("soyuq")
+    hal t < 30 → yaz("isti")
+    digər hallarda → yaz("çox isti")
+son
+funksiya növ(x)
+    seç tipi x
+        hal tam → qaytar "tam"
+        hal mətn → qaytar "mətn"
+        hal siyahı → qaytar "siyahı"
+        hal _ → qaytar "?"
+    son
+son
+yaz(növ(1), növ("a"), növ([1]), növ(2.5))

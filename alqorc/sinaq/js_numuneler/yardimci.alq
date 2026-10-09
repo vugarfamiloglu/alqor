@@ -1,0 +1,10 @@
+sabit SABİT = 42
+funksiya kvadrat(x) qaytar x * x son
+struktur Nöqtə
+    xassə x: tam
+    xassə y: tam
+    qurucu(x: tam, y: tam)
+        özü.x = x
+        özü.y = y
+    son
+son
