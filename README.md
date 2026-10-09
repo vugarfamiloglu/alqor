@@ -153,7 +153,7 @@ yazmadan interfeys qurmaq və kodu addım-addım izləmək üçün:
 
 ## İndi sınayın
 
-> Windows, Linux və macOS üçün bir kliklə quraşdırıcılar hazırlanır
+> Windows üçün bir kliklə quraşdırıcı hazırlanır
 > ([yol xəritəsi](NOVBETI.md)). Hələlik mənbədən işlədin — yalnız
 > [Python 3.12+](https://www.python.org/downloads/) lazımdır.
 
@@ -201,12 +201,11 @@ cd mənim-saytım
 |---|---|---|
 | Dil, kitabxana, alətlər, Studio | Tam işlək etalon implementasiya | ✅ |
 | JavaScript hədəfi | Node.js və brauzer, Python-la eyni nəticə | ✅ |
-| **1. Windows quraşdırıcısı** | `AlqorQurasdirici.exe` — Studio + `alqor` əmrləri PATH-da, daxili Python | ⏳ növbəti |
-| 2. Kompilyasiya | `alqor qur --exe` — tək faylda paylanan tətbiq | ⬜ |
-| 3. Vebə yerləşdirmə | `alqor yerləşdir` — statik hostinq və Docker | ⬜ |
-| 4. Linux və macOS quraşdırıcıları | `.deb`, `.rpm`, `.AppImage`, `.pkg` | ⬜ |
-| 5. Ekosistem | `hub.alqor.az`, VS Code Marketplace, `alqor.az` | ⬜ |
-| 6. Rust kompilyatoru | Native binar və WebAssembly | 🟡 başlanıb |
+| **1. Windows quraşdırıcısı** | `AlqorQurasdirici.exe` — Studio + `alqor` əmrləri PATH-da, daxili Python | ⏳ |
+| 2. Kompilyasiya | `alqor qur --exe` — tək faylda paylanan tətbiq | ⏳ |
+| 3. Vebə yerləşdirmə | `alqor yerləşdir` — statik hostinq və Docker | ⏳ |
+| 4. Rust kompilyatoru | Native binar və WebAssembly | 🟡 başlanıb |
+| Sonra | Ekosistem — [alqor.vuqar.pro](https://alqor.vuqar.pro): paket deposu, sənədlər; Linux/macOS quraşdırıcıları | ⬜ |
 
 Ətraflı: [NOVBETI.md](NOVBETI.md)
 
@@ -228,7 +227,14 @@ sistemi, operatorlar, idarəetmə, funksiyalar, OOP, xətalar, modullar,
 asinxronluq, standart kitabxana, veb, desktop, alət zənciri, vidjetlər və
 [EBNF qrammatika](spesifikasiya/qrammatika.ebnf).
 
-## Arxitektura
+## Texniki əsas
+
+Alqor öz **lekseri, parseri, tip yoxlayıcısı və icraçısı** olan müstəqil
+dildir — başqa dilin üstünə "tərcümə qatı" deyil. Etalon implementasiya
+**Python 3.12** ilə yazılıb və **yalnız Python standart kitabxanasından**
+istifadə edir: heç bir xarici paket (pip asılılığı) yoxdur. Veb server,
+WebSocket, verilənlər bazası sürücüləri, PDF, şəkil kodekləri, şifrələmə —
+hamısı sıfırdan yazılıb.
 
 ```
  mənbə.alq ─► normallaşdırma ─► lekser ─► parser ─► AAC ─┬─► tip yoxlayıcı
@@ -238,6 +244,22 @@ asinxronluq, standart kitabxana, veb, desktop, alət zənciri, vidjetlər və
                                                          └─► Rust kompilyatoru (hazırlanır) ─► native / WASM
 ```
 
+| Qat | Necə qurulub |
+|---|---|
+| **Mənbə** | UTF-8, BOM silinir, Unicode **NFC** normallaşdırma, **homoqlif qoruması** (kiril `е`, `ä` → `ə` kimi oxşar simvollar düzəldilir və bildirilir) |
+| **Lekser** | Əl ilə yazılmış; çox sözlü açar sözlər (`nə qədər ki`, `və ya`, `cəhd et`), ASCII yazılış (`eger` → `əgər`), şablon mətnlərdə `{ifadə:format}`, xam mətnlər `x"..."`, JSX-in xam skanı, mötərizə/blok kontekst yığını ilə sətir sonu qaydaları |
+| **Parser** | Rekursiv enmə + **Pratt** (prioritet dırmaşması), 16 prioritet səviyyəsi; xəta sonrası bərpa — bir faylda bütün xətalar bir dəfəyə göstərilir |
+| **Tip sistemi** | **Tədrici (gradual)**: tip yazmaq ixtiyaridir, yazılarsa yoxlanır; tip çıxarma, axın daralması (`əgər x boş deyil`), generiklər, birləşmə tipləri (`tam \| mətn`), ixtiyari tiplər (`mətn?`); 3 rejim: sərbəst / normal / sərt |
+| **İcraçı** | Ağac gəzən interpretator; leksik əhatə, qapanmalar, **hədsiz dəqiqlikli tam ədədlər**, IEEE-754 onluqlar, struktur = dəyər tipi, sinif = istinad tipi |
+| **Paralellik** | Tənbəl generatorlar (korutin), `asinxron`/`gözlə` (`Gələcək`), `paralel` və saplar, ləğv nişanları |
+| **Xətalar** | **121 xəta kodu** (`ALQ-L/P/T/R/M/Y…`), hər biri Azərbaycanca izah, mənbə parçası və düzəliş təklifi ilə; 40-dan çox tipli xəta iyerarxiyası (`cəhd et … tut (x: BölməXətası)`) |
+| **Veb** | Çoxsaplı HTTP server, marşrutlar, ara proqramlar, sessiya, CSRF/CORS/təhlükəsizlik başlıqları, şablon mühərriki, JSX → HTML (XSS qaçışı avtomatik), WebSocket |
+| **Desktop** | Eyni JSX/vidjet kodu yerli pəncərədə: Windows-da **WebView2/Edge**, Linux-da **WebKitGTK**, olmadıqda Chrome/Edge "tətbiq" pəncərəsi |
+| **JS hədəfi** | AAC → ES2020; `tam` → `BigInt`; Python icraçısı ilə **sətir-sətir eyni nəticə** avtomatik müqayisə ilə yoxlanır |
+| **Alət protokolları** | **LSP** (tamamlama, tərif, istinadlar, ad dəyişmə, kod linzaları, semantik rənglər), **DAP** (debaq) — VS Code, Neovim, Helix ilə işləyir |
+| **Alqor Studio** | Python serveri + çərçivəsiz (vanilla) JavaScript interfeys; öz redaktoru, vizual dizayner, canlı önbaxış |
+| **Keyfiyyət** | 1 200+ avtomatik sınaq: dil, kitabxana, alətlər, bələdçilərdəki hər nümunə, Studio-nun brauzer sınaqları (Playwright) |
+
 | Hissə | Yer |
 |---|---|
 | Etalon implementasiya (Python) | [`alqorc/`](alqorc/) |
@@ -246,6 +268,7 @@ asinxronluq, standart kitabxana, veb, desktop, alət zənciri, vidjetlər və
 | Alqor Studio | [`alqorc/studio/`](alqorc/studio/) |
 | VS Code genişlənməsi | [`redaktor/vscode/`](redaktor/vscode/) |
 | Nümunə proqramlar | [`numuneler/`](numuneler/) |
+| Rəsmi qrammatika | [`spesifikasiya/qrammatika.ebnf`](spesifikasiya/qrammatika.ebnf) |
 
 ## Ad haqqında
 

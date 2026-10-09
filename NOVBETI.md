@@ -62,7 +62,7 @@
 
 ## 🎯 Hədəf
 
-İstifadəçi **Windows** (ilk növbədə), **Linux** və ya **macOS**-da bir
+İstifadəçi **Windows**-da bir
 quraşdırıcı ilə Alqor-u qurur, Studio-da və ya terminalda kod yazır, proqramı
 **kompilyasiya edib** (tək fayllı tətbiq / quraşdırıcı) paylaşır və ya
 **vebə yerləşdirir**. Aşağıdakı sıra bu yolu açan işlərdir.
@@ -99,27 +99,19 @@ quraşdırıcı ilə Alqor-u qurur, Studio-da və ya terminalda kod yazır, proq
      yerləşdir --docker`; Render / Fly.io / VPS üçün addım-addım bələdçi.
 9. **JS hədəfini genişləndirmək**: `vidjet` və komponentlər brauzerdə
    (veb tətbiqləri serversiz işləsin), `http` müştərisi (`fetch`).
-10. **Onlayn sınaq meydançası** (`alqor.az/meydança`) — JS hədəfi ilə
+10. **Onlayn sınaq meydançası** (`alqor.vuqar.pro`) — JS hədəfi ilə
     brauzerdə quraşdırmadan kod yazıb işlətmək.
 
-### Mərhələ 4 — Linux və macOS quraşdırıcıları ⬜
-11. `.deb`, `.rpm`, `.AppImage` — Mərhələ 1-dəki kimi CLI əmrləri
-    PATH-da (`/usr/bin/alqor`), Studio, fayl əlaqəsi.
-12. macOS `.pkg` (+ `.dmg`) — `/usr/local/bin/alqor`, Apple Silicon və
-    Intel; həqiqi Mac-da yoxlama (CI `macos-latest`).
-13. İmza: Windows Authenticode, macOS notarizasiya — **sertifikat
-    tələb edir, sahibin qərarıdır** (imzasız da işləyir, xəbərdarlıqla).
-
-### Mərhələ 5 — Ekosistem ⬜
-14. **alqorhub ictimai server** (`hub.alqor.az`) — `alqor pm əlavə`
-    başqalarının paketlərini tapsın.
-15. **VS Code genişlənməsi** Marketplace-də (`.vsix` CI-da qurulur).
-16. **Sənəd saytı** `alqor.az` — spesifikasiya, bələdçilər, API.
-
-### Mərhələ 6 — Rust kompilyatoru (sürət və tək binar) 🟡
+### Mərhələ 4 — Rust kompilyatoru (sürət və tək binar) 🟡
 17. `alqor-rs/`: lekser + AAC hazırdır; parser, icraçı, standart
     kitabxana. Sınaq: Python etalonu ilə eyni çıxış (JS hədəfindəki
     müqayisə qoşqusu ilə). Sonra: native binar və WASM.
+
+### Sonraya saxlanılıb ⏸
+- **Ekosistem** — [alqor.vuqar.pro](https://alqor.vuqar.pro): paket deposu
+  (alqorhub), sənəd saytı, VS Code Marketplace.
+- **Linux və macOS quraşdırıcıları** — generatorlar kodda qalır
+  (`.deb`, `.rpm`, `.AppImage`, `.dmg`), amma hələlik prioritet deyil.
 
 ✅ Bu sessiyada hazır olanlar: JS hədəfi (`alqor işlət --js`,
 `alqor qur --hədəf js|veb`, spes. § 13.14), ifadəsiz `seç`-də şərt halları.
