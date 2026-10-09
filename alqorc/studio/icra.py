@@ -202,6 +202,14 @@ class İcraMeneceri:
                 self.işlər.pop(köhnə.id, None)
         return iş
 
+    def əmr_başlat(self, arqumentlər: list[str], qovluq: Path,
+                   ad: str) -> İş:
+        """İstənilən `alqor` əmri (məs. `qur --exe`) — çıxış axınla gəlir."""
+        iş = İş([sys.executable, "-u", str(ALQORC), *arqumentlər], qovluq, ad)
+        with self._kilid:
+            self.işlər[iş.id] = iş
+        return iş
+
     def əlavə_et(self, iş: İş) -> İş:
         with self._kilid:
             self.işlər[iş.id] = iş

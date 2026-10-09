@@ -1,0 +1,20 @@
+[package]
+name = "alqor-baslatici"
+version = "0.1.0"
+edition = "2021"
+description = "alqor qur --exe: tək .exe başladıcısı (yük: Python + proqram)"
+license = "MIT"
+
+[dependencies]
+miniz_oxide = "0.8"
+
+[features]
+# Konsolsuz (desktop) proqramlar üçün: Windows "GUI" alt sistemi
+pencere = []
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

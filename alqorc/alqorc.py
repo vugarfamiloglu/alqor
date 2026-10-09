@@ -777,6 +777,18 @@ def əmr_qur(arqumentlər: list[str]) -> int:
         return 0
 
     layihə = _layihə(".")
+    tək_fayl = [a for a in _faylları_topla(arqumentlər)
+                if a.endswith((".alq", ".alqor"))]
+    if tək_fayl and "--exe" in arqumentlər:
+        # `alqor qur --exe proqram.alq` — layihəsiz tək fayl
+        from alqor.layihe import Layihə
+        f = Path(tək_fayl[0]).resolve()
+        if not f.is_file():
+            çap_xəta(f"fayl tapılmadı: {tək_fayl[0]}")
+            return 4
+        layihə = Layihə(f.parent, {"paket": {"ad": f.stem},
+                                   "qurma": {"giriş": f.name,
+                                             "çıxış": "qurma/"}})
     if layihə is None:
         çap_xəta("`qur` `layihe.alq` olan qovluqda işlədilir "
                  "(yeni layihə: alqor yeni <ad>)")
@@ -799,6 +811,25 @@ def əmr_qur(arqumentlər: list[str]) -> int:
         if xəta:
             print(f"✖ {xəta} faylda xəta — paket qurulmadı")
             return 2
+    if "--exe" in arqumentlər:
+        from alqor import exe_qurucu
+        konsol = (True if "--konsol" in arqumentlər else
+                  False if {"--pəncərə", "--pencere"} & set(arqumentlər)
+                  else None)
+        try:
+            exe = exe_qurucu.qur(layihə, Path(__file__).resolve().parent,
+                                 konsol)
+        except (OSError, RuntimeError) as x:
+            çap_xəta(f".exe qurulmadı: {x}")
+            return 4
+        try:
+            göstər = exe.relative_to(Path.cwd())
+        except ValueError:
+            göstər = exe
+        print(f"✓ {göstər}  ({exe.stat().st_size / 1048576:.1f} MB)")
+        print("  Bu faylı istənilən Windows 10/11 kompüterinə köçürüb işlədin —"
+              " Alqor və ya Python lazım deyil.")
+        return 0
     try:
         n = qurucu.qur(layihə, Path(__file__).resolve().parent)
     except FileNotFoundError as x:
@@ -1006,6 +1037,9 @@ def əmr_kömək(_: list[str]) -> int:
                          --platforma linux,windows,macos   --python-daxil
                          --format deb,rpm,appimage,windows,app,dmg
                          --studio        Alqor Studio-nun quraşdırıcıları
+                         --exe           tək .exe (Windows) — Alqor/Python
+                                         olmayan kompüterdə də işləyir;
+                                         --konsol | --pəncərə
                          --alqor         Alqor-un Windows quraşdırıcısı
                                          (Studio + əmrlər + daxili Python)
                          --hədəf js [fayl]   qurma/<ad>.js (Node.js)

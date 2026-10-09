@@ -430,10 +430,16 @@ alqor işlət
 ## 4. Proqramı paylaşmaq
 
 ```powershell
+alqor qur --exe                # qurma\\<ad>.exe — istənilən Windows-da işləyir
 alqor qur                      # qurma\\<ad>.pyz — Alqor olan kompüterdə işləyir
 alqor qur --hədəf veb əsas.alq # qurma\\veb\\index.html — brauzerdə açılır
 alqor qur --quraşdırıcı        # öz proqramınız üçün quraşdırıcı
 ```
+
+`.exe` bir fayldır: dostunuza göndərin, o, heç nə quraşdırmadan işlədəcək.
+İlk açılış bir neçə saniyə çəkir (proqram açılır), sonrakılar dərhal.
+Pəncərəli proqramlar (`gətir pəncərə`) konsolsuz açılır. Studio-da:
+**İşlət → Qur: tək .exe** (Ctrl+Shift+B).
 
 Ətraflı: [Əmrlər arayışı](emrler.html).
 
@@ -502,7 +508,9 @@ alqor> "ışıq".böyüyə()
 
 | Əmr | Nəticə |
 |---|---|
-| `alqor qur` | `qurma\\<ad>.pyz` — tək fayllı paket |
+| `alqor qur --exe` | `qurma\\<ad>.exe` — **tək fayl**, Alqor və Python olmayan Windows kompüterində də işləyir |
+| `alqor qur --exe proqram.alq` | Layihəsiz tək fayldan `.exe` |
+| `alqor qur` | `qurma\\<ad>.pyz` — tək fayllı paket (Alqor/Python olan kompüterdə) |
 | `alqor qur --quraşdırıcı` | Proqramınız üçün Windows quraşdırıcısı |
 | `alqor qur --hədəf js fayl.alq` | `qurma\\<ad>.js` — Node.js ilə işləyir |
 | `alqor qur --hədəf veb fayl.alq` | `qurma\\veb\\index.html` — brauzerdə açılır, server lazım deyil |

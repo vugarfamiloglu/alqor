@@ -41,7 +41,7 @@ class ServerSınağı(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.qovluq = Path(tempfile.mkdtemp(prefix="studio-sınaq-"))
+        cls.qovluq = Path(tempfile.mkdtemp(prefix="studio-sınaq-")).resolve()
         cls.layihə = cls.qovluq / "layihə"
         cls.layihə.mkdir()
         (cls.layihə / "salam.alq").write_text('yaz("salam")\n',

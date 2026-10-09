@@ -295,6 +295,7 @@ class Studio:
             ("POST", "/api/ascii-duzelt"): self.api_ascii,
             ("POST", "/api/formatla"): self.api_formatla,
             ("POST", "/api/islet"): self.api_işlət,
+            ("POST", "/api/qur"): self.api_qur,
             ("POST", "/api/islet/giris"): self.api_giriş,
             ("POST", "/api/islet/dayandir"): self.api_dayandır,
             ("POST", "/api/onbaxis"): self.api_önbaxış,
@@ -547,6 +548,29 @@ class Studio:
             raise ApiXətası("`arqumentlər` siyahı olmalıdır")
         iş = self.icra.başlat(yol, [str(a) for a in arq],
                               self.layihə.nisbi(yol), bool(s.get("tip")))
+        return iş.lüğət()
+
+    QUR_HƏDƏFLƏRİ = {
+        "exe": ["--exe"], "veb": ["--hədəf", "veb"], "js": ["--hədəf", "js"],
+        "pyz": [], "quraşdırıcı": ["--quraşdırıcı", "--platforma", "windows",
+                                    "--python-daxil"],
+    }
+
+    def api_qur(self, s: dict) -> dict:
+        """Studio «Qur» menyusu: `.exe`, veb səhifə, JS, paket."""
+        hədəf = self._mətn(s, "hədəf")
+        if hədəf not in self.QUR_HƏDƏFLƏRİ:
+            raise ApiXətası(f"naməlum hədəf: {hədəf}")
+        yol = self.layihə.yol(self._mətn(s, "yol"))
+        if not yol.is_file():
+            raise ApiXətası("fayl tapılmadı — əvvəlcə saxlayın", 404)
+        kök = next((q for q in (yol.parent, *yol.parents)
+                    if (q / "layihe.alq").is_file()), None)
+        arq = ["qur", *self.QUR_HƏDƏFLƏRİ[hədəf]]
+        if hədəf in ("veb", "js") or kök is None:
+            arq.append(str(yol))
+        qovluq = kök or yol.parent
+        iş = self.icra.əmr_başlat(arq, qovluq, f"qur {hədəf}")
         return iş.lüğət()
 
     # ── Vizual dizayner ───────────────────────────────────────────────

@@ -284,8 +284,9 @@ class PDFSınağı(unittest.TestCase):
         with tempfile.TemporaryDirectory() as q:
             p = Path(q, "s.pdf")
             self.sənəd().saxla(p)
-            r = subprocess.run(["pdftotext", "-layout", str(p), "-"],
-                               capture_output=True, text=True)
+            r = subprocess.run(["pdftotext", "-layout", "-enc", "UTF-8",
+                                str(p), "-"], capture_output=True,
+                               text=True, encoding="utf-8", errors="replace")
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("Başlıq — ə ğ ş ı İ", r.stdout)
             self.assertIn("1,20 ₼", r.stdout)

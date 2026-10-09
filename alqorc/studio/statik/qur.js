@@ -350,6 +350,11 @@ function nişanaKeç(d) {
 ƏQ("işlət.işlət", "İşlət", "işlət", "F5", () => (S.dbq ? debaqƏmri("davam") : işlət()), () => varCari() && (!S.iş || !!S.dbq));
 ƏQ("işlət.dayandır", "Dayandır", "dayandır", "Shift+F5", dayandır, işləyir);
 ƏQ("işlət.önbaxış", "Komponent önbaxışı", "önbaxış", null, () => önbaxışıAçBağla(true), varCari, { gizli: true });
+ƏQ("qur.exe", "Qur: tək .exe (Windows)", "paket", "Ctrl+Shift+B", () => qur("exe"), varCari);
+ƏQ("qur.veb", "Qur: veb səhifə (brauzer)", "paket", null, () => qur("veb"), varCari);
+ƏQ("qur.js", "Qur: JavaScript (Node.js)", "paket", null, () => qur("js"), varCari);
+ƏQ("qur.pyz", "Qur: Alqor paketi (.pyz)", "paket", null, () => qur("pyz"), varCari);
+ƏQ("qur.quraşdırıcı", "Qur: Windows quraşdırıcısı", "paket", null, () => qur("quraşdırıcı"), varCari);
 ƏQ("işlət.çıxışıTəmizlə", "Çıxışı təmizlə", "sil", null, () => { $("#cixis").textContent = ""; });
 
 // Debaq
@@ -413,6 +418,7 @@ MenyuSətri.qur($("#menyu-setri"), [
   { ad: "Keç", hərf: "K", elementlər: ["fayl.aç", "keç.sətir", "keç.simvol", "-", "keç.təyinat", "keç.istinadlar",
     "keç.adDəyiş", "-", "keç.növbətiProblem", "-", "keç.növbətiNişan", "keç.əvvəlkiNişan"] },
   { ad: "İşlət", hərf: "I", elementlər: ["işlət.işlət", "işlət.dayandır", "-", "görünüş.önbaxış", "görünüş.dizayn", "-",
+    "qur.exe", "qur.veb", "qur.js", "qur.pyz", "qur.quraşdırıcı", "-",
     "işlət.çıxışıTəmizlə"] },
   { ad: "Debaq", hərf: "D", elementlər: ["debaq.başla", "debaq.davam", "debaq.fasilə", "debaq.dayandır", "-",
     "debaq.növbəti", "debaq.daxil", "debaq.çıx", "-", "debaq.nöqtə", "debaq.nöqtələriSil"] },
