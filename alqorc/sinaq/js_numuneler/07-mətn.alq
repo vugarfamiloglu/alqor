@@ -1,0 +1,21 @@
+dəyişən s = "  Salam, Dünya!  "
+yaz("[" + s.kəs() + "]", s.uzunluq(), s.böyüyə(), s.kiçiyə())
+yaz("ışıq".böyüyə(), "İSTİ".kiçiyə(), "ilham".başBöyük(), "bakı şəhəri".hərSözBöyük())
+yaz("a,b,,c".böl(","), "bir iki  üç".sözlər(), "abc".tərs(), "ab".təkrar(3))
+yaz("salam".ehtiva("la"), "salam".tap("a"), "salam".sonTap("a"), "salam".tap("z"))
+yaz("5".solDoldur(3, "0"), "x".mərkəz(5, "*"), "-".birləşdir(["a", "b", 3]))
+yaz("Salam {0}, {1}!".formatla("Ali", 5))
+dəyişən pi = 3.14159265
+yaz("{pi:.2f} {pi:.4} {1234567:,} {255:x} {255:X} {5:b} {42:>6} {42:<6}| {7:03}")
+yaz("{0.5:%} {1234.5:,az} {12345678.9:,.2f} {3:+d} {1e-7} {2.5e20}")
+yaz(10 / 4, 10 ~/ 4, -7 ~/ 2, -7 % 3, 7.5 % 2, 2 ** 10, 2 ** -1, 2 ** 100)
+yaz(0.1 + 0.2, 1 / 3, 100.0, 1e16, 1.5e-5, -0.0, 3 * 1.0)
+yaz(1 == 1.0, 1 < 2.5, "a" < "b", "z" < "ə", 5 <=> 3)
+yaz(tamƏt("42"), onluqƏt("3,5"), mətnƏt(12), "12" kimi tam, 3.9 kimi tam, "x" kimi? tam)
+yaz(simvolƏt(1025), kodƏt("Ə"), "ə".böyüyə())
+yaz(5.yazıyla(), 1234.yazıyla(), 3.sıraSayı(), 17.cütdür())
+yaz(3.7.yuvarlaqlaşdır(), 2.5.yuvarlaqlaşdır(), 3.14159.yuvarlaqlaşdır(2), (-3.7).aşağıYuvarlaq())
+yaz("abc"[1], "abc"[-1], "salam"[1..3], "Ağ" + "ac")
+dəyişən çox = """sətir 1
+sətir 2"""
+yaz(çox.sətirlər())

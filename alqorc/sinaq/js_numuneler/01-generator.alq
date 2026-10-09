@@ -1,0 +1,21 @@
+generator funksiya fib()
+    dəyişən a, b = 0, 1
+    həmişə
+        ver a
+        a, b = b, a + b
+    son
+son
+yaz(fib().ilk(10))
+dəyişən g = fib()
+yaz(g.növbəti(), g.növbəti(), g.növbəti())
+generator funksiya say(n: tam)
+    hər i üçün 1..n içində
+        ver i * i
+    son
+son
+hər x üçün say(4) içində
+    yaz(x)
+son
+yaz(say(5).siyahıyaÇevir())
+yaz(fib().filtr((x) => x % 2 == 0).ilk(5))
+yaz(tip(fib()))

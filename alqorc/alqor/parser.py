@@ -710,7 +710,7 @@ class Parser:
         while True:
             self._ayırıcı_atla()
             if self._acar("hal"):
-                hallar.append(self._hal(tipə_görə))
+                hallar.append(self._hal(tipə_görə, ifadə is None))
                 continue
             if self._acar("digər hallarda"):
                 self._al()
@@ -730,11 +730,13 @@ class Parser:
                                "heç bir `hal` yoxdur")
         return A.Seç(yer, ifadə, hallar, digər, tipə_görə)
 
-    def _hal(self, tipə_görə: bool) -> A.Hal:
+    def _hal(self, tipə_görə: bool, şərtli: bool = False) -> A.Hal:
         yer = self._al().yer                         # `hal`
-        naxışlar = [self._naxış(tipə_görə)]
+        oxu = self._şərt_naxışı if şərtli and not tipə_görə else \
+            (lambda: self._naxış(tipə_görə))
+        naxışlar = [oxu()]
         while self._qəbul_op(","):
-            naxışlar.append(self._naxış(tipə_görə))
+            naxışlar.append(oxu())
 
         mühafizə = None
         if self._qəbul_acar("əgər"):
@@ -753,6 +755,14 @@ class Parser:
             gövdə = gövdə[:-1]
 
         return A.Hal(yer, naxışlar, gövdə, mühafizə, keç)
+
+    def _şərt_naxışı(self) -> A.Naxış:
+        """İfadəsiz `seç`: `hal yaş < 13 → ...` — hal şərtdir."""
+        tok = self._bax()
+        if tok.opdur("_") or (tok.növ is Növ.AD and tok.dəyər == "_"):
+            self._al()
+            return A.Naxış(tok.yer, "atma")
+        return A.Naxış(tok.yer, "şərt", dəyər=self._ifadə())
 
     def _naxış(self, tipə_görə: bool) -> A.Naxış:
         tok = self._bax()

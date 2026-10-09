@@ -630,6 +630,7 @@ class Naxış(Qovşaq):
     """
     növ: "literal" | "ad" | "atma" | "tip" | "diapazon"
          | "kortej" | "siyahı" | "obyekt"
+         | "şərt" (ifadəsiz `seç`-də: `hal yaş < 13`)
     """
     növ: str
     dəyər: Any = None

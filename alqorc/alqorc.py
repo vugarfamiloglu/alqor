@@ -264,6 +264,10 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
     if x.xəbərdarlıqlar:
         x.çap()
 
+    # `--js`: JavaScript-ə kompilyasiya edib node ilə işlət
+    if "--js" in arqumentlər:
+        return _js_işlət(ağac, yol, proqram_arqumentləri)
+
     # Tədrici tiplər: `işlət` standart olaraq tip yoxlamır.
     # `--tip` bayrağı ilə yoxlanır, xəta varsa icra dayandırılır.
     if "--tip" in arqumentlər or "--tip-yoxla" in arqumentlər:
@@ -289,6 +293,84 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
     except KeyboardInterrupt:
         print("\n⊣ dayandırıldı", file=sys.stderr)
         return 130
+
+
+def _js_işlət(ağac, yol: str, proqram_arqumentləri: list[str]) -> int:
+    import subprocess
+    import tempfile
+    from alqor.js import KompilyasiyaXətası, node_faylı
+    from alqor.js.muqayise import node_tap
+    node = node_tap()
+    if node is None:
+        çap_xəta("`--js` üçün Node.js lazımdır (https://nodejs.org) — "
+                 "və ya ALQOR_NODE mühit dəyişənində yolunu göstərin")
+        return 4
+    try:
+        js = node_faylı(ağac, Path(yol).resolve() if yol != "-" else None)
+    except KompilyasiyaXətası as x:
+        çap_xəta(f"JS kompilyasiyası: {x}")
+        return 2
+    with tempfile.TemporaryDirectory() as q:
+        f = Path(q) / "proqram.js"
+        f.write_text(js, encoding="utf-8")
+        sys.stdout.flush()
+        return subprocess.call([node, "--stack-size=4000", str(f),
+                                *proqram_arqumentləri])
+
+
+def _js_qur(arqumentlər: list[str]) -> int:
+    """`qur --hədəf js|veb [fayl] [--çıxış yol]`"""
+    from alqor.js import KompilyasiyaXətası, node_faylı, veb_səhifəsi
+    from alqor.lekser import Lekser
+    from alqor.parser import Parser
+    i = arqumentlər.index("--hədəf")
+    hədəf = arqumentlər[i + 1] if i + 1 < len(arqumentlər) else ""
+    if hədəf not in ("js", "veb", "node"):
+        çap_xəta("`--hədəf` dəyəri: js | veb")
+        return 3
+    çıxış = None
+    if "--çıxış" in arqumentlər:
+        j = arqumentlər.index("--çıxış")
+        çıxış = Path(arqumentlər[j + 1]) if j + 1 < len(arqumentlər) else None
+    fayllar = _faylları_topla(arqumentlər)
+    başlıq = None
+    if fayllar:
+        yol = Path(fayllar[0])
+    else:
+        layihə = _layihə(".")
+        if layihə is None:
+            çap_xəta("fayl adı verin və ya `layihe.alq` olan qovluqda "
+                     "işlədin: alqor qur --hədəf js proqram.alq")
+            return 3
+        yol = Path(layihə.giriş)
+        başlıq = getattr(layihə, "ad", None)
+    x = XətaToplayıcı()
+    s = Mənbə.fayldan(yol, x)
+    if s is None:
+        x.çap()
+        return 4
+    ağac = Parser(Lekser(s, x).leksə(), s, x).ayır()
+    if not x.uğurludur():
+        x.çap()
+        return 2
+    try:
+        if hədəf == "veb":
+            mətn = veb_səhifəsi(ağac, başlıq or yol.stem, yol.resolve())
+            çıxış = çıxış or Path("qurma") / "veb" / "index.html"
+        else:
+            mətn = node_faylı(ağac, yol.resolve())
+            çıxış = çıxış or Path("qurma") / f"{yol.stem}.js"
+    except KompilyasiyaXətası as e:
+        çap_xəta(f"JS kompilyasiyası: {e}")
+        return 2
+    çıxış.parent.mkdir(parents=True, exist_ok=True)
+    çıxış.write_text(mətn, encoding="utf-8")
+    print(f"✓ {çıxış}  ({len(mətn.encode()) / 1024:.0f} KB)")
+    if hədəf == "veb":
+        print("  Brauzerdə açın: index.html")
+    else:
+        print(f"  İşlətmək: node {çıxış}")
+    return 0
 
 
 def _icra_xətası_çap(xəta, mənbə) -> None:
@@ -634,6 +716,9 @@ def əmr_qur(arqumentlər: list[str]) -> int:
     from alqor import qurasdirici, qurucu
     from alqor.alqorfmt import faylları_tap
 
+    if "--hədəf" in arqumentlər:
+        return _js_qur(arqumentlər)
+
     quraşdırıcı = bool({"--quraşdırıcı", "--qurasdirici"} & set(arqumentlər))
     python_daxil = "--python-daxil" in arqumentlər
     platformalar = _platformalar(arqumentlər)
@@ -857,6 +942,7 @@ def əmr_kömək(_: list[str]) -> int:
     işlət [fayl]         Proqramı icra edir (fayl yoxdursa — layihənin
                          giriş nöqtəsi, `layihe.alq`)
                          --tip           icradan əvvəl tipləri yoxlayır
+                         --js            JavaScript-ə çevirib node ilə
                          -- arq1 arq2    proqrama arqument ötürür
     tokenlər <fayl>      Faylı leksə edib tokenləri göstərir
                          --ətraflı / -e  əlavə məlumat
@@ -878,6 +964,8 @@ def əmr_kömək(_: list[str]) -> int:
                          --platforma linux,windows,macos   --python-daxil
                          --format deb,rpm,appimage,windows,app,dmg
                          --studio        Alqor Studio-nun quraşdırıcıları
+                         --hədəf js [fayl]   qurma/<ad>.js (Node.js)
+                         --hədəf veb [fayl]  qurma/veb/index.html (brauzer)
     təmizlə              qurma/ qovluğunu silir
     tip <fayl|qovluq>    Yalnız tip yoxlaması
                          --rejim sərbəst|normal|sərt

@@ -1,0 +1,54 @@
+xarici: hər i üçün 1..3 içində
+    hər j üçün 1..3 içində
+        əgər j == 2 onda davam xarici son
+        əgər i == 3 onda dayan xarici son
+        yaz(i, j)
+    son
+son
+dəyişən i = 0
+nə qədər ki i < 3
+    i++
+son
+yaz(i)
+təkrarla 3 dəfə
+    yaz("təkrar")
+son
+təkrarla k, 2 dəfə
+    yaz("k =", k)
+son
+dəyişən n = 0
+təkrarla
+    n += 2
+nə qədər ki n < 7
+yaz(n)
+hər x üçün [1, 2, 3] içində
+    əgər x == 5 onda dayan son
+yoxsa
+    yaz("tapılmadı")
+son
+hər x üçün 0..10 addım 5 içində
+    yaz(x)
+son
+hər h üçün "ağac" içində
+    yaz(h)
+son
+varsa t = [1, 2].tap((x) => x > 1) onda
+    yaz("tapıldı", t)
+yoxsa
+    yaz("yox")
+son
+varsa t = [1, 2].tap((x) => x > 5) onda
+    yaz("tapıldı", t)
+yoxsa
+    yaz("yox")
+son
+dəyişən cəm = 0
+hər x üçün 1..100 içində əgər x % 2 == 0
+    cəm += x
+son
+yaz(cəm)
+dəyişən m = 3
+m *= 4
+m -= 2
+m **= 2
+yaz(m)

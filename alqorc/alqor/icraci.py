@@ -345,6 +345,9 @@ class İcraçı:
         if n.növ == "literal":
             return self._bərabərdir(self._ifadə(n.dəyər, m), dəyər)
 
+        if n.növ == "şərt":
+            return self._məntiq(n.dəyər, m)
+
         if n.növ == "diapazon":
             b = self._ifadə(n.dəyər, m)
             s = self._ifadə(n.diapazon_son, m)
@@ -1575,6 +1578,9 @@ class İcraçı:
                         self._blok(f.gövdə, m)
                         nəticə = self._son_ifadənin_dəyəri(f, m)
                     except QaytarSiqnalı as s:
+                        nəticə = s.dəyər
+                    except VerSiqnalı as s:
+                        # `() => blok ... ver x son` — gövdə blokdur
                         nəticə = s.dəyər
                 finally:
                     gecikmiş = self._yerli.gecikdirilmiş.pop()

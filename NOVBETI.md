@@ -71,8 +71,10 @@ sağ klik → Aç).
 
 ## ⬜ Heç başlanmayanlar (növbə ilə)
 
-1. **JS/WASM backend** — brauzerdə Python olmadan işləmək
-2. **Rust-a köçürmə** — istehsal kompilyatoru
+1. **Rust-a köçürmə** — istehsal kompilyatoru
+
+✅ **JS backend** hazırdır: `alqor işlət --js`, `alqor qur --hədəf js|veb`
+(spes. § 13.14). WASM hədəfi Rust portu ilə gələcək.
 
 ## Qeydlər
 

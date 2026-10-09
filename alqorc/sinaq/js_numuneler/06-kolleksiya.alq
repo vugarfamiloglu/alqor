@@ -1,0 +1,35 @@
+dəyişən s = [5, 3, 8, 1, 9, 2]
+yaz(s.sıralanmış(), s.tərs(), s.cəm(), s.minimum(), s.maksimum(), s.orta())
+yaz(s.çevir((x) => x * 2).filtr((x) => x > 5))
+yaz(s.yığ(0, (a, b) => a + b), s[1..3], s[..2], s[-1], s[2..<4])
+s.sırala()
+yaz(s)
+yaz(s.hissələrə(4), s.pəncərə(5), s.zip(["a", "b"]), s.nömrələ()[0])
+dəyişən l = {"bir": 1, "iki": 2, "üç": 3}
+l["dörd"] = 4
+yaz(l, l.açarlar(), l.dəyərlər(), l.uzunluq())
+hər a, d üçün l içində
+    yaz(a, "→", d)
+son
+hər i, x üçün ["x", "y"] içində
+    yaz(i, x)
+son
+yaz(l.filtr((a, d) => d % 2 == 0), l.al("yox", 0), "bir" içindədir l)
+dəyişən d1 = dəst(1, 2, 3)
+dəyişən d2 = dəst(2, 3, 4)
+yaz(d1 | d2, d1 & d2, d1 - d2, d1.ehtiva(2), uzunluq(d1))
+yaz([x * x üçün x içində 1..10 əgər x % 3 == 0])
+yaz({x: x * x üçün x içində 1..4})
+yaz(["b", "ə", "a", "ç", "c"].sıralanmış(), sırala(["Zəfər", "Əli", "Aysel"]))
+yaz((1, "a", 2.5), (7,), kortej([1, 2]))
+yaz([1, [2, [3, 4]], 5].düzlə(), [1, 1, 2, 3, 3].təkrarsız())
+yaz(["alma", "armud", "banan"].qrupla((m) => m[0]))
+yaz(1..10 addım 3, (1..10 addım 3).siyahıyaÇevir(), 10..1, (5..1).siyahıyaÇevir())
+yaz(tip([1, 2]), tip({"a": 1}), tip([1, "a"]), tip((1, "a")), tip(1..2))
+dəyişən m = [[0] * 3] * 2
+yaz(m)
+yaz([3, 1, 2].sıralanmış((x) => -x))
+dəyişən ad, yaş = "Ali", 30
+yaz(ad, yaş)
+dəyişən birinci, ...qalanlar = [1, 2, 3, 4]
+yaz(birinci, qalanlar)

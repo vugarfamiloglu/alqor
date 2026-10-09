@@ -1721,7 +1721,7 @@ class TipYoxlayıcı:
                tipə_görə: bool) -> None:
         if n.növ == "atma":
             return
-        if n.növ == "literal":
+        if n.növ in ("literal", "şərt"):
             self._ifadə(n.dəyər, ə)
             return
         if n.növ == "diapazon":

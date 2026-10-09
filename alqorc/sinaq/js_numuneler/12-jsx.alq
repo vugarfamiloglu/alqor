@@ -1,0 +1,13 @@
+komponent Kart
+    xassə başlıq: mətn = ""
+    göstər()
+        qaytar <div sinif="kart"><h2>{özü.başlıq}</h2>{özü.uşaqlar}</div>
+    son
+son
+funksiya Siyahı(elementlər)
+    qaytar <ul>{elementlər.çevir((e) => <li>{e}</li>)}</ul>
+son
+yaz(<Kart başlıq="Salam"><p>mətn & "dırnaq"</p></Kart>)
+yaz(<Siyahı elementlər={["a", "b"]} />)
+yaz(<input növ="text" söndürülüb dəyər={5} />)
+yaz(<><b>1</b><i>2</i></>)
