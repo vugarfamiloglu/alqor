@@ -105,12 +105,15 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
 7. `alqor qur --quraşdırıcı` — istifadəçi layihəsi üçün öz Windows
    quraşdırıcısı (bu gün zip + PowerShell → həqiqi `.exe`).
 
-### Mərhələ 3 — Vebə yerləşdirmə ⬜
-8. **`alqor yerləşdir`**:
-   - statik / brauzer proqramları (JS hədəfi ✅) → GitHub Pages,
-     Netlify, Cloudflare Pages üçün hazır qovluq;
-   - `veb` serverli tətbiqlər → avtomatik `Dockerfile` + `alqor
-     yerləşdir --docker`; Render / Fly.io / VPS üçün addım-addım bələdçi.
+### Mərhələ 3 — Vebə yerləşdirmə 🟡
+8. ✅ **`alqor yerləşdir`** (spes. § 13.2, sənəd mərkəzində «Vebə
+   yerləşdirmə»; Studio: *İşlət → Qur: vebə yerləşdir*):
+   - `gətir veb` olmayan proqram → statik sayt (`index.html`, `404.html`,
+     `.nojekyll`): Netlify Drop, GitHub Pages (`--çıxış docs`),
+     Cloudflare Pages; `konsol` modulu JS hədəfinə əlavə olundu;
+   - `veb` serverli tətbiq → `tetbiq.pyz` + `Dockerfile`; `dinlə`
+     `PORT` / `ALQOR_HOST` oxuyur; Render / Fly.io / VPS addımları
+     `YERLESDIR.md`-də.
 9. **JS hədəfini genişləndirmək**: `vidjet` və komponentlər brauzerdə
    (veb tətbiqləri serversiz işləsin), `http` müştərisi (`fetch`).
 10. **Onlayn sınaq meydançası** (`alqor.vuqar.pro`) — JS hədəfi ilə

@@ -22,6 +22,7 @@ import json as _json
 import mimetypes
 import re
 import secrets
+import os
 import socket
 import sys
 import threading
@@ -805,7 +806,11 @@ class Server:
 
     def dinlə(self, port: int = 8080, host: str = "127.0.0.1") -> None:
         server = self
-        port = int(port)
+        # Hostinq platformaları (Render, Fly.io, Docker) portu və ünvanı
+        # mühit dəyişəni ilə verir — `alqor yerləşdir` bunlara güvənir
+        port = int(os.environ.get("PORT") or os.environ.get("ALQOR_PORT")
+                   or port)
+        host = os.environ.get("ALQOR_HOST") or host
 
         class İşləyici(BaseHTTPRequestHandler):
             protocol_version = "HTTP/1.1"

@@ -7,6 +7,7 @@ proqramları. Node.js yoxdursa sınaqlar ötürülür.
 """
 
 import io
+import os
 import subprocess
 import sys
 import tempfile
@@ -98,6 +99,22 @@ class NümunəProqramlar(unittest.TestCase):
                  str(f)], input="Aysel\n21\n", capture_output=True,
                 text=True, encoding="utf-8", timeout=60)
             self.assertEqual(r.stdout, "Ad: Salam, Aysel! 42\n")
+
+    def test_konsol_modulu_python_ilə_eyni(self):
+        f = KÖK / "sinaq" / "js_numuneler" / "konsol.alq"
+        giriş = "\nmavi\nx\nhə\n3,1\n"
+        mühit = dict(os.environ, NO_COLOR="1", PYTHONIOENCODING="utf-8")
+        çıxışlar = []
+        for bayraq in ([], ["--js"]):
+            r = subprocess.run(
+                [sys.executable, str(KÖK / "alqorc.py"), "işlət", *bayraq,
+                 str(f)], input=giriş, capture_output=True, text=True,
+                encoding="utf-8", timeout=120, env=mühit)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            çıxışlar.append(r.stdout)
+        self.assertEqual(çıxışlar[0], çıxışlar[1])
+        self.assertIn("Salam, Dünya", çıxışlar[1])
+        self.assertIn("Leyla │ 7", çıxışlar[1])
 
     def test_xəta_çıxış_kodu(self):
         js = mətndən('yaz("a")\nat ArqumentXətası("pis")\nyaz("b")\n')

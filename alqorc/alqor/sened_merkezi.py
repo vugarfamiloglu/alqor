@@ -434,6 +434,7 @@ alqor qur --exe                # qurma\\<ad>.exe — istənilən Windows-da işl
 alqor qur                      # qurma\\<ad>.pyz — Alqor olan kompüterdə işləyir
 alqor qur --hədəf veb əsas.alq # qurma\\veb\\index.html — brauzerdə açılır
 alqor qur --quraşdırıcı        # öz proqramınız üçün quraşdırıcı
+alqor yerləşdir                # internetə çıxarmaq üçün hazır qovluq
 ```
 
 `.exe` bir fayldır: dostunuza göndərin, o, heç nə quraşdırmadan işlədəcək.
@@ -441,7 +442,8 @@ alqor qur --quraşdırıcı        # öz proqramınız üçün quraşdırıcı
 Pəncərəli proqramlar (`gətir pəncərə`) konsolsuz açılır. Studio-da:
 **İşlət → Qur: tək .exe** (Ctrl+Shift+B).
 
-Ətraflı: [Əmrlər arayışı](emrler.html).
+Ətraflı: [Əmrlər arayışı](emrler.html) və
+[Vebə yerləşdirmə](yerlesdirme.html).
 
 ## 5. Növbəti nə oxumalı?
 
@@ -463,6 +465,133 @@ Pəncərəli proqramlar (`gətir pəncərə`) konsolsuz açılır. Studio-da:
   PowerShell 7 işlədin; Alqor çıxışı UTF-8-dir.
 - **Silmək** — *Parametrlər → Tətbiqlər → Alqor → Sil*. Layihələriniz
   (`Sənədlər\\Alqor`) toxunulmaz qalır.
+"""
+
+
+def _yerləşdirmə() -> str:
+    return """# Vebə yerləşdirmə
+
+Proqramınızı başqaları internetdən açsın deyə bir əmr kifayətdir:
+
+```powershell
+cd Sənədlər\\Alqor\\saytım
+alqor yerləşdir
+```
+
+Nəticə `qurma\\yerləşdir\\` qovluğudur. İçində `YERLESDIR.md` var:
+seçdiyiniz platforma üçün addım-addım təlimat. Studio-da:
+**İşlət → Qur: vebə yerləşdir**.
+
+## İki növ — Alqor özü seçir
+
+| Proqramınız | Nəticə | Harada yerləşir |
+|---|---|---|
+| `gətir veb` **yoxdur** (konsol proqramı, hesablamalar, oyun) | **Statik sayt**: `index.html` — proqram JavaScript-ə çevrilib brauzerdə işləyir | Netlify, GitHub Pages, Cloudflare Pages, istənilən hostinq — **pulsuz**, server lazım deyil |
+| `gətir veb` **var** (`veb.Server`, API, formalar) | **Server paketi**: `tetbiq.pyz` + `Dockerfile` | Render, Fly.io, Railway, öz VPS-iniz |
+
+Məcburi seçmək: `alqor yerləşdir --statik` və ya `--server`.
+
+## Statik sayt
+
+```alqor
+gətir konsol
+
+funksiya əsas()
+    dəyişən ad = konsol.soruş("Adınız: ", standart: "dünya")
+    yaz(konsol.yaşıl("Salam, {ad}!"))
+son
+```
+
+`alqor yerləşdir` → `qurma\\yerləşdir\\index.html`. Əvvəlcə yoxlayın:
+faylı iki dəfə klikləyin — proqram brauzerdə işləyir. `oxu()` və
+`konsol.soruş()` brauzerdə sual pəncərəsi açır.
+
+### Netlify Drop — 1 dəqiqə
+
+1. https://app.netlify.com/drop açın (pulsuz qeydiyyat).
+2. `qurma\\yerləşdir` qovluğunu səhifəyə sürükləyin.
+3. `https://<ad>.netlify.app` ünvanı dərhal işləyir.
+
+### GitHub Pages
+
+```powershell
+alqor yerləşdir --çıxış docs
+git add docs
+git commit -m "Sayt"
+git push
+```
+
+GitHub-da: **Settings → Pages → Branch: main, Folder: /docs**. Ünvan:
+`https://<istifadəçi>.github.io/<repo>/`.
+
+### Brauzerdə nə işləyir?
+
+Statik saytda proqram JavaScript-ə çevrilir. Bu modullar dəstəklənir:
+`riyaziyyat`, `mətn`, `təsadüfi`, `vaxt`, `json`, `naxış`, `sistem`,
+`jurnal`, `paralel`, `konsol` və öz modullarınız. Başqa modul
+(`veb`, `fayl`, `verilənlər`…) işlədirsinizsə, `alqor yerləşdir`
+bunu deyir — onda server növünü seçin.
+
+## Server tətbiqi
+
+```alqor
+gətir veb
+
+dəyişən s = yeni veb.Server()
+s.al("/", (sorğu) => veb.html(<h1>Salam, dünya!</h1>))
+s.al("/salam/:ad", (sorğu) => veb.html(<h1>Salam, {sorğu.parametr("ad")}!</h1>))
+s.dinlə(8080)
+```
+
+`alqor yerləşdir` bu faylları yaradır:
+
+| Fayl | Nədir |
+|---|---|
+| `tetbiq.pyz` | Proqramınız və Alqor icra mühiti, tək fayl |
+| `Dockerfile` | Konteyner təsviri (Python 3.12) |
+| `YERLESDIR.md` | Render, Fly.io və VPS üçün addımlar |
+
+**Port**: kodda `s.dinlə(8080)` yazsanız da, platforma `PORT` mühit
+dəyişənini verirsə, server həmin portda açılır. `ALQOR_HOST=0.0.0.0`
+serveri bütün şəbəkə interfeyslərində açır (Dockerfile bunu özü edir).
+Kodda heç nə dəyişmək lazım deyil.
+
+### Yerli yoxlama
+
+```powershell
+python qurma\\yerləşdir\\tetbiq.pyz     # http://127.0.0.1:8080
+```
+
+### Render.com — pulsuz plan
+
+1. `qurma\\yerləşdir` qovluğunu GitHub-da yeni repoya yükləyin.
+2. render.com → **New → Web Service** → reponu seçin.
+3. **Runtime: Docker** avtomatik seçilir → **Create Web Service**.
+4. Bir neçə dəqiqəyə `https://<ad>.onrender.com` hazırdır.
+
+### Öz serveriniz (VPS)
+
+```bash
+docker build -t saytim .
+docker run -d --restart always -p 80:8080 saytim
+```
+
+Docker yoxdursa: serverdə Python 3.12 qurun və
+`ALQOR_HOST=0.0.0.0 PORT=80 python tetbiq.pyz` işlədin.
+
+## Yeniləmək
+
+Kodu dəyişdikdən sonra yenidən `alqor yerləşdir` işlədin və qovluğu
+təzədən yükləyin (Netlify-da sürükləyin, GitHub-da `git push`).
+
+## Problem olarsa
+
+- **"statik sayta çevrilmədi: `X` modulu JS hədəfində dəstəklənmir"** —
+  `alqor yerləşdir --server` işlədin.
+- **"proqramda xəta var"** — əvvəlcə `alqor işlət` ilə xətanı düzəldin;
+  xətalı proqram yerləşdirilmir.
+- **Render-də sayt açılmır** — *Logs* bölməsinə baxın; `PORT`-u kodda
+  dəyişməyin, Alqor onu özü oxuyur.
 """
 
 
@@ -514,9 +643,13 @@ alqor> "ışıq".böyüyə()
 | `alqor qur --quraşdırıcı` | Proqramınız üçün Windows quraşdırıcısı |
 | `alqor qur --hədəf js fayl.alq` | `qurma\\<ad>.js` — Node.js ilə işləyir |
 | `alqor qur --hədəf veb fayl.alq` | `qurma\\veb\\index.html` — brauzerdə açılır, server lazım deyil |
+| `alqor yerləşdir` | `qurma\\yerləşdir\\` — internetə yükləmək üçün hazır qovluq ([ətraflı](yerlesdirme.html)) |
+| `alqor yerləşdir --statik` / `--server` | Növü məcburi seçir (statik sayt və ya Docker) |
+| `alqor yerləşdir --çıxış docs` | GitHub Pages üçün `docs\\` qovluğu |
 
 JavaScript hədəfi bu modulları dəstəkləyir: `riyaziyyat`, `mətn`,
-`təsadüfi`, `vaxt`, `json`, `naxış`, `sistem`, `jurnal`, `paralel`;
+`təsadüfi`, `vaxt`, `json`, `naxış`, `sistem`, `jurnal`, `paralel`,
+`konsol`;
 Node.js-də həm də `fayl`, `qovluq`, `yol`.
 
 ## Paketlər
@@ -590,6 +723,8 @@ def səhifələr(repo: Path) -> list[Səhifə]:
     n: list[Səhifə] = [
         Səhifə("ilk-addimlar.html", "İlk addımlar", "Başlanğıc",
                _ilk_addımlar(), təsvir="Quraşdırmadan sonra 10 dəqiqə"),
+        Səhifə("yerlesdirme.html", "Vebə yerləşdirmə", "Başlanğıc",
+               _yerləşdirmə(), təsvir="Proqramı internetə çıxarmaq"),
     ]
     bələdçi = repo / "beledci"
     sıra = {"00": "Başlanğıc", "01": "Dərsliklər", "02": "Dərsliklər",
@@ -830,6 +965,7 @@ təsviri və nümunələr. Hamısı bu kompüterdədir, internet lazım deyil.</
 <div class="kartlar">
 {k("beledci-02-veb-dersliyi.html", "Veb sayt, forma, JSON API")}
 {k("beledci-03-desktop-dersliyi.html", "Pəncərə, menyu, dialoq")}
+{k("yerlesdirme.html", "Saytınızı internetə çıxarın: Netlify, Render, VPS")}
 {k("beledci-07-vidjet-dersliyi.html", "118 hazır interfeys elementi")}
 {k("beledci-04-kocurme-beledcisi.html", "Python, JS, C#, PHP bilənlərə")}
 </div>
