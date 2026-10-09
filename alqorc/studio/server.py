@@ -772,6 +772,9 @@ def _İdarəedici_yarat(studio: Studio):
             if yol.startswith("/statik/"):
                 self._statik(yol[len("/statik/"):])
                 return
+            if yol == "/sened" or yol.startswith("/sened/"):
+                self._sənəd(yol[len("/sened/"):] or "index.html")
+                return
             if yol == "/favicon.ico":
                 self._statik("ikon.svg")
                 return
@@ -797,6 +800,21 @@ def _İdarəedici_yarat(studio: Studio):
                 return
             tip = MIME.get(p.suffix.lower(), "application/octet-stream")
             self._göndər(p.read_bytes(), tip, 200, başlıqlar)
+
+        def _sənəd(self, ad: str) -> None:
+            """Oflayn sənəd mərkəzi (Kömək menyusu)."""
+            from alqor.sened_merkezi import sənəd_qovluğu
+            kök = sənəd_qovluğu(Path(__file__).resolve().parent.parent)
+            try:
+                p = (kök / ad).resolve()
+            except (OSError, ValueError):
+                self._xəta("tapılmadı", 404)
+                return
+            if not p.is_relative_to(kök.resolve()) or not p.is_file():
+                self._xəta("tapılmadı", 404)
+                return
+            tip = MIME.get(p.suffix.lower(), "application/octet-stream")
+            self._göndər(p.read_bytes(), tip, 200, None)
 
         # ── POST ──────────────────────────────────────────────────────
 
