@@ -102,6 +102,13 @@ faylları keş qovluğuna açılır (`ALQOR_KES` ilə dəyişdirilir).
 `--tip` — paketdən əvvəl tip yoxlaması. Aşağıdakı `--hədəf` seçimləri
 yerli kompilyatorla gələcək.
 
+**`alqor qur --exe [fayl.alq] [--konsol|--pəncərə]`** — tək Windows
+`.exe` faylı (`qurma/<ad>.exe`); Alqor və Python quraşdırılmamış
+kompüterdə də işləyir. Quruluş: Rust başladıcısı (`alqor-rs/baslatici/`)
++ sıxılmış yük (Python + `.pyz`) + izləyici (`ALQORPAK`). İlk işə
+salınmada yük `%LOCALAPPDATA%\Alqor\tetbiqler\<ad>-<id>\`-yə açılır.
+`gətir pəncərə`/`gətir vidjet` olan proqram konsolsuz qurulur.
+
 **Quraşdırıcılar** — `alqor qur --quraşdırıcı` (`--platforma
 linux,windows,macos`, `--python-daxil`). Xarici alət tələb olunmur:
 
@@ -119,7 +126,23 @@ qoyur (bir dəfə endirilir). Manifestdə `[quraşdırıcı]`: `başlıq`, `naş
 `alqor qur --studio [qovluq]` — **Alqor Studio**-nun özünün quraşdırıcıları:
 `.alq` faylları Studio ilə açılır (`alqor studio fayl.alq` faylı açıb
 başlayır), menyuda və masaüstündə "Alqor Studio" ikonu.
-| `paketlə`, `yerləşdir` | planlaşdırılır |
+| `yerləşdir [fayl] [--statik\|--server] [--çıxış q]` | ✅ vebə yerləşdirmə paketi — aşağıya baxın |
+| `paketlə` | planlaşdırılır (`qur --quraşdırıcı` onu əvəz edir) |
+
+**`alqor yerləşdir`** — proqramı internetə çıxarmaq üçün hazır qovluq
+(standart: `qurma/yerləşdir/`). Növ layihəyə baxıb seçilir:
+
+| Layihə | Nəticə | Platforma |
+|---|---|---|
+| `gətir veb` yoxdur | statik sayt: `index.html` (JS hədəfi, § 13.14), `404.html`, `.nojekyll` | Netlify, GitHub Pages, Cloudflare Pages, istənilən hostinq |
+| `gətir veb` var | `tetbiq.pyz` + `Dockerfile` (python:3.12-slim, imtiyazsız istifadəçi) | Render, Fly.io, Railway, VPS |
+
+Hər iki halda `YERLESDIR.md` platformalar üzrə addımları verir.
+Sintaksis xətası olan proqram yerləşdirilmir (çıxış kodu 2). JS-də
+olmayan modul işlədən proqram üçün `--statik` aydın xəta verir və
+`--server`-i təklif edir. Server paketində port `PORT` mühit
+dəyişənindən gəlir (§ 11, `dinlə`), Dockerfile `ALQOR_HOST=0.0.0.0`
+qoyur. `--çıxış docs` GitHub Pages-in `/docs` rejimi üçündür.
 
 ### `alqor qur` seçimləri
 ```bash
@@ -693,9 +716,12 @@ jobs:
 | `ALQORHUB_TOKEN` | Paket yayımlama tokeni |
 | `ALQOR_BASSIZ` | `1` — `pəncərə` pəncərə açmır (CI, sınaq; § 12.2.1) |
 | `NO_COLOR` | təyin olunubsa `konsol` rəng kodları çap etmir ([no-color.org](https://no-color.org)) |
+| `PORT`, `ALQOR_PORT` | `veb.Server.dinlə` kodda yazılan port əvəzinə bunu işlədir (bulud platformaları) |
+| `ALQOR_HOST` | `veb.Server.dinlə` hostu — konteynerdə `0.0.0.0` |
+| `ALQOR_KES` | `.pyz` paketlərinin açıldığı keş qovluğu |
 
-Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ` və
-`NO_COLOR` oxunur; qalanları kompilyator və paket meneceri ilə gələcək.
+Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ`, `NO_COLOR`,
+`PORT`/`ALQOR_PORT`, `ALQOR_HOST` və `ALQOR_KES` oxunur; qalanları kompilyator və paket meneceri ilə gələcək.
 
 > **Niyə adlar ASCII-dir?**
 > `ALQOR_RƏNG` kimi ad shell-də təyin oluna bilmir — POSIX mühit dəyişəni
@@ -734,9 +760,10 @@ icrada işlədib çıxışı sətir-sətir müqayisə edir. Hesablama ağır
 proqramlarda JS hədəfi ~10 dəfə sürətlidir.
 
 **Dəstəklənən modullar:** `riyaziyyat`, `mətn`, `təsadüfi`, `vaxt`, `json`,
-`naxış`, `sistem`, `jurnal`, `paralel` (ardıcıl), `fayl`/`qovluq`/`yol`
+`naxış`, `sistem`, `jurnal`, `paralel` (ardıcıl), `konsol` (brauzerdə
+rəngsiz; `arqumentlər` yoxdur), `fayl`/`qovluq`/`yol`
 (yalnız node), yerli fayllar (`gətir "./x.alq"`) və `paketlər/` paketləri —
-hamısı bir fayla yığılır. `veb`, `pəncərə`, `vidjet`, `konsol`, `sap` və
+hamısı bir fayla yığılır. `veb`, `pəncərə`, `vidjet`, `sap` və
 `alqor/modullar/` modulları **kompilyasiya xətası** verir.
 
 Fərqlər: `paralel` əməliyyatları ardıcıl işləyir; `vaxt.gözlə` brauzerdə

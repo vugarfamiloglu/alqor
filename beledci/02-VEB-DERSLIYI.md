@@ -493,6 +493,18 @@ python alqorc.py işlət ..\numuneler\10-kitab-refi\esas.alq -- sınaq   # 16 yo
 
 Windows-da: `.\Brauzerde-ac.cmd 10`.
 
+**Bir əmrlə internetə** — layihə qovluğunda:
+
+```powershell
+alqor yerləşdir          # qurma\yerləşdir\: tetbiq.pyz + Dockerfile + YERLESDIR.md
+```
+
+Paket Render, Fly.io və ya Docker olan istənilən serverdə işləyir.
+`s.dinlə(8080)` kodda qalır: platforma `PORT` mühit dəyişənini verəndə
+server həmin portda açılır, `ALQOR_HOST=0.0.0.0` isə onu xaricə açır
+(Dockerfile ikisini də özü qurur). Addımlar: oflayn sənədlərdə
+«Vebə yerləşdirmə» səhifəsi.
+
 **Linux serverdə daimi işlətmək** (systemd):
 
 ```ini

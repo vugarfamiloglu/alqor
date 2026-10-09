@@ -551,13 +551,15 @@ class Studio:
         return iş.lüğət()
 
     QUR_HƏDƏFLƏRİ = {
-        "exe": ["--exe"], "veb": ["--hədəf", "veb"], "js": ["--hədəf", "js"],
-        "pyz": [], "quraşdırıcı": ["--quraşdırıcı", "--platforma", "windows",
-                                    "--python-daxil"],
+        "exe": ["qur", "--exe"], "veb": ["qur", "--hədəf", "veb"],
+        "js": ["qur", "--hədəf", "js"], "pyz": ["qur"],
+        "quraşdırıcı": ["qur", "--quraşdırıcı", "--platforma", "windows",
+                        "--python-daxil"],
+        "yerləşdir": ["yerləşdir"],
     }
 
     def api_qur(self, s: dict) -> dict:
-        """Studio «Qur» menyusu: `.exe`, veb səhifə, JS, paket."""
+        """Studio «Qur» menyusu: `.exe`, veb səhifə, JS, paket, yerləşdirmə."""
         hədəf = self._mətn(s, "hədəf")
         if hədəf not in self.QUR_HƏDƏFLƏRİ:
             raise ApiXətası(f"naməlum hədəf: {hədəf}")
@@ -566,7 +568,7 @@ class Studio:
             raise ApiXətası("fayl tapılmadı — əvvəlcə saxlayın", 404)
         kök = next((q for q in (yol.parent, *yol.parents)
                     if (q / "layihe.alq").is_file()), None)
-        arq = ["qur", *self.QUR_HƏDƏFLƏRİ[hədəf]]
+        arq = list(self.QUR_HƏDƏFLƏRİ[hədəf])
         if hədəf in ("veb", "js") or kök is None:
             arq.append(str(yol))
         qovluq = kök or yol.parent

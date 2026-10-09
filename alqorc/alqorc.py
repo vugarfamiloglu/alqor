@@ -978,6 +978,53 @@ def əmr_lint(arqumentlər: list[str]) -> int:
     return lint_əsas(arqumentlər)
 
 
+def əmr_yerləşdir(arqumentlər: list[str]) -> int:
+    """`alqor yerləşdir` — vebə çıxarmaq üçün hazır paket."""
+    from alqor import yerlesdir
+    from alqor.layihe import Layihə
+    fayllar = [a for a in _faylları_topla(arqumentlər)
+               if a.endswith((".alq", ".alqor"))]
+    if fayllar:
+        f = Path(fayllar[0]).resolve()
+        if not f.is_file():
+            çap_xəta(f"fayl tapılmadı: {fayllar[0]}")
+            return 4
+        layihə = Layihə(f.parent, {"paket": {"ad": f.stem},
+                                   "qurma": {"giriş": f.name,
+                                             "çıxış": "qurma/"}})
+    else:
+        layihə = _layihə(".")
+        if layihə is None:
+            çap_xəta("`layihe.alq` olan qovluqda işlədin və ya fayl verin: "
+                     "alqor yerləşdir proqram.alq")
+            return 3
+    növ = ("statik" if "--statik" in arqumentlər else
+           "server" if "--server" in arqumentlər else None)
+    çıxış = None
+    if "--çıxış" in arqumentlər:
+        i = arqumentlər.index("--çıxış")
+        if i + 1 < len(arqumentlər):
+            çıxış = Path(arqumentlər[i + 1]).resolve()
+    try:
+        n = yerlesdir.yerləşdir(layihə, Path(__file__).resolve().parent,
+                                növ, çıxış)
+    except yerlesdir.YerləşdirməXətası as x:
+        çap_xəta(str(x))
+        return 2
+    try:
+        göstər = n.qovluq.relative_to(Path.cwd())
+    except ValueError:
+        göstər = n.qovluq
+    if n.növ == "statik":
+        print(f"✓ Statik sayt: {göstər}{os.sep}index.html")
+        print("  Ən asan yol: https://app.netlify.com/drop — qovluğu sürükləyin")
+    else:
+        print(f"✓ Server paketi: {göstər}  (tetbiq.pyz + Dockerfile)")
+        print("  Render.com / Fly.io / VPS — Docker ilə")
+    print(f"  Addım-addım: {göstər}{os.sep}YERLESDIR.md")
+    return 0
+
+
 def əmr_sənədlər(arqumentlər: list[str]) -> int:
     """`alqor sənədlər` — oflayn sənəd mərkəzini brauzerdə açır."""
     from alqor import sened_merkezi
@@ -1055,6 +1102,8 @@ def əmr_kömək(_: list[str]) -> int:
                          --port N        sabit port
                          --başsız        pəncərə açmır, ünvanı çap edir
                          --sınaq         özünü yoxlayıb çıxır
+    yerləşdir [fayl]     Vebə çıxarmaq üçün paket: statik sayt (JS) və ya
+                         server (Dockerfile); --statik --server --çıxış q
     sənədlər             Sənədləri (dərsliklər, arayış, nümunələr) brauzerdə
                          açır — internetsiz; --qur [çıxış] statik sayt
     versiya              Versiya məlumatı
@@ -1099,6 +1148,8 @@ VƏZİYYƏT:
     "yeni": əmr_yeni, "new": əmr_yeni,
     "sına": əmr_sına, "sina": əmr_sına, "test": əmr_sına,
     "sənəd": əmr_sənəd, "sened": əmr_sənəd, "doc": əmr_sənəd,
+    "yerləşdir": əmr_yerləşdir, "yerlesdir": əmr_yerləşdir,
+    "deploy": əmr_yerləşdir,
     "sənədlər": əmr_sənədlər, "senedler": əmr_sənədlər, "docs": əmr_sənədlər,
     "dərslik": əmr_sənədlər,
     "qur": əmr_qur, "build": əmr_qur,

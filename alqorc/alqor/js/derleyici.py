@@ -31,12 +31,12 @@ KÖK = Path(__file__).resolve().parent
 #  JS hədəfində olan standart modullar (icra.js → `modullar`)
 DƏSTƏKLƏNƏN_MODULLAR = frozenset({
     "riyaziyyat", "mətn", "təsadüfi", "vaxt", "json", "naxış", "sistem",
-    "jurnal", "paralel", "fayl", "qovluq", "yol",
+    "jurnal", "paralel", "fayl", "qovluq", "yol", "konsol",
 })
 
 #  Python-da olan, JS-də olmayan modullar — aydın xəta üçün
 DƏSTƏKLƏNMƏYƏN_MODULLAR = frozenset({
-    "veb", "pəncərə", "vidjet", "konsol", "test", "sap",
+    "veb", "pəncərə", "vidjet", "test", "sap",
     "csv", "ffi", "html", "http", "keş", "kodlaşdırma", "konfiq",
     "lokalizasiya", "növbə", "pdf", "planlayıcı", "poçt", "pul", "qrafik",
     "sıxma", "toml", "validasiya", "verilənlər", "xml", "yaml", "şifrə",
@@ -1753,9 +1753,9 @@ VEB_ŞABLON = """<!doctype html>
 <title>{başlıq}</title>
 <style>
   :root {{ color-scheme: light dark; --fon: #fbfaf7; --mətn: #1d1d1f;
-          --xəta: #b3261e; --kənar: #d9d6cf; }}
+          --xəta: #b3261e; --kənar: #d9d6cf; --giriş: #1a5fb4; }}
   @media (prefers-color-scheme: dark) {{
-    :root {{ --fon: #17181a; --mətn: #e8e6e3; --xəta: #ff8a80; --kənar: #34363a; }}
+    :root {{ --fon: #17181a; --mətn: #e8e6e3; --xəta: #ff8a80; --kənar: #34363a; --giriş: #8ab4f8; }}
   }}
   body {{ margin: 0; background: var(--fon); color: var(--mətn);
          font: 15px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }}
@@ -1763,6 +1763,7 @@ VEB_ŞABLON = """<!doctype html>
            font-family: system-ui, sans-serif; font-weight: 600; }}
   #çıxış {{ margin: 0; padding: 16px; white-space: pre-wrap; word-break: break-word; }}
   .xəta {{ color: var(--xəta); }}
+  .giriş {{ color: var(--giriş); }}
 </style>
 </head>
 <body>
@@ -1783,7 +1784,11 @@ VEB_ŞABLON = """<!doctype html>
     yaz: s => əlavə(s + "\\n"),
     yazSətirsiz: s => əlavə(s),
     yazXəta: s => əlavə(s + "\\n", "xəta"),
-    oxu: () => prompt(çıxış.textContent.split("\\n").pop() || "") ,
+    oxu: () => {{
+      const c = prompt(çıxış.textContent.split("\\n").pop() || "");
+      if (c !== null) əlavə(c + "\\n", "giriş");
+      return c;
+    }},
   }});
 }})();
 </script>

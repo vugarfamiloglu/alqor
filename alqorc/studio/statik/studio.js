@@ -986,7 +986,8 @@ async function qur(hədəf) {
   $("#cixis").textContent = "";
   altPaneliAç("cixis");
   const adlar = { exe: "tək .exe (Windows)", veb: "veb səhifə", js: "JavaScript",
-                  pyz: "Alqor paketi (.pyz)", "quraşdırıcı": "Windows quraşdırıcısı" };
+                  pyz: "Alqor paketi (.pyz)", "quraşdırıcı": "Windows quraşdırıcısı",
+                  "yerləşdir": "vebə yerləşdirmə paketi" };
   çıxışaYaz(`⚙ Qurulur: ${adlar[hədəf]} — ${t.yol}\n`, "x-sistem");
   try {
     const iş = await API.göndər("/api/qur", { yol: t.yol, hədəf });

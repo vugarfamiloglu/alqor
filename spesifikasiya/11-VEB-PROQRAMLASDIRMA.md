@@ -44,6 +44,12 @@ funksiya əsas()
 son
 ```
 
+`dinlə(port, host = "127.0.0.1")` mühit dəyişənlərinə hörmət edir:
+`PORT` (və ya `ALQOR_PORT`) verilibsə, kodda yazılan port əvəzinə o
+işlədilir; `ALQOR_HOST` hostu əvəz edir. Bulud platformaları (Render,
+Fly.io, Heroku) portu `PORT` ilə verir, ona görə də eyni kod həm yerli,
+həm də `alqor yerləşdir` (§ 13) ilə qurulmuş konteynerdə dəyişmədən işləyir.
+
 ### Marşrutlar
 ```alqor
 server.al("/", idarəedici)                    // GET

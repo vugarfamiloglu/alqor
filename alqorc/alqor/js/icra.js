@@ -3188,6 +3188,182 @@ modullar["yol"] = () => new Modul("yol", {
   "ayırıcı": "/",
 });
 
+// ── konsol ──────────────────────────────────────────────────────────────
+
+const RƏNGLƏR = { "qara": 30, "qırmızı": 31, "yaşıl": 32, "sarı": 33, "mavi": 34,
+  "bənövşəyi": 35, "firuzəyi": 36, "ağ": 37, "boz": 90 };
+const terminaldır = () => !!(nodedir && process.stdout.isTTY);
+//  Brauzerdə ANSI kodları mənasızdır — rəngsiz mətn
+function boya(m, ...kodlar) {
+  m = mətnə(m);
+  if (!kodlar.length || !nodedir || process.env.NO_COLOR) return m;
+  return "\x1b[" + kodlar.join(";") + "m" + m + "\x1b[0m";
+}
+function rəngKodu(a, sahə) {
+  a = kiçiyə(mətnə(a));
+  if (!(a in RƏNGLƏR))
+    throw xəta("ArqumentXətası", "`" + a + "` " + sahə + " rəngi yoxdur. İcazəli: " +
+      Object.keys(RƏNGLƏR).join(", "), "ALQ-R013");
+  return RƏNGLƏR[a];
+}
+function konsolOxu(s) {
+  if (s) P.yazSətirsiz(s);
+  const c = P.oxu();
+  if (c === null || c === undefined)
+    throw xəta("GirişÇıxışXətası", "girişin sonu — oxunacaq məlumat qalmadı", "ALQ-R009");
+  return c;
+}
+function adlıVəYa(adlı, ad, v) { return adlı && adlı[ad] !== undefined ? adlı[ad] : v; }
+function seçimSiyahısı(s) {
+  const l = s instanceof Kortej ? s.e.slice() : Array.isArray(s) ? s.slice() : null;
+  if (!l || !l.length)
+    throw xəta("ArqumentXətası", "seçimlər boş olmayan siyahı olmalıdır", "ALQ-R013");
+  return l;
+}
+function seçimləriGöstər(sual, l) {
+  if (sual !== null && sual !== undefined && mətnə(sual)) P.yaz(mətnə(sual));
+  l.forEach((e, i) => P.yaz("  " + (i + 1) + ") " + mətnə(e)));
+}
+const BƏLİ = ["hə", "he", "bəli", "beli", "h", "b", "doğru", "dogru"];
+const XEYR = ["yox", "xeyr", "y", "x", "yanlış", "yanlis"];
+const konsolRəqəm = s => /^[0-9]+$/.test(s);
+
+function irəliləyiş(cəmi, m) {
+  const o = { cəmi: Math.max(1, N(cəmi)), mətn: m === undefined ? "" : mətnə(m), cari: 0, bitib: false };
+  const sətir = () => {
+    const n = Math.min(1, o.cari / o.cəmi), dolu = yuvarlaCüt(n * 28);
+    return (o.mətn ? o.mətn + " " : "") + "█".repeat(dolu) + "░".repeat(28 - dolu) + " " +
+      String(yuvarlaCüt(n * 100)).padStart(3) + "% (" + o.cari + "/" + o.cəmi + ")";
+  };
+  const çək = () => { if (terminaldır()) P.yazSətirsiz("\r" + sətir()); };
+  let ü;
+  const yenilə = n => { o.cari = Math.max(0, Math.min(o.cəmi, N(n))); çək(); return ü; };
+  ü = new Modul("irəliləyiş", {
+    "yenilə": D("yenilə", 1, 1, yenilə),
+    "artır": D("artır", 0, 1, a => yenilə(o.cari + (a === undefined ? 1 : N(a)))),
+    "bitir": D("bitir", 0, 1, m_ => {
+      if (o.bitib) return null;
+      o.bitib = true; o.cari = o.cəmi;
+      if (terminaldır()) P.yazSətirsiz("\r\x1b[K");
+      P.yaz(m_ === undefined || m_ === null ? sətir() : mətnə(m_));
+      return null;
+    }),
+    "cari": D("cari", 0, 0, () => BigInt(o.cari)),
+    "cəmi": D("cəmi", 0, 0, () => BigInt(o.cəmi)),
+    "mətnƏt": D("mətnƏt", 0, 0, sətir),
+  });
+  return ü;
+}
+
+function fırlanan(m) {
+  const o = { mətn: m === undefined ? "" : mətnə(m), işləyir: true };
+  let ü;
+  ü = new Modul("fırlanan", {
+    "mətnDəyiş": D("mətnDəyiş", 1, 1, m_ => { o.mətn = mətnə(m_); return ü; }),
+    "dayandır": D("dayandır", 0, 1, m_ => {
+      if (!o.işləyir) return null;
+      o.işləyir = false;
+      P.yaz(m_ === undefined || m_ === null ? o.mətn : mətnə(m_));
+      return null;
+    }),
+    "işləyir": D("işləyir", 0, 0, () => o.işləyir),
+  });
+  return ü;
+}
+
+function konsolCədvəl(b, s) {
+  const hamısı = [siyahıya(b).map(mətnə)].concat(siyahıya(s).map(r => siyahıya(r).map(mətnə)));
+  const say = Math.max(...hamısı.map(r => r.length));
+  for (const r of hamısı) while (r.length < say) r.push("");
+  const uz = x => [...x].length;
+  const enlər = [];
+  for (let i = 0; i < say; i++) enlər.push(Math.max(...hamısı.map(r => uz(r[i]))));
+  hamısı.forEach((r, j) => {
+    P.yaz(r.map((h, i) => h + " ".repeat(enlər[i] - uz(h))).join(" │ ").replace(/\s+$/, ""));
+    if (j === 0) P.yaz(enlər.map(e => "─".repeat(e)).join("─┼─"));
+  });
+  return null;
+}
+
+//  Python round(): yarımda cüt tərəfə
+function yuvarlaCüt(x) { const f = Math.floor(x); return x - f === 0.5 ? (f % 2 ? f + 1 : f) : Math.round(x); }
+
+const sadəBoya = (a, k) => D(a, 1, 1, m => boya(m, k));
+modullar["konsol"] = () => new Modul("konsol", {
+  "qırmızı": sadəBoya("qırmızı", 31), "yaşıl": sadəBoya("yaşıl", 32),
+  "sarı": sadəBoya("sarı", 33), "mavi": sadəBoya("mavi", 34),
+  "boz": sadəBoya("boz", 90), "qalın": sadəBoya("qalın", 1),
+  "altXətt": sadəBoya("altXətt", 4),
+  "rəng": D("rəng", 1, 4, (adlı, m, ön, arxa, qalın) => {
+    ön = adlıVəYa(adlı, "ön", ön); arxa = adlıVəYa(adlı, "arxa", arxa);
+    qalın = adlıVəYa(adlı, "qalın", qalın);
+    const k = [];
+    if (qalın) k.push(1);
+    if (ön !== undefined && ön !== null) k.push(rəngKodu(ön, "ön"));
+    if (arxa !== undefined && arxa !== null) k.push(rəngKodu(arxa, "arxa") + 10);
+    return boya(m, ...k);
+  }, true),
+  "təmizlə": D("təmizlə", 0, 0, () => { if (terminaldır()) P.yazSətirsiz("\x1b[2J\x1b[H"); return null; }),
+  "kursor": D("kursor", 1, 2, (s, c) => { if (terminaldır())
+    P.yazSətirsiz("\x1b[" + N(s) + ";" + (c === undefined ? 1 : N(c)) + "H"); return null; }),
+  "ölçü": D("ölçü", 0, 0, () => new Kortej([
+    BigInt(nodedir && process.stdout.columns || 80), BigInt(nodedir && process.stdout.rows || 24)])),
+  "terminaldır": D("terminaldır", 0, 0, terminaldır),
+  "soruş": D("soruş", 0, 2, (adlı, s, st) => {
+    s = mətnə(adlıVəYa(adlı, "sual", s === undefined ? "" : s));
+    st = adlıVəYa(adlı, "standart", st);
+    const var_ = st !== undefined && st !== null;
+    if (var_) s = (s ? s : "") + "[" + mətnə(st) + "] ";
+    const c = konsolOxu(s);
+    if (!c.trim() && var_) return mətnə(st);
+    return c;
+  }, true),
+  "parolSoruş": D("parolSoruş", 0, 1, s => konsolOxu(mətnə(s === undefined ? "Parol: " : s))),
+  "təsdiqlə": D("təsdiqlə", 1, 2, (adlı, s, st) => {
+    st = adlıVəYa(adlı, "standart", st);
+    const var_ = st !== undefined && st !== null;
+    const ipucu = !var_ ? "(hə/yox)" : st ? "(HƏ/yox)" : "(hə/YOX)";
+    for (;;) {
+      const c = kiçiyə(konsolOxu(mətnə(s) + " " + ipucu + " ").trim());
+      if (!c && var_) return !!st;
+      if (BƏLİ.includes(c)) return true;
+      if (XEYR.includes(c)) return false;
+      P.yaz("`hə` və ya `yox` yazın.");
+    }
+  }, true),
+  "seç": D("seç", 2, 2, (s, seçimlər) => {
+    const l = seçimSiyahısı(seçimlər);
+    seçimləriGöstər(s, l);
+    for (;;) {
+      const c = konsolOxu("Seçin (1–" + l.length + "): ").trim();
+      if (konsolRəqəm(c) && Number(c) >= 1 && Number(c) <= l.length) return l[Number(c) - 1];
+      for (const e of l) if (c && kiçiyə(mətnə(e)) === kiçiyə(c)) return e;
+      P.yaz("1 ilə " + l.length + " arasında nömrə yazın.");
+    }
+  }),
+  "çoxSeç": D("çoxSeç", 2, 2, (s, seçimlər) => {
+    const l = seçimSiyahısı(seçimlər);
+    seçimləriGöstər(s, l);
+    for (;;) {
+      const c = konsolOxu("Nömrələr (məs. 1,3; boş — heç biri): ").trim();
+      if (!c) return [];
+      const h = c.replace(/,/g, " ").split(/\s+/).filter(x => x);
+      if (h.every(x => konsolRəqəm(x) && Number(x) >= 1 && Number(x) <= l.length)) {
+        const görülən = [];
+        for (const x of h) if (!görülən.includes(Number(x))) görülən.push(Number(x));
+        return görülən.map(n => l[n - 1]);
+      }
+      P.yaz("1 ilə " + l.length + " arasında nömrələr yazın.");
+    }
+  }),
+  "cədvəl": D("cədvəl", 2, 2, konsolCədvəl),
+  "irəliləyiş": D("irəliləyiş", 1, 2, irəliləyiş),
+  "fırlanan": D("fırlanan", 0, 1, fırlanan),
+  "arqumentlər": D("arqumentlər", 0, 0, () => {
+    throw xəta("ArqumentXətası", "`konsol.arqumentlər` JS hədəfində dəstəklənmir", "ALQ-M002");
+  }),
+});
+
 const _modulKeş = Object.create(null);
 function modul(a) {
   if (_modulKeş[a]) return _modulKeş[a];
