@@ -208,7 +208,7 @@ def deb(t: Tətbiq, çıxış: Path) -> Path:
     ölçü = sum(len(d) for d, _ in fayllar.values()) // 1024 + 1
     control = (
         f"Package: {ad}\nVersion: {t.versiya_təmiz}\nArchitecture: all\n"
-        f"Maintainer: {t.naşir} <noreply@alqor.az>\n"
+        f"Maintainer: {t.naşir} <noreply@alqor.vuqar.pro>\n"
         "Depends: python3 (>= 3.12)\n"
         f"Installed-Size: {ölçü}\nSection: misc\nPriority: optional\n"
         f"Description: {(t.təsvir or t.başlıq).splitlines()[0]}\n"

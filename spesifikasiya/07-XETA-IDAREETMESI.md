@@ -342,7 +342,7 @@ Xəta heç yerdə tutulmasa, proqram dayanır və hesabat verilir:
   Səbəb: GirişÇıxışXətası — ENOENT (2)
 
   = kömək: faylın mövcudluğunu `fayl.vardır(yol)` ilə yoxlayın
-  = sənəd: alqor.az/xeta/FaylTapılmadıXətası
+  = sənəd: alqor.vuqar.pro/xeta/FaylTapılmadıXətası
 ```
 
 Çıxış kodu: `1` (və ya xətanın `kod` dəyəri).

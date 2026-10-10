@@ -71,7 +71,7 @@ vidjet.düymə(mətn: "Sil", növ: "təhlükə", ikon: "✕", ölçü: "kiçik")
 vidjet.düymə(mətn: "Göndərilir…", gözləyir: özü.göndərilir)
 vidjet.düymə(mətn: "Bütün en", tamEn: doğru)
 vidjet.ikonDüymə(ikon: "⚙", başlıq: "Ayarlar", klik: özü.ayarlar)
-vidjet.əlaqə(mətn: "Ətraflı", ünvan: "https://alqor.az", yeniNişan: doğru)
+vidjet.əlaqə(mətn: "Ətraflı", ünvan: "https://alqor.vuqar.pro", yeniNişan: doğru)
 ```
 
 | `növ` | Görünüş |
