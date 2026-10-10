@@ -16,7 +16,8 @@ import subprocess
 import sys
 import tempfile
 
-from .derleyici import KompilyasiyaXətası, icra_mühiti, kompilyasiya
+from .derleyici import (ƏLAVƏ_MODULLAR, KompilyasiyaXətası, icra_mühiti,
+                        kompilyasiya)
 
 
 def node_tap() -> str | None:
@@ -59,7 +60,7 @@ process.stdout.write(JSON.stringify(nəticələr));
 
 def js_işlət(nümunələr: list[dict], node: str) -> list[dict | None]:
     """Hər nümunəni kompilyasiya edib tək node prosesində işlədir."""
-    hissələr = [icra_mühiti(), "const $proqramlar = [];"]
+    hissələr = [icra_mühiti(set(ƏLAVƏ_MODULLAR)), "const $proqramlar = [];"]
     kompilyasiya_xətaları: dict[int, str] = {}
     for i, n in enumerate(nümunələr):
         try:

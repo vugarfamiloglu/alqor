@@ -12,8 +12,10 @@ brauzerdə işləyir:
 Semantika Python interpretatoru ilə eynidir (`sinaq/test_js.py` hər iki
 icranın çıxışını müqayisə edir). `tam` → BigInt, `onluq` → number.
 
-Dəstəklənməyən modullar (`veb`, `pəncərə`, `vidjet`, `konsol`, ...)
-kompilyasiya xətası verir.
+İnterfeys proqramları da (komponentlər, `vidjet`, `pəncərə`) brauzerdə
+serversiz işləyir: `veb_səhifəsi` onları statik sayta çevirir (§ 13.14).
+Dəstəklənməyən modullar (`veb`, `csv`, `verilənlər`, ...) kompilyasiya
+xətası verir.
 """
 
 from __future__ import annotations
@@ -32,12 +34,17 @@ KÖK = Path(__file__).resolve().parent
 DƏSTƏKLƏNƏN_MODULLAR = frozenset({
     "riyaziyyat", "mətn", "təsadüfi", "vaxt", "json", "naxış", "sistem",
     "jurnal", "paralel", "fayl", "qovluq", "yol", "konsol",
+    "vidjet", "pəncərə", "pəncərə.dialoq", "pəncərə.sınaq", "http",
 })
+
+#  icra.js-ə əlavə qoşulan modullar: proqram onları idxal edəndə
+#  (`Kompilyator.lazımi`) uyğun JS faylı nəticəyə daxil edilir.
+ƏLAVƏ_MODULLAR = ("vidjet", "pəncərə", "http", "veb")
 
 #  Python-da olan, JS-də olmayan modullar — aydın xəta üçün
 DƏSTƏKLƏNMƏYƏN_MODULLAR = frozenset({
-    "veb", "pəncərə", "vidjet", "test", "sap",
-    "csv", "ffi", "html", "http", "keş", "kodlaşdırma", "konfiq",
+    "veb", "test", "sap",
+    "csv", "ffi", "html", "keş", "kodlaşdırma", "konfiq",
     "lokalizasiya", "növbə", "pdf", "planlayıcı", "poçt", "pul", "qrafik",
     "sıxma", "toml", "validasiya", "verilənlər", "xml", "yaml", "şifrə",
     "şəbəkə", "şəkil",
@@ -133,6 +140,8 @@ class Kompilyator:
         self.fayl_oxu = fayl_oxu
         self.əh: Əhatə | None = None
         self.fk: FunksiyaK | None = None
+        self.lazımi: set[str] = set()      # ƏLAVƏ_MODULLAR-dan işlənənlər
+        self.interfeys = False             # proqram `pəncərə` idxal edir
 
     # ── Adlar ─────────────────────────────────────────────────────────
 
@@ -232,6 +241,9 @@ class Kompilyator:
         fk = FunksiyaK("proqram")
         self.fk = fk
         self.əh = Əhatə(None, fk)
+        self.interfeys = any(
+            isinstance(c, A.İdxal) and c.mətn_yolu is None and c.yol and
+            c.yol[0] == "pəncərə" for c in ağac.gövdə)
         gövdə = self._yuxarı_səviyyə(ağac.gövdə)
         əsas = self.əh.adlar.get("əsas")
         son = f"return typeof {əsas.js} === \"function\" ? {əsas.js} : null;" \
@@ -1274,7 +1286,14 @@ class Kompilyator:
     def _c_İdxal(self, c: A.İdxal) -> list[str]:
         ad = c.mətn_yolu or ".".join(c.yol)
         kök = ad.split(".")[0]
-        if c.mətn_yolu is None and (ad in DƏSTƏKLƏNƏN_MODULLAR):
+        if c.mətn_yolu is None and kök == "veb" and self.interfeys:
+            # İnterfeys proqramının veb budağı (`-- veb` arqumenti) — statik
+            # saytda server yoxdur, `veb.*` çağırışı icra xətası verir
+            self.lazımi.add("veb")
+            modul = f"$.modul({_js_mətn(ad)})"
+        elif c.mətn_yolu is None and (ad in DƏSTƏKLƏNƏN_MODULLAR):
+            if kök in ƏLAVƏ_MODULLAR:
+                self.lazımi.add(kök)
             modul = f"$.modul({_js_mətn(ad)})"
         elif c.mətn_yolu is None and (kök in DƏSTƏKLƏNMƏYƏN_MODULLAR):
             raise KompilyasiyaXətası(
@@ -1716,8 +1735,48 @@ def _std_üzvlər(ad: str) -> list[str]:
 #  İctimai API
 # ═══════════════════════════════════════════════════════════════════════
 
-def icra_mühiti() -> str:
-    return İCRA_JS.read_text(encoding="utf-8")
+def icra_mühiti(lazımi: set[str] | frozenset[str] | None = None) -> str:
+    """icra.js və (lazım olsa) əlavə modullar: vidjet, pəncərə, http."""
+    n = [İCRA_JS.read_text(encoding="utf-8")]
+    for ad in əlavə_sırası(lazımi or ()):
+        n.append(əlavə_modul(ad))
+    return "\n".join(n)
+
+
+def əlavə_sırası(lazımi) -> list[str]:
+    adlar = set(lazımi)
+    if "veb" in adlar:
+        adlar.add("pəncərə")
+    return [a for a in ƏLAVƏ_MODULLAR if a in adlar]
+
+
+def əlavə_modul(ad: str) -> str:
+    if ad == "vidjet":
+        from .vidjet_cevir import vidjet_modulu
+        return vidjet_modulu()
+    if ad == "pəncərə":
+        return (KÖK / "pencere.js").read_text(encoding="utf-8")
+    if ad == "http":
+        return (KÖK / "http.js").read_text(encoding="utf-8")
+    if ad == "veb":
+        return VEB_QARALAMA
+    raise KeyError(ad)
+
+
+# `veb` serveri brauzerdə yoxdur: interfeys proqramının veb budağı
+# kompilyasiya olunur, amma çağırılanda aydın xəta verir.
+VEB_QARALAMA = """(function ($) {
+const yox = a => $.D(a, 0, null, () => { throw $.xəta("ArqumentXətası",
+  "`veb." + a + "` JS hədəfində (brauzerdə) dəstəklənmir — veb serveri üçün " +
+  "proqramı Python ilə işlədin (`alqor işlət`, `alqor yerləşdir --server`)", "ALQ-M002"); });
+const ü = {};
+for (const a of ["Server", "mətn", "html", "json", "boş", "yönləndir", "yönləndirDaimi",
+  "xəta", "fayl", "yüklə", "şablon", "şablonQovluğu", "jurnal", "CORS", "sıxma",
+  "təhlükəsizlikBaşlıqları", "sessiya", "sürətLimiti", "boşPort"]) ü[a] = yox(a);
+ü["sınaq"] = new $.Modul("veb.sınaq", { "server": yox("sınaq.server") });
+$.modulQeyd("veb", () => new $.Modul("veb", ü));
+})($);
+"""
 
 
 def kompilyasiya(ağac: A.Proqram, əsas_yol: Path | None = None) -> str:
@@ -1726,17 +1785,24 @@ def kompilyasiya(ağac: A.Proqram, əsas_yol: Path | None = None) -> str:
     Qaytarır: icra mühiti olmadan, yalnız proqram hissəsi (speclər,
     fayl modulları və `const $proqram = function () {...};`).
     """
+    return kompilyasiya_tam(ağac, əsas_yol)[0]
+
+
+def kompilyasiya_tam(ağac: A.Proqram, əsas_yol: Path | None = None
+                     ) -> tuple[str, set[str]]:
+    """(proqram JS-i, lazım olan əlavə modullar)."""
     k = Kompilyator(əsas_yol)
     proqram = k.proqram(ağac)
-    return ("\n".join(k.speclər) + "\n" +
-            "\n".join(k.fayl_modulları.values()) + "\n" +
-            f"const $proqram = {proqram};\n")
+    js = ("\n".join(k.speclər) + "\n" +
+          "\n".join(k.fayl_modulları.values()) + "\n" +
+          f"const $proqram = {proqram};\n")
+    return js, k.lazımi
 
 
 def node_faylı(ağac: A.Proqram, əsas_yol: Path | None = None) -> str:
     """Node.js ilə işləyən tam fayl."""
-    return ("#!/usr/bin/env node\n" + icra_mühiti() + "\n" +
-            kompilyasiya(ağac, əsas_yol) +
+    js, lazımi = kompilyasiya_tam(ağac, əsas_yol)
+    return ("#!/usr/bin/env node\n" + icra_mühiti(lazımi) + "\n" + js +
             "if (typeof require !== \"undefined\" && require.main === module) {\n"
             "  $.P.arqumentlər = process.argv.slice(2);\n"
             "  process.exitCode = $.işlət($proqram);\n"
@@ -1797,12 +1863,100 @@ VEB_ŞABLON = """<!doctype html>
 """
 
 
+İNTERFEYS_ŞABLON = """<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{başlıq}</title>
+<style>{üslub}</style>
+</head>
+<body>
+<nav id="alqor-menyu" class="menyu-sətri" hidden></nav>
+<main id="alqor-kök"></main>
+<script>
+{icra}
+{proqram}
+(function () {{
+{nüvə}
+ try {{ const t = new URLSearchParams(location.search).get("tema");
+  if (t === "qaranlıq" || t === "işıqlı") document.documentElement.dataset.tema = t; }}
+ catch (e) {{}}
+ window.$alqorYamaq = yamaq;
+ const kök = document.getElementById("alqor-kök");
+ const menyu = document.getElementById("alqor-menyu");
+ const qaç = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+ let bağlı = false;
+ // Hadisə serverə yox, birbaşa icra mühitinə gedir (pencere.py-dəki
+ // `/_alqor/hadise` sorğusunun qarşılığı)
+ async function göndər(id, dəyər) {{
+  if (bağlı) return;
+  const n = $.UI.hadisə(id, dəyər === undefined ? null : dəyər);
+  if (n.xəta) {{ kök.innerHTML = '<pre id="alqor-xəta">' + qaç(n.xəta) + "</pre>"; return; }}
+  if (n.bağlı) {{ bağlı = true; return; }}
+  if (n.üslub !== undefined) {{
+   const ü = document.getElementById("alqor-pəncərə-üslubu");
+   if (ü && ü.textContent !== n.üslub) ü.textContent = n.üslub;
+  }}
+  if (n.html !== undefined) yamaq(kök, n.html);
+  if (n.menyu !== undefined && menyu) {{ menyu.innerHTML = n.menyu; menyu.hidden = !n.menyu; }}
+  if (n.başlıq) document.title = n.başlıq;
+ }}
+ alqorBağla(göndər);
+ // Menyu qısayolları
+ document.addEventListener("keydown", function (h) {{
+  const hissələr = [];
+  if (h.ctrlKey) hissələr.push("ctrl");
+  if (h.metaKey) hissələr.push("meta");
+  if (h.altKey) hissələr.push("alt");
+  if (h.shiftKey) hissələr.push("shift");
+  const a = h.key.toLowerCase();
+  if (["control", "meta", "alt", "shift"].includes(a)) return;
+  hissələr.push(a);
+  const t = document.querySelector('[data-a-qisayol="' + hissələr.join("+") + '"]');
+  if (t) {{ h.preventDefault(); göndər(t.getAttribute("data-a-klik")); }}
+ }});
+ // Konsol çıxışı (`yaz`) brauzer konsoluna gedir; pəncərə açılmayıbsa
+ // səhifədə göstərilir
+ const çıxış = [];
+ $.işlət($proqram, {{
+  yaz: s => {{ çıxış.push(s + "\\n"); console.log(s); }},
+  yazSətirsiz: s => {{ çıxış.push(s); console.log(s); }},
+  yazXəta: s => {{ çıxış.push(s + "\\n"); console.error(s); }},
+  xəta: e => {{ console.error(e); $.UI.xətanıGöstər(e); }},
+ }});
+ if (!kök.firstChild && çıxış.length) {{
+  const p = document.createElement("pre");
+  p.style.cssText = "margin:0;white-space:pre-wrap;font-family:ui-monospace,monospace";
+  p.textContent = çıxış.join("");
+  kök.appendChild(p);
+ }}
+}})();
+</script>
+</body>
+</html>
+"""
+
+
 def veb_səhifəsi(ağac: A.Proqram, başlıq: str = "Alqor",
                  əsas_yol: Path | None = None) -> str:
+    """Brauzerdə serversiz işləyən tək HTML səhifə.
+
+    `pəncərə` idxal edən proqram interfeys səhifəsi alır (menyu sətri,
+    `#alqor-kök`, vidjet üslubu, hadisələr) — qalanları konsol səhifəsi.
+    """
     import html
-    proqram = kompilyasiya(ağac, əsas_yol).replace("</script", "<\\/script")
-    return VEB_ŞABLON.format(başlıq=html.escape(başlıq),
-                             icra=icra_mühiti().replace("</script", "<\\/script"),
+    js, lazımi = kompilyasiya_tam(ağac, əsas_yol)
+    proqram = js.replace("</script", "<\\/script")
+    icra = icra_mühiti(lazımi).replace("</script", "<\\/script")
+    if "pəncərə" in lazımi:
+        from ..pencere import NÜVƏ_SKRİPTİ, ÜSLUB
+        from ..vidjet import ÜSLUB as VİDJET_ÜSLUBU
+        return İNTERFEYS_ŞABLON.format(
+            başlıq=html.escape(başlıq),
+            üslub=(ÜSLUB + VİDJET_ÜSLUBU).replace("</style", "<\\/style"),
+            icra=icra, proqram=proqram, nüvə=NÜVƏ_SKRİPTİ)
+    return VEB_ŞABLON.format(başlıq=html.escape(başlıq), icra=icra,
                              proqram=proqram)
 
 
