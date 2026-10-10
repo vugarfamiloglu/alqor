@@ -1,6 +1,6 @@
 [package]
 name = "alqor-baslatici"
-version = "0.1.0"
+version = "2.3.0"
 edition = "2021"
 description = "alqor qur --exe: tək .exe başladıcısı (yük: Python + proqram)"
 license = "MIT"

@@ -1,6 +1,6 @@
 name: Buraxılış (Windows quraşdırıcısı)
 
-# `v0.1.0` kimi teq push ediləndə quraşdırıcı qurulur, Windows-da səssiz
+# `v2.3.0` kimi teq push ediləndə quraşdırıcı qurulur, Windows-da səssiz
 # quraşdırılıb yoxlanır və GitHub Releases-ə yüklənir. Əl ilə də işə
 # salmaq olar (Actions → Buraxılış → Run workflow) — onda yalnız artefakt.
 
