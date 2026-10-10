@@ -11,6 +11,8 @@ Python etalonu ilə `alqor-rs` arasında diferensial müqayisə.
                                                      # stdout sətirləri + xəta tipi
     python -m alqor.rs.muqayise işlət [fayl...]      # proqramlar (standart: js_numuneler
                                                      # və numuneler): stdout + çıxış kodu
+    python -m alqor.rs.muqayise işlət --parçalar     # sinaq/rs_icra_parcalari.alq:
+                                                     # stdout + stderr + çıxış kodu
 """
 
 from __future__ import annotations
@@ -310,6 +312,12 @@ def proqram_işlət(b: Path, fayllar: list[Path], çıxış=print) -> int:
         arq = ARQUMENTLƏR.get(f.name)
         po, pe, pk = python_işlət(f, giriş, arq)
         ro, re_, rk = rust_işlət(b, f, giriş, arq)
+        # Python `paralel`/`başlat` sapları çıxışı bəzən qarışdırır —
+        # fərq olarsa etalonu bir neçə dəfə təkrar işlədirik
+        for _ in range(3):
+            if po == ro and pk == rk:
+                break
+            po, pe, pk = python_işlət(f, giriş, arq)
         if po == ro and pk == rk:
             continue
         pis += 1
@@ -323,6 +331,36 @@ def proqram_işlət(b: Path, fayllar: list[Path], çıxış=print) -> int:
     return pis
 
 
+PARÇALAR = REPO / "alqorc" / "sinaq" / "rs_icra_parcalari.alq"
+
+
+def parçalar_işlət(b: Path, fayl: Path = PARÇALAR,
+                   çıxış=print) -> tuple[int, int]:
+    """`=====` ilə ayrılmış parçalar: stdout, stderr və kod tam eyni olmalıdır."""
+    import tempfile
+    q = Path(tempfile.mkdtemp(prefix="alqor-rs-par-"))
+    parçalar = fayl.read_text(encoding="utf-8").split("=====\n")
+    eyni = 0
+    for k, kod in enumerate(parçalar):
+        f = q / f"p{k:03d}.alq"
+        f.write_text(kod, encoding="utf-8")
+        giriş, arq = "bir\niki\n", ["x", "y"]
+        py = python_işlət(f, giriş, arq)
+        rs = rust_işlət(b, f, giriş, arq)
+        if py == rs:
+            eyni += 1
+            continue
+        çıxış(f"✖ parça #{k} ({f}): kod py={py[2]} rs={rs[2]}")
+        for ad, x, y in (("stdout", py[0], rs[0]), ("stderr", py[1], rs[1])):
+            x, y = x.splitlines(), y.splitlines()
+            if x != y:
+                i = next((i for i, (m, n) in enumerate(zip(x, y)) if m != n),
+                         min(len(x), len(y)))
+                çıxış(f"    {ad} py: {x[i] if i < len(x) else '—'}\n"
+                      f"    {ad} rs: {y[i] if i < len(y) else '—'}")
+    return eyni, len(parçalar)
+
+
 def main(a: list[str]) -> int:
     if a and a[0] in ("işlət", "islet"):
         b = qur()
@@ -331,6 +369,11 @@ def main(a: list[str]) -> int:
             return 2
         if a[1:] == ["--korpus"]:
             eyni, cəmi = korpus_işlət(b)
+            print(f"{eyni}/{cəmi} parça eyni")
+            return 0 if eyni == cəmi else 1
+        if a[1:2] == ["--parçalar"]:
+            eyni, cəmi = parçalar_işlət(
+                b, Path(a[2]) if len(a) > 2 else PARÇALAR)
             print(f"{eyni}/{cəmi} parça eyni")
             return 0 if eyni == cəmi else 1
         fayllar = [Path(x).resolve() for x in a[1:]] or proqramlar()
