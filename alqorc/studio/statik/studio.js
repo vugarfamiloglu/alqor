@@ -64,11 +64,15 @@ function bildir(mətn, növ = "", müddət = 3600) {
 
 function xəta(x) { bildir(x.message || String(x), "xəta", 6000); }
 
-function dialoq(başlıq, { mətn = "", standart = "", giriş = true, tamam = "Tamam" } = {}) {
+function dialoq(başlıq, { mətn = "", standart = "", giriş = true, tamam = "Tamam",
+                           düyün = null, ləğv = true } = {}) {
   const d = $("#dialoq");
   $("#dialoq-basliq").textContent = başlıq;
-  $("#dialoq-metn").textContent = mətn;
-  $("#dialoq-metn").hidden = !mətn;
+  const m = $("#dialoq-metn");
+  m.textContent = mətn;
+  if (düyün) m.appendChild(düyün);
+  m.hidden = !mətn && !düyün;
+  $("#dialoq-legv").hidden = !ləğv;
   const g = $("#dialoq-giris");
   g.hidden = !giriş;
   g.value = standart;
@@ -82,7 +86,7 @@ function dialoq(başlıq, { mətn = "", standart = "", giriş = true, tamam = "T
       if (h.key === "Enter") { h.preventDefault(); d.close("tamam"); }
     };
     d.showModal();
-    if (giriş) { g.focus(); g.select(); }
+    if (giriş) { g.focus(); g.select(); } else $("#dialoq-tamam").focus();
   });
 }
 

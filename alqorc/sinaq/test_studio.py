@@ -1633,6 +1633,23 @@ class Brauzer(unittest.TestCase):
             self.səhifə.wait_for_timeout(100)
         self.fail(mesaj)
 
+    def test_haqqında_pəncərəsi(self):
+        p = self.səhifə
+        p.click('#menyu-setri .m-başlıq:has-text("Kömək")')
+        p.click('.menyu-qutu .m-element:has-text("Alqor Studio haqqında")')
+        d = p.locator("#dialoq")
+        d.wait_for(state="visible")
+        m = d.inner_text()
+        for parça in ("Vüqar Familoğlu", "alqor.vuqar.pro", "Versiya",
+                      "Azərbaycan dilində"):
+            self.assertIn(parça, m)
+        self.assertEqual(d.locator("a").get_attribute("href"),
+                         "https://alqor.vuqar.pro")
+        self.assertFalse(p.locator("#dialoq-legv").is_visible())
+        if os.environ.get("ALQOR_EKRAN"):
+            d.screenshot(path=os.environ["ALQOR_EKRAN"])
+        p.click("#dialoq-tamam")
+
     def test_menyu_sətri(self):
         p = self.səhifə
         başlıqlar = p.locator("#menyu-setri .m-başlıq").all_inner_texts()
