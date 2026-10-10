@@ -252,7 +252,11 @@ def _vidjet_kodları() -> list[str]:
 
 
 def _vidjet_korpusu() -> list[dict]:
+    from alqor import vidjet_elave
     from sinaq.test_icraci import işlət
+    # `avtoTamamlama` proses boyu sayğac işlədir (datalist id-si) — JS
+    # tərəfi kimi sıfırdan başlasın
+    vidjet_elave._SİYAHI_SAYĞACI[0] = 0
     korpus = []
     for kod in _vidjet_kodları():
         s, x = işlət(kod)
