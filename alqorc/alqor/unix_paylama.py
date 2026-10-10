@@ -314,8 +314,8 @@ def deb(q: Path, çıxış: Path, arx: str) -> Path:
                if p.is_file() and not p.is_symlink()) // 1024 + 1
     control = (
         f"Package: alqor\nVersion: {v}\nArchitecture: {_DEB_ARX[arx]}\n"
-        "Maintainer: Vüqar Familoğlu <noreply@alqor.vuqar.pro>\n"
-        "Homepage: https://alqor.vuqar.pro\n"
+        "Maintainer: Vüqar Familoğlu <noreply@vuqar.pro>\n"
+        "Homepage: https://vuqar.pro/alqor\n"
         f"Installed-Size: {ölçü}\nSection: devel\nPriority: optional\n"
         "Description: Alqor — Azərbaycan dilində proqramlaşdırma dili\n"
         " Dil, Alqor Studio IDE, paket meneceri, linter, formatter, LSP\n"
@@ -373,7 +373,7 @@ def _plist(v: str) -> str:
         "  <key>CFBundleIconFile</key><string>ikon.png</string>\n"
         "  <key>LSMinimumSystemVersion</key><string>11.0</string>\n"
         "  <key>NSHumanReadableCopyright</key><string>Vüqar Familoğlu · "
-        "alqor.vuqar.pro</string>\n"
+        "vuqar.pro/alqor</string>\n"
         "  <key>CFBundleDocumentTypes</key><array><dict>"
         "<key>CFBundleTypeExtensions</key><array><string>alq</string>"
         "<string>alqor</string></array><key>CFBundleTypeName</key>"
@@ -387,7 +387,7 @@ _DMG_OXU = ("Alqor {v}\n\n"
             "2. İlk açılışda: sağ klik → «Open» (tətbiq imzalanmayıb).\n"
             "3. Terminal əmrləri (alqor, alqorpm…) üçün Terminalda:\n"
             '   "/Applications/Alqor Studio.app/Contents/Resources/alqor/'
-            'qurasdir.sh"\n\nSayt: https://alqor.vuqar.pro\n')
+            'qurasdir.sh"\n\nSayt: https://vuqar.pro/alqor\n')
 
 
 def app_qovluğu(q: Path, çıxış: Path) -> Path:

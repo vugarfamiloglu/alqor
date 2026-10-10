@@ -11,7 +11,7 @@ xətlənmiş mənbə parçası və düzəliş təklifi var.
       │          ^^^^^^^^^^^^ `mətn` və `tam` toplanmır
       │
       = kömək: interpolyasiya istifadə edin: "Yaş: {yaş}"
-      = sənəd: alqor.vuqar.pro/xeta/ALQ-T008
+      = sənəd: vuqar.pro/alqor/xeta/ALQ-T008
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from enum import Enum
 
 from .token import Yer
 
-SENED_KOKU = "alqor.vuqar.pro/xeta"
+SENED_KOKU = "vuqar.pro/alqor/xeta"
 TAB_GENISLIK = 4
 
 

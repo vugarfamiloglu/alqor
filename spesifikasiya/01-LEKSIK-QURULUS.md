@@ -636,5 +636,5 @@ Dəstəklənən tipli bağlanışlar: `son əgər`, `son funksiya`, `son sinif`,
   │         ^^^^^^^^^^^^^^ bu mətn bağlanmayıb
   │
   = kömək: sonda `"` əlavə edin
-  = sənəd: alqor.vuqar.pro/xeta/ALQ-L003
+  = sənəd: vuqar.pro/alqor/xeta/ALQ-L003
 ```

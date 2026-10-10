@@ -21,7 +21,7 @@ Alqor — `alqorpm`: paket meneceri (Spesifikasiya § 8.9).
     alqorpm təmizlə                    yerli keşi təmizlə
 
 Depo ünvanı: `--depo URL` › `ALQORHUB` mühit dəyişəni › `layihe.alq`
-`[alqorpm] depo` › `~/.alq/ayarlar.json` › https://hub.alqor.vuqar.pro.
+`[alqorpm] depo` › `~/.alq/ayarlar.json` › https://vuqar.pro/hub.
 Paketlər `paketlər/<ad>/`-a açılır; yüklənən arxivlər SHA256 ilə
 yoxlanır və `~/.alq/keş/` qovluğunda saxlanır.
 """
@@ -51,7 +51,7 @@ from .layihe import MANİFEST, oxu as manifest_oxu
 from .paketler import (Aralıq, Versiya, VersiyaXətası, ad_yoxla,
                        layihə_kökü)
 
-STANDART_DEPO = "https://hub.alqor.vuqar.pro"
+STANDART_DEPO = "https://vuqar.pro/hub"
 KİLİD = "alqor.kilid"
 MAKS_ARXİV = 50 * 1024 * 1024
 _SABİT_ZAMAN = 1577836800                       # 2020-01-01 — təkrarlanan arxiv

@@ -116,7 +116,7 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
      `YERLESDIR.md`-də.
 9. **JS hədəfini genişləndirmək**: `vidjet` və komponentlər brauzerdə
    (veb tətbiqləri serversiz işləsin), `http` müştərisi (`fetch`).
-10. **Onlayn sınaq meydançası** (`alqor.vuqar.pro`) — JS hədəfi ilə
+10. **Onlayn sınaq meydançası** (`vuqar.pro/alqor`) — JS hədəfi ilə
     brauzerdə quraşdırmadan kod yazıb işlətmək.
 
 ### Mərhələ 4 — Rust kompilyatoru (sürət və tək binar) 🟡
@@ -125,11 +125,16 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
     icraçı yarımçıq (dəyərlər, mühit, ifadələr), standart kitabxana yoxdur. Sınaq: Python etalonu ilə eyni çıxış (JS hədəfindəki
     müqayisə qoşqusu ilə). Sonra: native binar və WASM.
 
-### Sonraya saxlanılıb ⏸
-- **Ekosistem** — [alqor.vuqar.pro](https://alqor.vuqar.pro): paket deposu
-  (alqorhub), sənəd saytı, VS Code Marketplace.
-- **Linux və macOS quraşdırıcıları** — generatorlar kodda qalır
-  (`.deb`, `.rpm`, `.AppImage`, `.dmg`), amma hələlik prioritet deyil.
+### Ekosistem (Vüqar Familoğlu özü hazırlayır) ⏸
+- Sayt: [vuqar.pro/alqor](https://vuqar.pro/alqor) — xəta mesajlarındakı
+  linklər `vuqar.pro/alqor/xeta/<KOD>` formasındadır.
+- Paket deposu: [vuqar.pro/hub](https://vuqar.pro/hub) — `alqorpm`-in
+  standart deposu; server `alqor hub --önək /hub` (spes. § 8.9).
+
+### Linux və macOS quraşdırıcıları ✅
+- `alqor qur --alqor --platforma linux|macos [--arx x86_64|aarch64]`:
+  `.deb`, `.tar.gz` (sudo-suz `qurasdir.sh`), `.dmg` (Alqor Studio.app);
+  CI-da həqiqi Linux və macOS maşınlarında quraşdırılıb sınanır.
 
 ✅ Bu sessiyada hazır olanlar: JS hədəfi (`alqor işlət --js`,
 `alqor qur --hədəf js|veb`, spes. § 13.14), ifadəsiz `seç`-də şərt halları.

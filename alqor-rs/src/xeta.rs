@@ -214,7 +214,7 @@ impl Diaqnostika {
         for k in &self.köməklər {
             s.push(format!("  {} {}", boya("= kömək:", "90", r), k));
         }
-        s.push(format!("  {} alqor.vuqar.pro/xeta/{}", boya("= sənəd:", "90", r), self.kod));
+        s.push(format!("  {} vuqar.pro/alqor/xeta/{}", boya("= sənəd:", "90", r), self.kod));
         s.join("\n")
     }
 }

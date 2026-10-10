@@ -161,7 +161,7 @@ class XətaHesabatı(unittest.TestCase):
         self.assertIn("əsas.alq:1:6", h)
         self.assertIn("^^^^^^^", h)
         self.assertIn("= kömək:", h)
-        self.assertIn("= sənəd: alqor.vuqar.pro/xeta/ALQ-T008", h)
+        self.assertIn("= sənəd: vuqar.pro/alqor/xeta/ALQ-T008", h)
 
     def test_xəbərdarlıq_işarəsi(self):
         self.x.xəbərdarlıq("ALQ-L020", "ASCII açar söz", self.m.yer(0, 3))
