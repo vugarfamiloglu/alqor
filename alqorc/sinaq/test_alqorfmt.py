@@ -207,6 +207,21 @@ class Nümunələr(unittest.TestCase):
                 self.assertEqual(fmt(bir), bir, f"{md.name}:\n{b}")
 
 
+class FaylTapmaSınağı(unittest.TestCase):
+    def test_manifest_və_qurma_atlanır(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as q:
+            q = Path(q)
+            (q / "mənbə").mkdir()
+            (q / "qurma").mkdir()
+            for f in ("layihe.alq", "mənbə/əsas.alq", "qurma/köhnə.alq"):
+                (q / f).write_text('yaz("a")\n', encoding="utf-8")
+            adlar = [f.name for f in F.faylları_tap([str(q)])]
+            self.assertEqual(adlar, ["əsas.alq"])
+            # açıq verilən fayl atlanmır
+            self.assertEqual(len(F.faylları_tap([str(q / "layihe.alq")])), 1)
+
+
 class CLISınağı(unittest.TestCase):
     def _işlət(self, *arq: str) -> subprocess.CompletedProcess:
         return subprocess.run(

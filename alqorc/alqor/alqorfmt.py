@@ -527,6 +527,9 @@ def _sətri_qur(sətir: str, sətir_başı: int, indekslər: list[int],
 # ═══════════════════════════════════════════════════════════════════════
 
 UZANTILAR = (".alq", ".alqor")
+#  Qovluq gəzərkən atlananlar: manifest (TOML formatıdır), qurma nəticəsi
+MANİFESTLƏR = ("layihe.alq", "layihe.alqor")
+ATLANAN_QOVLUQLAR = ("qurma", "paketlər")
 
 
 def faylları_tap(yollar: list[str]) -> list[Path]:
@@ -535,9 +538,11 @@ def faylları_tap(yollar: list[str]) -> list[Path]:
         p = Path(y)
         if p.is_dir():
             for f in sorted(p.rglob("*")):
-                if f.suffix in UZANTILAR and not any(
-                        h.startswith(".")
-                        for h in f.relative_to(p).parts):
+                hissələr = f.relative_to(p).parts
+                if f.suffix in UZANTILAR and f.name not in MANİFESTLƏR \
+                        and not any(h.startswith(".") or h in ATLANAN_QOVLUQLAR
+                                    for h in hissələr[:-1]) \
+                        and not hissələr[-1].startswith("."):
                     nəticə.append(f)
         elif p.suffix in UZANTILAR or p.exists():
             nəticə.append(p)
