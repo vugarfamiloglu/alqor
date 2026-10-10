@@ -2,7 +2,7 @@
 Alqor — İnteraktiv rejim (REPL / söhbət).
 
     $ python alqorc.py söhbət
-    Alqor 0.1.0 — interaktiv rejim. Kömək üçün :kömək
+    Alqor 2.3.0 — interaktiv rejim. Kömək üçün :kömək
     alqor> 2 + 2
     4
 

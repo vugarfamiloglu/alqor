@@ -84,7 +84,7 @@ Desktop dialoqları üçün Linux-da: `sudo apt install python3-tk`.
 
 ```
 $ alqor versiya
-Alqor 0.1.0-layihe
+Alqor 2.3.0
 Etalon implementasiya — Python 3.12.3
 ```
 
