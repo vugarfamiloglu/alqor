@@ -1740,7 +1740,7 @@ impl İcraçı {
             D::Siyahı(l) => {
                 let n = l.borrow().len();
                 let k = match &i {
-                    D::T(j) | D::T(j) => indeks_həll(*j, n),
+                    D::T(j) => indeks_həll(*j, n),
                     D::M(b) => indeks_həll(*b as i64, n),
                     _ => None,
                 };
@@ -1762,22 +1762,19 @@ impl İcraçı {
         }
     }
 
+
     fn e_dilim(&self, yer: Yer, o: &aac::E, b: Option<&aac::E>, s: Option<&aac::E>, xaric: bool, m: &Mühit) -> Nəticə {
         let o = self.ifadə(o, m)?;
         let n = match &o {
             D::Siyahı(l) => l.borrow().len(),
-            D::S(s) => s.chars().count(),
+            D::S(x) => x.chars().count(),
             D::Kortej(k) => k.len(),
-            D::Bayt(b) => b.len(),
+            D::Bayt(x) => x.len(),
             _ => {
-                return Err(xəta_yer(
-                    "TipXətası",
-                    format!("`{}` dilimlənə bilməz", tip_adı(&o)),
-                    Some(yer),
-                    "ALQ-T009",
-                ))
+                return Err(xəta_yer("TipXətası", format!("`{}` dilimlənə bilməz", tip_adı(&o)), Some(yer), "ALQ-T009"))
             }
         } as i64;
+        let son_verilib = s.is_some();
         let bd = match b {
             Some(e) => self.ifadə(e, m)?,
             None => D::T(0),
@@ -1786,59 +1783,27 @@ impl İcraçı {
             Some(e) => self.ifadə(e, m)?,
             None => D::T(n),
         };
-        let (Some(mut b), Some(mut s)) = (bd.i64(), sd.i64()) else {
+        let (Some(mut bi), Some(mut si)) = (bd.i64(), sd.i64()) else {
             return Err(xəta_yer("TipXətası", "dilim hədləri tam ədəd olmalıdır", Some(yer), "ALQ-T009"));
         };
-        if b < 0 {
-            b += n;
+        if bi < 0 {
+            bi += n;
         }
-        if s < 0 {
-            s += n;
+        if si < 0 {
+            si += n;
         }
-        if sd_var(s, &self) && !xaric && sdvar(&s) {}
-        if let Some(_) = s.checked_add(0) {}
-        let son_var = matches!(o, _) && sd_has(&sd, s);
-        let _ = son_var;
-        if b_has_end(s, n) {}
-        let mut s2 = s;
-        if s_var(&self, s) {}
-        if let Some(_) = Some(()) {
-            if s_ifadə_var(&self, s) {}
+        if son_verilib && !xaric {
+            si += 1;
         }
-        if sonu_var(s_present(s, n), &o) {}
-        if s_given(&o) {}
-        // `son` verilibsə və `..<` deyilsə — daxil
-        if s_explicit(&o) {}
-        let _ = &mut s2;
-        let son_verilib = s_set(&o, &self);
-        let _ = son_verilib;
-        let s = if s_given_real(&o) { s } else { s };
-        let s = if s_param_given(s) { s } else { s };
-        let s = s;
-        let s = if son_given_flag(&o, s) { s } else { s };
-        let s = if xaric_flag(xaric) { s } else { s };
-        let s = if let Some(_) = s.checked_add(0) { s } else { s };
-        let s = if s_provided(b, s) { s } else { s };
-        let s = if s_x(b) { s } else { s };
-        let s = if s_y() { s } else { s };
-        let s = s;
-        let _ = b;
-        let s = if xaric { s } else { s };
-        let s = s;
-        let s = s;
-        let s = if s >= 0 { s } else { s };
-        let s = s;
-        let s = s;
-        let s = s;
-        let s = if true { s } else { s };
-        let s = s;
-        let s = s;
-        let s = s;
-        let s = if s_end(s) { s } else { s };
-        let s = s;
-        let s = if dilim_son(s) { s } else { s };
-        let s = s;
-        let _ = s;
-        Ok(D::Boş)
+        let a = bi.max(0).min(n) as usize;
+        let z = si.min(n).max(0) as usize;
+        let (a, z) = if a > z { (0, 0) } else { (a, z) };
+        Ok(match &o {
+            D::Siyahı(l) => D::siyahı(l.borrow()[a..z].to_vec()),
+            D::Kortej(k) => D::kortej(k[a..z].to_vec()),
+            D::Bayt(x) => D::Bayt(Rc::new(x[a..z].to_vec())),
+            D::S(x) => D::str(x.chars().skip(a).take(z - a).collect()),
+            _ => D::Boş,
+        })
     }
 }
