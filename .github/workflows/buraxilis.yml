@@ -1,7 +1,8 @@
-name: Buraxılış (Windows quraşdırıcısı)
+name: Buraxılış (Windows, Linux, macOS)
 
-# `v2.3.0` kimi teq push ediləndə quraşdırıcı qurulur, Windows-da səssiz
-# quraşdırılıb yoxlanır və GitHub Releases-ə yüklənir. Əl ilə də işə
+# `v2.3.0` kimi teq push ediləndə hər üç platforma üçün quraşdırıcılar
+# qurulur, həqiqi Windows / Linux / macOS maşınlarında quraşdırılıb
+# yoxlanır və GitHub Releases-ə yüklənir. Əl ilə də işə
 # salmaq olar (Actions → Buraxılış → Run workflow) — onda yalnız artefakt.
 
 on:
@@ -78,20 +79,133 @@ jobs:
             qurma/AlqorQurasdirici-*.exe
             qurma/alqor-*-windows-portativ.zip
 
+  linux:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Paylamalar (x86_64, aarch64)
+        run: |
+          python alqorc/alqorc.py qur --alqor qurma --platforma linux --arx x86_64
+          python alqorc/alqorc.py qur --alqor qurma --platforma linux --arx aarch64
+          ls -la qurma
+      - name: Tüstü sınağı — .deb
+        run: |
+          sudo apt-get install -y ./qurma/alqor_*_amd64.deb
+          cd "$RUNNER_TEMP"
+          env -i HOME="$HOME" PATH=/usr/bin:/bin sh -c '
+            set -e
+            alqor versiya
+            alqor yeni deb-layihe >/dev/null
+            cd deb-layihe
+            echo dünya | alqor işlət
+            alqor sına
+            alqor lint .
+            alqor yerləşdir'
+          test -f /usr/share/applications/alqor-studio.desktop
+          sudo apt-get remove -y alqor
+          test ! -e /usr/bin/alqor
+      - name: Tüstü sınağı — .tar.gz (sudo-suz)
+        run: |
+          T="$RUNNER_TEMP/tar"; mkdir -p "$T/ev"; cd "$T"
+          tar xzf "$GITHUB_WORKSPACE"/qurma/alqor-*-linux-x86_64.tar.gz
+          env -i HOME="$T/ev" PATH=/usr/bin:/bin sh alqor-*/qurasdir.sh
+          env -i HOME="$T/ev" PATH="$T/ev/.local/bin:/usr/bin:/bin" sh -c '
+            set -e
+            cd "$HOME"
+            alqor yeni t >/dev/null
+            cd t
+            echo dünya | alqor işlət
+            alqor qur'
+          env -i HOME="$T/ev" PATH=/usr/bin:/bin sh "$T/ev/.local/share/alqor/sil.sh"
+          test ! -e "$T/ev/.local/bin/alqor"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alqor-linux
+          path: |
+            qurma/alqor-*-linux-*.tar.gz
+            qurma/alqor_*.deb
+
+  macos:
+    runs-on: macos-latest
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Paylamalar (aarch64, x86_64)
+        run: |
+          python alqorc/alqorc.py qur --alqor qurma --platforma macos --arx aarch64
+          python alqorc/alqorc.py qur --alqor qurma --platforma macos --arx x86_64
+          ls -la qurma
+      - name: Tüstü sınağı — .dmg açılır, Studio.app içində Python işləyir
+        run: |
+          hdiutil attach -nobrowse -mountpoint /tmp/alqor-dmg qurma/Alqor-*-macos-aarch64.dmg
+          ls -la /tmp/alqor-dmg
+          APP="/tmp/alqor-dmg/Alqor Studio.app"
+          test -x "$APP/Contents/MacOS/alqor-studio"
+          "$APP/Contents/Resources/alqor/bin/alqor" versiya
+          hdiutil detach /tmp/alqor-dmg
+      - name: Tüstü sınağı — .tar.gz + qurasdir.sh
+        run: |
+          T="$RUNNER_TEMP/mac"; mkdir -p "$T/ev"; cd "$T"
+          tar xzf "$GITHUB_WORKSPACE"/qurma/alqor-*-macos-aarch64.tar.gz
+          env -i HOME="$T/ev" PATH=/usr/bin:/bin sh alqor-*/qurasdir.sh
+          test -d "$T/ev/Applications/Alqor Studio.app"
+          env -i HOME="$T/ev" PATH="$T/ev/.local/bin:/usr/bin:/bin" sh -c '
+            set -e
+            cd "$HOME"
+            alqor yeni t >/dev/null
+            cd t
+            echo dünya | alqor işlət
+            alqor sına
+            alqor yerləşdir'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alqor-macos
+          path: |
+            qurma/Alqor-*-macos-*.dmg
+            qurma/alqor-*-macos-*.tar.gz
+
+  buraxilis:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: fayllar
+          merge-multiple: true
+      - run: ls -la fayllar
       - name: GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            qurma/AlqorQurasdirici-*.exe
-            qurma/alqor-*-windows-portativ.zip
+          files: fayllar/*
           body: |
             ## Alqor ${{ github.ref_name }}
 
-            **AlqorQurasdirici-*.exe** — endirin və işə salın. İdarəçi hüququ
-            lazım deyil, Python daxildir. Quraşdırmadan sonra Başlat menyusunda
-            **Alqor Studio**, **Alqor terminalı** və **Alqor sənədləri** görünür;
-            terminalda `alqor kömək` yazın.
+            Azərbaycan dilində proqramlaşdırma dili — dil, Alqor Studio IDE,
+            paket meneceri, linter, formatter və oflayn sənədlər. Hər
+            quraşdırıcıda Python daxildir, əlavə heç nə lazım deyil.
 
-            **alqor-*-windows-portativ.zip** — quraşdırmasız versiya: açın,
-            `bin\alqor.cmd` və ya `bin\studio.pyw` işlədin.
+            ### Windows
+            **AlqorQurasdirici-*.exe** — endirin və işə salın (idarəçi hüququ
+            lazım deyil). Başlat menyusunda **Alqor Studio**, **Alqor
+            terminalı**, **Alqor sənədləri**. Quraşdırmasız: **…-windows-portativ.zip**.
+
+            ### Linux
+            - Debian / Ubuntu: `sudo apt install ./alqor_*_amd64.deb` (ARM: `arm64`)
+            - İstənilən distribusiya, sudo-suz: `tar xzf alqor-*-linux-x86_64.tar.gz && ./alqor-*/qurasdir.sh`
+
+            ### macOS
+            **Alqor-*-macos-aarch64.dmg** (Apple Silicon) və ya **…-x86_64.dmg**
+            (Intel): «Alqor Studio»-nu Applications-a sürükləyin, ilk dəfə sağ
+            klik → Open. Terminal əmrləri üçün `.tar.gz`-dəki `qurasdir.sh`.
+
+            Sənədlər, nümunələr: https://alqor.vuqar.pro
