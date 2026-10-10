@@ -385,7 +385,7 @@ asinxron funksiya məlumatAl(url: mətn) -> mətn
 son
 
 asinxron funksiya əsas()
-    dəyişən m = gözlə məlumatAl("https://alqor.az/api")
+    dəyişən m = gözlə məlumatAl("https://alqor.vuqar.pro/api")
     yaz(m)
 son
 ```

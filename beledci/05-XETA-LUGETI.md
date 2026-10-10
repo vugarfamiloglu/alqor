@@ -352,7 +352,7 @@ Parol və tokenlər yalnız HTTPS üzərindən göndərilməlidir.
   │
   = kömək: interpolyasiya istifadə edin: "Yaş: {yaş}"
   = kömək: və ya çevirin: "Yaş: " + mətnƏt(yaş)
-  = sənəd: alqor.az/xeta/ALQ-T008
+  = sənəd: alqor.vuqar.pro/xeta/ALQ-T008
 ```
 
 | Hissə | Mənası |

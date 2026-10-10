@@ -246,7 +246,7 @@ təsvir = "Nümunə Alqor layihəsi"
 müəllif = ["Vüqar Qənbərov <vuqar@nümunə.az>"]
 lisenziya = "MIT"
 depo = "https://github.com/istifadəçi/mənim-layihəm"
-sənəd = "https://alqor.az/paket/mənim-layihəm"
+sənəd = "https://alqor.vuqar.pro/paket/mənim-layihəm"
 açarSözlər = ["veb", "api"]
 alqor_versiya = ">=1.0.0"
 
@@ -351,7 +351,7 @@ Ziddiyyətli tələblər (`b` → `a ^1`, `c` → `a ^2`) kimin nəyi tələb
 etdiyini göstərən `ALQ-M007` ilə bitir.
 
 **Depo ünvanı**: `--depo URL` › `ALQORHUB` › `layihe.alq` `[alqorpm] depo`
-› `~/.alq/ayarlar.json` › `https://hub.alqor.az`.
+› `~/.alq/ayarlar.json` › `https://hub.alqor.vuqar.pro`.
 
 ### `alqorhub` — paket deposu ✅
 

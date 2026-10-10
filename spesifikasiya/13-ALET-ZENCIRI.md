@@ -2,45 +2,32 @@
 
 ---
 
-## 13.1 Quraşdırma (Linux)
+## 13.1 Quraşdırma
 
-```bash
-# Rəsmi quraşdırıcı
-curl -fsSL https://alqor.az/qur | sh
+Hər quraşdırıcıda Python daxildir — sistemdə əlavə heç nə tələb olunmur.
+Bütün fayllar: https://github.com/vugarfamiloglu/alqor/releases.
 
-# Debian / Ubuntu
-sudo apt install alqor
+| Sistem | Yol |
+|---|---|
+| Windows 10/11 | `AlqorQurasdirici-<v>.exe` — idarəçi hüququ lazım deyil; əmrlər istifadəçi PATH-ında, Başlat menyusunda Studio, terminal və sənədlər |
+| Linux (istənilən) | `alqor-<v>-linux-<arx>.tar.gz` açın → `./qurasdir.sh` — sudo-suz, `~/.local` |
+| Debian / Ubuntu | `sudo apt install ./alqor_<v>_amd64.deb` (`arm64` də var) — `/opt/alqor`, əmrlər `/usr/bin`-də |
+| macOS 11+ | `Alqor-<v>-macos-aarch64.dmg` (Apple Silicon) və ya `…-x86_64.dmg` (Intel) — «Alqor Studio»-nu Applications-a sürükləyin |
+| Mənbədən | `git clone https://github.com/vugarfamiloglu/alqor` → `python alqorc/alqorc.py` (Python 3.12+) |
 
-# Arch
-yay -S alqor
-
-# Fedora
-sudo dnf install alqor
-
-# Mənbədən
-git clone https://github.com/alqor-dili/alqor
-cd alqor && make && sudo make install
-
-# Versiya meneceri (bir neçə versiya yanaşı)
-alqorup quraşdır 1.0.0
-alqorup istifadə 1.0.0
-alqorup siyahı
+Quraşdırılan əmrlər:
+```
+alqor           # əsas CLI (işlət, yeni, qur, sına, yerləşdir, …)
+alqorpm         # paket meneceri (§ 8.9)
+alqorlint       # linter (§ 13.4)
+alqorfmt        # formatter (§ 13.3)
+alqorls         # LSP serveri (§ 13.8)
+alqor-studio    # Alqor Studio IDE (Linux/macOS; Windows-da Başlat menyusu)
+~/.alq/         # istifadəçi ayarları və paket keşi
 ```
 
-Quraşdırılan fayllar:
-```
-/usr/bin/alqor           # əsas CLI
-/usr/bin/alqorc          # kompilyator
-/usr/bin/alqorvm         # icra mühiti
-/usr/bin/alqorfmt        # formatter
-/usr/bin/alqorlint       # linter
-/usr/bin/alqorls         # LSP serveri
-/usr/bin/alqorpm         # paket meneceri
-/usr/bin/alqortest       # test işlədici
-/usr/bin/alqordoc        # sənəd generatoru
-/usr/lib/alqor/          # standart kitabxana
-~/.alq/                # istifadəçi keşi və paketlər
-```
+Quraşdırıcıları Alqor özü qurur: `alqor qur --alqor --platforma
+windows|linux|macos [--arx x86_64|aarch64]` (§ 13.2).
 
 ---
 
