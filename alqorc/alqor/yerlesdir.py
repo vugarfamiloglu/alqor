@@ -5,9 +5,14 @@
 
   statik   `gətir veb` yoxdur → proqram JavaScript-ə çevrilir, nəticə
            sadə HTML qovluğudur. Server lazım deyil: GitHub Pages,
-           Netlify, Cloudflare Pages, istənilən hostinq.
+           Netlify, Cloudflare Pages, istənilən hostinq. İnterfeys
+           proqramları (`gətir pəncərə`, komponentlər, `vidjet`) da
+           statikdir: pəncərə səhifənin özündə göstərilir, hadisələr
+           brauzerdə işləyir. `pəncərə` idxal edən proqramın `veb` budağı
+           (`-- veb` arqumenti) statik saytda işləmir.
 
-  server   `gətir veb` var → `Dockerfile` + `tetbiq.pyz`. Render, Fly.io,
+  server   `gətir veb` var (və `gətir pəncərə` yoxdur) → `Dockerfile` +
+           `tetbiq.pyz`. Render, Fly.io,
            Railway, öz VPS-iniz — Docker işlədən hər yer. Port platformanın
            verdiyi `PORT` dəyişənindən götürülür (`veb.Server.dinlə`).
 
@@ -48,14 +53,22 @@ def _mənbələr(layihə) -> list[Path]:
 
 
 def serverdirmi(layihə) -> bool:
+    """`gətir veb` var, `gətir pəncərə` yoxdur → server tətbiqi.
+
+    Hər ikisini idxal edən proqram (nümunə 08, 09) əsasən desktop
+    interfeysidir: veb serveri yalnız `-- veb` arqumenti ilə qalxır,
+    Docker paketi isə arqumentsiz işləyir — ona görə statik sayt olur.
+    """
+    veb = pəncərə = False
     for f in _mənbələr(layihə):
         try:
             m = f.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
-        if re.search(r"^\s*gətir\s+veb\b", m, re.M):
-            return True
-    return False
+        veb = veb or bool(re.search(r"^\s*gətir\s+veb\b", m, re.M))
+        pəncərə = pəncərə or bool(
+            re.search(r"^\s*gətir\s+pəncərə\b", m, re.M))
+    return veb and not pəncərə
 
 
 _DOCKERFILE = """\
@@ -137,6 +150,10 @@ _STATİK_TƏLİMATI = """\
 
 Proqramınız JavaScript-ə çevrilib: `index.html` brauzerdə işləyir, server
 lazım deyil. Əvvəlcə yoxlayın — `index.html`-i iki dəfə klikləyib açın.
+
+Desktop interfeysi (`pəncərə`, komponentlər, vidjetlər) səhifənin özündə
+göstərilir. Dialoqlar brauzerin `confirm`/`prompt` pəncərələri ilə açılır;
+fayl dialoqları və fayl sistemi brauzerdə yoxdur (icra xətası verir).
 
 ## Netlify Drop — ən asan yol (1 dəqiqə)
 
