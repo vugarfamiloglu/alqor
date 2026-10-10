@@ -286,6 +286,150 @@ class VidjetMüqayisəsi(unittest.TestCase):
         self.assertLess(len(xətalı), 12, "\n".join(xətalı))
 
 
+def _işlət(yol: Path, *arq: str, js: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(KÖK / "alqorc.py"), "işlət",
+         *(["--js"] if js else []), str(yol), *arq],
+        capture_output=True, text=True, encoding="utf-8", timeout=180,
+        env=dict(os.environ, PYTHONIOENCODING="utf-8", ALQOR_BAŞSIZ="1"))
+
+
+@unittest.skipIf(NODE is None, "Node.js tapılmadı")
+class İnterfeysNümunələri(unittest.TestCase):
+    """`pəncərə.sınaq` ilə desktop nümunələri: Python = Node.js."""
+
+    def test_desktop_nümunələri_eyni_nəticə_verir(self):
+        for ad in ("06-desktop.alq", "09-tapsiriqlar.alq"):
+            with self.subTest(ad):
+                f = KÖK.parent / "numuneler" / ad
+                py, js = _işlət(f, "--", "sınaq"), _işlət(f, "--", "sınaq",
+                                                          js=True)
+                self.assertEqual(py.returncode, 0, py.stderr)
+                self.assertEqual(js.returncode, 0, js.stderr)
+                self.assertEqual(js.stdout, py.stdout)
+
+    def test_vidjet_nümunəsi_veb_hissəsinə_qədər_eynidir(self):
+        f = KÖK.parent / "numuneler" / "08-vidjetler.alq"
+        py, js = _işlət(f, "--", "sınaq"), _işlət(f, "--", "sınaq", js=True)
+        sərhəd = "── Vebdə eyni komponent ──"
+        self.assertIn(sərhəd, py.stdout)
+        self.assertEqual(js.stdout, py.stdout.split(sərhəd)[0] + sərhəd + "\n")
+        # Statik saytda server yoxdur — aydın icra xətası
+        self.assertIn("`veb.Server` JS hədəfində (brauzerdə) dəstəklənmir",
+                      js.stderr)
+
+    def test_veb_yalnız_interfeys_proqramında_icazəlidir(self):
+        with self.assertRaises(KompilyasiyaXətası):
+            mətndən("gətir veb\nyaz(1)\n")
+        js = mətndən("gətir pəncərə\ngətir veb\nyaz(1)\n")
+        self.assertTrue('$.modulQeyd("veb"' in js)
+
+
+@unittest.skipIf(NODE is None, "Node.js tapılmadı")
+class HTTPMüştərisi(unittest.TestCase):
+    """`http` modulu Node.js-də sinxron işləyir — Python ilə eyni nəticə."""
+
+    @classmethod
+    def setUpClass(cls):
+        import json
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        class İdarə(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def _cavab(self, kod, gövdə, növ="application/json"):
+                b = gövdə.encode("utf-8")
+                self.send_response(kod)
+                self.send_header("Content-Type", növ + "; charset=utf-8")
+                self.send_header("Content-Length", str(len(b)))
+                self.send_header("X-Alqor", "bəli".encode().decode("latin-1"))
+                self.end_headers()
+                self.wfile.write(b)
+
+            def do_GET(self):
+                if self.path.startswith("/json"):
+                    self._cavab(200, json.dumps(
+                        {"ad": "Aysel", "yaş": 30, "dillər": ["az", "en"],
+                         "yol": self.path}, ensure_ascii=False))
+                elif self.path == "/yox":
+                    self._cavab(404, "tapılmadı", "text/plain")
+                else:
+                    self._cavab(200, "salam, dünya", "text/plain")
+
+            def do_POST(self):
+                n = int(self.headers.get("Content-Length") or 0)
+                gövdə = self.rfile.read(n).decode("utf-8")
+                self._cavab(201, json.dumps({
+                    "növ": self.headers.get("Content-Type"),
+                    "gövdə": gövdə, "x": self.headers.get("X-Test")},
+                    ensure_ascii=False))
+
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), İdarə)
+        cls.port = cls.server.server_address[1]
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+
+    def test_python_ilə_eyni(self):
+        u = f"http://127.0.0.1:{self.port}"
+        kod = f'''gətir http
+dəyişən c = gözlə http.al("{u}/mətn")
+yaz(c.kod(), c.uğurlu(), c.mətn(), c.başlıq("content-type"))
+dəyişən j = gözlə http.al("{u}/json", parametrlər: {{"a": "b c"}})
+yaz(j.json()["ad"], j.json()["dillər"], j.json()["yol"])
+dəyişən y = gözlə http.al("{u}/yox")
+yaz(y.kod(), y.uğurlu(), y.mətn())
+cəhd et
+    y.yoxla()
+tut x
+    yaz("xəta:", x.mesaj)
+son
+dəyişən p = gözlə http.göndər("{u}/a", json: {{"ad": "Rəşad", "n": [1, 2.5]}},
+                              başlıqlar: {{"X-Test": "1"}})
+yaz(p.kod(), p.json()["növ"], p.json()["gövdə"], p.json()["x"])
+dəyişən f = gözlə http.göndər("{u}/a", forma: {{"ad": "Ə b", "s": 3}})
+yaz(f.json()["növ"], f.json()["gövdə"])
+dəyişən s = yeni http.Sorğu("GÖNDƏR", "{u}/a")
+s.başlıq("X-Test", "2").gövdə("düz mətn")
+dəyişən r = gözlə s.göndər()
+yaz(s.metod(), r.json()["gövdə"], r.json()["növ"], r.json()["x"])
+cəhd et
+    gözlə http.al("{u}/json").json()
+    gözlə http.al("{u}/mətn").json()
+tut x
+    yaz("JSON:", x.tip)
+son
+cəhd et
+    http.al("ftp://x")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+'''
+        with tempfile.TemporaryDirectory() as q:
+            f = Path(q) / "h.alq"
+            f.write_text(kod, encoding="utf-8")
+            py, js = _işlət(f), _işlət(f, js=True)
+        self.assertEqual(py.returncode, 0, py.stdout + py.stderr)
+        self.assertEqual(js.returncode, 0, js.stdout + js.stderr)
+        self.assertIn("salam, dünya", py.stdout)
+        self.assertEqual(js.stdout, py.stdout)
+
+    def test_bağlantı_xətası(self):
+        js = mətndən('gətir http\ncəhd et\n    gözlə http.al('
+                     '"http://127.0.0.1:1/")\ntut x\n    yaz(x.tip)\nson\n')
+        with tempfile.TemporaryDirectory() as q:
+            f = Path(q) / "p.js"
+            f.write_text(js, encoding="utf-8")
+            r = subprocess.run([NODE, str(f)], capture_output=True,
+                               text=True, encoding="utf-8", timeout=60)
+        self.assertEqual(r.stdout, "BağlantıXətası\n", r.stderr)
+
+
 # ═══════════════════════════════════════════════════════════════════════
 #  Brauzer: statik interfeys səhifəsi Chromium-da (Playwright)
 # ═══════════════════════════════════════════════════════════════════════
@@ -462,6 +606,37 @@ class Brauzer(unittest.TestCase):
         # Menyu qısayolu: Ctrl+Q pəncərəni bağlayır
         s.keyboard.press("Control+q")
         self.assertIn("Pəncərə bağlandı", s.inner_text("#alqor-kök"))
+        self.assertEqual(self.xətalar, [])
+
+    def test_http_brauzerdə_sinxron_sorğu(self):
+        import functools
+        import threading
+        from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+        kod = ('gətir pəncərə\ngətir http\n'
+               'komponent Yükləyici\n    vəziyyət mətn: mətn = "-"\n'
+               '    metod yüklə()\n'
+               '        dəyişən c = gözlə http.al(sistem_ünvanı() + "/d.json")\n'
+               '        özü.mətn = "{c.kod()} {c.json()["ad"]}"\n    son\n'
+               '    göstər()\n        qaytar <button klik={özü.yüklə}>'
+               '{özü.mətn}</button>\n    son\nson\n'
+               'funksiya sistem_ünvanı() -> mətn\n    qaytar "ÜNVAN"\nson\n'
+               'dəyişən p = yeni pəncərə.Pəncərə("h")\np.məzmun(<Yükləyici />)\n'
+               'p.göstər()\n')
+        (Path(self.q.name) / "d.json").write_text('{"ad": "Aysel"}',
+                                                   encoding="utf-8")
+        class Səssiz(SimpleHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+        server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(
+            Səssiz, directory=self.q.name))
+        threading.Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(server.shutdown)
+        ünvan = f"http://127.0.0.1:{server.server_address[1]}"
+        s, yol = self._səhifə(kod.replace("ÜNVAN", ünvan), "http")
+        s.goto(f"{ünvan}/{yol.name}")
+        s.click("#alqor-kök button")
+        self.assertEqual(s.inner_text("#alqor-kök button"), "200 Aysel")
         self.assertEqual(self.xətalar, [])
 
     def test_idarəedici_xətası_interfeysi_silmir(self):
