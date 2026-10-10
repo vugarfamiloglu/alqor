@@ -401,7 +401,7 @@ fn fayldan_modul(i: &İcraçı, yol: &str, yer: Option<Yer>) -> Nəticə<Rc<Modu
         Some(m) => m,
         None => return Err(xəta_yer("ArqumentXətası", format!("\"{}\" oxunmadı", yol), yer, "ALQ-M001")),
     };
-    let ad_ = p.to_string_lossy().to_string();
+    let ad_ = p.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
     let mənbə = crate::xeta::Mənbə::yeni(&ad_, &mətn, Some(p.clone()));
     let mut x = crate::xeta::XətaToplayıcı::yeni();
     let ağac = crate::parser::ayır(mənbə, &mut x);

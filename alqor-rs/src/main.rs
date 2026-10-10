@@ -22,7 +22,8 @@ use std::rc::Rc;
 fn oxu(yol: &str) -> Result<Rc<xeta::Mənbə>, String> {
     let mətn = std::fs::read(yol).map_err(|e| format!("{yol}: {e}"))?;
     let mətn = String::from_utf8(mətn).map_err(|_| format!("{yol}: UTF-8 deyil"))?;
-    Ok(xeta::Mənbə::yeni(yol, &mətn, Some(yol.into())))
+    let ad = std::path::Path::new(yol).file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| yol.to_string());
+    Ok(xeta::Mənbə::yeni(&ad, &mətn, Some(yol.into())))
 }
 
 fn token_yaz(t: &lekser::Token, ç: &mut String) {
