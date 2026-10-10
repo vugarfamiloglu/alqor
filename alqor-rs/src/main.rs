@@ -2,12 +2,17 @@
 //!
 //!     alqor-rs işlət fayl.alq [-- arq…]
 //!     alqor-rs tokenlər fayl.alq       (maşın üçün: sətir:sütun NÖV dəyər)
+//!     alqor-rs aac fayl.alq [--diaq]   (AAC-nin kanonik çapı; `--diaq`:
+//!                                       diaqnostikalar da stdout-a, maşın formatında)
 
 mod aac;
+mod aac_yaz;
 mod acar;
 mod elifba;
 mod homoqlif;
 mod lekser;
+mod parser;
+mod parser_jsx;
 mod xeta;
 
 use std::process::ExitCode;
@@ -44,6 +49,25 @@ fn token_yaz(t: &lekser::Token, ç: &mut String) {
     ç.push_str(&format!("{}:{} {} {}\n", t.yer.sətir(), t.yer.sütun(), n, d));
 }
 
+/// Diaqnostikalar maşın formatında (hesabat sırası ilə).
+fn diaq_yaz(x: &xeta::XətaToplayıcı) -> String {
+    let açar = |d: &&xeta::Diaqnostika| d.yer.map(|y| (1, y.başlanğıc)).unwrap_or((0, 0));
+    let mut v: Vec<&xeta::Diaqnostika> = x.siyahı.iter().filter(|d| d.səviyyə == xeta::Səviyyə::Xəta).collect();
+    v.sort_by_key(açar);
+    let mut d: Vec<&xeta::Diaqnostika> = x.siyahı.iter().filter(|d| d.səviyyə != xeta::Səviyyə::Xəta).collect();
+    d.sort_by_key(açar);
+    v.extend(d);
+    let mut ç = String::new();
+    for d in v {
+        let s = if d.səviyyə == xeta::Səviyyə::Xəta { "xəta" } else { "xəbərdarlıq" };
+        let yer = d.yer.map(|y| format!("{}:{}+{}", y.sətir(), y.sütun(), y.uzunluq)).unwrap_or("-".into());
+        let k: Vec<String> = d.köməklər.iter().map(|k| aac_yaz::q(k)).collect();
+        ç.push_str(&format!("{} {} {} {} qeyd={} köməklər=[{}]\n", s, d.kod, yer, aac_yaz::q(&d.mesaj),
+                            aac_yaz::q(&d.qeyd), k.join(", ")));
+    }
+    ç
+}
+
 fn main() -> ExitCode {
     let a: Vec<String> = std::env::args().skip(1).collect();
     let əmr = a.first().map(String::as_str).unwrap_or("kömək");
@@ -58,9 +82,23 @@ fn main() -> ExitCode {
             if !x.uğurludur() { eprint!("{}", x.hesabat(Some(false))); return ExitCode::from(2); }
             ExitCode::SUCCESS
         }
+        "aac" if a.len() >= 2 => {
+            let m = match oxu(&a[1]) { Ok(m) => m, Err(e) => { eprintln!("xəta: {e}"); return ExitCode::from(4); } };
+            let mut x = xeta::XətaToplayıcı::yeni();
+            let p = parser::ayır(m, &mut x);
+            let mut ç = aac_yaz::çap(&p);
+            if a.iter().any(|s| s == "--diaq") {
+                ç.push_str("## diaqnostika\n");
+                ç.push_str(&diaq_yaz(&x));
+            }
+            print!("{ç}");
+            if !x.siyahı.is_empty() { eprintln!("{}", x.hesabat(None)); }
+            if !x.uğurludur() { return ExitCode::from(2); }
+            ExitCode::SUCCESS
+        }
         "versiya" | "--versiya" => { println!("alqor-rs {}", env!("CARGO_PKG_VERSION")); ExitCode::SUCCESS }
         _ => {
-            println!("istifadə: alqor-rs tokenlər <fayl>");
+            println!("istifadə: alqor-rs tokenlər <fayl> | alqor-rs aac <fayl> [--diaq]");
             ExitCode::from(3)
         }
     }

@@ -13,6 +13,8 @@
   Bir dildə konsol proqramı, veb sayt, desktop tətbiq və brauzer kodu yazın.
 </p>
 
+<p align="center"><b>Versiya 2.3</b></p>
+
 <p align="center">
   <code>əgər</code> · <code>hər ... üçün</code> · <code>funksiya</code> · <code>sinif</code> · <code>cəhd et</code> · <code>gözlə</code>
 </p>

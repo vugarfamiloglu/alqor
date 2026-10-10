@@ -319,10 +319,12 @@ class NövbəSınağı(unittest.TestCase):
             "dəyişən sıra = []\n"
             "dəyişən n = növbə.yarat(işçilər: 1)\n"
             "funksiya qeyd(x: tam)\n    sıra.əlavə(x)\nson\n"
-            "n.planla(qeyd, arqumentlər: [0], gecikmə: 0.1)\n"
+            # Tək işçi əvvəlcə məşğuldur — qalanlar növbədə eyni anda
+            # hazır olur və prioritetə görə seçilir
+            "n.planla((x) => vaxt.gözlə(300), arqumentlər: [0])\n"
+            "n.planla(qeyd, arqumentlər: [0], gecikmə: 0.6)\n"
             "hər i üçün [1, 2, 3] içində\n"
-            "    n.planla(qeyd, arqumentlər: [i], prioritet: i, "
-            "gecikmə: 0.05)\nson\n"
+            "    n.planla(qeyd, arqumentlər: [i], prioritet: i)\nson\n"
             "n.gözlə()\nyaz(sıra)\n"
             "dəyişən p = növbə.yarat(işçilər: 4)\n"
             "dəyişən t = vaxt.ölç()\n"

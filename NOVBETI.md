@@ -120,8 +120,9 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
     brauzerdə quraşdırmadan kod yazıb işlətmək.
 
 ### Mərhələ 4 — Rust kompilyatoru (sürət və tək binar) 🟡
-17. `alqor-rs/`: lekser + AAC hazırdır; parser, icraçı, standart
-    kitabxana. Sınaq: Python etalonu ilə eyni çıxış (JS hədəfindəki
+17. `alqor-rs/`: lekser ✅ və parser ✅ — Python etalonu ilə eyni tokenlər
+    və eyni AAC (`python -m alqor.rs.muqayise tokenlər|aac [--korpus]`);
+    icraçı yarımçıq (dəyərlər, mühit, ifadələr), standart kitabxana yoxdur. Sınaq: Python etalonu ilə eyni çıxış (JS hədəfindəki
     müqayisə qoşqusu ilə). Sonra: native binar və WASM.
 
 ### Sonraya saxlanılıb ⏸

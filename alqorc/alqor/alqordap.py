@@ -28,7 +28,7 @@ from . import aac as A
 from .deyerler import (AlqorXəta, DayanmaSiqnalı, Funksiya, Mühit, Nümunə,
                        mətnə, tip_adı)
 
-VERSİYA = "0.1.0"
+VERSİYA = "2.3.0"
 SAP_ID = 1
 
 
