@@ -292,6 +292,14 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 .dialoq h3 { margin: 0 0 6px; }
 .dialoq input { width: 100%; margin: 10px 0 14px; }
 .dialoq-düymələri { display: flex; justify-content: flex-end; gap: 8px; }
+.qısayollar { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 4px 28px; align-items: start; width: min(980px, 86vw);
+  max-height: 68vh; overflow-y: auto; margin: 8px 0 16px; color: var(--mətn); }
+.qısayollar section { break-inside: avoid; margin-bottom: 14px; }
+.qısayollar h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--sönük); }
+.qısayol { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px solid var(--kənar); font-size: 13px; }
+.qısayol .düymələr { white-space: nowrap; color: var(--sönük); }
+.qısayol kbd { font: 11px var(--kod-şrift); padding: 1px 5px; border: 1px solid var(--kənar); border-bottom-width: 2px;
+  border-radius: 4px; background: var(--fon); color: var(--mətn); }
 .haqqında { max-width: 440px; margin: 6px 0 16px; color: var(--mətn); }
 .haqqında p { margin: 0 0 12px; color: var(--sönük); line-height: 1.5; }
 .haqqında > div { display: flex; gap: 10px; padding: 3px 0; }

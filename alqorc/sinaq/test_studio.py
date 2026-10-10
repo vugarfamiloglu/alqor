@@ -1633,6 +1633,22 @@ class Brauzer(unittest.TestCase):
             self.səhifə.wait_for_timeout(100)
         self.fail(mesaj)
 
+    def test_qısayollar_pəncərəsi(self):
+        p = self.səhifə
+        p.click('#menyu-setri .m-başlıq:has-text("Kömək")')
+        p.click('.menyu-qutu .m-element:has-text("Klaviatura qısayolları")')
+        d = p.locator("#dialoq")
+        d.wait_for(state="visible")
+        başlıqlar = d.locator(".qısayollar h4").all_text_contents()
+        for ad in ("Fayl", "Redaktə", "Debaq", "Kömək"):
+            self.assertIn(ad, başlıqlar)
+        saxla = d.locator('.qısayol:has-text("Saxla")').first
+        self.assertEqual(saxla.locator("kbd").all_inner_texts(), ["Ctrl", "S"])
+        self.assertGreater(d.locator(".qısayol").count(), 30)
+        if os.environ.get("ALQOR_EKRAN"):
+            d.screenshot(path=os.environ["ALQOR_EKRAN"])
+        p.keyboard.press("Escape")
+
     def test_haqqında_pəncərəsi(self):
         p = self.səhifə
         p.click('#menyu-setri .m-başlıq:has-text("Kömək")')
