@@ -382,6 +382,14 @@ def _plist(v: str) -> str:
         "</dict></plist>\n")
 
 
+_DMG_OXU = ("Alqor {v}\n\n"
+            "1. «Alqor Studio»-nu «Applications» qovluğuna sürükləyin.\n"
+            "2. İlk açılışda: sağ klik → «Open» (tətbiq imzalanmayıb).\n"
+            "3. Terminal əmrləri (alqor, alqorpm…) üçün Terminalda:\n"
+            '   "/Applications/Alqor Studio.app/Contents/Resources/alqor/'
+            'qurasdir.sh"\n\nSayt: https://alqor.vuqar.pro\n')
+
+
 def app_qovluğu(q: Path, çıxış: Path) -> Path:
     """`Alqor Studio.app` — paylamanın hamısı Resources/alqor-dadır."""
     app = çıxış / "Alqor Studio.app"
@@ -413,19 +421,29 @@ def _fayl_xəritəsi(kök: Path, ön: str
 
 
 def dmg(app: Path, çıxış: Path, arx: str) -> Path:
-    from ._qur_dmg import iso9660, udif
+    """macOS-da `hdiutil` ilə (HFS+, UDZO); başqa sistemdə saf Python ilə
+    (ISO 9660 + UDIF) — buraxılışlar CI-da macOS-da qurulur."""
     v = versiya_təmiz()
+    h = çıxış / f"Alqor-{v}-macos-{arx}.dmg"
+    oxu = _DMG_OXU.format(v=v)
+    hdiutil = shutil.which("hdiutil")
+    if hdiutil and os.environ.get("ALQOR_DMG_SAF") != "1":
+        import subprocess
+        import tempfile
+        with tempfile.TemporaryDirectory() as q:
+            shutil.copytree(app, Path(q) / app.name, symlinks=True)
+            os.symlink("/Applications", Path(q) / "Applications")
+            (Path(q) / "OXU.txt").write_text(oxu, encoding="utf-8")
+            h.unlink(missing_ok=True)
+            subprocess.run([hdiutil, "create", "-volname", f"Alqor {v}",
+                            "-srcfolder", q, "-ov", "-format", "UDZO",
+                            "-fs", "HFS+", str(h)], check=True)
+        return h
+    from ._qur_dmg import iso9660, udif
     fayllar, keçidlər = _fayl_xəritəsi(app, app.name)
     keçidlər["Applications"] = "/Applications"
-    oxu = ("Alqor {v}\n\n"
-           "1. «Alqor Studio»-nu «Applications» qovluğuna sürükləyin.\n"
-           "2. İlk açılışda: sağ klik → «Open» (tətbiq imzalanmayıb).\n"
-           "3. Terminal əmrləri (alqor, alqorpm…) üçün Terminalda:\n"
-           '   "/Applications/Alqor Studio.app/Contents/Resources/alqor/'
-           'qurasdir.sh"\n\nSayt: https://alqor.vuqar.pro\n').format(v=v)
     fayllar["OXU.txt"] = (oxu.encode("utf-8"), 0o644)
     imaj = iso9660(fayllar, keçidlər, "ALQOR")
-    h = çıxış / f"Alqor-{v}-macos-{arx}.dmg"
     h.write_bytes(udif(imaj, f"Alqor {v}"))
     return h
 
