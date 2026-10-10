@@ -2,6 +2,7 @@
 
 use super::deyerler::*;
 use super::muhit::{Mühit, MühitD};
+use super::cagiris::*;
 use crate::aac::{self, Bağlama, BağlamaNöv, Cümlə, LiteralD, Naxış, Tip, İfadə};
 use crate::xeta::Yer;
 use std::cell::{Cell, RefCell};
