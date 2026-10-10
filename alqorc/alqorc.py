@@ -319,10 +319,30 @@ def _js_işlət(ağac, yol: str, proqram_arqumentləri: list[str]) -> int:
 
 
 def _alqor_windows(arqumentlər: list[str]) -> int:
-    """`qur --alqor [çıxış]` — Alqor-un öz Windows quraşdırıcısı."""
+    """`qur --alqor [çıxış] [--platforma windows|linux|macos] [--arx …]`
+    — Alqor-un öz quraşdırıcısı."""
     from alqor import windows_paylama
-    sərbəst = [a for a in arqumentlər if not a.startswith("-")]
+    platforma = _seçim(arqumentlər, "--platforma") or "windows"
+    arx = _seçim(arqumentlər, "--arx") or "x86_64"
+    seçim_dəyərləri = {platforma, arx}
+    sərbəst = [a for a in arqumentlər if not a.startswith("-")
+               and a not in seçim_dəyərləri]
     çıxış = Path(sərbəst[0]) if sərbəst else Path("qurma")
+    if platforma in ("linux", "macos"):
+        from alqor import unix_paylama
+        try:
+            n = unix_paylama.qur(Path(__file__).resolve().parent,
+                                 çıxış.resolve(), platforma, arx)
+        except (OSError, RuntimeError, ValueError) as x:
+            çap_xəta(f"{platforma} paylaması qurulmadı: {x}")
+            return 4
+        print(f"✓ Alqor {platforma} ({arx}) paylaması:")
+        for p in n:
+            print(f"  {p}")
+        return 0
+    if platforma != "windows":
+        çap_xəta("`--platforma`: windows | linux | macos")
+        return 3
     python_zip = os.environ.get("ALQOR_PYTHON_EMBED")
     try:
         n = windows_paylama.qur(
