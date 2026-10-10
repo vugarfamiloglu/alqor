@@ -292,6 +292,11 @@ input:focus, select:focus, button:focus-visible { outline: 2px solid var(--vurğ
 .dialoq h3 { margin: 0 0 6px; }
 .dialoq input { width: 100%; margin: 10px 0 14px; }
 .dialoq-düymələri { display: flex; justify-content: flex-end; gap: 8px; }
+.haqqında { max-width: 440px; margin: 6px 0 16px; color: var(--mətn); }
+.haqqında p { margin: 0 0 12px; color: var(--sönük); line-height: 1.5; }
+.haqqında > div { display: flex; gap: 10px; padding: 3px 0; }
+.haqqında .etiket { min-width: 84px; color: var(--sönük); }
+.haqqında a { color: var(--vurğu); }
 
 body.sürüklənir { user-select: none; }
 body.sürüklənir iframe { pointer-events: none; }

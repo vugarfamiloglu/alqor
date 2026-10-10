@@ -392,8 +392,30 @@ const sənədAç = (səhifə) => window.open(`/sened/${səhifə}`, "_blank");
 ƏQ("kömək.xətalar", "Xəta lüğəti", "kitab", null, () => sənədAç("beledci-05-xeta-lugeti.html"));
 ƏQ("kömək.nümunələr", "Nümunə proqramlar", "kitab", null, () => sənədAç("numuneler.html"));
 ƏQ("kömək.spesifikasiya", "Dil spesifikasiyası", "kitab", null, () => sənədAç("spes-01-leksik-qurulus.html"));
+function haqqındaDüyünü() {
+  const k = document.createElement("div");
+  k.className = "haqqında";
+  const sətir = (etiket, dəyər) => {
+    const s = document.createElement("div");
+    const e = document.createElement("span"); e.className = "etiket"; e.textContent = etiket;
+    s.append(e, dəyər);
+    return s;
+  };
+  const p = document.createElement("p");
+  p.textContent = "Alqor — açar sözləri, xəta mesajları və sənədləri Azərbaycan dilində olan " +
+    "proqramlaşdırma dilidir. Bir dildə konsol proqramı, veb sayt, desktop tətbiq və " +
+    "brauzer kodu yazılır; proqram tək .exe faylına çevrilir və bir əmrlə vebə yerləşdirilir.";
+  const sayt = document.createElement("a");
+  sayt.href = "https://alqor.vuqar.pro"; sayt.textContent = "alqor.vuqar.pro";
+  sayt.target = "_blank"; sayt.rel = "noopener";
+  k.append(p,
+    sətir("Versiya", `Alqor Studio ${S.məlumat?.versiya || ""}`),
+    sətir("Developer", "Vüqar Familoğlu"),
+    sətir("Sayt", sayt));
+  return k;
+}
 ƏQ("kömək.haqqında", "Alqor Studio haqqında", "məlumat", null, () =>
-  dialoq("Alqor Studio", { mətn: `Versiya ${S.məlumat?.versiya || ""} · Azərbaycan dilində proqramlaşdırma dili Alqor üçün IDE.`, giriş: false }));
+  dialoq("Alqor Studio", { düyün: haqqındaDüyünü(), giriş: false, ləğv: false }));
 
 function qısayollarıGöstər() {
   const n = [...Əmrlər.siyahı.values()].filter((ə) => ə.qısayol && !ə.gizli)
