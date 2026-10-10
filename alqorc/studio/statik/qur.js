@@ -417,10 +417,49 @@ function haqqındaDüyünü() {
 ƏQ("kömək.haqqında", "Alqor Studio haqqında", "məlumat", null, () =>
   dialoq("Alqor Studio", { düyün: haqqındaDüyünü(), giriş: false, ləğv: false }));
 
+const QISAYOL_QRUPLARI = [
+  ["fayl", "Fayl"], ["redaktə", "Redaktə"], ["seçim", "Seçim"], ["görünüş", "Görünüş"],
+  ["keç", "Keç"], ["işlət", "İşlət və qur"], ["qur", "İşlət və qur"], ["debaq", "Debaq"],
+  ["alətlər", "Alətlər"], ["kömək", "Kömək"],
+];
+
 function qısayollarıGöstər() {
-  const n = [...Əmrlər.siyahı.values()].filter((ə) => ə.qısayol && !ə.gizli)
-    .map((ə) => `${Əmrlər.göstər(Array.isArray(ə.qısayol) ? ə.qısayol[0] : ə.qısayol).padEnd(18)} ${ə.ad}`);
-  dialoq("Klaviatura qısayolları", { mətn: n.join("\n"), giriş: false });
+  const qruplar = new Map();
+  for (const ə of Əmrlər.siyahı.values()) {
+    if (!ə.qısayol || ə.gizli) continue;
+    const ön = ə.id.split(".")[0];
+    const ad = (QISAYOL_QRUPLARI.find(([k]) => k === ön) || [, "Digər"])[1];
+    if (!qruplar.has(ad)) qruplar.set(ad, []);
+    qruplar.get(ad).push(ə);
+  }
+  const sıra = [...new Set(QISAYOL_QRUPLARI.map(([, a]) => a)), "Digər"];
+  const k = document.createElement("div");
+  k.className = "qısayollar";
+  for (const ad of sıra) {
+    const əmrlər = qruplar.get(ad);
+    if (!əmrlər) continue;
+    const b = document.createElement("section");
+    const h = document.createElement("h4"); h.textContent = ad;
+    b.append(h);
+    for (const ə of əmrlər) {
+      const s = document.createElement("div"); s.className = "qısayol";
+      const a = document.createElement("span"); a.textContent = ə.ad.replace(/…$/, "");
+      const d = document.createElement("span"); d.className = "düymələr";
+      const q = Əmrlər.göstər(Array.isArray(ə.qısayol) ? ə.qısayol[0] : ə.qısayol);
+      q.split(" ").forEach((akkord, i) => {
+        if (i) d.append(" ");
+        akkord.split("+").forEach((düymə, j) => {
+          if (j) d.append("+");
+          const kbd = document.createElement("kbd"); kbd.textContent = düymə;
+          d.append(kbd);
+        });
+      });
+      s.append(a, d);
+      b.append(s);
+    }
+    k.append(b);
+  }
+  dialoq("Klaviatura qısayolları", { düyün: k, giriş: false, ləğv: false });
 }
 
 // ══ Menyu sətri ══════════════════════════════════════════════════════
