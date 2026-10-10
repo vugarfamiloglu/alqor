@@ -120,11 +120,14 @@ p.göstər()
 pəncərə.işlət()
 ```
 
-**JavaScript-ə kompilyasiya** — Python olmadan Node.js-də və ya brauzerdə:
+**JavaScript-ə kompilyasiya** — Python olmadan Node.js-də və ya brauzerdə.
+Yuxarıdakı desktop tətbiqi də (komponentlər, vidjetlər, dialoqlar)
+serversiz statik sayta çevrilir:
 
 ```bash
 alqor işlət --js proqram.alq          # dərhal işlət (~10× sürətli)
 alqor qur --hədəf veb proqram.alq     # → qurma/veb/index.html
+alqor yerləşdir                       # → Netlify / GitHub Pages üçün qovluq
 ```
 
 ## Alqor Studio
