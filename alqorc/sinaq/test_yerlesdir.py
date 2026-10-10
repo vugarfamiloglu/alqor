@@ -42,6 +42,16 @@ class Növ(unittest.TestCase):
         with tempfile.TemporaryDirectory() as q:
             self.assertTrue(Y.serverdirmi(_layihə(Path(q) / "v", "veb")))
             self.assertFalse(Y.serverdirmi(_layihə(Path(q) / "k", "konsol")))
+            self.assertFalse(Y.serverdirmi(_layihə(Path(q) / "d", "desktop")))
+
+    def test_pəncərəli_veb_budağı_statikdir(self):
+        # 08/09 nümunələri: `gətir veb` + `gətir pəncərə` → statik
+        with tempfile.TemporaryDirectory() as q:
+            kök = Path(q) / "n"
+            _layihə(kök, "konsol")
+            (kök / "mənbə" / "əsas.alq").write_text(
+                "gətir vidjet\ngətir pəncərə\ngətir veb\n", encoding="utf-8")
+            self.assertFalse(Y.serverdirmi(tap(kök)))
 
     def test_sistem_adı(self):
         self.assertEqual(Y._sistem_adı("Mənim Saytım"), "menim-saytim")
@@ -64,6 +74,30 @@ class Statik(unittest.TestCase):
             self.assertIn("<script>", html)
             self.assertIn("netlify", (ç / "YERLESDIR.md").read_text(
                 encoding="utf-8").lower())
+
+    def test_desktop_layihəsi_statik_interfeys_saytıdır(self):
+        with tempfile.TemporaryDirectory() as q:
+            kök = Path(q).resolve() / "d"
+            _layihə(kök, "desktop")
+            r = _alqor("yerləşdir", cwd=kök)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("Statik sayt", r.stdout)
+            html = (kök / "qurma" / "yerləşdir" / "index.html").read_text(
+                encoding="utf-8")
+            self.assertIn('id="alqor-kök"', html)
+            self.assertIn(".v-düymə", html)            # vidjet üslubu
+            self.assertIn("alqorBağla(göndər)", html)
+
+    def test_desktop_nümunələri_statik_yerləşir(self):
+        nümunələr = KÖK.parent / "numuneler"
+        for ad in ("06-desktop.alq", "08-vidjetler.alq",
+                   "09-tapsiriqlar.alq"):
+            with self.subTest(ad), tempfile.TemporaryDirectory() as q:
+                r = _alqor("yerləşdir", str(nümunələr / ad), "--çıxış",
+                           str(Path(q) / "s"), cwd=q)
+                self.assertEqual(r.returncode, 0, r.stderr)
+                self.assertIn("Statik sayt", r.stdout)
+                self.assertTrue((Path(q) / "s" / "index.html").is_file())
 
     def test_tək_fayl_və_çıxış_qovluğu(self):
         with tempfile.TemporaryDirectory() as q:

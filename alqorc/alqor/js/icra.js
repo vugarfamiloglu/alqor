@@ -264,7 +264,17 @@ class Element {
   constructor(ad, atributlar, uşaqlar) {
     this.ad = ad; this.atributlar = atributlar || new Lüğət();
     this.uşaqlar = uşaqlar || [];
+    // Ağacı hansı komponent nümunəsi yaradıb (`pəncərə` yenidən göstərir)
+    this.komponent = null;
   }
+}
+
+/**
+ * Yerli obyekt: JS-də yazılmış modul tipləri (`Pəncərə`, `httpCavabı`).
+ * `c` — metod cədvəli: {ad: (obyekt, ...arqumentlər) => dəyər}.
+ */
+class Yerli {
+  constructor(tipAdı, c, d) { this.tipAdı = tipAdı; this.c = c; this.d = d || {}; }
 }
 
 class Modul {
@@ -694,6 +704,7 @@ function tip(x) {
   if (x instanceof VariantQ || x instanceof QurucuIst ||
       x instanceof _XətaSinfi) return "funksiya";
   if (x instanceof Naxış) return "naxış";
+  if (x instanceof Yerli) return x.tipAdı;
   return "istənilən";
 }
 
@@ -787,6 +798,7 @@ function mətnə(x) {
   if (x instanceof _XətaSinfi) return "<xəta " + x.ad + ">";
   if (x instanceof Gələcək) return "<gələcək " + x.ad + ">";
   if (x instanceof TipAlias) return "<tip " + x.ad + ">";
+  if (x instanceof Yerli) return x.c.$mətn ? x.c.$mətn(x) : "<" + x.tipAdı + ">";
   return String(x);
 }
 
@@ -932,7 +944,9 @@ function jsx(a, hədəf, atributlar, uşaqlar) {
     if (g === undefined)
       throw xəta("TipXətası",
         "`" + hədəf.ad + "` komponentində `göstər()` metodu yoxdur", "ALQ-T053");
-    return g.call(n);
+    const r = g.call(n);
+    if (r instanceof Element) r.komponent = n;
+    return r;
   }
   if (typeof hədəf === "function") {
     const o = Object.create(null);
@@ -2460,6 +2474,7 @@ function cədvəl(o) {
   if (o instanceof Gələcək) return GƏLƏCƏK;
   if (o instanceof LəğvNişanı) return LƏĞV;
   if (o instanceof Naxış) return NAXIŞ;
+  if (o instanceof Yerli) return o.c;
   return null;
 }
 
@@ -3376,6 +3391,14 @@ for (const a of Object.keys(modullar)) {
   Object.defineProperty(g, a, { get: () => modul(a), enumerable: true, configurable: true });
 }
 
+/** Əlavə modul (vidjet, pəncərə, http) icra mühitinə qoşulur. */
+function modulQeyd(a, f) {
+  modullar[a] = f;
+  delete _modulKeş[a];
+  if (!a.includes("."))
+    Object.defineProperty(g, a, { get: () => modul(a), enumerable: true, configurable: true });
+}
+
 /** Qlobal ad (kompilyator yerli elan tapmayanda). */
 function qad(a) {
   const d = g[a];
@@ -3542,6 +3565,9 @@ return {
   g, qad, modul, idxalElement, faylQeyd, faylModul, genişlətmə,
   // icra
   işlət, P,
+  // əlavə modullar üçün daxili köməkçilər
+  Yerli, modulQeyd, Gələcək, Bayt, pyFormat, onluqRepr, böyüyə, kiçiyə, latınla,
+  htmlQaç, çağırılandır, elementHTML, KICIK, jsonHazırla, jsonYaz, jsonOxu, nodedir,
 };
 })();
 

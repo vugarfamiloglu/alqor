@@ -114,8 +114,20 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
    - `veb` serverli tətbiq → `tetbiq.pyz` + `Dockerfile`; `dinlə`
      `PORT` / `ALQOR_HOST` oxuyur; Render / Fly.io / VPS addımları
      `YERLESDIR.md`-də.
-9. **JS hədəfini genişləndirmək**: `vidjet` və komponentlər brauzerdə
-   (veb tətbiqləri serversiz işləsin), `http` müştərisi (`fetch`).
+9. ✅ **JS hədəfi: interfeys brauzerdə** (spes. § 13.14):
+   - komponentlər (`vəziyyət`, hesablananlar, props, uşaq komponentlər)
+     və `pəncərə` (`Pəncərə`, `məzmun`, menyu + qısayollar, `üslub`,
+     dialoqlar → `confirm`/`prompt`) brauzerdə serversiz işləyir; DOM
+     Python pəncərəsinin `yamaq()` nüvəsi ilə yenilənir;
+   - `vidjet` (118 element) Python mənbəyindən avtomatik JS-ə çevrilir
+     (`alqor/js/vidjet_cevir.py`) — HTML Python ilə eynidir (müqayisə
+     sınağı); `http` müştərisi (brauzerdə sinxron XHR, Node.js-də
+     `fetch` uşaq prosesdə);
+   - `alqor yerləşdir`: `gətir pəncərə` olan proqram statik sayt olur
+     (nümunələr 06, 08, 09); Playwright sınaqları Chromium-da;
+   - qalıb: fayl dialoqları brauzerdə (File System Access API),
+     `http.faylYüklə`/`vebSoket`, bir neçə pəncərənin eyni anda
+     göstərilməsi (bu gün sonuncu açılan göstərilir).
 10. **Onlayn sınaq meydançası** (`vuqar.pro/alqor`) — JS hədəfi ilə
     brauzerdə quraşdırmadan kod yazıb işlətmək.
 
