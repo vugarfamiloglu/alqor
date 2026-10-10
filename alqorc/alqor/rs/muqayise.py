@@ -3,6 +3,10 @@ Python etalonu ilə `alqor-rs` arasında diferensial müqayisə.
 
     python -m alqor.rs.muqayise tokenlər [fayl...]   # standart: repo-dakı bütün .alq
     python -m alqor.rs.muqayise tokenlər --korpus    # test_icraci kod parçaları
+    python -m alqor.rs.muqayise aac [fayl...]        # AAC çapı + diaqnostika
+    python -m alqor.rs.muqayise aac --korpus         # test_icraci kod parçaları
+    python -m alqor.rs.muqayise aac --parçalar       # sınaqlarda ayrılan bütün
+                                                     # mətnlər (xətalılar daxil)
 """
 
 from __future__ import annotations
@@ -124,6 +128,25 @@ def _rust_f64(x: float) -> str:
     return r
 
 
+def python_aac(yol: Path) -> tuple[str, bool]:
+    from ..lekser import Lekser
+    from ..menbe import Mənbə
+    from ..parser import Parser
+    from ..xeta import XətaToplayıcı
+    from .aac_capi import aac_çapı
+    x = XətaToplayıcı()
+    m = Mənbə.fayldan(yol, x)
+    if m is None:
+        return "", False
+    p = Parser(Lekser(m, x).leksə(), m, x).ayır()
+    return aac_çapı(p), x.uğurludur()
+
+
+def rust_aac(b: Path, yol: Path) -> tuple[str, bool]:
+    r = subprocess.run([str(b), "aac", str(yol)], capture_output=True)
+    return r.stdout.decode("utf-8", "replace"), r.returncode == 0
+
+
 def rust_tokenləri(b: Path, yol: Path) -> tuple[str, bool]:
     r = subprocess.run([str(b), "tokenlər", str(yol)], capture_output=True)
     return r.stdout.decode("utf-8", "replace"), r.returncode == 0
@@ -176,33 +199,42 @@ def korpus_faylları(q: Path) -> list[Path]:
 
 
 def main(a: list[str]) -> int:
-    if not a or a[0] not in ("tokenlər", "tokenler"):
+    if not a or a[0] not in ("tokenlər", "tokenler", "aac"):
         print(__doc__)
         return 3
     b = qur()
     if b is None:
         print("alqor-rs qurulmadı", file=sys.stderr)
         return 2
+    import tempfile
     if a[1:] == ["--korpus"]:
-        import tempfile
         fayllar = korpus_faylları(Path(tempfile.mkdtemp(prefix="alqor-rs-")))
     else:
         fayllar = [Path(x) for x in a[1:]] or bütün_alq()
-    pis = 0
-    for f in fayllar:
-        p, pu = python_tokenləri(f)
-        r, ru = rust_tokenləri(b, f)
-        if p != r or pu != ru:
-            pis += 1
-            ps, rs = p.splitlines(), r.splitlines()
-            i = next((i for i, (x, y) in enumerate(zip(ps, rs)) if x != y),
-                     min(len(ps), len(rs)))
-            print(f"✖ {f}: "
-                  f"sətir {i + 1}\n    py: {ps[i] if i < len(ps) else '—'}\n"
-                  f"    rs: {rs[i] if i < len(rs) else '—'}"
-                  + ("" if pu == ru else f"\n    uğur: py={pu} rs={ru}"))
+    py, rs = ((python_aac, rust_aac) if a[0] == "aac"
+              else (python_tokenləri, rust_tokenləri))
+    pis = müqayisə_et(b, fayllar, py, rs)
     print(f"{len(fayllar) - pis}/{len(fayllar)} fayl eyni")
     return 1 if pis else 0
+
+
+def müqayisə_et(b: Path, fayllar: list[Path], py, rs,
+                çıxış=print) -> int:
+    """Fərqli faylların sayı; hər fərq üçün ilk fərqli sətir çap olunur."""
+    pis = 0
+    for f in fayllar:
+        p, pu = py(f)
+        r, ru = rs(b, f)
+        if p != r or pu != ru:
+            pis += 1
+            ps, rsl = p.splitlines(), r.splitlines()
+            i = next((i for i, (x, y) in enumerate(zip(ps, rsl)) if x != y),
+                     min(len(ps), len(rsl)))
+            çıxış(f"✖ {f}: "
+                  f"sətir {i + 1}\n    py: {ps[i] if i < len(ps) else '—'}\n"
+                  f"    rs: {rsl[i] if i < len(rsl) else '—'}"
+                  + ("" if pu == ru else f"\n    uğur: py={pu} rs={ru}"))
+    return pis
 
 
 if __name__ == "__main__":
