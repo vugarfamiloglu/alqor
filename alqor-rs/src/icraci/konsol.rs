@@ -397,8 +397,335 @@ pub fn modul() -> Rc<Modul> {
         }))),
         ("irəliləyiş", d("irəliləyiş", 1, Some(2), Box::new(irəliləyiş))),
         ("fırlanan", d("fırlanan", 0, Some(1), Box::new(fırlanan))),
-        ("arqumentlər", d("arqumentlər", 0, Some(0), Box::new(|_, _, _| {
-            Err(xəta("ArqumentXətası", "`konsol.arqumentlər` hələ dəstəklənmir", "ALQ-M002"))
-        }))),
+        ("arqumentlər", d("arqumentlər", 0, Some(0), Box::new(|i, _, _| Ok(arqumentlər(i))))),
     ])
+}
+
+// ── konsol.arqumentlər() — zəncirlənən təhlilçi ────────────────────────
+
+struct ArqParametr {
+    ad: String,
+    izah: String,
+    çoxlu: bool,
+    ixtiyari: bool,
+}
+
+struct ArqSeçim {
+    uzun: String,
+    qısa: String,
+    izah: String,
+    standart: Option<String>,
+    bayraqdır: bool,
+}
+
+impl ArqSeçim {
+    fn ad(&self) -> String {
+        self.uzun.trim_start_matches('-').to_string()
+    }
+}
+
+#[derive(Default)]
+struct ArqVəziyyət {
+    proqram: String,
+    versiya: String,
+    təsvir: String,
+    parametrlər: Vec<ArqParametr>,
+    seçimlər: Vec<ArqSeçim>,
+}
+
+impl ArqVəziyyət {
+    fn istifadə(&self) -> String {
+        let mut h = vec![self.proqram.clone()];
+        if !self.seçimlər.is_empty() {
+            h.push("[SEÇİMLƏR]".into());
+        }
+        for p in &self.parametrlər {
+            let a = format!("<{}>{}", p.ad, if p.çoxlu { "..." } else { "" });
+            h.push(if p.ixtiyari { format!("[{a}]") } else { a });
+        }
+        h.join(" ")
+    }
+    fn kömək(&self) -> String {
+        let sol_düz = |s: &str, en: usize| format!("{}{}", s, " ".repeat(en.saturating_sub(s.chars().count())));
+        let mut s = vec![];
+        s.push(if self.versiya.is_empty() { self.proqram.clone() } else { format!("{} {}", self.proqram, self.versiya) });
+        if !self.təsvir.is_empty() {
+            s.push(self.təsvir.clone());
+        }
+        s.push(String::new());
+        s.push("İSTİFADƏ:".into());
+        s.push(format!("    {}", self.istifadə()));
+        if !self.parametrlər.is_empty() {
+            s.push(String::new());
+            s.push("ARQUMENTLƏR:".into());
+            let adlar: Vec<String> =
+                self.parametrlər.iter().map(|p| format!("<{}>{}", p.ad, if p.çoxlu { "..." } else { "" })).collect();
+            let en = adlar.iter().map(|a| a.chars().count()).max().unwrap_or(0);
+            for (a, p) in adlar.iter().zip(&self.parametrlər) {
+                s.push(format!("    {}  {}", sol_düz(a, en), p.izah).trim_end().to_string());
+            }
+        }
+        s.push(String::new());
+        s.push("SEÇİMLƏR:".into());
+        let daxili = |o: &ArqSeçim| o.uzun == "--kömək" || o.uzun == "--versiya";
+        let sıra: Vec<&ArqSeçim> =
+            self.seçimlər.iter().filter(|o| !daxili(o)).chain(self.seçimlər.iter().filter(|o| daxili(o))).collect();
+        let sol: Vec<String> = sıra
+            .iter()
+            .map(|o| {
+                let mut a = if o.qısa.is_empty() { format!("    {}", o.uzun) } else { format!("{}, {}", o.qısa, o.uzun) };
+                if !o.bayraqdır {
+                    a += &format!(" <{}>", E::böyüyə(&o.ad()));
+                }
+                a
+            })
+            .collect();
+        let en = sol.iter().map(|a| a.chars().count()).max().unwrap_or(0);
+        for (a, o) in sol.iter().zip(&sıra) {
+            let mut izah = o.izah.clone();
+            if let Some(st) = &o.standart {
+                izah += &format!(" [standart: {st}]");
+            }
+            s.push(format!("    {}  {}", sol_düz(a, en), izah).trim_end().to_string());
+        }
+        s.join("\n")
+    }
+    fn tap(&self, ad: &str) -> Option<&ArqSeçim> {
+        self.seçimlər.iter().find(|o| ad == o.uzun || (!o.qısa.is_empty() && ad == o.qısa))
+    }
+}
+
+enum TəhlilXətası {
+    Arq(String),
+    Siqnal(Siqnal),
+}
+
+fn arq_təhlil(i: &İcraçı, v: &ArqVəziyyət, xam: &[String]) -> Result<D, TəhlilXətası> {
+    let mut dəyərlər: IndexMap<String, D> = IndexMap::new();
+    let mut bayraqlar: Vec<String> = vec![];
+    let mut mövqeli: Vec<String> = vec![];
+    let mut k = 0;
+    let mut yalnız = false;
+    while k < xam.len() {
+        let a = &xam[k];
+        k += 1;
+        if yalnız || !a.starts_with('-') || a == "-" {
+            mövqeli.push(a.clone());
+            continue;
+        }
+        if a == "--" {
+            yalnız = true;
+            continue;
+        }
+        let (ad_, bərabər, dəyər) = match a.split_once('=') {
+            Some((x, y)) => (x.to_string(), true, y.to_string()),
+            None => (a.clone(), false, String::new()),
+        };
+        let Some(o) = v.tap(&ad_) else { return Err(TəhlilXətası::Arq(format!("naməlum seçim `{ad_}`"))) };
+        if o.uzun == "--kömək" {
+            i.yaz(&v.kömək());
+            return Err(TəhlilXətası::Siqnal(Siqnal::Dayanma(D::T(0))));
+        }
+        if o.uzun == "--versiya" {
+            i.yaz(&format!("{} {}", v.proqram, v.versiya));
+            return Err(TəhlilXətası::Siqnal(Siqnal::Dayanma(D::T(0))));
+        }
+        if o.bayraqdır {
+            if bərabər {
+                return Err(TəhlilXətası::Arq(format!("`{}` dəyər qəbul etmir", o.uzun)));
+            }
+            if !bayraqlar.contains(&o.ad()) {
+                bayraqlar.push(o.ad());
+            }
+            continue;
+        }
+        let dəyər = if bərabər {
+            dəyər
+        } else {
+            if k >= xam.len() {
+                return Err(TəhlilXətası::Arq(format!("`{}` üçün dəyər lazımdır", o.uzun)));
+            }
+            k += 1;
+            xam[k - 1].clone()
+        };
+        dəyərlər.insert(o.ad(), D::str(dəyər));
+    }
+    for o in &v.seçimlər {
+        if !o.bayraqdır && !dəyərlər.contains_key(&o.ad()) {
+            if let Some(st) = &o.standart {
+                dəyərlər.insert(o.ad(), D::s(st));
+            }
+        }
+    }
+    for p in &v.parametrlər {
+        if p.çoxlu {
+            if mövqeli.is_empty() && !p.ixtiyari {
+                return Err(TəhlilXətası::Arq(format!("<{}> lazımdır", p.ad)));
+            }
+            dəyərlər.insert(p.ad.clone(), D::siyahı(mövqeli.drain(..).map(D::str).collect()));
+        } else if !mövqeli.is_empty() {
+            dəyərlər.insert(p.ad.clone(), D::str(mövqeli.remove(0)));
+        } else if !p.ixtiyari {
+            return Err(TəhlilXətası::Arq(format!("<{}> lazımdır", p.ad)));
+        }
+    }
+    if let Some(m) = mövqeli.first() {
+        return Err(TəhlilXətası::Arq(format!("artıq arqument: `{m}`")));
+    }
+    Ok(arq_nəticəsi(Rc::new(dəyərlər), Rc::new(bayraqlar)))
+}
+
+fn arq_nəticəsi(dəyərlər: Rc<IndexMap<String, D>>, bayraqlar: Rc<Vec<String>>) -> D {
+    let ad_ = |s: &str| s.trim_start_matches('-').to_string();
+    let (d1, d2, d3, d4) = (dəyərlər.clone(), dəyərlər.clone(), dəyərlər.clone(), dəyərlər.clone());
+    let (b1, b2, b3) = (bayraqlar.clone(), bayraqlar.clone(), bayraqlar.clone());
+    obyekt(
+        "arqNəticəsi",
+        vec![
+            ("bayraq", d("bayraq", 1, Some(1), Box::new(move |i, a, _| Ok(D::M(b1.contains(&ad_(&mətnə(i, &a[0])?))))))),
+            ("dəyər", d("dəyər", 1, Some(2), Box::new(move |i, a, _| {
+                Ok(d1.get(&ad_(&mətnə(i, &a[0])?)).cloned().unwrap_or(a.get(1).cloned().unwrap_or(D::Boş)))
+            }))),
+            ("siyahı", d("siyahı", 1, Some(1), Box::new(move |i, a, _| {
+                Ok(match d2.get(&ad_(&mətnə(i, &a[0])?)) {
+                    None | Some(D::Boş) => D::siyahı(vec![]),
+                    Some(D::Siyahı(l)) => D::Siyahı(l.clone()),
+                    Some(x) => D::siyahı(vec![x.clone()]),
+                })
+            }))),
+            ("var", d("var", 1, Some(1), Box::new(move |i, a, _| {
+                let k = ad_(&mətnə(i, &a[0])?);
+                Ok(D::M(d3.contains_key(&k) || b2.contains(&k)))
+            }))),
+            ("hamısı", d("hamısı", 0, Some(0), Box::new(move |_, _, _| {
+                let mut l = Lüğət::default();
+                for (k, v) in d4.iter() {
+                    l.insert(Açar(D::s(k)), v.clone());
+                }
+                for b in b3.iter() {
+                    l.insert(Açar(D::s(b)), D::M(true));
+                }
+                Ok(D::lüğət(l))
+            }))),
+        ],
+        None,
+    )
+}
+
+fn arqumentlər(_i: &İcraçı) -> D {
+    let v = Rc::new(RefCell::new(ArqVəziyyət {
+        proqram: "proqram".into(),
+        seçimlər: vec![ArqSeçim { uzun: "--kömək".into(), qısa: "-k".into(), izah: "Bu köməyi göstər".into(), standart: None, bayraqdır: true }],
+        ..Default::default()
+    }));
+    let özü: Rc<RefCell<D>> = Rc::new(RefCell::new(D::Boş));
+    let qaytar = {
+        let ö = özü.clone();
+        move || ö.borrow().clone()
+    };
+    let qaytar = Rc::new(qaytar);
+    let mətn_ = |i: &İcraçı, d: Option<&D>| -> Nəticə<String> {
+        match d {
+            Some(x) => mətnə(i, x),
+            None => Ok(String::new()),
+        }
+    };
+    let seçim_əlavə = |v: &Rc<RefCell<ArqVəziyyət>>, i: &İcraçı, a: &[D], adlı: &Adlı, bayraqdır: bool| -> Nəticə<()> {
+        let u = mətnə(i, &arq_al(a, adlı, 0, "uzun").unwrap_or(D::Boş))?;
+        if !u.starts_with("--") {
+            return Err(xəta("ArqumentXətası", format!("uzun ad `--` ilə başlamalıdır: `{u}`"), "ALQ-R013"));
+        }
+        let q = match arq_al(a, adlı, 1, "qısa") {
+            Some(x) if super::eded::doğrudur(&x) => mətnə(i, &x)?,
+            _ => String::new(),
+        };
+        let izah = match arq_al(a, adlı, 2, "izah") {
+            Some(x) => mətnə(i, &x)?,
+            None => String::new(),
+        };
+        let standart = if bayraqdır {
+            None
+        } else {
+            match arq_al(a, adlı, 3, "standart") {
+                None | Some(D::Boş) => None,
+                Some(x) => Some(mətnə(i, &x)?),
+            }
+        };
+        v.borrow_mut().seçimlər.push(ArqSeçim { uzun: u, qısa: q, izah, standart, bayraqdır });
+        Ok(())
+    };
+    let (v1, v2, v3, v4, v5, v6, v7, v8, v9) =
+        (v.clone(), v.clone(), v.clone(), v.clone(), v.clone(), v.clone(), v.clone(), v.clone(), v.clone());
+    let (q1, q2, q3, q4, q5, q6) = (qaytar.clone(), qaytar.clone(), qaytar.clone(), qaytar.clone(), qaytar.clone(), qaytar.clone());
+    let ob = obyekt(
+        "arqumentlər",
+        vec![
+            ("proqram", d("proqram", 1, Some(1), Box::new(move |i, a, _| {
+                v1.borrow_mut().proqram = mətnə(i, &a[0])?;
+                Ok(q1())
+            }))),
+            ("versiya", d("versiya", 1, Some(1), Box::new(move |i, a, _| {
+                let mut v = v2.borrow_mut();
+                v.versiya = mətnə(i, &a[0])?;
+                if !v.seçimlər.iter().any(|s| s.uzun == "--versiya") {
+                    v.seçimlər.push(ArqSeçim { uzun: "--versiya".into(), qısa: "-v".into(), izah: "Versiyanı göstər".into(), standart: None, bayraqdır: true });
+                }
+                drop(v);
+                Ok(q2())
+            }))),
+            ("təsvir", d("təsvir", 1, Some(1), Box::new(move |i, a, _| {
+                v3.borrow_mut().təsvir = mətnə(i, &a[0])?;
+                Ok(q3())
+            }))),
+            ("parametr", d("parametr", 1, Some(4), Box::new(move |i, a, adlı| {
+                if v4.borrow().parametrlər.last().map(|p| p.çoxlu).unwrap_or(false) {
+                    return Err(xəta("ArqumentXətası", "`çoxlu` parametrdən sonra parametr ola bilməz", "ALQ-R013"));
+                }
+                let p = ArqParametr {
+                    ad: mətnə(i, &a[0])?,
+                    izah: mətn_(i, arq_al(&a, &adlı, 1, "izah").as_ref())?,
+                    çoxlu: arq_al(&a, &adlı, 2, "çoxlu").map(|x| super::eded::doğrudur(&x)).unwrap_or(false),
+                    ixtiyari: arq_al(&a, &adlı, 3, "ixtiyari").map(|x| super::eded::doğrudur(&x)).unwrap_or(false),
+                };
+                v4.borrow_mut().parametrlər.push(p);
+                Ok(q4())
+            }))),
+            ("bayraq", d("bayraq", 1, Some(3), Box::new(move |i, a, adlı| {
+                seçim_əlavə(&v5, i, &a, &adlı, true)?;
+                Ok(q5())
+            }))),
+            ("seçim", d("seçim", 1, Some(4), Box::new(move |i, a, adlı| {
+                seçim_əlavə(&v6, i, &a, &adlı, false)?;
+                Ok(q6())
+            }))),
+            ("təhlil", d("təhlil", 0, Some(1), Box::new(move |i, a, _| {
+                let xam: Vec<String> = match a.first() {
+                    Some(x) if !x.boşdur() => {
+                        let mut v = vec![];
+                        for y in i.siyahıya(x, None)? {
+                            v.push(mətnə(i, &y)?);
+                        }
+                        v
+                    }
+                    _ => i.proqram_arqumentləri.borrow().clone(),
+                };
+                let v = v7.borrow();
+                match arq_təhlil(i, &v, &xam) {
+                    Ok(d) => Ok(d),
+                    Err(TəhlilXətası::Siqnal(s)) => Err(s),
+                    Err(TəhlilXətası::Arq(m)) => {
+                        i.xəta_yaz(&format!("xəta: {m}"));
+                        i.xəta_yaz(&format!("istifadə: {}", v.istifadə()));
+                        i.xəta_yaz(&format!("Ətraflı: {} --kömək", v.proqram));
+                        Err(Siqnal::Dayanma(D::T(3)))
+                    }
+                }
+            }))),
+            ("kömək", d("kömək", 0, Some(0), Box::new(move |_, _, _| Ok(D::str(v8.borrow().kömək()))))),
+            ("istifadə", d("istifadə", 0, Some(0), Box::new(move |_, _, _| Ok(D::str(v9.borrow().istifadə()))))),
+        ],
+        None,
+    );
+    *özü.borrow_mut() = ob.clone();
+    ob
 }
