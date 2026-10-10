@@ -10,6 +10,7 @@ mod aac_yaz;
 mod acar;
 mod elifba;
 mod homoqlif;
+mod icraci;
 mod lekser;
 mod parser;
 mod parser_jsx;
@@ -96,10 +97,77 @@ fn main() -> ExitCode {
             if !x.uğurludur() { return ExitCode::from(2); }
             ExitCode::SUCCESS
         }
+        "işlət" | "islet" | "run" if a.len() >= 2 => işlət(&a[1..]),
         "versiya" | "--versiya" => { println!("alqor-rs {}", env!("CARGO_PKG_VERSION")); ExitCode::SUCCESS }
         _ => {
             println!("istifadə: alqor-rs tokenlər <fayl> | alqor-rs aac <fayl> [--diaq]");
             ExitCode::from(3)
+        }
+    }
+}
+
+/// `alqor-rs işlət fayl.alq [-- arq…]` — Python `alqor işlət` ilə eyni davranış.
+fn işlət(a: &[String]) -> ExitCode {
+    let a = a.to_vec();
+    // Dərin rekursiya üçün böyük stek; mənbə reyestri sap-yerlidir
+    let sap = std::thread::Builder::new().stack_size(1 << 30).spawn(move || işlət_sapda(&a));
+    let k = match sap {
+        Ok(s) => s.join().unwrap_or(101),
+        Err(_) => 101,
+    };
+    ExitCode::from((k & 0xff) as u8)
+}
+
+fn işlət_sapda(a: &[String]) -> i32 {
+    let (öz, arqumentlər): (Vec<String>, Vec<String>) = match a.iter().position(|x| x == "--") {
+        Some(k) => (a[..k].to_vec(), a[k + 1..].to_vec()),
+        None => (a.to_vec(), vec![]),
+    };
+    let Some(yol) = öz.iter().find(|x| !x.starts_with("--") || *x == "-").cloned() else {
+        eprintln!("xəta: `işlət` əmri üçün fayl adı lazımdır");
+        return 3;
+    };
+    let m = if yol == "-" {
+        let mut s = String::new();
+        let _ = std::io::Read::read_to_string(&mut std::io::stdin(), &mut s);
+        xeta::Mənbə::yeni("<stdin>", &s, None)
+    } else {
+        match oxu(&yol) {
+            Ok(m) => m,
+            Err(e) => {
+                eprintln!("✖ {e}");
+                return 4;
+            }
+        }
+    };
+    let mut x = xeta::XətaToplayıcı::yeni();
+    let ağac = parser::ayır(m, &mut x);
+    if !x.uğurludur() {
+        x.çap();
+        return 2;
+    }
+    if !x.siyahı.is_empty() {
+        x.çap();
+    }
+    let ağac: &'static aac::Proqram = Box::leak(Box::new(ağac));
+    let i = icraci::İcraçı::yeni();
+    if yol != "-" {
+        *i.əsas_qovluq.borrow_mut() = std::fs::canonicalize(&yol).ok().and_then(|p| p.parent().map(|p| p.to_path_buf()));
+    }
+    match i.işlət(&ağac.gövdə, arqumentlər) {
+        Ok(k) => k,
+        Err(x) => {
+            i.boşalt();
+            let d = xeta::Diaqnostika {
+                kod: if x.kod.is_empty() { "ALQ-R000".into() } else { x.kod.clone() },
+                mesaj: format!("{}: {}", x.tip, x.mesaj),
+                yer: x.yer,
+                səviyyə: xeta::Səviyyə::Xəta,
+                qeyd: if x.yer.is_some() { "burada baş verdi".into() } else { String::new() },
+                köməklər: vec![],
+            };
+            eprintln!("{}", d.formatla(None));
+            1
         }
     }
 }
