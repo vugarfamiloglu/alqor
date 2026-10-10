@@ -487,6 +487,7 @@ seçdiyiniz platforma üçün addım-addım təlimat. Studio-da:
 | Proqramınız | Nəticə | Harada yerləşir |
 |---|---|---|
 | `gətir veb` **yoxdur** (konsol proqramı, hesablamalar, oyun) | **Statik sayt**: `index.html` — proqram JavaScript-ə çevrilib brauzerdə işləyir | Netlify, GitHub Pages, Cloudflare Pages, istənilən hostinq — **pulsuz**, server lazım deyil |
+| `gətir pəncərə` **var** (desktop tətbiqi: komponentlər, vidjetlər) | **Statik sayt**: pəncərə səhifənin özündə açılır, düymələr brauzerdə işləyir | eyni — **pulsuz**, server lazım deyil |
 | `gətir veb` **var** (`veb.Server`, API, formalar) | **Server paketi**: `tetbiq.pyz` + `Dockerfile` | Render, Fly.io, Railway, öz VPS-iniz |
 
 Məcburi seçmək: `alqor yerləşdir --statik` və ya `--server`.
@@ -524,13 +525,41 @@ git push
 GitHub-da: **Settings → Pages → Branch: main, Folder: /docs**. Ünvan:
 `https://<istifadəçi>.github.io/<repo>/`.
 
+### Desktop tətbiqi — eyni kod, server yoxdur
+
+```alqor
+gətir pəncərə
+
+komponent Sayğac
+    vəziyyət say: tam = 0
+    göstər()
+        qaytar <button klik={() => özü.say += 1}>Basıldı: {özü.say}</button>
+    son
+son
+
+dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 320, 200)
+p.məzmun(<Sayğac />)
+p.göstər()
+pəncərə.işlət()
+```
+
+`alqor yerləşdir` → `index.html`: pəncərənin məzmunu səhifədə görünür,
+düymə basılanda komponent yenidən göstərilir — hamısı brauzerdə, serversiz.
+Vidjetlər (`vidjet.cədvəl`, `vidjet.form`…) desktopdakı kimi görünür,
+menyu və qısayollar işləyir. `dialoq.təsdiqlə` / `soruş` brauzerin sual
+pəncərəsini açır; **fayl dialoqları** (`faylAç`, `faylSaxla`) və fayl
+sistemi brauzerdə yoxdur — basılanda səhifənin altında xəta görünür.
+Proqram `gətir veb` də işlədirsə (məs. `-- veb` arqumenti ilə server
+açan nümunələr), statik saytda yalnız desktop hissəsi işləyir.
+
 ### Brauzerdə nə işləyir?
 
 Statik saytda proqram JavaScript-ə çevrilir. Bu modullar dəstəklənir:
 `riyaziyyat`, `mətn`, `təsadüfi`, `vaxt`, `json`, `naxış`, `sistem`,
-`jurnal`, `paralel`, `konsol` və öz modullarınız. Başqa modul
-(`veb`, `fayl`, `verilənlər`…) işlədirsinizsə, `alqor yerləşdir`
-bunu deyir — onda server növünü seçin.
+`jurnal`, `paralel`, `konsol`, `vidjet`, `pəncərə`, `http` (brauzerin
+CORS qaydaları ilə) və öz modullarınız. Başqa modul (`veb`, `fayl`,
+`verilənlər`…) işlədirsinizsə, `alqor yerləşdir` bunu deyir — onda
+server növünü seçin.
 
 ## Server tətbiqi
 
@@ -649,7 +678,7 @@ alqor> "ışıq".böyüyə()
 
 JavaScript hədəfi bu modulları dəstəkləyir: `riyaziyyat`, `mətn`,
 `təsadüfi`, `vaxt`, `json`, `naxış`, `sistem`, `jurnal`, `paralel`,
-`konsol`;
+`konsol`, `vidjet`, `pəncərə` (komponentlər, dialoqlar), `http`;
 Node.js-də həm də `fayl`, `qovluq`, `yol`.
 
 ## Paketlər

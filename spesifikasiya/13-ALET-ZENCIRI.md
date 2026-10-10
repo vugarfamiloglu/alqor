@@ -135,7 +135,8 @@ başlayır), menyuda və masaüstündə "Alqor Studio" ikonu.
 | Layihə | Nəticə | Platforma |
 |---|---|---|
 | `gətir veb` yoxdur | statik sayt: `index.html` (JS hədəfi, § 13.14), `404.html`, `.nojekyll` | Netlify, GitHub Pages, Cloudflare Pages, istənilən hostinq |
-| `gətir veb` var | `tetbiq.pyz` + `Dockerfile` (python:3.12-slim, imtiyazsız istifadəçi) | Render, Fly.io, Railway, VPS |
+| `gətir pəncərə` var | statik **interfeys** saytı: pəncərə səhifədə göstərilir, hadisələr brauzerdə işləyir (`veb` budağı olsa da) | eyni |
+| `gətir veb` var, `pəncərə` yox | `tetbiq.pyz` + `Dockerfile` (python:3.12-slim, imtiyazsız istifadəçi) | Render, Fly.io, Railway, VPS |
 
 Hər iki halda `YERLESDIR.md` platformalar üzrə addımları verir.
 Sintaksis xətası olan proqram yerləşdirilmir (çıxış kodu 2). JS-də
@@ -752,7 +753,8 @@ alqor qur --hədəf js --çıxış a.js      # layihə qovluğunda: giriş fayl�
 | `generator funksiya` | JS generatoru (tənbəl, sonsuz ola bilər) |
 | `asinxron` / `gözlə` | tənbəl `Gələcək` — gövdə `gözlə` ilə işə düşür |
 | `oxu()` | node: stdin; brauzer: `prompt()` |
-| `yaz()` | node: stdout; brauzer: səhifədəki çıxış sahəsi |
+| `yaz()` | node: stdout; brauzer: səhifədəki çıxış sahəsi (interfeys səhifəsində brauzer konsolu) |
+| `komponent`, JSX | `Element` ağacı; `göstər()` nəticəsi brauzerdə HTML-ə çevrilir |
 
 Semantika etalon icraçı ilə eynidir: `sinaq/test_js.py` `test_icraci`-dəki
 bütün kod parçalarını və `sinaq/js_numuneler/` proqramlarını hər iki
@@ -762,9 +764,52 @@ proqramlarda JS hədəfi ~10 dəfə sürətlidir.
 **Dəstəklənən modullar:** `riyaziyyat`, `mətn`, `təsadüfi`, `vaxt`, `json`,
 `naxış`, `sistem`, `jurnal`, `paralel` (ardıcıl), `konsol` (brauzerdə
 rəngsiz; `arqumentlər` yoxdur), `fayl`/`qovluq`/`yol`
-(yalnız node), yerli fayllar (`gətir "./x.alq"`) və `paketlər/` paketləri —
-hamısı bir fayla yığılır. `veb`, `pəncərə`, `vidjet`, `sap` və
-`alqor/modullar/` modulları **kompilyasiya xətası** verir.
+(yalnız node), `vidjet`, `pəncərə` (+ `pəncərə.dialoq`, `pəncərə.sınaq`),
+`http`, yerli fayllar (`gətir "./x.alq"`) və `paketlər/` paketləri —
+hamısı bir fayla yığılır. `veb`, `sap` və qalan `alqor/modullar/`
+modulları **kompilyasiya xətası** verir (istisna: `pəncərə` idxal edən
+proqramda `veb` kompilyasiya olunur, çağırılanda icra xətası verir).
+
+### İnterfeys proqramları brauzerdə (serversiz)
+
+`gətir pəncərə` olan proqram `qur --hədəf veb` / `yerləşdir` ilə
+**interfeys səhifəsinə** çevrilir: menyu sətri, `#alqor-kök`, pəncərə və
+vidjet üslubu (`pencere.ÜSLUB` + `vidjet.ÜSLUB`) və Python pəncərəsinin
+brauzer nüvəsi (`yamaq()`, hadisə növbəsi). Model Python ilə eynidir —
+`göstər()` nəticəsi HTML-ə çevrilir, idarəedicilər `data-a-klik="n1h3"`
+reyestrinə yazılır — fərq yalnız göndərmədədir: hadisə HTTP sorğusu ilə
+serverə yox, birbaşa səhifədəki icra mühitinə gedir, sonra kök yenidən
+göstərilir və DOM yamanır (yazılan sahənin fokusu və dəyəri qalır).
+
+| İmkan | Brauzerdə |
+|---|---|
+| `komponent` + `vəziyyət`, `hesablanan`, uşaq komponentlər, props | hər hadisədən sonra `göstər()` yenidən çağırılır |
+| hadisələr | `klik`, `dəyişdi`, `yazıldı`, `göndərildi`, `ikiKlik`, `düyməBasma`, ... (`pəncərə` cədvəli) |
+| `pəncərə.Pəncərə` | `məzmun`, `menyu` (+ qısayollar), `üslub`, `başlıq`, `göstər`, `bağla`, `yenilə`; ölçü/mövqe nəzərə alınmır |
+| `pəncərə.işlət()` | dərhal qayıdır — hadisələr səhifədə işləməyə davam edir |
+| `dialoq.təsdiqlə` / `soruş` / `məlumat` / `xəbərdarlıq` / `xəta` | `confirm` / `prompt` / `alert` |
+| `dialoq.faylAç` / `faylSaxla` / `qovluqSeç` | icra xətası (`ALQ-R009`) — brauzerdə fayl sistemi yoxdur |
+| `pəncərə.bildiriş` | səhifədə bildiriş qutusu |
+| `vidjet.*` (118 element) | Python mənbəyindən avtomatik çevrilir (`alqor/js/vidjet_cevir.py`) — HTML eynidir |
+| `http.al/göndər/...` | sinxron `XMLHttpRequest` (CORS qaydaları ilə) |
+
+İdarəedicidə xəta interfeysi silmir: səhifənin altında bağlana bilən
+xəta qutusu görünür. Node.js-də pəncərə açılmır (Python-un başsız rejimi
+kimi): `pəncərə.sınaq` sürücüsü və dialoq cavabları növbəsi işləyir, ona
+görə `06-desktop.alq -- sınaq` hər iki icrada eyni nəticə verir.
+
+**Vidjetlər.** `vidjet.py` və `vidjet_elave.py` funksiyaları əl ilə
+köçürülmür: `vidjet_cevir.py` Python AAC-sini (`ast`) JS-ə çevirir,
+Python əməliyyatları `vidjet_komekci.js` köməkçiləri ilə ifadə olunur
+(doğruluq, `%`, dilim, `f"{x:g}"`). Yeni vidjet əlavə edildikdə JS hədəfi
+avtomatik onu da alır; naməlum Python konstruksiyası çeviricidə xəta
+verir. `sinaq/test_js.py` hər vidjeti (standart və dolu arqumentlərlə)
+hər iki icrada qurub HTML-i müqayisə edir; Playwright sınaqları
+Chromium-da klik → DOM yenilənməsini yoxlayır.
+
+**`http` Node.js-də** uşaq prosesdə `fetch` ilə sinxron icra olunur
+(`gözlə http.al(...)` Python-dakı kimi bloklayır). `faylYüklə`,
+`faylGöndər`, `vebSoket` JS hədəfində yoxdur.
 
 Fərqlər: `paralel` əməliyyatları ardıcıl işləyir; `vaxt.gözlə` brauzerdə
 məşğul gözləmədir; JS stek həddi aşılarsa `StekDaşmaXətası` atılır.
