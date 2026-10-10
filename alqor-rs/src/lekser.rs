@@ -207,7 +207,7 @@ impl<'a> Lekser<'a> {
         self.i += 1;
         let y = self.yer(baş, 1);
         self.x.xəta("ALQ-L002", "Tanınmayan simvol", Some(y),
-            &format!("'{}' (U+{:04X})", c, c as u32),
+            &match unicode_names2::name(c) { Some(a) => format!("'{}' (U+{:04X}, {})", c, c as u32, a), None => format!("'{}' (U+{:04X}, adsız simvol)", c, c as u32) },
             &["bu simvol Alqor kodunda istifadə oluna bilməz",
               "mətn literalı daxilində istifadə etmək istəyirsinizsə dırnaq içinə alın: \"...\""]);
     }
@@ -454,9 +454,10 @@ impl<'a> Lekser<'a> {
     fn ascii_xəbərdarlıq(&mut self, baş: usize, uz: usize, kanonik: &str) {
         let yazılan = self.parça(baş, baş + uz);
         let y = self.yer(baş, uz);
-        self.x.xəbərdarlıq("ALQ-L020", "Açar söz ASCII formada yazılıb", Some(y),
+        self.x.xəbərdarlıq("ALQ-L020", "ASCII açar söz istifadə olunub", Some(y),
             &format!("'{}' → '{}'", yazılan, kanonik),
-            &[&format!("kanonik forma: {}", kanonik), "hamısını birdən düzəltmək: alqorfmt --ascii-düzəlt ."]);
+            &[&format!("kanonik forma: {}", kanonik), "hamısını birdən düzəltmək: alqorfmt --ascii-düzəlt .",
+              "bu xəbərdarlığı söndürmək: // alqor: ascii-xeberdarliq sondur"]);
     }
 
     // ── Ədədlər ───────────────────────────────────────────────────────
@@ -718,7 +719,8 @@ impl<'a> Lekser<'a> {
         }
         let y = self.yer(baş, 2);
         self.x.xəta("ALQ-L005", "Yanlış qaçış ardıcıllığı", Some(y), &format!("`\\{}` tanınmayan qaçışdır", c),
-            &["tərs kəsiyin özü üçün: \\\\"]);
+            &["icazəli: \\n \\r \\t \\\\ \\\" \\' \\0 \\e \\{ \\} \\u{...} \\xHH",
+              "tərs kəsiyin özü üçün: \\\\"]);
         c.to_string()
     }
 
