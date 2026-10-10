@@ -1656,11 +1656,11 @@ class Brauzer(unittest.TestCase):
         d = p.locator("#dialoq")
         d.wait_for(state="visible")
         m = d.inner_text()
-        for parça in ("Vüqar Familoğlu", "alqor.vuqar.pro", "Versiya",
+        for parça in ("Vüqar Familoğlu", "vuqar.pro/alqor", "Versiya",
                       "Azərbaycan dilində"):
             self.assertIn(parça, m)
         self.assertEqual(d.locator("a").get_attribute("href"),
-                         "https://alqor.vuqar.pro")
+                         "https://vuqar.pro/alqor")
         self.assertFalse(p.locator("#dialoq-legv").is_visible())
         if os.environ.get("ALQOR_EKRAN"):
             d.screenshot(path=os.environ["ALQOR_EKRAN"])

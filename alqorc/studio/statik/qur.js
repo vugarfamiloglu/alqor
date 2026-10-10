@@ -406,7 +406,7 @@ function haqqındaDüyünü() {
     "proqramlaşdırma dilidir. Bir dildə konsol proqramı, veb sayt, desktop tətbiq və " +
     "brauzer kodu yazılır; proqram tək .exe faylına çevrilir və bir əmrlə vebə yerləşdirilir.";
   const sayt = document.createElement("a");
-  sayt.href = "https://alqor.vuqar.pro"; sayt.textContent = "alqor.vuqar.pro";
+  sayt.href = "https://vuqar.pro/alqor"; sayt.textContent = "vuqar.pro/alqor";
   sayt.target = "_blank"; sayt.rel = "noopener";
   k.append(p,
     sətir("Versiya", `Alqor Studio ${S.məlumat?.versiya || ""}`),

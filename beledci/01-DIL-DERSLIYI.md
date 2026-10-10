@@ -681,7 +681,7 @@ alqortest
 gətir http
 
 asinxron funksiya əsas()
-    dəyişən c = gözlə http.al("https://alqor.vuqar.pro/api/vaxt")
+    dəyişən c = gözlə http.al("https://vuqar.pro/alqor/api/vaxt")
     yaz(c.mətn())
 son
 ```

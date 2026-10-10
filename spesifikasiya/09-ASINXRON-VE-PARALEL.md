@@ -22,7 +22,7 @@ asinxron funksiya məlumatAl(url: mətn) -> mətn
 son
 
 asinxron funksiya əsas()
-    dəyişən m = gözlə məlumatAl("https://alqor.vuqar.pro/api/istifadəçilər")
+    dəyişən m = gözlə məlumatAl("https://vuqar.pro/alqor/api/istifadəçilər")
     yaz(m)
 son
 ```

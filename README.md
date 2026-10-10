@@ -207,7 +207,7 @@ cd mənim-saytım
 | 2. Kompilyasiya | `alqor qur --exe` — tək faylda paylanan tətbiq | ⏳ |
 | 3. Vebə yerləşdirmə | `alqor yerləşdir` — statik hostinq və Docker | ⏳ |
 | 4. Rust kompilyatoru | Native binar və WebAssembly | 🟡 başlanıb |
-| Sonra | Ekosistem — [alqor.vuqar.pro](https://alqor.vuqar.pro): paket deposu, sənədlər; Linux/macOS quraşdırıcıları | ⬜ |
+| Sonra | Ekosistem — sayt [vuqar.pro/alqor](https://vuqar.pro/alqor), paket deposu [vuqar.pro/hub](https://vuqar.pro/hub) | ⬜ |
 
 Ətraflı: [NOVBETI.md](NOVBETI.md)
 

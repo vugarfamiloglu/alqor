@@ -182,6 +182,34 @@ class HubSınağı(unittest.TestCase):
         except urllib.error.HTTPError as x:
             self.assertEqual(x.code, 401)
 
+    def test_alt_ünvanda_önək_ilə(self):
+        """`--önək /hub` — vuqar.pro/hub kimi alt ünvanda işləmə."""
+        s = H.server(self.hub, port=0, önək="/hub")
+        threading.Thread(target=s.serve_forever, daemon=True).start()
+        try:
+            baza = f"http://127.0.0.1:{s.server_address[1]}"
+            depo = P.Depo(baza + "/hub")
+            m = depo.meta("a")
+            self.assertEqual(m["son"], "2.0.0")
+            self.assertTrue(m["versiyalar"]["2.0.0"]["fayl"].startswith(
+                baza + "/hub/api/paket/a/"))
+            # HTTPS proksi arxasında ünvan proksinin protokolu ilə qurulur
+            r = urllib.request.Request(baza + "/hub/api/paket/a", headers={
+                "X-Forwarded-Proto": "https", "X-Forwarded-Host": "vuqar.pro"})
+            with urllib.request.urlopen(r) as c:
+                f = json.loads(c.read())["versiyalar"]["1.0.0"]["fayl"]
+            self.assertTrue(f.startswith("https://vuqar.pro/hub/api/"), f)
+            with urllib.request.urlopen(baza + "/hub/?q=analit") as c:
+                h = c.read().decode()
+            self.assertIn('href="/hub/paket/', h)
+            self.assertIn('action="/hub/"', h)
+            # proksi önəki silsə də işləyir
+            with urllib.request.urlopen(baza + "/api/paket/b") as c:
+                self.assertEqual(json.loads(c.read())["son"], "1.0.0")
+        finally:
+            s.shutdown()
+            s.server_close()
+
     def test_tam_ssenari_cli(self):
         k = self.layihə("tətbiq", {}, "gətir b\ngətir \"@şirkət/analitika\" "
                                       "kimi an\nyaz(b.versiyaMətni(), an.versiyaMətni())\n")

@@ -246,7 +246,7 @@ təsvir = "Nümunə Alqor layihəsi"
 müəllif = ["Vüqar Qənbərov <vuqar@nümunə.az>"]
 lisenziya = "MIT"
 depo = "https://github.com/istifadəçi/mənim-layihəm"
-sənəd = "https://alqor.vuqar.pro/paket/mənim-layihəm"
+sənəd = "https://vuqar.pro/hub/paket/mənim-layihəm"
 açarSözlər = ["veb", "api"]
 alqor_versiya = ">=1.0.0"
 
@@ -351,12 +351,30 @@ Ziddiyyətli tələblər (`b` → `a ^1`, `c` → `a ^2`) kimin nəyi tələb
 etdiyini göstərən `ALQ-M007` ilə bitir.
 
 **Depo ünvanı**: `--depo URL` › `ALQORHUB` › `layihe.alq` `[alqorpm] depo`
-› `~/.alq/ayarlar.json` › `https://hub.alqor.vuqar.pro`.
+› `~/.alq/ayarlar.json` › `https://vuqar.pro/hub`.
 
 ### `alqorhub` — paket deposu ✅
 
 ```bash
 alqor hub --qovluq hub-məlumat --port 8790 --admin aysel
+```
+
+Rəsmi depo `https://vuqar.pro/hub` alt ünvanında işləyir. Bunun üçün
+`--önək /hub`: səhifə linkləri və API-nin qaytardığı arxiv ünvanları
+önəklə qurulur; reverse proxy önəki silsə də, saxlasa da işləyir.
+`X-Forwarded-Proto` / `X-Forwarded-Host` başlıqları nəzərə alınır:
+
+```bash
+alqor hub --qovluq /srv/alqorhub --host 127.0.0.1 --port 8790 --önək /hub
+```
+
+```nginx
+location /hub/ {
+    proxy_pass http://127.0.0.1:8790/hub/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    client_max_body_size 12m;
+}
 ```
 
 Xarici asılılıqsız server (SQLite + fayllar): veb səhifələr (axtarış,

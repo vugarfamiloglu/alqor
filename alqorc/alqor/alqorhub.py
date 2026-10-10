@@ -2,7 +2,11 @@
 Alqor — `alqorhub`: paket deposu serveri (Spesifikasiya § 8.9).
 
     alqor hub --qovluq hub-məlumat --port 8790 [--host 0.0.0.0]
-              [--admin ad1,ad2]
+              [--admin ad1,ad2] [--önək /hub]
+
+`--önək /hub` — depo alt ünvanda işləyir (məs. https://vuqar.pro/hub,
+reverse proxy arxasında): səhifə linkləri və API ünvanları önəklə
+qurulur; proksi önəki silsə də, saxlasa da işləyir.
 
 Xarici asılılıq yoxdur: `http.server` + SQLite. Arxivlər
 `<qovluq>/fayllar/` altında, metaməlumat `<qovluq>/hub.db`-dədir.
@@ -412,32 +416,33 @@ def _md(mətn: str) -> str:
     return "\n".join(n)
 
 
-def _səhifə(başlıq: str, gövdə: str, q: str = "") -> bytes:
+def _səhifə(başlıq: str, gövdə: str, q: str = "", önək: str = "") -> bytes:
     return (f"<!doctype html><html lang=\"az\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,"
             f"initial-scale=1\"><title>{html.escape(başlıq)} — alqorhub"
             f"</title><style>{_ÜSLUB}</style></head><body><header><div "
-            f"class=\"iç\"><a class=\"loqo\" href=\"/\">alqorhub</a>"
-            f"<form action=\"/\"><input name=\"q\" value=\"{html.escape(q)}\""
+            f"class=\"iç\"><a class=\"loqo\" href=\"{önək}/\">alqorhub</a>"
+            f"<form action=\"{önək}/\"><input name=\"q\" value=\"{html.escape(q)}\""
             f" placeholder=\"Paket axtar…\" aria-label=\"Paket axtar\">"
             f"</form></div></header><main class=\"iç\">{gövdə}</main>"
             f"</body></html>").encode("utf-8")
 
 
-def ana_səhifə(hub: Hub, q: str) -> bytes:
+def ana_səhifə(hub: Hub, q: str, önək: str = "") -> bytes:
     n = hub.axtar(q)
     kartlar = "".join(
-        f'<div class="kart"><h3><a href="/paket/{urllib.parse.quote(x["ad"], safe="@")}">'
+        f'<div class="kart"><h3><a href="{önək}/paket/{urllib.parse.quote(x["ad"], safe="@")}">'
         f'{html.escape(x["ad"])}</a><span class="nişan">'
         f'{html.escape(x["son"] or "—")}</span></h3><div>'
         f'{html.escape(x["təsvir"] or "")}</div><div class="sönük">'
         f'{x["endirmə"]} endirmə</div></div>' for x in n)
     başlıq = f"«{html.escape(q)}» üçün {len(n)} nəticə" if q else \
         f"{len(n)} paket"
-    return _səhifə("Paketlər", f"<h2>{başlıq}</h2>{kartlar or '<p>Heç nə tapılmadı.</p>'}", q)
+    return _səhifə("Paketlər", f"<h2>{başlıq}</h2>{kartlar or '<p>Heç nə tapılmadı.</p>'}", q,
+                   önək)
 
 
-def paket_səhifəsi(hub: Hub, ad: str) -> bytes:
+def paket_səhifəsi(hub: Hub, ad: str, önək: str = "") -> bytes:
     m = hub.meta(ad)
     son = m["son"]
     readme = ""
@@ -464,14 +469,16 @@ def paket_səhifəsi(hub: Hub, ad: str) -> bytes:
              f"<p class=sönük>{html.escape(m['təsvir'] or '')}</p>"
              f"<div class=cərgə><div class=kart>{readme or '<p class=sönük>README yoxdur.</p>'}</div>"
              f"<div>{yan}</div></div>")
-    return _səhifə(ad, gövdə)
+    return _səhifə(ad, gövdə, önək=önək)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 #  HTTP
 # ═══════════════════════════════════════════════════════════════════════
 
-def işləyici_sinfi(hub: Hub):
+def işləyici_sinfi(hub: Hub, önək: str = ""):
+    önək = "/" + önək.strip("/") if önək.strip("/") else ""
+    önək_hissələri = [h for h in önək.split("/") if h]
     class İşləyici(BaseHTTPRequestHandler):
         server_version = "alqorhub/1"
         protocol_version = "HTTP/1.1"
@@ -511,6 +518,9 @@ def işləyici_sinfi(hub: Hub):
             u = urllib.parse.urlsplit(self.path)
             hissələr = [urllib.parse.unquote(h) for h in u.path.split("/")
                         if h]
+            if önək_hissələri and \
+                    hissələr[:len(önək_hissələri)] == önək_hissələri:
+                hissələr = hissələr[len(önək_hissələri):]
             # `@sahə/ad` iki hissədir — birləşdir
             n = []
             for h in hissələr:
@@ -524,16 +534,20 @@ def işləyici_sinfi(hub: Hub):
         def _işlə(self) -> None:
             try:
                 h, sorğu = self._yol()
-                kök = f"http://{self.headers.get('Host', 'localhost')}"
+                protokol = (self.headers.get("X-Forwarded-Proto") or "http") \
+                    .split(",")[0].strip()
+                host = self.headers.get("X-Forwarded-Host") or \
+                    self.headers.get("Host", "localhost")
+                kök = f"{protokol}://{host}{önək}"
                 if h[:1] == ["api"]:
                     return self._api(h[1:], sorğu, kök)
                 if self.command not in ("GET", "HEAD"):
                     raise HubXətası(405, "icazəsiz üsul")
                 if not h:
-                    return self._cavab(200, ana_səhifə(hub, sorğu.get("q", "")),
+                    return self._cavab(200, ana_səhifə(hub, sorğu.get("q", ""), önək),
                                        "text/html; charset=utf-8")
                 if h[0] == "paket" and len(h) == 2:
-                    return self._cavab(200, paket_səhifəsi(hub, h[1]),
+                    return self._cavab(200, paket_səhifəsi(hub, h[1], önək),
                                        "text/html; charset=utf-8")
                 raise HubXətası(404, "səhifə tapılmadı")
             except HubXətası as x:
@@ -590,15 +604,16 @@ def işləyici_sinfi(hub: Hub):
     return İşləyici
 
 
-def server(hub: Hub, host: str = "127.0.0.1", port: int = 8790
-           ) -> ThreadingHTTPServer:
-    s = ThreadingHTTPServer((host, port), işləyici_sinfi(hub))
+def server(hub: Hub, host: str = "127.0.0.1", port: int = 8790,
+           önək: str = "") -> ThreadingHTTPServer:
+    s = ThreadingHTTPServer((host, port), işləyici_sinfi(hub, önək))
     s.daemon_threads = True
     return s
 
 
 def əsas(arqumentlər: list[str]) -> int:
     qovluq, host, port, adminlər = "hub-məlumat", "127.0.0.1", 8790, set()
+    önək = ""
     i = 0
     while i < len(arqumentlər):
         a = arqumentlər[i]
@@ -609,6 +624,8 @@ def əsas(arqumentlər: list[str]) -> int:
             host, i = v, i + 1
         elif a == "--port":
             port, i = int(v), i + 1
+        elif a in ("--önək", "--onek"):
+            önək, i = v, i + 1
         elif a == "--admin":
             adminlər = {x.strip() for x in v.split(",") if x.strip()}
             i += 1
@@ -617,8 +634,8 @@ def əsas(arqumentlər: list[str]) -> int:
             return 0
         i += 1
     hub = Hub(qovluq, adminlər)
-    s = server(hub, host, port)
-    print(f"alqorhub: http://{host}:{s.server_address[1]}/  "
+    s = server(hub, host, port, önək)
+    print(f"alqorhub: http://{host}:{s.server_address[1]}{önək}/  "
           f"(məlumat: {Path(qovluq).resolve()})")
     print(f"  istifadə: ALQORHUB=http://{host}:{s.server_address[1]} "
           "alqorpm …   (dayandırmaq: Ctrl+C)")
