@@ -17,6 +17,7 @@ unicode-normalization = "0.1"
 fancy-regex = "0.14"
 corosensei = "0.3"
 indexmap = "2"
+unicode_names2 = "1"
 
 [profile.release]
 opt-level = 3

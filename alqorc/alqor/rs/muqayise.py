@@ -3,6 +3,8 @@ Python etalonu ilə `alqor-rs` arasında diferensial müqayisə.
 
     python -m alqor.rs.muqayise tokenlər [fayl...]   # standart: repo-dakı bütün .alq
     python -m alqor.rs.muqayise tokenlər --korpus    # test_icraci kod parçaları
+    python -m alqor.rs.muqayise aac --mənbələr --diaq
+        # sınaqlarda parserə verilən bütün mənbələr, xəta mesajları ilə
     python -m alqor.rs.muqayise aac [fayl...]        # AAC çapı + diaqnostika
     python -m alqor.rs.muqayise aac --korpus         # test_icraci kod parçaları
     python -m alqor.rs.muqayise aac --parçalar       # sınaqlarda ayrılan bütün
@@ -147,6 +149,70 @@ def rust_aac(b: Path, yol: Path) -> tuple[str, bool]:
     return r.stdout.decode("utf-8", "replace"), r.returncode == 0
 
 
+def python_aac_diaq(yol: Path) -> tuple[str, bool]:
+    """AAC + diaqnostikalar (`alqor-rs aac --diaq` formatı)."""
+    from ..lekser import Lekser
+    from ..menbe import Mənbə
+    from ..parser import Parser
+    from ..xeta import XətaToplayıcı
+    from .aac_capi import aac_çapı, diaq_çapı
+    x = XətaToplayıcı()
+    m = Mənbə.fayldan(yol, x)
+    if m is None:
+        return "", False
+    p = Parser(Lekser(m, x).leksə(), m, x).ayır()
+    return aac_çapı(p) + "## diaqnostika\n" + diaq_çapı(x), x.uğurludur()
+
+
+def rust_aac_diaq(b: Path, yol: Path) -> tuple[str, bool]:
+    r = subprocess.run([str(b), "aac", str(yol), "--diaq"],
+                       capture_output=True)
+    return r.stdout.decode("utf-8", "replace"), r.returncode == 0
+
+
+#  Mənbə korpusu üçün işlədilən sınaq modulları
+MƏNBƏ_SINAQLARI = ("test_icraci", "test_tipyoxlayici", "test_lekser",
+                   "test_beledci", "test_konsol", "test_alqorfmt",
+                   "test_alqorlint", "test_modullar", "test_spesifikasiya")
+
+
+def mənbə_korpusu() -> list[str]:
+    """Sınaqlar işləyərkən parserə verilən bütün mənbələr (xətalılar da)."""
+    import io
+    import importlib
+    import unittest
+    sys.path.insert(0, str(REPO / "alqorc"))
+    from .. import parser as P
+    görülən: dict[str, None] = {}
+    orijinal = P.Parser.ayır
+
+    def yazan(self):
+        görülən.setdefault(self.s.mətn, None)
+        return orijinal(self)
+    P.Parser.ayır = yazan
+    try:
+        for ad in MƏNBƏ_SINAQLARI:
+            try:
+                m = importlib.import_module(f"sinaq.{ad}")
+            except ImportError:
+                continue
+            unittest.TextTestRunner(stream=io.StringIO()).run(
+                unittest.TestLoader().loadTestsFromModule(m))
+    finally:
+        P.Parser.ayır = orijinal
+    return list(görülən)
+
+
+def mənbə_faylları(q: Path) -> list[Path]:
+    q.mkdir(parents=True, exist_ok=True)
+    n = []
+    for i, m in enumerate(mənbə_korpusu()):
+        f = q / f"m{i:05d}.alq"
+        f.write_text(m, encoding="utf-8")
+        n.append(f)
+    return n
+
+
 def rust_tokenləri(b: Path, yol: Path) -> tuple[str, bool]:
     r = subprocess.run([str(b), "tokenlər", str(yol)], capture_output=True)
     return r.stdout.decode("utf-8", "replace"), r.returncode == 0
@@ -207,12 +273,19 @@ def main(a: list[str]) -> int:
         print("alqor-rs qurulmadı", file=sys.stderr)
         return 2
     import tempfile
+    diaq = "--diaq" in a
+    a = [x for x in a if x != "--diaq"]
     if a[1:] == ["--korpus"]:
         fayllar = korpus_faylları(Path(tempfile.mkdtemp(prefix="alqor-rs-")))
+    elif a[1:] == ["--mənbələr"] or a[1:] == ["--menbeler"]:
+        fayllar = mənbə_faylları(Path(tempfile.mkdtemp(prefix="alqor-rs-")))
     else:
         fayllar = [Path(x) for x in a[1:]] or bütün_alq()
-    py, rs = ((python_aac, rust_aac) if a[0] == "aac"
-              else (python_tokenləri, rust_tokenləri))
+    if a[0] == "aac":
+        py, rs = (python_aac_diaq, rust_aac_diaq) if diaq else \
+            (python_aac, rust_aac)
+    else:
+        py, rs = python_tokenləri, rust_tokenləri
     pis = müqayisə_et(b, fayllar, py, rs)
     print(f"{len(fayllar) - pis}/{len(fayllar)} fayl eyni")
     return 1 if pis else 0
