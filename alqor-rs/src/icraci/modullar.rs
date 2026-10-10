@@ -810,6 +810,7 @@ pub fn modulları_qur(_i: &İcraçı) -> Vec<(&'static str, Rc<Modul>)> {
         ("sistem", sistem()),
         ("konsol", super::konsol::modul()),
         ("jurnal", jurnal()),
+        ("test", test_modulu()),
     ]
 }
 
@@ -1624,4 +1625,162 @@ fn sap() -> Rc<Modul> {
 #[allow(dead_code)]
 fn _istifadə() -> Option<f64> {
     Some(0f64).and_then(|x: f64| x.to_f64())
+}
+
+// ── test (sinaqci.py: təsdiqlər) ───────────────────────────────────────
+
+fn uğursuz(m: String) -> Siqnal {
+    xəta("İddiaXətası", m, "ALQ-R007")
+}
+
+fn mesaj_al(i: &İcraçı, a: &[D], k: usize) -> Nəticə<Option<String>> {
+    match a.get(k) {
+        Some(x) => {
+            let s = mətnə(i, x)?;
+            Ok(if s.is_empty() { None } else { Some(s) })
+        }
+        None => Ok(None),
+    }
+}
+
+fn xəta_adı(d: &D) -> Nəticə<String> {
+    match d {
+        D::S(s) => Ok(s.to_string()),
+        D::Sinif(s) => Ok(s.ad.to_string()),
+        D::XətaSinfi(a) => Ok(a.to_string()),
+        _ => Err(xəta("ArqumentXətası", "xəta tipi gözlənilirdi (məs. `ArqumentXətası`)", "ALQ-R013")),
+    }
+}
+
+pub fn test_modulu() -> Rc<Modul> {
+    m("test", vec![
+        ("bərabər", D_("bərabər", 2, Some(3), Box::new(|i, a, _| {
+            if !i.bərabərdir(&a[0], &a[1])? {
+                let m = match mesaj_al(i, &a, 2)? {
+                    Some(m) => m,
+                    None => format!("gözlənilən: {}\n      alınan:     {}", mətnə(i, &a[1])?, mətnə(i, &a[0])?),
+                };
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("bərabərDeyil", D_("bərabərDeyil", 2, Some(3), Box::new(|i, a, _| {
+            if i.bərabərdir(&a[0], &a[1])? {
+                let m = match mesaj_al(i, &a, 2)? {
+                    Some(m) => m,
+                    None => format!("{} gözlənilməyən dəyərdir", mətnə(i, &a[0])?),
+                };
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("doğru", D_("doğru", 1, Some(2), Box::new(|i, a, _| {
+            if !matches!(a[0], D::M(true)) {
+                let m = mesaj_al(i, &a, 1)?.map(Ok).unwrap_or_else(|| mətnə(i, &a[0]).map(|s| format!("doğru gözlənilirdi, alınan: {s}")))?;
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("yanlış", D_("yanlış", 1, Some(2), Box::new(|i, a, _| {
+            if !matches!(a[0], D::M(false)) {
+                let m = mesaj_al(i, &a, 1)?.map(Ok).unwrap_or_else(|| mətnə(i, &a[0]).map(|s| format!("yanlış gözlənilirdi, alınan: {s}")))?;
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("boş", D_("boş", 1, Some(2), Box::new(|i, a, _| {
+            if !a[0].boşdur() {
+                let m = mesaj_al(i, &a, 1)?.map(Ok).unwrap_or_else(|| mətnə(i, &a[0]).map(|s| format!("boş gözlənilirdi, alınan: {s}")))?;
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("boşDeyil", D_("boşDeyil", 1, Some(2), Box::new(|i, a, _| {
+            if a[0].boşdur() {
+                return Err(uğursuz(mesaj_al(i, &a, 1)?.unwrap_or("dəyər boşdur".into())));
+            }
+            Ok(D::Boş)
+        }))),
+        ("ehtiva", D_("ehtiva", 2, Some(3), Box::new(|i, a, _| {
+            let var = matches!(i.üzvlük(&a[1], &a[0], None), Ok(true));
+            if !var {
+                let m = match mesaj_al(i, &a, 2)? {
+                    Some(m) => m,
+                    None => format!("{} içində {} yoxdur", mətnə(i, &a[0])?, mətnə(i, &a[1])?),
+                };
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("atır", D_("atır", 1, Some(3), Box::new(|i, a, _| {
+            let tip = a.get(1).filter(|x| !x.boşdur()).cloned();
+            match i.çağır(&a[0], vec![], vec![], None) {
+                Err(Siqnal::Xəta(x)) => {
+                    if let Some(t) = &tip {
+                        let ad_ = xəta_adı(t)?;
+                        if !xəta_uyğundur(&x.tip, &ad_) {
+                            let m = match mesaj_al(i, &a, 2)? {
+                                Some(m) => m,
+                                None => format!("{} gözlənilirdi, {} atıldı: {}", ad_, x.tip, x.mesaj),
+                            };
+                            return Err(uğursuz(m));
+                        }
+                    }
+                    Ok(xəta_obyekti(&x))
+                }
+                Err(s) => Err(s),
+                Ok(_) => {
+                    let m = match mesaj_al(i, &a, 2)? {
+                        Some(m) => m,
+                        None => match &tip {
+                            Some(t) => format!("{} gözlənilirdi, atılmadı", xəta_adı(t)?),
+                            None => "xəta gözlənilirdi, atılmadı".into(),
+                        },
+                    };
+                    Err(uğursuz(m))
+                }
+            }
+        }))),
+        ("atmır", D_("atmır", 1, Some(2), Box::new(|i, a, _| match i.çağır(&a[0], vec![], vec![], None) {
+            Err(Siqnal::Xəta(x)) => Err(uğursuz(
+                mesaj_al(i, &a, 1)?.unwrap_or_else(|| format!("xəta gözlənilmirdi: {}: {}", x.tip, x.mesaj)),
+            )),
+            r => r,
+        }))),
+        ("təxminən", D_("təxminən", 2, Some(4), Box::new(|i, a, _| {
+            let d = a.get(2).cloned().unwrap_or(D::O(1e-9));
+            let fərq = i.ikili_hesabla("-", &a[0], &a[1], None)?;
+            let fərq = match fərq.onluq() {
+                Some(f) => f.abs(),
+                None => 0.0,
+            };
+            if fərq > d.onluq().unwrap_or(1e-9) {
+                let m = match mesaj_al(i, &a, 3)? {
+                    Some(m) => m,
+                    None => format!("{} ≉ {} (dəqiqlik {})", mətnə(i, &a[0])?, mətnə(i, &a[1])?, mətnə(i, &d)?),
+                };
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("uyğun", D_("uyğun", 2, Some(3), Box::new(|i, a, _| {
+            let (s, n) = (mətnə(i, &a[0])?, mətnə(i, &a[1])?);
+            let r = naxış_qur(&n, "")?;
+            if !r.is_match(&s).map_err(re_xəta)? {
+                let m = match mesaj_al(i, &a, 2)? {
+                    Some(m) => m,
+                    None => format!("{} `{}` naxışına uyğun deyil", str_repr(&s), n),
+                };
+                return Err(uğursuz(m));
+            }
+            Ok(D::Boş)
+        }))),
+        ("uğursuz", D_("uğursuz", 0, Some(1), Box::new(|i, a, _| {
+            let m = match a.first() {
+                Some(x) => mətnə(i, x)?,
+                None => "sınaq uğursuz oldu".into(),
+            };
+            Err(uğursuz(m))
+        }))),
+    ])
 }
