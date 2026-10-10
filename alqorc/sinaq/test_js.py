@@ -286,6 +286,248 @@ class VidjetMüqayisəsi(unittest.TestCase):
         self.assertLess(len(xətalı), 12, "\n".join(xətalı))
 
 
+# ═══════════════════════════════════════════════════════════════════════
+#  Brauzer: statik interfeys səhifəsi Chromium-da (Playwright)
+# ═══════════════════════════════════════════════════════════════════════
+
+def _playwright():
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        return None
+    return sync_playwright
+
+
+SAYĞAC = """gətir pəncərə
+
+komponent Sayğac
+    vəziyyət say: tam = 0
+    göstər()
+        qaytar <button klik={() => özü.say += 1}>Basıldı: {özü.say}</button>
+    son
+son
+
+dəyişən p = yeni pəncərə.Pəncərə("Sayğac", 320, 200)
+p.məzmun(<Sayğac />)
+p.göstər()
+pəncərə.işlət()
+"""
+
+İNTERFEYS = """gətir pəncərə
+gətir pəncərə.dialoq
+gətir vidjet
+
+komponent Kart
+    xassə ad: mətn = ""
+    göstər()
+        qaytar <li sinif="kart">{özü.ad}</li>
+    son
+son
+
+komponent Forma
+    vəziyyət ad: mətn = ""
+    vəziyyət adlar: siyahı[mətn] = []
+    vəziyyət razı: məntiq = yanlış
+    vəziyyət cavab: mətn = ""
+
+    metod yazıldı(d: mətn)
+        özü.ad = d
+    son
+    metod razılıq(d: məntiq)
+        özü.razı = d
+    son
+    metod əlavə()
+        özü.adlar = özü.adlar + [özü.ad]
+        özü.ad = ""
+    son
+    metod soruş()
+        əgər dialoq.təsdiqlə("Silinsin?", "hamısı") onda
+            özü.adlar = []
+        son
+        özü.cavab = dialoq.soruş("Ad", "yazın") ?? "yox"
+    son
+
+    göstər()
+        qaytar <div>
+            {vidjet.form(göndərildi: özü.əlavə, məzmun: [
+                vidjet.sahə(etiket: "Ad", ad: "ad", dəyər: özü.ad,
+                            yazıldı: özü.yazıldı),
+                vidjet.qeyd(etiket: "Razıyam", ad: "razı",
+                            işarələnmiş: özü.razı, dəyişdi: özü.razılıq),
+                vidjet.düymə(mətn: "Əlavə et", klik: özü.əlavə)])}
+            <p id="say">{uzunluq(özü.adlar)} ad, razı: {mətnƏt(özü.razı)}</p>
+            <ul>{özü.adlar.çevir((a) => <Kart ad={a} />)}</ul>
+            <button id="sil" klik={özü.soruş}>Sil</button>
+            <p id="cavab">{özü.cavab}</p>
+        </div>
+    son
+son
+
+dəyişən p = yeni pəncərə.Pəncərə("Forma")
+p.menyu([pəncərə.menyu("Fayl", [
+    pəncərə.element("Bağla", qısayol: "Ctrl+Q", klik: () => p.bağla())])])
+p.üslub(x".kart{color:rgb(255, 0, 0)}")
+p.məzmun(<Forma />)
+p.göstər()
+yaz("konsola")
+pəncərə.işlət()
+"""
+
+
+@unittest.skipIf(_playwright() is None, "playwright yoxdur")
+class Brauzer(unittest.TestCase):
+    """`alqor yerləşdir` nəticəsi serversiz işləyir: klik → DOM yenilənir."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.q = tempfile.TemporaryDirectory()
+        cls.pw = _playwright()().start()
+        try:
+            cls.brauzer = cls.pw.chromium.launch()
+        except Exception as x:                      # noqa: BLE001
+            cls.pw.stop()
+            cls.q.cleanup()
+            raise unittest.SkipTest(f"Chromium açılmadı: {x}")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.brauzer.close()
+        cls.pw.stop()
+        cls.q.cleanup()
+
+    def _səhifə(self, kod: str, ad: str = "p"):
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.xeta import XətaToplayıcı
+        x = XətaToplayıcı()
+        s = Mənbə.mətndən(kod, ad + ".alq", x)
+        html = veb_səhifəsi(Parser(Lekser(s, x).leksə(), s, x).ayır(), ad)
+        yol = Path(self.q.name) / (ad + ".html")
+        yol.write_text(html, encoding="utf-8")
+        səhifə = self.brauzer.new_page()
+        self.xətalar: list[str] = []
+        self.konsol: list[str] = []
+        səhifə.on("pageerror", lambda e: self.xətalar.append(str(e)))
+        səhifə.on("console", lambda m: self.konsol.append(m.text))
+        self.addCleanup(səhifə.close)
+        return səhifə, yol
+
+    def test_readme_sayğacı_klikdə_yenilənir(self):
+        s, yol = self._səhifə(SAYĞAC, "sayğac")
+        s.goto(yol.as_uri())
+        self.assertEqual(s.title(), "Sayğac")
+        düymə = s.locator("#alqor-kök button")
+        self.assertEqual(düymə.inner_text(), "Basıldı: 0")
+        for _ in range(3):
+            düymə.click()
+        self.assertEqual(düymə.inner_text(), "Basıldı: 3")
+        self.assertEqual(self.xətalar, [])
+
+    def test_vidjetlər_sahə_fokusu_dialoq_və_menyu(self):
+        s, yol = self._səhifə(İNTERFEYS, "forma")
+        cavablar = []
+
+        def dialoq(d):
+            cavablar.append((d.type, d.message))
+            d.accept("Leyla") if d.type == "prompt" else d.accept()
+        s.on("dialog", dialoq)
+        s.goto(yol.as_uri())
+        # Vidjet üslubu və pəncərənin öz üslubu qoşulub
+        self.assertIn("v-düymə", s.content())
+        sahə = s.locator("#ad")
+        sahə.click()
+        s.keyboard.type("Aysel", delay=15)
+        # Hər hərfdə yenidən göstərilir, amma yazılan mətn və fokus qalır
+        self.assertEqual(sahə.input_value(), "Aysel")
+        self.assertTrue(s.evaluate("document.activeElement.id === 'ad'"))
+        s.click("button:text-is('Əlavə et')")
+        self.assertEqual(sahə.input_value(), "")
+        sahə.click()
+        s.keyboard.type("Rəşad")
+        s.keyboard.press("Enter")                     # forma göndərildi
+        self.assertEqual(s.inner_text("#say"), "2 ad, razı: yanlış")
+        kartlar = s.locator("li.kart")
+        self.assertEqual(kartlar.all_inner_texts(), ["Aysel", "Rəşad"])
+        self.assertEqual(kartlar.first.evaluate(
+            "e => getComputedStyle(e).color"), "rgb(255, 0, 0)")
+        s.click("#razı")
+        self.assertEqual(s.inner_text("#say"), "2 ad, razı: doğru")
+        s.click("#sil")
+        self.assertEqual(cavablar, [("confirm", "Silinsin?\n\nhamısı"),
+                                    ("prompt", "Ad\n\nyazın")])
+        self.assertEqual(s.inner_text("#say"), "0 ad, razı: doğru")
+        self.assertEqual(s.inner_text("#cavab"), "Leyla")
+        self.assertIn("konsola", self.konsol)
+        # Menyu qısayolu: Ctrl+Q pəncərəni bağlayır
+        s.keyboard.press("Control+q")
+        self.assertIn("Pəncərə bağlandı", s.inner_text("#alqor-kök"))
+        self.assertEqual(self.xətalar, [])
+
+    def test_idarəedici_xətası_interfeysi_silmir(self):
+        kod = ("gətir pəncərə\ngətir pəncərə.dialoq\n"
+               "dəyişən p = yeni pəncərə.Pəncərə(\"x\")\n"
+               "p.məzmun(<button klik={() => dialoq.faylAç()}>Aç</button>)\n"
+               "p.göstər()\n")
+        s, yol = self._səhifə(kod, "xeta")
+        s.goto(yol.as_uri())
+        s.click("button:text-is('Aç')")
+        self.assertIn("brauzerdə dəstəklənmir",
+                      s.inner_text("#alqor-xəta-qutusu"))
+        self.assertEqual(s.locator("#alqor-kök button").count(), 1)
+
+    def test_nümunələr_brauzerdə_işləyir(self):
+        nümunələr = KÖK.parent / "numuneler"
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.xeta import XətaToplayıcı
+
+        def aç(ad):
+            x = XətaToplayıcı()
+            m = Mənbə.fayldan(nümunələr / ad, x)
+            html = veb_səhifəsi(Parser(Lekser(m, x).leksə(), m, x).ayır(),
+                                ad, (nümunələr / ad).resolve())
+            yol = Path(self.q.name) / (ad + ".html")
+            yol.write_text(html, encoding="utf-8")
+            s = self.brauzer.new_page()
+            self.addCleanup(s.close)
+            xətalar = []
+            s.on("pageerror", lambda e: xətalar.append(str(e)))
+            s.on("dialog", lambda d: d.accept())
+            s.goto(yol.as_uri())
+            return s, xətalar
+
+        s, x = aç("06-desktop.alq")
+        s.click("button:text-is('+')")
+        s.click("button:text-is('+')")
+        self.assertEqual(s.inner_text("h1"), "2")
+        s.click("button:text-is('Sıfırla')")          # təsdiq → bəli
+        self.assertEqual(s.inner_text("h1"), "0")
+        self.assertEqual(x, [])
+
+        s, x = aç("08-vidjetler.alq")
+        s.click("input[type=search]")
+        s.keyboard.type("rəşad", delay=15)
+        mətn = s.inner_text("#alqor-kök")
+        self.assertIn("Rəşad Əliyev", mətn)
+        self.assertNotIn("Aysel", mətn)
+        self.assertEqual(s.input_value("input[type=search]"), "rəşad")
+        s.click("button:text-is('Ayarlar')")
+        self.assertTrue(s.is_checked("#bildirişlər"))
+        s.click(".v-açar")
+        self.assertFalse(s.is_checked("#bildirişlər"))
+        self.assertEqual(x, [])
+
+        s, x = aç("09-tapsiriqlar.alq")
+        s.click("#yeniAd")
+        s.keyboard.type("Süd al")
+        s.click("button:text-is('Əlavə et')")
+        s.click("tr:has-text('Süd al')")
+        self.assertIn("1 / 1 bitib", s.inner_text("#alqor-kök"))
+        self.assertEqual(x, [])
+
+
 class Kompilyasiya(unittest.TestCase):
     def test_dəstəklənməyən_modul_aydın_xəta_verir(self):
         with self.assertRaises(KompilyasiyaXətası) as k:

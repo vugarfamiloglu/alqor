@@ -1887,12 +1887,28 @@ VEB_ŞABLON = """<!doctype html>
  const menyu = document.getElementById("alqor-menyu");
  const qaç = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
  let bağlı = false;
+ // İdarəedicidəki xəta interfeysi silmir: üstdə bağlana bilən qutu
+ function xətaQutusu(m) {{
+  let q = document.getElementById("alqor-xəta-qutusu");
+  if (!q) {{
+   q = document.createElement("div");
+   q.id = "alqor-xəta-qutusu";
+   q.setAttribute("role", "alert");
+   q.style.cssText = "position:fixed;left:16px;right:16px;bottom:16px;z-index:150;" +
+    "background:var(--fon);border:1px solid #c0392b;border-radius:8px;" +
+    "box-shadow:0 8px 24px rgba(0,0,0,.25)";
+   document.body.appendChild(q);
+  }}
+  q.innerHTML = '<pre id="alqor-xəta" style="margin:0">' + qaç(m) + "</pre>" +
+   '<button type="button" style="margin:0 16px 12px">Bağla</button>';
+  q.querySelector("button").onclick = () => q.remove();
+ }}
  // Hadisə serverə yox, birbaşa icra mühitinə gedir (pencere.py-dəki
  // `/_alqor/hadise` sorğusunun qarşılığı)
  async function göndər(id, dəyər) {{
   if (bağlı) return;
   const n = $.UI.hadisə(id, dəyər === undefined ? null : dəyər);
-  if (n.xəta) {{ kök.innerHTML = '<pre id="alqor-xəta">' + qaç(n.xəta) + "</pre>"; return; }}
+  if (n.xəta) {{ xətaQutusu(n.xəta); return; }}
   if (n.bağlı) {{ bağlı = true; return; }}
   if (n.üslub !== undefined) {{
    const ü = document.getElementById("alqor-pəncərə-üslubu");
