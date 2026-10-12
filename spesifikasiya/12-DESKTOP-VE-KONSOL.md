@@ -598,6 +598,88 @@ komponentin metodu, başqa xassədə formadakı obyektin adı. Şablon mətn
 Forma xətaları proqram açılarkən (komponent elan olunanda) göstərilir,
 hadisə baş verəndə yox.
 
+### 12.6.5 Verilənlər bazası
+
+Delphi-dəki TDatabase / TTable / TDataSource / TDBNavigator modeli. Bazanı
+formaya **görünməyən komponent** kimi əlavə edirsiniz; cədvəlləri `.sxem`
+faylında təsvir edirsiniz (Studio-nun cədvəl redaktoru bu faylı yazır).
+
+```
+// mekteb.sxem
+sxem Məktəb
+    cədvəl tələbələr
+        id: tam açar
+        ad: mətn məcburi
+        sinif: tam = 1
+        qrup_id: tam → qruplar.id
+    son
+    cədvəl qruplar
+        id: tam açar
+        ad: mətn məcburi tək
+    son
+son
+```
+
+Sahə: `ad: tip [açar] [məcburi] [tək] [= standart] [→ cədvəl.sütun]`.
+Tiplər: `tam`, `onluq`, `mətn`, `məntiq`, `tarix`, `tarixVaxt`, `bayt`.
+`açar` olan `tam` sahə avtomatik artır. Proqram bazaya qoşulanda
+çatışmayan cədvəl və sütunlar yaradılır — heç nə silinmir.
+
+```
+// Əsas.forma
+    obyekt Baza1: VerilənlərBazası
+        növ = "sqlite"               // sqlite · postgres · mysql
+        fayl = "mekteb.db"           // sqlite; postgres/mysql: host, port,
+        sxem = "mekteb.sxem"         //   baza, istifadəçi, parolMühiti
+    son
+    obyekt Tələbələr: Sorğu
+        baza = Baza1
+        cədvəl = "tələbələr"
+        sırala = "ad"                // süzgəc = {"sinif": 5}, azalan, limit
+    son
+    obyekt Siyahı: cədvəl            // sətirlər sorğudan; klik → cari sətir
+        mənbə = Tələbələr
+    son
+    obyekt AdSahəsi: sahə            // cari sətrin `ad` sütunu
+        etiket = "Ad"
+        mənbə = Tələbələr
+        sütun = "ad"
+    son
+    obyekt Nav: naviqator            // ⏮ ◀ ▶ ⏭ ＋ 🗑 💾 ↶ ↻
+        mənbə = Tələbələr
+    son
+```
+
+- **Parol forma faylına yazılmır**: `parolMühiti = "DB_PAROL"` — parol
+  mühit dəyişənindən oxunur.
+- **Bağlama**: istənilən giriş vidjetində `mənbə` + `sütun` — dəyər cari
+  sətirdən gəlir, istifadəçi yazdıqca redaktə buferinə yazılır
+  (sxemdəki tipə çevrilir); `saxla()` bazaya yazır (yeni sətir → INSERT,
+  yoxsa açara görə UPDATE). Göstərici vidjetlər (`mətn`, `başlıq` …)
+  sütunun dəyərini göstərir. `cədvəl` vidjeti bütün sətirləri göstərir,
+  cari sətri vurğulayır, sətrə klik onu cari edir.
+- **Kodda**: `özü.Tələbələr.cari["ad"]`, `.sətirlər`, `.say`, `.indeks`,
+  `.ilk()`, `.əvvəlki()`, `.növbəti()`, `.son()`, `.keç(n)`,
+  `.əlavəEt()`, `.saxla()`, `.sil()`, `.ləğvEt()`, `.yenilə()`,
+  `.dəyər(sütun)`, `.dəyiş(sütun, d)`; baza: `özü.Baza1.sorğu(sql, …)`,
+  `.birDəyər`, `.icra`, `.cədvəl("t").harada(…).al()`, `.tranzaksiya(f)`
+  (§ 10.13 — eyni API).
+
+| Kod | Nə vaxt |
+|---|---|
+| `ALQ-D001` | sxemdə sintaksis və ya tip xətası |
+| `ALQ-D002`–`D004` | cədvəl adı, təkrar sahə, bir neçə açar |
+| `ALQ-D005` | əlaqə sxemdə olmayan sahəyə göstərir |
+| `ALQ-D006` | `sxem` faylı tapılmadı |
+| `ALQ-D007` | `Sorğu`-da `baza` və ya `cədvəl` verilməyib |
+| `ALQ-F008` | `mənbə` Sorğu komponenti deyil |
+
+**Əmr sətri**: `alqor sxem fayl.sxem` (yoxla) · `… sql --dialekt
+postgres` · `… model --çıxış modellər.alq` (ORM sinifləri, § 10.13;
+açar söz olan sütun adı `@sütun("sinif") xassə sinif_` olur) ·
+`… tətbiq ÜNVAN` · `alqor sxem idxal ÜNVAN --çıxış baza.sxem` (mövcud
+bazadan).
+
 ## 12.7 Mobil (gələcək — v2.0)
 
 | Platforma | Yanaşma |
