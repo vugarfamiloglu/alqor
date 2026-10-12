@@ -42,7 +42,9 @@ class Növ(unittest.TestCase):
         with tempfile.TemporaryDirectory() as q:
             self.assertTrue(Y.serverdirmi(_layihə(Path(q) / "v", "veb")))
             self.assertFalse(Y.serverdirmi(_layihə(Path(q) / "k", "konsol")))
-            self.assertFalse(Y.serverdirmi(_layihə(Path(q) / "d", "desktop")))
+            # Desktop şablonu `Əsas.forma` ilədir — forma vebdə server
+            # kimi işləyir (`ALQOR_VEB=1`)
+            self.assertTrue(Y.serverdirmi(_layihə(Path(q) / "d", "desktop")))
 
     def test_pəncərəli_veb_budağı_statikdir(self):
         # 08/09 nümunələri: `gətir veb` + `gətir pəncərə` → statik
@@ -79,6 +81,15 @@ class Statik(unittest.TestCase):
         with tempfile.TemporaryDirectory() as q:
             kök = Path(q).resolve() / "d"
             _layihə(kök, "desktop")
+            # Formasız desktop proqramı (vidjetlər kodla) — statik sayt
+            (kök / "mənbə" / "Əsas.forma").unlink()
+            (kök / "mənbə" / "Əsas.alq").write_text(
+                "gətir pəncərə\ngətir vidjet\n\nkomponent Əsas\n"
+                "    göstər()\n        qaytar vidjet.düymə(mətn: \"Bas\")\n"
+                "    son\nson\n\nfunksiya əsas()\n"
+                "    dəyişən p = yeni pəncərə.Pəncərə(\"d\", 300, 200)\n"
+                "    p.məzmun(<Əsas />)\n    p.göstər()\n"
+                "    pəncərə.işlət()\nson\n", encoding="utf-8")
             r = _alqor("yerləşdir", cwd=kök)
             self.assertEqual(r.returncode, 0, r.stderr)
             self.assertIn("Statik sayt", r.stdout)
