@@ -492,7 +492,113 @@ son
 
 ---
 
-## 12.6 Mobil (gələcək — v2.0)
+## 12.6 Formalar — vizual dizayner (`.forma`)
+
+Delphi-dəki `.dfm` + `.pas` cütü kimi: pəncərənin **görünüşü** ayrı
+faylda (`Ad.forma`), **kodu** adi `.alq` faylındadır. Alqor Studio-nun
+vizual dizayneri forma faylını yazır; kod faylına yalnız yeni hadisə
+metodunun boş skeletini əlavə edir, yazdığınız koda toxunmur.
+
+```
+mənbə/
+  Əsas.forma      görünüş: obyektlər, xassələr, yerləşmə
+  Əsas.alq        kod: komponent Əsas — hadisə metodları, məntiq
+```
+
+Eyni qovluqdakı `Əsas.forma` `komponent Əsas`-a birləşir:
+
+```
+// Əsas.forma
+forma Əsas
+    başlıq = "Tələbə qeydiyyatı"
+    en = 640
+    hündürlük = 480
+
+    obyekt AdSahəsi: sahə
+        etiket = "Ad"
+        ad = "ad"
+    son
+    obyekt Saxla: düymə
+        mətn = "Saxla"
+        klik = Saxla_klik
+    son
+    obyekt Nəticə: mətn
+        məzmun = "Hələ heç nə yoxdur"
+    son
+son
+```
+
+```alqor
+// Əsas.alq
+gətir pəncərə
+
+komponent Əsas
+    əməl Saxla_klik()
+        özü.Nəticə.məzmun = "Salam, {özü.AdSahəsi.dəyər}!"
+    son
+son
+
+funksiya əsas()
+    pəncərə.formaAç(Əsas)        // formanın başlığı və ölçüsü ilə
+    pəncərə.işlət()
+son
+```
+
+### 12.6.1 Format
+
+| Sətir | Mənası |
+|---|---|
+| `forma Ad … son` | fayl; `Ad` komponentin adı ilə eyni olmalıdır |
+| `xassə = dəyər` | kökdə: `başlıq`, `en`, `hündürlük`, `düzülüş` (`"axın"` · `"sərbəst"`), `boşluq`, `mərkəzə`, `ölçüsüSabit` |
+| `obyekt Ad: növ … son` | `növ` — vidjet adı (§ 14) və ya `kətan`; uşaq obyektlər konteynerin `məzmun`-u olur |
+| `xassə = dəyər` (obyektdə) | vidjetin parametri; ortaq: `görünür`, `sol`, `yuxarı`, `en`, `hündürlük` |
+
+Dəyər literaldır — mətn, ədəd, `doğru`/`yanlış`, `boş`, siyahı, lüğət,
+kortej — və ya **ad**: hadisə xassəsində (`klik`, `dəyişdi` …)
+komponentin metodu, başqa xassədə formadakı obyektin adı. Şablon mətn
+(`"{x}"`) ola bilməz — dəyişən dəyər kodda verilir.
+
+### 12.6.2 Yerləşmə
+
+- **Axın** (standart): obyektlər yuxarıdan aşağı düzülür; `sütun`,
+  `sətir`, `tor` konteynerləri ilə qruplaşdırılır. Pəncərə ölçüsü
+  dəyişəndə və vebdə səliqəli qalır.
+- **Sərbəst**: kökdə `düzülüş = "sərbəst"` və ya `kətan` konteyneri —
+  obyektlər `sol`, `yuxarı`, `en`, `hündürlük` (piksel) ilə yerləşir.
+
+### 12.6.3 Kodda forma obyektləri
+
+- Hər obyekt komponentdə adı ilə sahədir: `özü.AdSahəsi`.
+- Xassəni oxumaq və dəyişmək: `özü.Etiket1.mətn = "…"` — hadisədən
+  sonra görünüş özü yenilənir.
+- Giriş elementlərinin dəyəri (`dəyər`, `yanıq`, `işarələnmiş`,
+  `seçili`, `seçilmiş`) istifadəçi yazdıqca avtomatik yenilənir.
+- `özü.X.göstər()` / `özü.X.gizlət()` — `görünür` xassəsi;
+  `özü.X.xassələr()` — bütün xassələr lüğət kimi.
+- Hadisə metodu parametr alırsa, hadisənin dəyərini alır
+  (`əməl AdDəyişdi(mətn)`).
+- Komponentdə `göstər()` yoxdursa formanın özü göstərilir; varsa —
+  komponentin öz `göstər()`-i (forma obyektləri yenə sahə kimi əlçatandır).
+
+`pəncərə.formaAç(Komponent, göstər = doğru)` — formanın `başlıq`,
+`en`, `hündürlük`, `mərkəzə`, `ölçüsüSabit` xassələri ilə pəncərə yaradır.
+
+### 12.6.4 Xətalar
+
+| Kod | Nə vaxt |
+|---|---|
+| `ALQ-F001` | forma faylında sintaksis xətası |
+| `ALQ-F002` | eyni adlı iki obyekt |
+| `ALQ-F003` | naməlum vidjet növü (yaxın ad təklif olunur) |
+| `ALQ-F004` | ⚠ vidjetdə olmayan xassə — nəzərə alınmır |
+| `ALQ-F005` | konteyner olmayan vidjetin içində obyekt |
+| `ALQ-F006` | hadisənin göstərdiyi metod komponentdə yoxdur |
+| `ALQ-F007` | `forma Ad` komponentin adı ilə uyğun gəlmir |
+
+Forma xətaları proqram açılarkən (komponent elan olunanda) göstərilir,
+hadisə baş verəndə yox.
+
+## 12.7 Mobil (gələcək — v2.0)
 
 | Platforma | Yanaşma |
 |---|---|

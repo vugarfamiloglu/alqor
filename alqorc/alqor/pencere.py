@@ -453,6 +453,30 @@ class Pəncərə:
                 "başlıq": self._başlıq}
 
 
+def forma_pəncərəsi(icraçı: Any, komponent: Any, göstər: bool = True
+                    ) -> Pəncərə:
+    """`pəncərə.formaAç(Əsas)` — `Əsas.forma`-dakı başlıq və ölçü ilə
+    pəncərə yaradır, komponenti içinə qoyur və (standart) göstərir."""
+    from . import forma as F
+    from .deyerler import Sinif
+    if not isinstance(komponent, Sinif):
+        raise AlqorXəta("TipXətası", "`formaAç` komponent gözləyir "
+                        f"(məs. `formaAç(Əsas)`), {tip_adı(komponent)} "
+                        "verilib", kod="ALQ-T002")
+    f = F.forma_tap(komponent)
+    x = f.xassələr if f is not None else {}
+    p = Pəncərə(icraçı, x.get("başlıq", komponent.ad),
+                x.get("en", 800), x.get("hündürlük", 600))
+    if x.get("mərkəzə"):
+        p.mərkəzə()
+    if x.get("ölçüsüSabit"):
+        p.ölçüsüSabit()
+    p.məzmun(icraçı.nümunə_yarat(komponent, None, [], {}, None))
+    if göstər:
+        p.göstər()
+    return p
+
+
 def _vidjet_üslubu() -> str:
     """
     `vidjet` elementlərinin CSS-i. Hər pəncərəyə qoşulur: vidjet
