@@ -1045,6 +1045,77 @@ def əmr_yerləşdir(arqumentlər: list[str]) -> int:
     return 0
 
 
+def əmr_sxem(arqumentlər: list[str]) -> int:
+    """`alqor sxem` — verilənlər bazası sxemi (`.sxem`, § 12.6.5).
+
+    alqor sxem fayl.sxem                       yoxla
+    alqor sxem fayl.sxem sql [--dialekt d]     CREATE TABLE (sqlite|postgres|mysql)
+    alqor sxem fayl.sxem model [--çıxış f]     ORM sinifləri (verilənlər.Model)
+    alqor sxem fayl.sxem tətbiq ÜNVAN          çatışmayan cədvəl/sütunları yarat
+    alqor sxem idxal ÜNVAN [--çıxış f.sxem]    mövcud bazadan sxem
+    """
+    from alqor import sxem as S
+    from alqor.deyerler import AlqorXəta
+    from alqor.modullar.verilenler import bağlan
+    sərbəst = [a for a in arqumentlər if not a.startswith("--")
+               and a not in (_seçim(arqumentlər, "--dialekt") or "",
+                             _seçim(arqumentlər, "--çıxış", "--cixis") or "")]
+    çıxış = _seçim(arqumentlər, "--çıxış", "--cixis")
+    if not sərbəst:
+        print(əmr_sxem.__doc__)
+        return 3
+    try:
+        if sərbəst[0] == "idxal":
+            if len(sərbəst) < 2:
+                çap_xəta("ünvan lazımdır: alqor sxem idxal sqlite://baza.db")
+                return 3
+            b = bağlan(sərbəst[1])
+            mətn = S.yaz(S.idxal(b, Path(çıxış).stem if çıxış else "Baza"))
+            b.bağla()
+            if çıxış:
+                Path(çıxış).write_text(mətn, encoding="utf-8")
+                print(f"✓ {çıxış}")
+            else:
+                print(mətn, end="")
+            return 0
+        x = XətaToplayıcı()
+        sx = S.fayldan(sərbəst[0], x)
+        if sx is None:
+            x.çap()
+            return 2
+        əmr = sərbəst[1] if len(sərbəst) > 1 else "yoxla"
+        if əmr == "yoxla":
+            print(f"✓ {sərbəst[0]}: {len(sx.cədvəllər)} cədvəl, "
+                  f"{sum(len(c.sahələr) for c in sx.cədvəllər)} sahə")
+            return 0
+        if əmr == "sql":
+            print(";\n\n".join(S.ddl(sx, _seçim(arqumentlər, "--dialekt")
+                                       or "sqlite")) + ";")
+            return 0
+        if əmr == "model":
+            mətn = S.model_kodu(sx)
+            if çıxış:
+                Path(çıxış).write_text(mətn, encoding="utf-8")
+                print(f"✓ {çıxış}")
+            else:
+                print(mətn, end="")
+            return 0
+        if əmr == "tətbiq" and len(sərbəst) > 2:
+            b = bağlan(sərbəst[2])
+            əmrlər = S.tətbiq_et(b, sx)
+            b.bağla()
+            print(f"✓ {len(əmrlər)} dəyişiklik" if əmrlər
+                  else "✓ baza artıq sxemə uyğundur")
+            for e in əmrlər:
+                print("  " + e.splitlines()[0])
+            return 0
+    except AlqorXəta as x_:
+        çap_xəta(f"{x_.tip}: {x_.mesaj}")
+        return 1
+    print(əmr_sxem.__doc__)
+    return 3
+
+
 def əmr_sənədlər(arqumentlər: list[str]) -> int:
     """`alqor sənədlər` — oflayn sənəd mərkəzini brauzerdə açır."""
     from alqor import sened_merkezi
@@ -1124,6 +1195,8 @@ def əmr_kömək(_: list[str]) -> int:
                          --sınaq         özünü yoxlayıb çıxır
     yerləşdir [fayl]     Vebə çıxarmaq üçün paket: statik sayt (JS) və ya
                          server (Dockerfile); --statik --server --çıxış q
+    sxem fayl.sxem       Verilənlər bazası sxemi: yoxla, sql [--dialekt],
+                         model [--çıxış], tətbiq ÜNVAN; sxem idxal ÜNVAN
     sənədlər             Sənədləri (dərsliklər, arayış, nümunələr) brauzerdə
                          açır — internetsiz; --qur [çıxış] statik sayt
     versiya              Versiya məlumatı
@@ -1170,6 +1243,7 @@ VƏZİYYƏT:
     "sənəd": əmr_sənəd, "sened": əmr_sənəd, "doc": əmr_sənəd,
     "yerləşdir": əmr_yerləşdir, "yerlesdir": əmr_yerləşdir,
     "deploy": əmr_yerləşdir,
+    "sxem": əmr_sxem,
     "sənədlər": əmr_sənədlər, "senedler": əmr_sənədlər, "docs": əmr_sənədlər,
     "dərslik": əmr_sənədlər,
     "qur": əmr_qur, "build": əmr_qur,

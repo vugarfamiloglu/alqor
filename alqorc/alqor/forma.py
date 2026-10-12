@@ -62,6 +62,12 @@ KÖK_XASSƏLƏRİ = ("başlıq", "en", "hündürlük", "düzülüş", "boşluq",
                  "ölçüsüSabit", "mərkəzə")
 #  Forma konteynerləri (vidjet deyil)
 FORMA_KONTEYNERLƏRİ = ("kətan",)
+#  Formaya xas görünən elementlər (vidjet deyil): ad → xassələr
+FORMA_VİDJETLƏRİ: dict[str, tuple[str, ...]] = {
+    "naviqator": ("mənbə", "düymələr"),
+}
+#  Məlumat bağlama — istənilən görünən vidjetdə (§ 12.6.5)
+BAĞLAMA_XASSƏLƏRİ = ("mənbə", "sütun")
 #  İstifadəçinin daxil etdiyi dəyəri saxlayan xassələr
 DƏYƏR_XASSƏLƏRİ = ("dəyər", "yanıq", "işarələnmiş", "seçili", "seçilmiş")
 
@@ -143,9 +149,16 @@ def hadisədir(növ: str, xassə: str) -> bool:
     return xassə in HADİSƏLƏR
 
 
+def görünməyənlər() -> dict[str, Any]:
+    """Görünməyən komponentlər: ad → sinif (`VerilənlərBazası`, `Sorğu`)."""
+    from .forma_verilenler import KOMPONENTLƏR
+    return KOMPONENTLƏR
+
+
 def məlum_növlər() -> tuple[str, ...]:
     from . import vidjet as V
-    return tuple(V.VİDJETLƏR) + FORMA_KONTEYNERLƏRİ
+    return (tuple(V.VİDJETLƏR) + FORMA_KONTEYNERLƏRİ
+            + tuple(FORMA_VİDJETLƏRİ) + tuple(görünməyənlər()))
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -374,17 +387,32 @@ def yoxla(f: FormaTəsviri, x: XətaToplayıcı) -> None:
                    "naməlum növ",
                    *([f"bəlkə `{yaxın[0]}`?"] if yaxın else []))
             continue
-        icazəli = _vidjet_parametrləri(o.növ)
+        gk = görünməyənlər().get(o.növ)
+        if gk is not None:
+            icazəli = list(gk.XASSƏLƏR)
+        elif o.növ in FORMA_VİDJETLƏRİ:
+            icazəli = list(FORMA_VİDJETLƏRİ[o.növ])
+        else:
+            icazəli = _vidjet_parametrləri(o.növ)
         if icazəli is None:
             continue
+        ortaq = () if gk is not None else ORTAQ_XASSƏLƏR + BAĞLAMA_XASSƏLƏRİ
         for xa in o.xassələr:
-            if xa not in icazəli and xa not in ORTAQ_XASSƏLƏR:
+            if xa not in icazəli and xa not in ortaq:
                 from difflib import get_close_matches
                 yaxın = get_close_matches(xa, icazəli, 1)
                 x.xəbərdarlıq(
                     "ALQ-F004", f"`{o.növ}` vidjetinin `{xa}` xassəsi yoxdur",
                     o.xassə_yerləri.get(xa, o.yer), "bu xassə nəzərə alınmır",
                     *([f"bəlkə `{yaxın[0]}`?"] if yaxın else []))
+        mənbə = o.xassələr.get("mənbə")
+        if isinstance(mənbə, İstinad):
+            h = f.tap(mənbə.ad)
+            if h is None or h.növ != "Sorğu":
+                x.xəta("ALQ-F008", f"`{o.ad}.mənbə` Sorğu komponenti "
+                       f"olmalıdır — `{mənbə.ad}` "
+                       + ("tapılmadı" if h is None else f"{h.növ}-dur"),
+                       mənbə.yer or o.yer)
         if o.uşaqlar and "məzmun" not in icazəli and \
                 o.növ not in FORMA_KONTEYNERLƏRİ:
             x.xəta("ALQ-F005", f"`{o.növ}` konteyner deyil — içində "
@@ -464,7 +492,7 @@ class FormaObyekti:
         self.növ = t.növ
         self.xassələr: dict[str, Any] = {
             k: _kopya(v) for k, v in t.xassələr.items()}
-        self.uşaqlar = [FormaObyekti(u, sahib) for u in t.uşaqlar]
+        self.uşaqlar = [obyekt_yarat(u, sahib) for u in t.uşaqlar]
         self.sahib = sahib
         self._icazəli = _vidjet_parametrləri(t.növ) or []
 
@@ -484,6 +512,8 @@ class FormaObyekti:
             return v.ad if isinstance(v, İstinad) else v
         if ad == "görünür":
             return True
+        if ad in BAĞLAMA_XASSƏLƏRİ:
+            return None
         if ad in self._icazəli or ad in ORTAQ_XASSƏLƏR:
             from .vidjet_arayis import parametrlər
             for p, d in parametrlər(self.növ):
@@ -500,7 +530,7 @@ class FormaObyekti:
             raise AlqorXəta("ArqumentXətası", f"`{ad}` yalnız oxunandır",
                             yer, "ALQ-T020")
         if self._icazəli and ad not in self._icazəli and \
-                ad not in ORTAQ_XASSƏLƏR and \
+                ad not in ORTAQ_XASSƏLƏR + BAĞLAMA_XASSƏLƏRİ and \
                 self.növ not in FORMA_KONTEYNERLƏRİ:
             raise AlqorXəta("ArqumentXətası",
                             f"`{self.növ}` vidjetinin `{ad}` xassəsi yoxdur",
@@ -523,10 +553,20 @@ def _kopya(v: Any) -> Any:
     return v
 
 
+def obyekt_yarat(t: ObyektTəsviri, sahib: Any) -> FormaObyekti:
+    sinif = görünməyənlər().get(t.növ, FormaObyekti)
+    return sinif(t, sahib)
+
+
 def obyektləri_yarat(f: FormaTəsviri, nümunə: Any) -> dict[str, FormaObyekti]:
     """Komponent nümunəsi üçün obyekt ağacı; ad → obyekt."""
-    kök = [FormaObyekti(o, nümunə) for o in f.obyektlər]
-    return {o.ad: o for o in _hamısı(kök)}
+    kök = [obyekt_yarat(o, nümunə) for o in f.obyektlər]
+    n = {o.ad: o for o in _hamısı(kök)}
+    qovluq = f.yol.parent if f.yol is not None else None
+    for o in n.values():
+        if qovluq is not None and hasattr(o, "qovluq"):
+            o.qovluq = qovluq
+    return n
 
 
 def _ölçü(v: Any) -> str:
@@ -567,10 +607,23 @@ def göstər(icraçı: Any, nümunə: Any) -> Element:
             return icraçı._çağır(hədəf, list(arq[:p]) if p else [], {}, None)
         return Daxili(f"{o.ad}.{hadisə}", işlə, 0, None)
 
+    from . import forma_verilenler as FV
+
+    def mənbə(o: FormaObyekti) -> Any:
+        m = o.xassələr.get("mənbə")
+        if isinstance(m, İstinad):
+            h = obyektlər.get(m.ad)
+            return h if isinstance(h, FV.Sorğu) else None
+        return m if isinstance(m, FV.Sorğu) else None
+
     def element(o: FormaObyekti, mütləq: bool) -> Any:
+        if isinstance(o, FV.GörünməyənKomponent):
+            return None
         if o.xassələr.get("görünür", True) is False:
             return None
-        if o.növ == "kətan":
+        if o.növ == "naviqator":
+            e = FV.naviqator(icraçı, o, mənbə(o))
+        elif o.növ == "kətan":
             uşaqlar = [e for e in (element(u, True) for u in o.uşaqlar)
                        if e is not None]
             üslub = "position:relative;"
@@ -586,6 +639,8 @@ def göstər(icraçı: Any, nümunə: Any) -> Element:
             dx = next((p for p in DƏYƏR_XASSƏLƏRİ if p in icazəli), None)
             adlı: dict[str, Any] = {}
             for k, v in o.xassələr.items():
+                if k in BAĞLAMA_XASSƏLƏRİ and k not in icazəli:
+                    continue
                 if k in ORTAQ_XASSƏLƏR and k not in icazəli:
                     continue
                 if k not in icazəli or k in hadisələr:
@@ -604,7 +659,12 @@ def göstər(icraçı: Any, nümunə: Any) -> Element:
                 adlı["məzmun"] = [e for e in (element(u, False)
                                               for u in o.uşaqlar)
                                   if e is not None]
+            sorğu = mənbə(o)
+            if sorğu is not None:
+                FV.bağla(icraçı, o, sorğu, adlı, hadisələr, dx, idarəedici)
             e = vf(icraçı, **adlı)
+            if sorğu is not None and o.növ == "cədvəl" and not sorğu.yeni:
+                FV.sətri_işarələ(e, sorğu.indeks)
         üslub = ""
         if mütləq:
             üslub = "position:absolute;"
