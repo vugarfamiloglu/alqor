@@ -218,6 +218,8 @@ bağlananda (səhifə `/api/bagla` göndərir, nəbz kəsilir) server də bitir.
 | `onbaxis.py` | önbaxış prosesi (birbaşa işlədilir) |
 | `sablonlar.py` | konsol / veb / desktop şablonları |
 | `server.py` | HTTP server, API marşrutları, pəncərə, `işə_sal()` |
+| `forma_dizayner.py` | `.forma` dizayneri: model əməliyyatları, kətan HTML-i, kataloq, `.alq`-a `əməl` skeleti (saf funksiyalar) |
+| `statik/forma.js`, `forma.css` | dizayn səthi, palet, struktur, obyekt inspektoru, cədvəl redaktoru |
 
 ### API
 
@@ -242,6 +244,13 @@ Bütün `/api/*` sorğuları `X-Alqor-Token` başlığı tələb edir (SSE üç�
 | `POST /api/islet/giris` · `dayandir` | `{id, mətn?}` |
 | `POST /api/onbaxis` · `onbaxis/dayandir` | `{yol, komponent?}` → `{ünvan}` və ya `{xəta}` |
 | `POST /api/sablon` | `{növ, ad}` → yeni layihə qovluğu |
+| `GET /api/forma/kataloq` | dizayner paleti və inspektor: növlər, parametrlər, hadisələr |
+| `POST /api/forma/oxu` | `{yol, mətn?}` → `{forma, html, diaqnostikalar, metodlar, alq, verilənlər}` |
+| `POST /api/forma/emeliyyat` | `{yol, mətn, əməliyyat: {növ, …}}` → faylı yazır, cavab `oxu` kimi + `seçim` |
+| `POST /api/forma/hadise` | `{yol, mətn, obyekt, hadisə, metod?, alqMətn?}` → `.forma` + `.alq`-a `əməl` |
+| `POST /api/forma/yeni` | `{ad, qovluq?}` → `Ad.forma` + `Ad.alq` |
+| `POST /api/forma/sxem` · `sxem/yaz` · `sxem/idxal` | cədvəl redaktoru (`.sxem`) |
+| `POST /api/forma/model` | `{yol, baza}` → `modellər.alq` |
 
 ### Təhlükəsizlik
 
