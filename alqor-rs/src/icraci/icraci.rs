@@ -14,11 +14,16 @@ use std::rc::Rc;
 pub const STEK_HƏDDİ: usize = 1000;
 pub const KORUTİN_STEKİ: usize = 64 * 1024 * 1024;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub type Yielder = corosensei::Yielder<(), D>;
+#[cfg(target_arch = "wasm32")]
+pub struct Yielder;
 
 pub enum Çıxış {
     Std(std::io::BufWriter<std::io::Stdout>),
     Yaddaş(Vec<String>),
+    /// Bütün çıxış bir mətndə (wasm, `işlət_mətn`)
+    Mətn(String),
 }
 
 pub struct İcraçı {
@@ -26,15 +31,23 @@ pub struct İcraçı {
     pub çıxış: RefCell<Çıxış>,
     pub giriş: RefCell<Option<std::io::BufReader<std::io::Stdin>>>,
     pub giriş_növbəsi: RefCell<Option<std::collections::VecDeque<String>>>,
+    /// Növbə bitəndə `oxu()` girişin sonu xətası versin
+    pub giriş_sonlu: RefCell<bool>,
     pub proqram_arqumentləri: RefCell<Vec<String>>,
     pub əsas_qovluq: RefCell<Option<PathBuf>>,
     pub dərinlik: Cell<usize>,
     pub gecikdirilmiş: RefCell<Vec<Vec<(aac::E, Mühit)>>>,
     pub ver: Cell<*const Yielder>,
+    /// `wasm32` generator təkrarı: (hədəf `ver` nömrəsi, keçilən say)
+    pub təkrar: Cell<Option<(usize, usize)>>,
+    /// Təkrarda çıxışı susdur
+    pub susdur: Cell<bool>,
+    /// Stderr yaddaşda (wasm)
+    pub xəta_çıxışı: RefCell<Option<String>>,
     pub genişlətmələr: RefCell<FxMap<String, FxMap<Ad, Rc<Funksiya>>>>,
     pub fayl_modulları: RefCell<HashMap<PathBuf, Rc<Modul>>>,
     pub təsadüfi: RefCell<super::modullar::MT>,
-    pub ölçü_başlanğıc: std::time::Instant,
+    pub ölçü_başlanğıc: f64,
 }
 
 /// İterator
@@ -118,6 +131,40 @@ impl Generator {
             Err(_) => return Err(xəta("Xəta", "generator artıq icra olunur", "ALQ-R014")),
         };
         match &mut *m {
+            #[cfg(target_arch = "wasm32")]
+            GenMənbə::Təkrar(t) => {
+                if self.korutin_bitdi.get() {
+                    return Ok(None);
+                }
+                let (f, args, adlı, hədəf) = (t.f.clone(), t.args.clone(), t.adlı.clone(), t.verilən);
+                drop(m);
+                let saxla = (i.təkrar.get(), i.susdur.get(), i.dərinlik.get(), i.gecikdirilmiş.take());
+                i.təkrar.set(Some((hədəf, 0)));
+                i.susdur.set(hədəf > 0 || saxla.1);
+                i.dərinlik.set(0);
+                let r = i.generator_gövdəsi(&f, args, adlı);
+                i.təkrar.set(saxla.0);
+                i.susdur.set(saxla.1);
+                i.dərinlik.set(saxla.2);
+                *i.gecikdirilmiş.borrow_mut() = saxla.3;
+                match r {
+                    Err(Siqnal::GenVer(d)) => {
+                        if let GenMənbə::Təkrar(t) = &mut *self.mənbə.borrow_mut() {
+                            t.verilən += 1;
+                        }
+                        Ok(Some(d))
+                    }
+                    Ok(()) | Err(Siqnal::Qaytar(_)) | Err(Siqnal::Dayan(_)) => {
+                        self.korutin_bitdi.set(true);
+                        Ok(None)
+                    }
+                    Err(x) => {
+                        self.korutin_bitdi.set(true);
+                        Err(x)
+                    }
+                }
+            }
+            #[cfg(not(target_arch = "wasm32"))]
             GenMənbə::Korutin(co, _) => {
                 if self.korutin_bitdi.get() {
                     return Ok(None);
@@ -249,15 +296,19 @@ impl İcraçı {
             çıxış: RefCell::new(Çıxış::Std(std::io::BufWriter::with_capacity(1 << 16, std::io::stdout()))),
             giriş: RefCell::new(None),
             giriş_növbəsi: RefCell::new(None),
+            giriş_sonlu: RefCell::new(false),
             proqram_arqumentləri: RefCell::new(vec![]),
             əsas_qovluq: RefCell::new(None),
             dərinlik: Cell::new(0),
             gecikdirilmiş: RefCell::new(vec![]),
             ver: Cell::new(std::ptr::null()),
+            təkrar: Cell::new(None),
+            susdur: Cell::new(false),
+            xəta_çıxışı: RefCell::new(None),
             genişlətmələr: Default::default(),
             fayl_modulları: Default::default(),
             təsadüfi: RefCell::new(super::modullar::MT::təsadüfi()),
-            ölçü_başlanğıc: std::time::Instant::now(),
+            ölçü_başlanğıc: super::platforma::monoton_san(),
         }));
         super::kitabxana::qlobal_qur(i);
         i
@@ -270,22 +321,33 @@ impl İcraçı {
     // ── Giriş / çıxış ─────────────────────────────────────────────────
 
     pub fn yaz(&self, s: &str) {
+        if self.susdur.get() {
+            return;
+        }
         match &mut *self.çıxış.borrow_mut() {
             Çıxış::Std(w) => {
                 let _ = w.write_all(s.as_bytes());
                 let _ = w.write_all(b"\n");
             }
             Çıxış::Yaddaş(v) => v.push(s.to_string()),
+            Çıxış::Mətn(m) => {
+                m.push_str(s);
+                m.push('\n');
+            }
         }
     }
 
     pub fn yaz_xam(&self, s: &str) {
+        if self.susdur.get() {
+            return;
+        }
         match &mut *self.çıxış.borrow_mut() {
             Çıxış::Std(w) => {
                 let _ = w.write_all(s.as_bytes());
                 let _ = w.flush();
             }
             Çıxış::Yaddaş(v) => v.push(s.to_string()),
+            Çıxış::Mətn(m) => m.push_str(s),
         }
     }
 
@@ -296,6 +358,14 @@ impl İcraçı {
     }
 
     pub fn xəta_yaz(&self, s: &str) {
+        if self.susdur.get() {
+            return;
+        }
+        if let Some(x) = &mut *self.xəta_çıxışı.borrow_mut() {
+            x.push_str(s);
+            x.push('\n');
+            return;
+        }
         self.boşalt();
         eprintln!("{s}");
     }
@@ -303,6 +373,9 @@ impl İcraçı {
     /// Bir sətir oxuyur; girişin sonunda `None`.
     pub fn sətir_oxu(&self) -> Option<String> {
         if let Some(n) = &mut *self.giriş_növbəsi.borrow_mut() {
+            if n.is_empty() && *self.giriş_sonlu.borrow() {
+                return None;
+            }
             return Some(n.pop_front().unwrap_or_default());
         }
         self.boşalt();
@@ -326,6 +399,9 @@ impl İcraçı {
     }
 
     pub fn hamısını_oxu(&self) -> String {
+        if let Some(n) = &mut *self.giriş_növbəsi.borrow_mut() {
+            return n.drain(..).map(|s| s + "\n").collect();
+        }
         self.boşalt();
         let mut g = self.giriş.borrow_mut();
         if g.is_none() {
@@ -392,7 +468,7 @@ impl İcraçı {
             }),
             Err(Siqnal::Qaytar(_)) => Ok(0),
             Err(Siqnal::Xəta(x)) => Err(x),
-            Err(Siqnal::Dayan(_)) | Err(Siqnal::Davam(_)) | Err(Siqnal::Ver(_)) => Err(Box::new(AlqorXəta {
+            Err(Siqnal::Dayan(_)) | Err(Siqnal::Davam(_)) | Err(Siqnal::Ver(_)) | Err(Siqnal::GenVer(_)) => Err(Box::new(AlqorXəta {
                 tip: ad("DaxiliXəta"),
                 mesaj: "dövr və ya blok xaricində axın siqnalı".into(),
                 yer: None,
@@ -560,12 +636,32 @@ impl İcraçı {
                 }
                 Err(Siqnal::Qaytar(D::kortej(v)))
             }
+            _ => self.cümlə_digər(c, m),
+        }
+    }
+
+    #[inline(never)]
+    fn cümlə_digər(&self, c: &Cümlə, m: &Mühit) -> Nəticə<()> {
+        match c {
             Cümlə::Ver(_, d) => {
                 let d = match d {
                     Some(e) => self.ifadə(e, m)?,
                     None => D::Boş,
                 };
+                #[cfg(target_arch = "wasm32")]
+                if let Some((hədəf, say)) = self.təkrar.get() {
+                    if say == hədəf {
+                        return Err(Siqnal::GenVer(d));
+                    }
+                    self.təkrar.set(Some((hədəf, say + 1)));
+                    if say + 1 == hədəf {
+                        self.susdur.set(false);
+                    }
+                    return Ok(());
+                }
+                #[cfg(not(target_arch = "wasm32"))]
                 let v = self.ver.get();
+                #[cfg(not(target_arch = "wasm32"))]
                 if !v.is_null() {
                     let saxla = (self.dərinlik.get(), self.gecikdirilmiş.take());
                     unsafe { (*v).suspend(d) };
@@ -744,6 +840,7 @@ impl İcraçı {
                 Some(c.yer()),
                 "",
             )),
+            _ => unreachable!(),
         }
     }
 
@@ -1322,6 +1419,14 @@ impl İcraçı {
                 let i = self.ifadə(i, m)?;
                 self.indeks_al(&o, &i, Some(*yer))
             }
+            _ => self.ifadə_digər(e, m),
+        }
+    }
+
+    /// Nadir ifadələr — `ifadə`-nin stek çərçivəsini kiçik saxlamaq üçün ayrıca
+    #[inline(never)]
+    fn ifadə_digər(&self, e: &İfadə, m: &Mühit) -> Nəticə {
+        match e {
             İfadə::Şablon(_, parçalar) => {
                 let mut s = String::new();
                 for p in parçalar {
@@ -1563,6 +1668,7 @@ impl İcraçı {
                 let u = self.jsx_uşaqlar(uşaqlar, m)?;
                 Ok(D::Element(Rc::new(Element { ad: ad(""), atributlar: D::lüğət(Lüğət::default()), uşaqlar: D::siyahı(u) })))
             }
+            _ => unreachable!(),
         }
     }
 

@@ -5,17 +5,8 @@
 //!     alqor-rs aac fayl.alq [--diaq]   (AAC-nin kanonik çapı; `--diaq`:
 //!                                       diaqnostikalar da stdout-a, maşın formatında)
 
-mod aac;
-mod aac_yaz;
-mod acar;
-mod elifba;
-mod homoqlif;
-mod icraci;
-mod lekser;
-mod parser;
-mod parser_jsx;
-mod xeta;
 
+use alqor::{aac, aac_yaz, icraci, lekser, parser, xeta};
 use std::process::ExitCode;
 use std::rc::Rc;
 

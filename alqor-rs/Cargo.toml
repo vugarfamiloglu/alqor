@@ -15,13 +15,28 @@ num-traits = "0.2"
 num-integer = "0.1"
 unicode-normalization = "0.1"
 fancy-regex = "0.14"
-corosensei = "0.3"
 indexmap = "2"
 unicode_names2 = "1"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+corosensei = "0.3"
 libc = "0.2"
+
+[lib]
+name = "alqor"
+path = "src/lib.rs"
+crate-type = ["rlib"]
 
 [profile.release]
 opt-level = 3
 lto = "thin"
 codegen-units = 4
 panic = "unwind"
+
+# WebAssembly paketi (`wasm/qur.sh`): stek açılması yoxdur
+[profile.wasm]
+inherits = "release"
+panic = "abort"
+lto = true
+codegen-units = 1
+opt-level = "s"
