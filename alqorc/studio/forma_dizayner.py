@@ -643,7 +643,8 @@ def kataloq() -> dict:
             "izah": izah, "hadisələr": [], "konteyner": False,
             "görünməz": True, "metodlar": dict(sinif.METODLAR),
             "parametrlər": [{
-                "ad": k, "növ": ("istinad" if k == "baza" else
+                "ad": k, "növ": ("istinad" if (ad, k) == ("Sorğu", "baza")
+                                 else
                                  "məntiq" if isinstance(d, bool) else
                                  "ədəd" if isinstance(d, (int, float))
                                  or k in ("port", "limit") else

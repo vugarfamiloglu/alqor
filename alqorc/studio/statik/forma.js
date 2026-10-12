@@ -266,6 +266,7 @@ function fdÇək() {
   const m = $("#fd-mezmun");
   m.style.width = `${en}px`;
   m.style.height = `${hün}px`;
+  $("#fd-gorunmez").style.width = `${en + 2}px`;
   $("#fd-baslik").textContent = fdDəyər(f.xassələr.başlıq) || f.ad;
   $("#fd-olcu").textContent = `${f.ad} · ${en} × ${hün}${fdSərbəstdir(null) ? " · sərbəst" : ""}`;
   const kök = fdKök();
