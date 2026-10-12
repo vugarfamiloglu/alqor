@@ -699,6 +699,44 @@ yoxlayır — xətalı forma yerləşdirilmir (`qur --exe` də eyni yoxlamanı
 edir). Konteynerdə SQLite faylı itə bildiyi üçün vebdə
 `ünvanMühiti = "DATABASE_URL"` ilə PostgreSQL/MySQL tövsiyə olunur.
 
+### 12.6.7 Studio dizayneri
+
+Alqor Studio `.forma` faylını redaktor əvəzinə **dizayn səthində** açır
+(**Alt+F12** — mətn ↔ dizayn; ikisi eyni faylı göstərir). Qaydalar:
+
+- **Fayl həqiqətin yeganə mənbəyidir.** Hər dizayner əməliyyatı faylı
+  `forma.yaz()` formatında yenidən yazır (Studio-nun
+  `studio/forma_dizayner.py` modulu: əlavə et, sil, köçür, ad dəyiş,
+  xassə, təkrarla, yapışdır, düzləndir, cədvəldən forma). Şərhlər və əl
+  ilə düzülüş kanonik formata çevrilir. Əl ilə yazılmış mətn xətalıdırsa
+  (`ALQ-F…`), dizayner son düzgün vəziyyəti göstərir və əməliyyat etmir.
+- **Kətan** formanı işləyən proqramdakı vidjetlərlə çəkir; hadisələr
+  bağlanmır, bazaya qoşulmur — bağlı `cədvəl` sxemdəki sütunları
+  göstərir. `görünür = yanlış` obyekt solğun görünür.
+- **Yeni obyektin adı** — növ + ilk boş nömrə (`Düymə1`, `Baza1`,
+  `Sorğu1`); surətlər də yeni ad alır, hadisə xassələri surətə keçmir.
+  Adı dəyişəndə formadakı istinadlar (`mənbə`, `baza`) da dəyişir.
+- **Hadisə**: obyektə və ya boş hadisə sahəsinə iki klik →
+  `hadisə = Obyekt_hadisə` və komponentə `əməl Obyekt_hadisə()`
+  skeleti (`dəyişdi`, `yazıldı` … üçün `(dəyər)` parametri). Kod faylı:
+  `Ad.alq`, yoxdursa qovluqda `komponent Ad` olan `.alq`. Metod
+  komponentin sonuna, son üzvdən sonra əlavə olunur; başqa sətirlər
+  dəyişmir. Metod artıq varsa yalnız ona keçilir.
+- **Konteyner** — `kətan` və `məzmun` parametri elementlər qəbul edən
+  vidjetlər (`sütun`, `sətir`, `tor`, `kart`, `panel`, `form` …).
+  Görünməyən komponentlər həmişə kökdədir.
+- **Sərbəst düzülüş**: 8 px tor, bələdçi xətlər, tutacaqlar (`sol`,
+  `yuxarı`, `en`, `hündürlük`), hizalama (ilk seçilən obyektə görə),
+  bərabər ölçü və paylama.
+- **Cədvəl redaktoru** (`VerilənlərBazası`-na iki klik) `.sxem`-i
+  yazır: fayl `sxem` xassəsindəki ad və ya `<baza>.sxem` (xassə özü
+  yazılır). Saxlamazdan əvvəl sxem `sxem.mətndən` ilə yoxlanılır —
+  `ALQ-D…` xətaları dialoqda göstərilir, fayl yazılmır. «Mövcud bazadan
+  idxal» — `sxem.idxal(bağlantı)`.
+- **Cədvəldən forma yarat** — `forma_verilenler.crud_obyektləri()`;
+  **Model kodu yarat** — `modellər.alq` (`sxem.model_kodu`).
+- **F5** `.forma` açıq olanda formanın kod faylını işlədir.
+
 ## 12.7 Mobil (gələcək — v2.0)
 
 | Platforma | Yanaşma |

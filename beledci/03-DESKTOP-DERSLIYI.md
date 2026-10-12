@@ -530,7 +530,133 @@ python alqorc.py işlət tapşırıqlar.alq -- veb     # veb
 
 ---
 
-## 4.13 Yekun proqram
+## 4.13 Vizual dizayner: formalar (`.forma`)
+
+İndiyə qədər pəncərənin görünüşünü kodla (`göstər()`) qurduq. Alqor
+Studio-da bunu **siçanla** da etmək olar — Delphi-dəki kimi: görünüş
+`Ad.forma` faylında, kod `Ad.alq`-dakı `komponent Ad`-dadır
+(spesifikasiya § 12.6).
+
+### Yeni forma
+
+**Fayl → Yeni forma…** (və ya layihə ağacında sağ klik) → ad: `Əsas`.
+Studio iki fayl yaradır:
+
+```alqor
+// Əsas.alq — kod
+gətir pəncərə
+
+komponent Əsas
+son
+
+funksiya əsas()
+    pəncərə.formaAç(Əsas)
+    pəncərə.işlət()
+son
+```
+
+`Əsas.forma` açılanda redaktor əvəzinə **dizayn səthi** görünür:
+
+| Hissə | Nə edir |
+|---|---|
+| Palet (yuxarıda, nişanlarla) | Forma · Göstərmə · Vəziyyət · Düzülüş · Naviqasiya · Üst qat · **Verilənlər** — elementi formaya və ya konteynerə (`sütun`, `sətir`, `kart`, `kətan` …) sürükləyin; iki klik — seçilmiş konteynerə əlavə edir |
+| Kətan (ortada) | formanın **həqiqi** görünüşü (işləyən proqramdakı vidjetlər), başlıq və ölçü ilə; sağ-aşağı künc — formanın ölçüsü |
+| Görünməyən komponentlər | kətanın altında: `VerilənlərBazası`, `Sorğu` |
+| Struktur | obyekt ağacı — seçim, sürükləyib yerini dəyişmək, iki klik — ad |
+| Obyekt inspektoru | **Xüsusiyyətlər** (mətn, ədəd, seçim, rəng …; `ad` — adı dəyişir) və **Hadisələr** |
+
+Klaviatura: **Delete** — sil, **Ctrl+C / Ctrl+V / Ctrl+D** — kopyala /
+yapışdır / təkrarla (adlar özü artır: `Düymə1`, `Düymə2`), **Ctrl+Z /
+Ctrl+Y** — geri / irəli al, **oxlar** — sərbəst düzülüşdə 1 px (Shift
+ilə 8 px), **F2** — ad, **Alt+F12** — formanın mətni (Kod / Dizayn).
+Mətni əl ilə dəyişsəniz, dizayner xətanı göstərir və son düzgün
+vəziyyəti saxlayır.
+
+**Sərbəst düzülüş**: formanı seçin (boş yerə klik) → `düzülüş` =
+`sərbəst`, və ya `kətan` konteyneri atın. Obyektlər 8 px-lik tora
+yapışır, qonşuların kənarlarına bələdçi xətlər çıxır; tutacaqlarla ölçü
+dəyişir; bir neçə obyekt (Shift+klik) alət sətrindəki düymələrlə
+düzlənir, bərabər ölçülür və bərabər paylanır.
+
+### Hadisə — iki klik
+
+Düyməyə **iki klik** edin. Studio:
+
+1. formada `klik = Düymə1_klik` yazır;
+2. `Əsas.alq`-da komponentin sonuna boş metod əlavə edir — başqa koda
+   toxunmadan — və kursoru ora qoyur:
+
+```alqor
+gətir pəncərə
+
+komponent Əsas
+    əməl Düymə1_klik()
+        özü.Düymə1.mətn = "Basıldı!"
+    son
+son
+```
+
+İnspektorun **Hadisələr** nişanında mövcud metodu seçmək, yeni ad
+yazmaq və ya hadisəni ayırmaq (✕) olar. Parametr alan hadisələr
+(`dəyişdi`, `yazıldı`) `əməl AdSahəsi_dəyişdi(dəyər)` kimi yaradılır.
+
+### Verilənlər bazası ilə forma — addım-addım
+
+Delphi-nin «Database Form Wizard»-ı kimi: kitabxana kataloqu.
+
+1. Palet → **Verilənlər** nişanı → `VerilənlərBazası`-nı formaya atın
+   (kətanın altındakı zolaqda `Baza1` görünür). İnspektorda `növ =
+   sqlite`, `fayl = "kitabxana.db"`.
+2. `Baza1`-ə **iki klik** — **cədvəl redaktoru** açılır. «＋ Cədvəl» →
+   ad `kitablar`; «＋ Sahə» ilə: `ad` (mətn, məcburi), `müəllif`
+   (mətn), `il` (tam, standart `2024`). `id` (tam, açar) özü əlavə
+   olunur. Başqa cədvələ istinad — «əlaqə» sütunu (`müəlliflər.id`).
+   **Saxla** → yanında `Baza1.sxem` yaranır, komponentin `sxem`
+   xassəsi yazılır:
+
+   ```
+   sxem Baza1
+       cədvəl kitablar
+           id: tam açar
+           ad: mətn məcburi
+           müəllif: mətn
+           il: tam = 2024
+       son
+   son
+   ```
+
+   Artıq bazanız varsa — **Mövcud bazadan idxal** (SQLite faylı və ya
+   `ünvan` ilə PostgreSQL/MySQL) cədvəlləri oxuyur.
+3. Alət sətri → **Cədvəldən forma…** → cədvəl `kitablar` → **Yarat**.
+   Formaya bir-birinə bağlı obyektlər əlavə olunur: `Kitablar` (Sorğu),
+   `KitablarSiyahısı` (cədvəl), hər sahə üçün giriş elementi (`mənbə` +
+   `sütun`) və `KitablarNaviqator` (⏮ ◀ ▶ ⏭ ＋ 🗑 💾).
+4. İstənilən vidjetdə inspektorun **Verilənlər** qrupu: `mənbə` —
+   formadakı Sorğular, `sütun` — seçilmiş sorğunun cədvəlinin sütunları
+   (sxemdən). Sorğuda `baza`, `cədvəl`, `sırala` da açılan siyahıdır.
+5. **F5** — forma öz kodu (`Əsas.alq`) ilə işləyir: cədvəl avtomatik
+   yaradılır, sətir əlavə edib saxlamaq, gəzmək, silmək olar.
+
+Kodda eyni obyektlər:
+
+```alqor
+gətir pəncərə
+
+komponent Əsas
+    əməl Axtar_klik()
+        özü.Kitablar.süzgəc = {"müəllif": özü.MüəllifSahəsi.dəyər}
+        özü.Kitablar.yenilə()
+        yaz("{özü.Kitablar.say} kitab tapıldı")
+    son
+son
+```
+
+ORM sinifləri lazımdırsa: **Alətlər → Verilənlər: model kodu yarat** —
+sxemdən `modellər.alq` (`sinif Kitab miras verilənlər.Model`).
+
+---
+
+## 4.14 Yekun proqram
 
 Bütün hissələr bir yerdə: [`numuneler/09-tapsiriqlar.alq`](../numuneler/09-tapsiriqlar.alq).
 
@@ -544,7 +670,7 @@ Və ya Windows-da `Desktop-ac.cmd`-ə iki dəfə klik (06 nümunəsini açır).
 
 ---
 
-## 4.14 Tez-tez rast gəlinən xətalar
+## 4.15 Tez-tez rast gəlinən xətalar
 
 | Xəta | Səbəb | Həll |
 |---|---|---|
@@ -558,7 +684,7 @@ Və ya Windows-da `Desktop-ac.cmd`-ə iki dəfə klik (06 nümunəsini açır).
 
 ---
 
-## 4.15 Paketləmə (planlaşdırılır)
+## 4.16 Paketləmə (planlaşdırılır)
 
 `alqor paketlə --hədəf deb | appimage | windows-nsis` əmrləri
 (spesifikasiya § 12.3) hələ hazırlanır. Hazırda tətbiq Python ilə
