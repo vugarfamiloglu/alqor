@@ -124,6 +124,31 @@ class Statik(unittest.TestCase):
             self.assertIn("--server", r.stderr)
 
 
+class FormaLayihəsi(unittest.TestCase):
+    def test_forma_server_olur_xətalı_forma_yerləşdirilmir(self):
+        with tempfile.TemporaryDirectory() as q:
+            kök = Path(q).resolve() / "f"
+            _layihə(kök, "konsol")
+            (kök / "mənbə" / "əsas.alq").write_text(
+                "gətir pəncərə\nkomponent Əsas\nson\nfunksiya əsas()\n"
+                "    pəncərə.formaAç(Əsas)\n    pəncərə.işlət()\nson\n",
+                encoding="utf-8")
+            f = kök / "mənbə" / "Əsas.forma"
+            f.write_text("forma Əsas\n    obyekt D: düyme\n    son\nson\n",
+                         encoding="utf-8")
+            r = _alqor("yerləşdir", cwd=kök)
+            self.assertEqual(r.returncode, 2)
+            self.assertIn("ALQ-F003", r.stderr)
+            f.write_text("forma Əsas\n    obyekt D: düymə\n"
+                         '        mətn = "Bas"\n    son\nson\n',
+                         encoding="utf-8")
+            r = _alqor("yerləşdir", cwd=kök)
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertIn("Server paketi", r.stdout)
+            self.assertIn("ALQOR_VEB=1", (kök / "qurma" / "yerləşdir" /
+                                         "Dockerfile").read_text())
+
+
 class Server(unittest.TestCase):
     def test_veb_layihəsi_docker_paketi_və_PORT(self):
         with tempfile.TemporaryDirectory() as q:

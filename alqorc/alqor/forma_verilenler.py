@@ -100,6 +100,9 @@ class VerilənlərBazası(GörünməyənKomponent):
                         "forma faylına yazılmır"),
         "ünvan": ("", "tam ünvan (verilibsə yuxarıdakıları əvəzləyir); "
                   "məs. postgres://u@host/baza"),
+        "ünvanMühiti": ("", "tam ünvanı saxlayan mühit dəyişəni (məs. "
+                        "DATABASE_URL — Render, Heroku); doludursa "
+                        "hamısını əvəzləyir"),
         "sxem": ("", "`.sxem` faylı — çatışmayan cədvəllər yaradılır"),
     }
     METODLAR = {
@@ -116,6 +119,8 @@ class VerilənlərBazası(GörünməyənKomponent):
         self._b: Any = None
 
     def ünvan(self) -> str:
+        if self.x("ünvanMühiti") and os.environ.get(str(self.x("ünvanMühiti"))):
+            return os.environ[str(self.x("ünvanMühiti"))]
         if self.x("ünvan"):
             return str(self.x("ünvan"))
         növ = str(self.x("növ") or "sqlite").lower()

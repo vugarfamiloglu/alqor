@@ -453,6 +453,12 @@ class Pəncərə:
                 "başlıq": self._başlıq}
 
 
+def veb_rejimidir() -> bool:
+    """`ALQOR_VEB=1` — desktop proqramı veb tətbiqi kimi işləyir
+    (`alqor yerləşdir` Docker paketində qoyur)."""
+    return os.environ.get("ALQOR_VEB", "").lower() in ("1", "doğru", "true")
+
+
 def forma_pəncərəsi(icraçı: Any, komponent: Any, göstər: bool = True
                     ) -> Pəncərə:
     """`pəncərə.formaAç(Əsas)` — `Əsas.forma`-dakı başlıq və ölçü ilə
@@ -465,6 +471,13 @@ def forma_pəncərəsi(icraçı: Any, komponent: Any, göstər: bool = True
                         "verilib", kod="ALQ-T002")
     f = F.forma_tap(komponent)
     x = f.xassələr if f is not None else {}
+    if veb_rejimidir():
+        # Pəncərə açılmır — `pəncərə.işlət()` veb serveri qaldırır
+        t = tətbiq(icraçı)
+        t.veb_formaları.append((f"/{komponent.ad}", komponent))
+        p = Pəncərə(icraçı, x.get("başlıq", komponent.ad))
+        t.pəncərələr.remove(p)
+        return p
     p = Pəncərə(icraçı, x.get("başlıq", komponent.ad),
                 x.get("en", 800), x.get("hündürlük", 600))
     if x.get("mərkəzə"):
@@ -787,6 +800,9 @@ class Tətbiq:
         # Sınaq rejimində dialoq cavabları buradan götürülür
         self.dialoq_cavabları: list[Any] = []
         self.dialoq_jurnalı: list[tuple[str, str]] = []
+        # Veb rejimi (`ALQOR_VEB=1`): formalar pəncərədə yox, veb
+        # serverdə açılır — hər brauzer sessiyası öz nümunəsini alır
+        self.veb_formaları: list[tuple[str, Any]] = []
 
     # ── Pəncərələr ────────────────────────────────────────────────────
 
@@ -860,6 +876,9 @@ class Tətbiq:
         Bütün pəncərələr bağlanana qədər hadisə növbəsini boşaldır.
         Hadisələr BU sapda — əsas sapda — işləyir.
         """
+        if self.veb_formaları and veb_rejimidir():
+            self._veb_serveri()
+            return
         if self.başsız:
             return
         if not self.açıqlar():
@@ -878,6 +897,14 @@ class Tətbiq:
         finally:
             self._işləyir = False
             self.dayandır()
+
+    def _veb_serveri(self) -> None:
+        """Formaları veb serverdə verir: ilki `/`, digərləri `/Ad`."""
+        from .veb import Server
+        s = Server(self.icraçı)
+        for i, (yol, komponent) in enumerate(self.veb_formaları):
+            s.komponent("/" if i == 0 else yol, komponent)
+        s.dinlə(8080, "0.0.0.0" if os.environ.get("PORT") else "127.0.0.1")
 
     def növbəyə(self, funksiya: Callable[[], Any]) -> Any:
         """

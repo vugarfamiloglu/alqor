@@ -250,5 +250,110 @@ class FormadaBaza(unittest.TestCase):
         self.assertNotIn("IdSahəsi", növlər)
 
 
+class VebdəForma(unittest.TestCase):
+    """Eyni forma `veb.Server.komponent` ilə vebdə — hər sessiyanın öz
+    nümunəsi (öz cari sətri, öz redaktə buferi)."""
+
+    def test_iki_sessiya_bir_baza(self):
+        import json
+        import re
+        from alqor.icraci import İcraçı
+        from alqor.lekser import Lekser
+        from alqor.menbe import Mənbə
+        from alqor.parser import Parser
+        from alqor.veb import SınaqMüştərisi
+        q = Path(tempfile.mkdtemp(prefix="forma-veb-")).resolve()
+        self.addCleanup(shutil.rmtree, q, True)
+        (q / "mekteb.sxem").write_text(
+            "sxem M\n    cədvəl tələbələr\n        id: tam açar\n"
+            "        ad: mətn məcburi\n        sinif: tam = 1\n    son\nson\n",
+            encoding="utf-8")
+        (q / "Əsas.forma").write_text(FORMA, encoding="utf-8")
+        kod = KOD.split("funksiya əsas()")[0].replace(
+            "gətir pəncərə", "gətir veb") + \
+            'dəyişən s = yeni veb.Server()\ns.komponent("/", Əsas)\n'
+        (q / "Əsas.alq").write_text(kod, encoding="utf-8")
+        x = XətaToplayıcı()
+        m = Mənbə.fayldan(q / "Əsas.alq", x)
+        ağac = Parser(Lekser(m, x).leksə(), m, x).ayır()
+        self.assertTrue(x.uğurludur(), x.hesabat(False))
+        i = İcraçı(çıxış=lambda s_: None)
+        i.işlət(ağac)
+        server = i.qlobal.al("s")
+
+        def müştəri():
+            c = SınaqMüştərisi(server, i)
+            h = c.al("/").gövdə.decode()
+            return c, h
+
+        def hadisə(c, h, naxış, dəyər=None):
+            id_ = re.search(naxış, h).group(1)
+            r = c.göndər("/_alqor/hadise", {"k": 0, "id": id_,
+                                             "dəyər": dəyər},
+                         {"Origin": "http://sınaq"})
+            return json.loads(r.gövdə)["html"]
+
+        c1, h1 = müştəri()
+        self.assertIn("<title>Tələbələr</title>", h1)
+        h1 = hadisə(c1, h1, r'data-a-klik="([^"]+)"[^>]*data-nav="əlavəEt"')
+        h1 = hadisə(c1, h1, r'name="ad"[^>]*data-a-deyisdi="([^"]+)"',
+                    "Aysel")
+        h1 = hadisə(c1, h1, r'data-a-klik="([^"]+)"[^>]*data-nav="saxla"')
+        self.assertIn("1 / 1", h1)
+        # ikinci istifadəçi eyni bazanı görür, amma öz kursoru ilə
+        c2, h2 = müştəri()
+        self.assertIn("Aysel", h2)
+        h2 = hadisə(c2, h2, r'data-a-klik="([^"]+)"[^>]*data-nav="əlavəEt"')
+        self.assertIn("yeni", h2)
+        h1 = c1.al("/").gövdə.decode()
+        self.assertIn("1 / 1", h1)
+        self.assertNotIn(">yeni<", h1)
+
+
+    def test_desktop_proqramı_veb_rejimində(self):
+        """`ALQOR_VEB=1`: `pəncərə.formaAç` + `pəncərə.işlət()` veb
+        serveri qaldırır — eyni kod, pəncərəsiz."""
+        import socket
+        import time
+        import urllib.request
+        q = Path(tempfile.mkdtemp(prefix="forma-vebrejim-")).resolve()
+        self.addCleanup(shutil.rmtree, q, True)
+        (q / "mekteb.sxem").write_text(
+            "sxem M\n    cədvəl tələbələr\n        id: tam açar\n"
+            "        ad: mətn məcburi\n        sinif: tam = 1\n    son\nson\n",
+            encoding="utf-8")
+        (q / "Əsas.forma").write_text(FORMA, encoding="utf-8")
+        (q / "Əsas.alq").write_text(
+            KOD.split("funksiya əsas()")[0] +
+            "funksiya əsas()\n    pəncərə.formaAç(Əsas)\n"
+            "    pəncərə.işlət()\nson\n", encoding="utf-8")
+        with socket.socket() as so:
+            so.bind(("127.0.0.1", 0))
+            port = so.getsockname()[1]
+        p = subprocess.Popen(
+            [sys.executable, str(KÖK / "alqorc.py"), "işlət",
+             str(q / "Əsas.alq")], stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            env=dict(os.environ, PYTHONIOENCODING="utf-8", ALQOR_VEB="1",
+                     ALQOR_PORT=str(port), ALQOR_HOST="127.0.0.1"))
+        try:
+            h = None
+            for _ in range(100):
+                try:
+                    with urllib.request.urlopen(
+                            f"http://127.0.0.1:{port}/", timeout=2) as c:
+                        h = c.read().decode()
+                    break
+                except OSError:
+                    time.sleep(0.1)
+            self.assertIsNotNone(h, "server qalxmadı")
+            self.assertIn("<title>Tələbələr</title>", h)
+            self.assertIn('data-nav="saxla"', h)
+            self.assertTrue((q / "mekteb.db").is_file())
+        finally:
+            p.terminate()
+            p.wait(timeout=10)
+
+
 if __name__ == "__main__":
     unittest.main()

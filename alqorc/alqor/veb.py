@@ -526,6 +526,13 @@ class Server:
                 "ArqumentXətası",
                 f"`{yol}` yoluna artıq komponent qoşulub",
                 kod="ALQ-R013")
+        # Forma komponentinin başlığı (`Əsas.forma` → `başlıq = "…"`)
+        if başlıq == "Alqor":
+            from .forma import forma_tap
+            from .deyerler import Sinif
+            f = forma_tap(mənbə) if isinstance(mənbə, Sinif) else None
+            if f is not None and isinstance(f.xassələr.get("başlıq"), str):
+                başlıq = f.xassələr["başlıq"]
         self._komponentlər.append(_KomponentQoşması(
             len(self._komponentlər), yol, mənbə,
             mətnə(başlıq, self._icraçı),

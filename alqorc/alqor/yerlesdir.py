@@ -59,6 +59,10 @@ def serverdirmi(layihə) -> bool:
     interfeysidir: veb serveri yalnız `-- veb` arqumenti ilə qalxır,
     Docker paketi isə arqumentsiz işləyir — ona görə statik sayt olur.
     """
+    # Vizual dizaynerin formaları (`.forma`) Python icra mühiti tələb edir:
+    # Docker paketində `ALQOR_VEB=1` — `pəncərə.formaAç` veb səhifə olur
+    if any("qurma" not in f.parts for f in layihə.kök.rglob("*.forma")):
+        return True
     veb = pəncərə = False
     for f in _mənbələr(layihə):
         try:
@@ -79,6 +83,7 @@ COPY tetbiq.pyz /app/tetbiq.pyz
 ENV PYTHONIOENCODING=utf-8 \\
     PYTHONUNBUFFERED=1 \\
     ALQOR_HOST=0.0.0.0 \\
+    ALQOR_VEB=1 \\
     PORT=8080 \\
     ALQOR_KES=/tmp/alqor
 EXPOSE 8080
@@ -99,6 +104,17 @@ Bu qovluqda hər şey hazırdır:
 
 Server portu platformanın verdiyi `PORT` dəyişənindən götürür, kodda
 dəyişiklik lazım deyil.
+
+## Verilənlər bazası
+
+Konteynerdə SQLite faylı server yenidən başladılanda itə bilər. Davamlı
+məlumat üçün PostgreSQL və ya MySQL işlədin: formada
+`VerilənlərBazası` komponentinə `ünvanMühiti = "DATABASE_URL"` yazın,
+platformada (Render → *Environment*) `DATABASE_URL` dəyişənini verin.
+Cədvəllər `.sxem` faylından avtomatik yaradılır.
+
+Desktop formaları (`pəncərə.formaAç`) bu paketdə veb səhifə kimi açılır
+(`ALQOR_VEB=1`): hər istifadəçinin öz pəncərə nümunəsi olur.
 
 ## Yerli yoxlama
 
