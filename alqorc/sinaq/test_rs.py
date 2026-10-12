@@ -1,6 +1,6 @@
 """
 Rust implementasiyası (`alqor-rs/`) — Python etalonu ilə diferensial
-müqayisə: tokenlər, AAC və xəta mesajları eyni olmalıdır.
+müqayisə: tokenlər, AAC, xəta mesajları və icra nəticələri eyni olmalıdır.
 Cargo yoxdursa sınaqlar ötürülür.
 """
 
@@ -64,6 +64,35 @@ class RustMüqayisəsi(unittest.TestCase):
             f.write_text(k, encoding="utf-8")
             fayllar.append(f)
         self.müqayisə(fayllar, M.python_aac_diaq, M.rust_aac_diaq)
+
+
+def _binar():
+    if shutil.which("cargo") or (Path.home() / ".cargo" / "bin" / "cargo").exists():
+        return M.qur()
+    return M.binar()
+
+
+_B = _binar()
+
+
+@unittest.skipIf(_B is None, "cargo / alqor-rs mövcud deyil")
+class RustİcraMüqayisəsi(unittest.TestCase):
+    def test_icraçı_korpusu(self):
+        fərqlər: list[str] = []
+        eyni, cəmi = M.korpus_işlət(_B, çıxış=fərqlər.append)
+        self.assertEqual(eyni, cəmi, "\n".join(fərqlər))
+
+    def test_nümunə_proqramlar(self):
+        fərqlər: list[str] = []
+        fayllar = M.proqramlar()
+        self.assertGreater(len(fayllar), 10)
+        pis = M.proqram_işlət(_B, fayllar, çıxış=fərqlər.append)
+        self.assertEqual(pis, 0, "\n".join(fərqlər))
+
+    def test_icra_parçaları(self):
+        fərqlər: list[str] = []
+        eyni, cəmi = M.parçalar_işlət(_B, çıxış=fərqlər.append)
+        self.assertEqual(eyni, cəmi, "\n".join(fərqlər))
 
 
 if __name__ == "__main__":

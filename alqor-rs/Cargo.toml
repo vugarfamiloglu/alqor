@@ -18,6 +18,7 @@ fancy-regex = "0.14"
 corosensei = "0.3"
 indexmap = "2"
 unicode_names2 = "1"
+libc = "0.2"
 
 [profile.release]
 opt-level = 3
