@@ -46,7 +46,7 @@
 .fd-pb-düymələr i { width: 11px; height: 11px; border-radius: 50%; background: var(--kənar); }
 .fd-pb-düymələr i:last-child { background: #e5534b; }
 .fd-məzmun { position: relative; overflow: auto; border-radius: 0 0 9px 9px; }
-.fd-host { min-height: 100%; }
+.fd-host { height: 100%; }
 .fd-örtük { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
 .fd-seçim { position: absolute; outline: 1px dashed var(--vurğu); pointer-events: none; }
 .fd-seçim.əsas { outline: 2px solid var(--vurğu); }
