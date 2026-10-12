@@ -95,5 +95,19 @@ class RustİcraMüqayisəsi(unittest.TestCase):
         self.assertEqual(eyni, cəmi, "\n".join(fərqlər))
 
 
+@unittest.skipIf(_B is None or M.node_tap() is None,
+                 "cargo / alqor-rs və ya node mövcud deyil")
+class RustWasmMüqayisəsi(unittest.TestCase):
+    """WebAssembly paketi (wasm/alqor.js + alqor.wasm) yerli binarla eynidir."""
+
+    def test_wasm_parçalar(self):
+        if M.wasm_qur() is None:
+            self.skipTest("wasm32-unknown-unknown hədəfi yoxdur")
+        fərqlər: list[str] = []
+        eyni, cəmi = M.wasm_müqayisə(_B, M.node_tap(), çıxış=fərqlər.append)
+        self.assertGreater(cəmi, 50)
+        self.assertEqual(eyni, cəmi, "\n".join(fərqlər))
+
+
 if __name__ == "__main__":
     unittest.main()

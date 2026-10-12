@@ -19,7 +19,7 @@ const RƏNGLƏR: [(&str, i64); 9] = [
 ];
 
 fn terminaldır() -> bool {
-    unsafe { libc::isatty(1) == 1 }
+    super::platforma::terminaldır()
 }
 
 fn boya(i: &İcraçı, m: &D, kodlar: &[i64]) -> Nəticə<String> {
@@ -221,10 +221,9 @@ fn ölçü() -> (i64, i64) {
     let env = |k: &str| std::env::var(k).ok().and_then(|v| v.parse::<i64>().ok()).filter(|v| *v > 0);
     let (mut c, mut l) = (env("COLUMNS"), env("LINES"));
     if c.is_none() || l.is_none() {
-        let mut w: libc::winsize = unsafe { std::mem::zeroed() };
-        if unsafe { libc::ioctl(1, libc::TIOCGWINSZ, &mut w) } == 0 && w.ws_col > 0 {
-            c = c.or(Some(w.ws_col as i64));
-            l = l.or(Some(w.ws_row as i64));
+        if let Some((x, y)) = super::platforma::terminal_ölçüsü() {
+            c = c.or(Some(x));
+            l = l.or(Some(y));
         }
     }
     (c.unwrap_or(80), l.unwrap_or(24))

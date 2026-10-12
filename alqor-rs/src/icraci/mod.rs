@@ -11,6 +11,7 @@ pub mod konsol;
 pub mod metodlar;
 pub mod modullar;
 pub mod muhit;
+pub mod platforma;
 pub mod sinifler;
 
 pub use deyerler::AlqorXəta;

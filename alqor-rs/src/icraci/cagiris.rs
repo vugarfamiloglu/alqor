@@ -1,7 +1,9 @@
 //! Çağırışlar, funksiyalar, generatorlar, iterasiya, tiplər (icraci.py davamı).
 
 use super::deyerler::*;
-use super::icraci::{İcraçı, İter, KORUTİN_STEKİ, STEK_HƏDDİ};
+use super::icraci::{İcraçı, İter, STEK_HƏDDİ};
+#[cfg(not(target_arch = "wasm32"))]
+use super::icraci::KORUTİN_STEKİ;
 use super::muhit::Mühit;
 use crate::aac::{self, Cümlə, Tip, İfadə};
 use crate::xeta::Yer;
@@ -435,8 +437,13 @@ impl İcraçı {
         } else if let Some(s) = &f.sinif {
             m.elan(ad("__sinif__"), D::Sinif(s.clone()), false);
         }
+        #[cfg(target_arch = "wasm32")]
+        let saxlanan = if f.generator { (args.clone(), adlı.clone()) } else { (vec![], vec![]) };
         self.parametrləri_bağla(f, args, adlı, &m, yer)?;
         if f.generator {
+            #[cfg(target_arch = "wasm32")]
+            return Ok(D::Gen(Generator::yeni(GenMənbə::Təkrar(Təkrar { f: f.clone(), args: saxlanan.0, adlı: saxlanan.1, verilən: 0 }))));
+            #[cfg(not(target_arch = "wasm32"))]
             return Ok(D::Gen(self.korutin_qur(f, m)));
         }
         match &f.gövdə {
@@ -473,6 +480,30 @@ impl İcraçı {
         }
     }
 
+    /// `wasm32`: generator gövdəsini təzə əhatədə başdan işlədir.
+    #[cfg(target_arch = "wasm32")]
+    pub fn generator_gövdəsi(&self, f: &Rc<Funksiya>, args: Vec<D>, adlı: Adlı) -> Nəticə<()> {
+        let m = f.mühit.alt();
+        if let Some(özü) = &f.özü {
+            m.elan(ad("özü"), özü.clone(), false);
+            let sinif = f.sinif.clone().or_else(|| match özü {
+                D::Nümunə(n) => Some(n.sinif.clone()),
+                _ => None,
+            });
+            if let Some(s) = sinif {
+                m.elan(ad("__sinif__"), D::Sinif(s), false);
+            }
+        } else if let Some(s) = &f.sinif {
+            m.elan(ad("__sinif__"), D::Sinif(s.clone()), false);
+        }
+        self.parametrləri_bağla(f, args, adlı, &m, None)?;
+        match &f.gövdə {
+            FGövdə::Blok(g) => self.blok(g, &m),
+            FGövdə::İfadə(_) => Ok(()),
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
     fn korutin_qur(&self, f: &Rc<Funksiya>, m: Mühit) -> Rc<Generator> {
         let i = self.statik();
         let gövdə = match &f.gövdə {
