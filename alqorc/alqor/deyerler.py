@@ -334,6 +334,8 @@ class Sinif(Çağırılan):
     mühit: Mühit | None = None
     # `@cədvəl("x")` kimi sinif annotasiyaları (AST) — ORM oxuyur
     annotasiyalar: list = field(default_factory=list)
+    # Komponentin görünüş faylı (`Ad.forma`) — `forma.FormaTəsviri`
+    forma: Any = None
 
     # ── Axtarış ───────────────────────────────────────────────────────
 

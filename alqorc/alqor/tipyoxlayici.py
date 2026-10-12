@@ -635,6 +635,7 @@ def _pəncərə_modulu() -> T.ModulTipi:
     })
     return T.ModulTipi("pəncərə", {
         "Pəncərə": F(m, i, i, qaytarır=PƏNCƏRƏ, standart=3),
+        "formaAç": F(e, b, qaytarır=PƏNCƏRƏ, standart=1),
         "menyu": F(m, T.Siyahı(MENYU_ELEMENTİ), qaytarır=MENYU,
                    standart=1),
         "element": F(m, m, e, b, b, qaytarır=MENYU_ELEMENTİ, standart=4),

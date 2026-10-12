@@ -1652,6 +1652,8 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
         "Pəncərə": D("Pəncərə", lambda başlıq="Alqor", en=800,
                      hündürlük=600: _p.Pəncərə(
                          icraçı, başlıq, en, hündürlük), 0, 3),
+        "formaAç": D("formaAç", lambda komponent, göstər=True:
+                     _p.forma_pəncərəsi(icraçı, komponent, göstər), 1, 2),
         "menyu": D("menyu", lambda ad, elementlər=None: _p.Menyu(
             mətnə(ad, icraçı),
             [e for e in (elementlər or []) if isinstance(

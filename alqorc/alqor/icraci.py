@@ -709,6 +709,14 @@ class İcraçı:
                     f"`{s.ad}` mücərrəd metodları tətbiq etmir: "
                     + ", ".join(sorted(çatışmayan)), c.yer, "ALQ-T053")
 
+        # `Ad.forma` — komponentin vizual dizayner faylı
+        if c.quruluş == "komponent":
+            from . import forma
+            yol = forma.komponent_üçün(
+                c.ad, getattr(getattr(c.yer, "mənbə", None), "yol", None))
+            if yol is not None:
+                forma.birləşdir(self, s, yol, c.yer)
+
         if c.quruluş == "obyekt":
             m.elan(c.ad, self.nümunə_yarat(s, None, [], {}, c.yer))
         else:
@@ -1298,6 +1306,11 @@ class İcraçı:
         if metod is not None:
             return metod
 
+        # Python obyektinin dinamik xassələri (`forma.FormaObyekti`)
+        üzv = getattr(obyekt, "alqor_üzv", None)
+        if üzv is not None:
+            return üzv(self, ad, yer)
+
         raise self._üzv_xətası(obyekt, ad, yer)
 
     @staticmethod
@@ -1377,6 +1390,10 @@ class İcraçı:
             return
         if isinstance(obyekt, Modul):
             obyekt.üzvlər[ad] = dəyər
+            return
+        qoy = getattr(obyekt, "alqor_üzv_qoy", None)
+        if qoy is not None:
+            qoy(self, ad, dəyər, yer)
             return
         raise AlqorXəta("ArqumentXətası",
                         f"`{tip_adı(obyekt)}` tipinin üzvü dəyişdirilə "
@@ -1717,6 +1734,11 @@ class İcraçı:
                     self._ifadə(x.standart, s.mühit or self.qlobal), x.tip)
             else:
                 n.sahələr[x.ad] = self._xassə_standartı(x)
+
+        if s.forma is not None or (s.baza is not None
+                                   and s.quruluş == "komponent"):
+            from . import forma
+            forma.nümunəyə_qoş(n)
 
         qurucu = self._qurucu_tap(s, qurucu_adı or "")
         if qurucu is not None:
