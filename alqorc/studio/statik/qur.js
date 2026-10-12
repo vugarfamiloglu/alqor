@@ -269,6 +269,16 @@ const ƏQ = (id, ad, ikon, qısayol, işlə, aktiv, əlavə = {}) => Əmrlər.qe
 // Fayl
 ƏQ("fayl.yeni", "Yeni fayl", "fayl-yeni", "Alt+N", () => yeniFayl());
 ƏQ("fayl.yeniQovluq", "Yeni qovluq", "qovluq-yeni", null, () => yeniQovluq());
+ƏQ("fayl.yeniForma", "Yeni forma…", "dizayn", null, () => yeniForma());
+
+// Forma dizayneri (`.forma`)
+const formaAçıqdır = () => fdFormadır();
+const bazaVar = () => fdFormadır() && Object.keys(FD.cavab?.verilənlər?.bazalar || {}).length > 0;
+ƏQ("forma.kodDizayn", "Forma: Kod / Dizayn", "dizayn", "Alt+F12", () => fdKodDizayn(!cari()?.fdKod), formaAçıqdır,
+  { seçilib: () => fdFormadır() && !cari().fdKod });
+ƏQ("forma.cədvəllər", "Verilənlər: cədvəllər…", "layihə", null, () => fdCədvəlRedaktoru(fdSeçilmişBaza()), bazaVar);
+ƏQ("forma.crud", "Verilənlər: cədvəldən forma yarat…", "elementlər", null, () => fdCrudDialoq(fdSeçilmişBaza()), bazaVar);
+ƏQ("forma.model", "Verilənlər: model kodu yarat", "fayl-yeni", null, () => fdModelKodu(fdSeçilmişBaza()), bazaVar);
 ƏQ("fayl.yeniLayihə", "Yeni layihə…", "layihə", null, () => { hamısınıBağla().then(() => xoşGəldin()); });
 ƏQ("fayl.aç", "Fayla keç…", "keç-fayl", "Ctrl+P", () => Palitra.aç(""));
 ƏQ("fayl.saxla", "Saxla", "saxla", "Ctrl+S", () => saxla(), varCari);
@@ -284,8 +294,9 @@ const ƏQ = (id, ad, ikon, qısayol, işlə, aktiv, əlavə = {}) => Əmrlər.qe
 });
 
 // Redaktə
-ƏQ("redaktə.geriAl", "Geri al", "geri-al", "Ctrl+Z", () => R.geriAl(), varCari);
-ƏQ("redaktə.irəliAl", "İrəli al", "irəli-al", ["Ctrl+Y", "Ctrl+Shift+Z"], () => R.irəliAl(), varCari);
+// Forma dizaynerində geri al / irəli al dizayner əməliyyatlarına aiddir
+ƏQ("redaktə.geriAl", "Geri al", "geri-al", "Ctrl+Z", () => (fdDizayndadır() ? fdGeriAl() : R.geriAl()), varCari);
+ƏQ("redaktə.irəliAl", "İrəli al", "irəli-al", ["Ctrl+Y", "Ctrl+Shift+Z"], () => (fdDizayndadır() ? fdGeriAl(true) : R.irəliAl()), varCari);
 ƏQ("redaktə.kəs", "Kəs", "kəs", "Ctrl+X", () => redaktorƏmri("kəs"), varCari, { yalnızGöstər: true });
 ƏQ("redaktə.kopyala", "Kopyala", "kopyala", "Ctrl+C", () => redaktorƏmri("kopyala"), varCari, { yalnızGöstər: true });
 ƏQ("redaktə.yapışdır", "Yapışdır", "yapışdır", "Ctrl+V", () => redaktorƏmri("yapışdır"), varCari, { yalnızGöstər: true });
@@ -465,7 +476,7 @@ function qısayollarıGöstər() {
 // ══ Menyu sətri ══════════════════════════════════════════════════════
 const paneller = () => Dok.panellər().filter((p) => p.id !== "onbaxis").map((p) => `görünüş.${p.id}`);
 MenyuSətri.qur($("#menyu-setri"), [
-  { ad: "Fayl", hərf: "F", elementlər: ["fayl.yeni", "fayl.yeniQovluq", "fayl.yeniLayihə", "-", "fayl.aç", "-",
+  { ad: "Fayl", hərf: "F", elementlər: ["fayl.yeni", "fayl.yeniForma", "fayl.yeniQovluq", "fayl.yeniLayihə", "-", "fayl.aç", "-",
     "fayl.saxla", "fayl.hamısınıSaxla", "-", "fayl.bağla", "fayl.hamısınıBağla", "-", "fayl.yoluKopyala", "fayl.yenilə", "-", "fayl.çıxış"] },
   { ad: "Redaktə", hərf: "R", elementlər: ["redaktə.geriAl", "redaktə.irəliAl", "-", "redaktə.kəs", "redaktə.kopyala",
     "redaktə.yapışdır", "-", "redaktə.axtar", "redaktə.əvəzlə", "redaktə.layihədəAxtar", "-", "redaktə.şərh",
@@ -473,7 +484,7 @@ MenyuSətri.qur($("#menyu-setri"), [
   { ad: "Seçim", hərf: "S", elementlər: ["seçim.hamısı", "seçim.sətir", "-", "seçim.yuxarıDaşı", "seçim.aşağıDaşı",
     "seçim.yuxarıTəkrarla", "seçim.aşağıTəkrarla", "-", "seçim.sətriSil"] },
   { ad: "Görünüş", hərf: "G", elementlər: ["görünüş.palitra", "-",
-    { ad: "Panellər", ikon: "layihə", alt: paneller }, "görünüş.önbaxış", "görünüş.dizayn", "-",
+    { ad: "Panellər", ikon: "layihə", alt: paneller }, "görünüş.önbaxış", "görünüş.dizayn", "forma.kodDizayn", "-",
     "görünüş.yanPanel", "görünüş.altPanel", "görünüş.sağPanel", "görünüş.düzülüşüSıfırla", "-",
     "görünüş.tema", "görünüş.hərfPaneli", "-", "görünüş.böyüt", "görünüş.kiçilt", "görünüş.şriftSıfırla", "-",
     "görünüş.xoşGəldin"] },
@@ -484,7 +495,8 @@ MenyuSətri.qur($("#menyu-setri"), [
     "işlət.çıxışıTəmizlə"] },
   { ad: "Debaq", hərf: "D", elementlər: ["debaq.başla", "debaq.davam", "debaq.fasilə", "debaq.dayandır", "-",
     "debaq.növbəti", "debaq.daxil", "debaq.çıx", "-", "debaq.nöqtə", "debaq.nöqtələriSil"] },
-  { ad: "Alətlər", hərf: "A", elementlər: ["redaktə.formatla", "redaktə.ascii", "-", "alətlər.asciiAvto", "alətlər.tərkib", "-",
+  { ad: "Alətlər", hərf: "A", elementlər: ["redaktə.formatla", "redaktə.ascii", "-",
+    "forma.cədvəllər", "forma.crud", "forma.model", "-", "alətlər.asciiAvto", "alətlər.tərkib", "-",
     "görünüş.palitra"] },
   { ad: "Kömək", hərf: "M", elementlər: ["kömək.sənədlər", "kömək.ilk", "-", "kömək.dərslik", "kömək.arayış", "kömək.əmrlər", "kömək.xətalar", "kömək.nümunələr", "kömək.spesifikasiya", "-", "kömək.qısayollar", "kömək.haqqında"] },
 ]);
@@ -534,6 +546,7 @@ $("#agac").addEventListener("contextmenu", (h) => {
       ...(/\.(alqor|alq)$/.test(yol) ? [{ ad: "Aç və işlət", ikon: "işlət", işlə: async () => { await faylıAç(yol); işlət(); } }] : []),
       "-"] : []),
     { ad: "Yeni fayl", ikon: "fayl-yeni", işlə: () => { S.seçiliQovluq = qovluq; yeniFayl(qovluq); } },
+    { ad: "Yeni forma…", ikon: "dizayn", işlə: () => { S.seçiliQovluq = qovluq; yeniForma(qovluq); } },
     { ad: "Yeni qovluq", ikon: "qovluq-yeni", işlə: () => { S.seçiliQovluq = qovluq; yeniQovluq(); } },
     ...(d ? ["-",
       { ad: "Adını dəyiş", ikon: "ad-dəyiş", işlə: () => adınıDəyiş(yol) },
