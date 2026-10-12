@@ -161,6 +161,7 @@ function temaQur(t) {
   document.documentElement.dataset.tema = t;
   yaddaş("tema", t);
   if (S.kataloq) miniatürləriÇək();
+  if (typeof fdTemaDəyişdi === "function") fdTemaDəyişdi();
   const ç = $("#onbaxis-cercive");
   if (ç && sonÖnbaxışÜnvanı && S.önbaxışAçıq) ç.src = önbaxışÜnvanı(sonÖnbaxışÜnvanı, true);
 }
@@ -244,8 +245,9 @@ async function ağacıYenilə() {
           (a ? qur(e) : "") + "</li>";
       }
       const alqor = /\.(alqor|alq)$/.test(e.ad);
-      return `<li><div class="düyün fayl${alqor ? " alqor" : ""}${S.aktiv === e.yol ? " seçili" : ""}" data-yol="${qaç(e.yol)}" data-nov="fayl" role="treeitem">` +
-        `<span class="işarə">${alqor ? "◆" : "·"}</span><span class="ad">${qaç(e.ad)}</span>` +
+      const forma = /\.(forma|sxem)$/.test(e.ad);
+      return `<li><div class="düyün fayl${alqor ? " alqor" : ""}${forma ? " forma" : ""}${S.aktiv === e.yol ? " seçili" : ""}" data-yol="${qaç(e.yol)}" data-nov="fayl" role="treeitem">` +
+        `<span class="işarə">${alqor ? "◆" : forma ? (e.ad.endsWith(".forma") ? "▣" : "⛁") : "·"}</span><span class="ad">${qaç(e.ad)}</span>` +
         `<span class="əməllər"><button data-emel="adlandir" title="Adını dəyiş">✎</button>` +
         `<button data-emel="sil" title="Sil">✕</button></span></div></li>`;
     }).join("");
@@ -375,8 +377,12 @@ function tabaKeç(yol) {
   X.mövqe = null;
   if (xüsusiyyətPaneliAçıqdır()) xüsusiyyətləriYüklə();
   if (typeof strukturuYenilə === "function") strukturuYenilə();
-  R.fokus();
+  if (typeof fdTabDəyişdi === "function") fdTabDəyişdi();
+  if (!fdFormadırMı(t) || t.fdKod) R.fokus();
 }
+
+/** `.forma` tabı (dizayner `forma.js`-dədir). */
+function fdFormadırMı(t) { return !!t && /\.forma$/.test(t.yol); }
 
 function ağacSeçiminiYenilə() {
   for (const d of $$(".düyün.fayl")) d.classList.toggle("seçili", d.dataset.yol === S.aktiv);
@@ -399,6 +405,7 @@ async function tabıBağla(yol, məcburi = false) {
     if (n) tabaKeç(n.yol);
     else { R.yüklə(""); diaqnostikaNəticəsi(null); elementləriÇək([]); }
   }
+  if (typeof fdTabDəyişdi === "function" && !S.tablar.length) fdTabDəyişdi();
   tablarıÇək();
   xoşGəldin();
 }
@@ -482,6 +489,7 @@ $("#sablonlar").addEventListener("click", async (h) => {
 R.on("dəyişdi", () => {
   const t = cari();
   if (!t) return;
+  if (typeof fdMətnDəyişdi === "function") fdMətnDəyişdi();
   dizaynıPlanla();
   const ç = çirklidir(t);
   const el = $(`.tab[data-yol="${CSS.escape(t.yol)}"]`);
@@ -534,6 +542,7 @@ async function yoxla() {
   if (!t) return;
   const n = ++yoxlamaNömrəsi;
   const mətn = R.mətn;
+  if (fdFormadırMı(t)) return;                  // `.forma` — dizayner yoxlayır
   if (!/\.(alqor|alq)$/.test(t.yol)) { diaqnostikaNəticəsi(null); return; }
   try {
     const [d, e] = await Promise.all([
@@ -967,10 +976,17 @@ $("#cixis").addEventListener("click", (h) => {
 });
 
 async function işlət() {
-  const t = cari();
+  let t = cari();
   if (!t) { bildir("Əvvəlcə fayl açın"); return; }
+  if (fdFormadırMı(t) && typeof FD !== "undefined" && FD.cavab?.alq) {
+    // Forma öz kodu ilə işləyir: `Ad.alq`
+    if (çirklidir(t) && !(await saxla(t, true))) return;
+    const alq = S.tablar.find((x) => x.yol === FD.cavab.alq);
+    if (alq && çirklidir(alq) && !(await saxla(alq, true))) return;
+    t = { yol: FD.cavab.alq, saxlanmış: "", v: { mətn: "" } };
+  }
   if (!/\.(alqor|alq)$/.test(t.yol)) { bildir("Yalnız .alq faylları işlədilə bilər", "xəta"); return; }
-  if (çirklidir(t) && !(await saxla(t))) return;
+  if (S.tablar.includes(t) && çirklidir(t) && !(await saxla(t))) return;
   if (S.iş) await dayandır();
   $("#cixis").textContent = "";
   altPaneliAç("cixis");

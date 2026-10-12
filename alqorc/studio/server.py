@@ -286,6 +286,15 @@ class Studio:
             ("POST", "/api/axtar/evezle"): self.api_axtar_əvəzlə,
             ("POST", "/api/dizayn/agac"): self.api_dizayn_ağac,
             ("POST", "/api/dizayn/emeliyyat"): self.api_dizayn_əməliyyat,
+            ("GET", "/api/forma/kataloq"): self.api_forma_kataloq,
+            ("POST", "/api/forma/oxu"): self.api_forma_oxu,
+            ("POST", "/api/forma/emeliyyat"): self.api_forma_əməliyyat,
+            ("POST", "/api/forma/hadise"): self.api_forma_hadisə,
+            ("POST", "/api/forma/yeni"): self.api_forma_yeni,
+            ("POST", "/api/forma/sxem"): self.api_forma_sxem,
+            ("POST", "/api/forma/sxem/yaz"): self.api_forma_sxem_yaz,
+            ("POST", "/api/forma/sxem/idxal"): self.api_forma_sxem_idxal,
+            ("POST", "/api/forma/model"): self.api_forma_model,
             ("POST", "/api/debaq"): self.api_debaq,
             ("POST", "/api/debaq/emr"): self.api_debaq_əmr,
             ("POST", "/api/debaq/noqteler"): self.api_debaq_nöqtələr,
@@ -613,6 +622,264 @@ class Studio:
         except skelet.SkeletXətası as x:
             raise ApiXətası(str(x), 422) from None
         raise ApiXətası(f"naməlum əməliyyat: {növ}")
+
+    # ── Forma dizayneri (`.forma`) ────────────────────────────────────
+
+    def api_forma_kataloq(self, _: dict) -> dict:
+        from . import forma_dizayner as D
+        return D.kataloq()
+
+    def _forma_yolu(self, s: dict) -> Path:
+        yol = self.layihə.yol(self._mətn(s, "yol"))
+        if yol.suffix != ".forma":
+            raise ApiXətası("`.forma` faylı gözlənilirdi")
+        return yol
+
+    def _forma(self, s: dict):
+        """(yol, mətn, model) — mətn verilməyibsə fayldan oxunur."""
+        from . import forma_dizayner as D
+        yol = self._forma_yolu(s)
+        mətn = s.get("mətn")
+        if not isinstance(mətn, str):
+            mətn = self.layihə.oxu(self.layihə.nisbi(yol))
+        f, diaq = D.oxu(mətn, yol.name, yol)
+        if f is None:
+            xəta = next((d for d in diaq if d["səviyyə"] == "xəta"), None)
+            raise ApiXətası("Forma mətnində xəta var — əvvəlcə düzəldin"
+                            + (f" (sətir {xəta['sətir']}: {xəta['mesaj']})"
+                               if xəta else ""), 422)
+        return yol, mətn, f
+
+    def _komponent_faylı(self, yol: Path, ad: str) -> Path:
+        """Formanın kodu: `Ad.alq` və ya qovluqda `komponent Ad` olan fayl."""
+        import re
+        y = yol.parent / f"{ad}.alq"
+        if y.is_file():
+            return y
+        naxış = re.compile(r"^\s*(?:ixrac\s+et\s+|ixrac\s+)?komponent\s+"
+                           + re.escape(ad) + r"\b", re.M)
+        for x in sorted(yol.parent.glob("*.alq")):
+            try:
+                if naxış.search(x.read_text(encoding="utf-8")):
+                    return x
+            except (OSError, UnicodeDecodeError):
+                continue
+        return y
+
+    def _forma_cavabı(self, yol: Path, mətn: str) -> dict:
+        from . import forma_dizayner as D
+        f, diaq = D.oxu(mətn, yol.name, yol)
+        n: dict[str, Any] = {"mətn": mətn, "diaqnostikalar": diaq,
+                             "forma": None}
+        if f is None:
+            return n
+        alq = self._komponent_faylı(yol, f.ad)
+        metodlar: list[str] = []
+        if alq.is_file():
+            try:
+                metodlar = D.metodlar(alq.read_text(encoding="utf-8"), f.ad)
+            except (OSError, UnicodeDecodeError):
+                pass
+        n.update(forma=D.model(f), html=D.html(f, yol.parent),
+                 metodlar=metodlar, alq=self.layihə.nisbi(alq),
+                 alqVar=alq.is_file(),
+                 verilənlər=D.verilənlər(f, yol.parent))
+        return n
+
+    def _forma_yaz(self, yol: Path, f) -> str:
+        from alqor import forma as F
+        mətn = F.yaz(f)
+        self.layihə.yaz(self.layihə.nisbi(yol), mətn)
+        return mətn
+
+    def api_forma_oxu(self, s: dict) -> dict:
+        yol = self._forma_yolu(s)
+        mətn = s.get("mətn")
+        if not isinstance(mətn, str):
+            mətn = self.layihə.oxu(self.layihə.nisbi(yol))
+        return self._forma_cavabı(yol, mətn)
+
+    def api_forma_əməliyyat(self, s: dict) -> dict:
+        from . import forma_dizayner as D
+        ə = s.get("əməliyyat")
+        if not isinstance(ə, dict):
+            raise ApiXətası("`əməliyyat` lüğət olmalıdır")
+        if ə.get("növ") == "mətn":
+            # Geri al / irəli al: bütöv mətn (əvvəl yoxlanılır)
+            yol, mətn, _ = self._forma({**s, "mətn": self._mətn(ə, "mətn")})
+            self.layihə.yaz(self.layihə.nisbi(yol), mətn)
+            n = self._forma_cavabı(yol, mətn)
+            n["seçim"] = None
+            return n
+        yol, _, f = self._forma(s)
+        sxem = None
+        if ə.get("növ") == "crud":
+            baza = str(ə.get("baza") or "")
+            try:
+                sxem, xətalar = D.sxem_oxu(D.sxem_yolu(f, baza, yol.parent))
+            except D.FormaDizaynXətası as x:
+                raise ApiXətası(str(x), 422) from None
+            if sxem is None:
+                raise ApiXətası("Sxem oxunmadı: " + ("; ".join(xətalar) or
+                                "əvvəlcə «Cədvəllər…» ilə cədvəl yaradın"),
+                                422)
+        try:
+            r = D.əməliyyat(f, ə, sxem)
+        except D.FormaDizaynXətası as x:
+            raise ApiXətası(str(x), 422) from None
+        mətn = self._forma_yaz(yol, f)
+        n = self._forma_cavabı(yol, mətn)
+        n["seçim"] = r.get("seçim")
+        return n
+
+    def api_forma_hadisə(self, s: dict) -> dict:
+        """Obyektə / boş hadisə sahəsinə iki klik: `.forma`-da hadisə
+        xassəsi və `.alq`-dakı komponentdə `əməl` skeleti."""
+        from alqor.forma import İstinad
+        from . import forma_dizayner as D
+        yol, mətn, f = self._forma(s)
+        obyekt, hadisə = self._mətn(s, "obyekt"), self._mətn(s, "hadisə")
+        o = f.tap(obyekt)
+        if o is None:
+            raise ApiXətası(f"`{obyekt}` obyekti tapılmadı", 404)
+        if not D._AD.match(hadisə):
+            raise ApiXətası("hadisə adı yanlışdır")
+        mövcud = o.xassələr.get(hadisə)
+        istənən = s.get("metod")
+        if isinstance(istənən, str) and istənən.strip():
+            ad = istənən.strip()
+        elif isinstance(mövcud, İstinad):
+            ad = mövcud.ad
+        else:
+            ad = D.hadisə_metodu(obyekt, hadisə)
+        if not D._AD.match(ad):
+            raise ApiXətası(f"`{ad}` metod adı ola bilməz")
+        alq = self._komponent_faylı(yol, f.ad)
+        alq_nisbi = self.layihə.nisbi(alq)
+        alq_mətn = s.get("alqMətn")
+        if not isinstance(alq_mətn, str):
+            alq_mətn = alq.read_text(encoding="utf-8") if alq.is_file() \
+                else D.yeni_forma(f.ad)[1]
+        yeni_alq, sətir = D.metod_əlavə(
+            alq_mətn, f.ad, ad, D.hadisə_parametrləri(hadisə),
+            f"{obyekt} — `{hadisə}` hadisəsi")
+        if yeni_alq != alq_mətn or not alq.is_file():
+            self.layihə.yaz(alq_nisbi, yeni_alq)
+        if mövcud != İstinad(ad):
+            o.xassələr[hadisə] = İstinad(ad)
+            mətn = self._forma_yaz(yol, f)
+        n = self._forma_cavabı(yol, mətn)
+        n.update(seçim=None, metod=ad, alq=alq_nisbi, alqMətn=yeni_alq,
+                 sətir=sətir, yeniMetod=yeni_alq != alq_mətn)
+        return n
+
+    def api_forma_yeni(self, s: dict) -> dict:
+        from . import forma_dizayner as D
+        ad = self._mətn(s, "ad").strip()
+        if ad.endswith(".forma"):
+            ad = ad[:-len(".forma")]
+        qovluq = self._mətn(s, "qovluq", "").strip("/")
+        try:
+            forma_mətni, kod = D.yeni_forma(ad)
+        except D.FormaDizaynXətası as x:
+            raise ApiXətası(str(x)) from None
+        ön = f"{qovluq}/" if qovluq else ""
+        fy, ky = f"{ön}{ad}.forma", f"{ön}{ad}.alq"
+        for y in (fy, ky):
+            if self.layihə.yol(y).exists():
+                raise ApiXətası(f'"{y}" artıq mövcuddur', 409)
+        self.layihə.yarat(fy, "fayl", forma_mətni)
+        self.layihə.yarat(ky, "fayl", kod)
+        return {"forma": fy, "alq": ky}
+
+    def _sxem_yolu(self, yol: Path, f, baza: str) -> Path:
+        from . import forma_dizayner as D
+        try:
+            y = D.sxem_yolu(f, baza, yol.parent)
+        except D.FormaDizaynXətası as x:
+            raise ApiXətası(str(x), 422) from None
+        self.layihə.yol(self.layihə.nisbi(y))        # layihədən kənar olmasın
+        return y
+
+    def api_forma_sxem(self, s: dict) -> dict:
+        from alqor import sxem as S
+        from . import forma_dizayner as D
+        yol, _, f = self._forma(s)
+        baza = self._mətn(s, "baza")
+        y = self._sxem_yolu(yol, f, baza)
+        sx, xətalar = D.sxem_oxu(y)
+        lüğət = sx.lüğət() if sx is not None else {"ad": baza,
+                                                   "cədvəllər": []}
+        return {"sxem": lüğət, "fayl": y.name, "var": y.is_file(),
+                "xətalar": xətalar, "tiplər": list(S.TİPLƏR)}
+
+    def api_forma_sxem_yaz(self, s: dict) -> dict:
+        from alqor import sxem as S
+        from alqor.xeta import XətaToplayıcı
+        yol, mətn, f = self._forma(s)
+        baza = self._mətn(s, "baza")
+        d = s.get("sxem")
+        if not isinstance(d, dict):
+            raise ApiXətası("`sxem` lüğət olmalıdır")
+        try:
+            sx = S.lüğətdən(d)
+            sxem_mətni = S.yaz(sx)
+        except (KeyError, TypeError, ValueError) as x:
+            raise ApiXətası(f"sxem yanlışdır: {x}", 422) from None
+        y = self._sxem_yolu(yol, f, baza)
+        x = XətaToplayıcı()
+        if S.mətndən(sxem_mətni, y.name, x) is None:
+            return {"xətalar": [f"{e.kod}: {e.mesaj}" for e in x.xətalar]
+                    or ["sxem oxunmadı"]}
+        self.layihə.yaz(self.layihə.nisbi(y), sxem_mətni)
+        o = f.tap(baza)
+        if not o.xassələr.get("sxem"):
+            o.xassələr["sxem"] = y.name
+            mətn = self._forma_yaz(yol, f)
+        n = self._forma_cavabı(yol, mətn)
+        n.update(seçim=None, sxemYol=self.layihə.nisbi(y), xətalar=[])
+        return n
+
+    def api_forma_sxem_idxal(self, s: dict) -> dict:
+        from alqor import sxem as S
+        from alqor.deyerler import AlqorXəta
+        from alqor.forma_verilenler import VerilənlərBazası
+        yol, _, f = self._forma(s)
+        baza = self._mətn(s, "baza")
+        o = f.tap(baza)
+        if o is None or o.növ != "VerilənlərBazası":
+            raise ApiXətası(f"`{baza}` VerilənlərBazası deyil", 422)
+        v = VerilənlərBazası(o, None)
+        v.qovluq = yol.parent
+        try:
+            ünvan = v.ünvan()
+            if ünvan.startswith("sqlite://"):
+                fayl = Path(ünvan[len("sqlite://"):])
+                if not fayl.is_file():
+                    raise ApiXətası(f"`{fayl.name}` bazası tapılmadı", 404)
+            from alqor.modullar.verilenler import bağlan
+            b = bağlan(ünvan)
+            try:
+                sx = S.idxal(b, baza)
+            finally:
+                b.bağla()
+        except AlqorXəta as x:
+            raise ApiXətası(f"Bazaya qoşulmaq olmadı: {x.mesaj}", 422) \
+                from None
+        return {"sxem": sx.lüğət()}
+
+    def api_forma_model(self, s: dict) -> dict:
+        from alqor import sxem as S
+        from . import forma_dizayner as D
+        yol, _, f = self._forma(s)
+        baza = self._mətn(s, "baza")
+        sx, xətalar = D.sxem_oxu(self._sxem_yolu(yol, f, baza))
+        if sx is None:
+            raise ApiXətası("Sxem oxunmadı: " + ("; ".join(xətalar) or
+                            "əvvəlcə cədvəlləri yaradın"), 422)
+        nisbi = self.layihə.nisbi(yol.parent / "modellər.alq")
+        self.layihə.yaz(nisbi, S.model_kodu(sx))
+        return {"yol": nisbi}
 
     # ── Debaq ─────────────────────────────────────────────────────────
 
