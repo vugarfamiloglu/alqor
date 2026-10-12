@@ -241,6 +241,8 @@ function fdÜslub() {
   const qaranlıq = document.documentElement.dataset.tema === "qaranlıq";
   css = css.replace(/@media\s*\(prefers-color-scheme:\s*dark\)\s*\{(:host\{[^}]*\})\}/, (_, iç) => (qaranlıq ? iç : ""));
   return `${css}
+  *{box-sizing:border-box}
+  button,input,select,textarea{font:inherit}
   :host{display:block;min-height:100%;background:var(--v-fon);color:var(--v-mətn);font:14px/1.5 system-ui,"Segoe UI",sans-serif}
   .fd-qab{min-height:100%;height:100%}
   .dz-o{position:relative;min-width:8px;min-height:8px}
@@ -991,7 +993,7 @@ function fdSətir(p, dəyər, verilib) {
       break;
     }
     case "ifadə":
-      g = `<input type="text" class="kod" data-fx="${ad}" data-nov="ifadə" value="${qaç(verilib ? (typeof dəyər === "object" && dəyər?.$ifadə !== undefined ? dəyər.$ifadə : JSON.stringify(v)) : "")}" placeholder='["a", "b"]' spellcheck="false">`;
+      g = `<input type="text" class="kod" data-fx="${ad}" data-nov="ifadə" value="${qaç(verilib ? (typeof dəyər === "object" && dəyər?.$ifadə !== undefined ? dəyər.$ifadə : JSON.stringify(v)) : "")}" placeholder='${p.ad === "üslub" ? '{"fon": "#f5f5f5"}' : '["a", "b"]'}' spellcheck="false">`;
       break;
     case "sorğu": {
       const s = Object.keys(FD.cavab.verilənlər?.sorğular || {});

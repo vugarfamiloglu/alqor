@@ -237,7 +237,7 @@ def əlavə_et(f: FormaTəsviri, növ: str, ana: str | None = None,
     if növ not in F.məlum_növlər():
         raise FormaDizaynXətası(f"`{növ}` adlı vidjet yoxdur")
     if görünməzdir(növ):
-        ana = None                    # görünməyənlər həmişə kökdə
+        ana, indeks = None, None      # görünməyənlər həmişə kökün sonunda
     siyahı = _uşaqlar(f, ana)
     if ad:
         if not _AD.match(ad):
