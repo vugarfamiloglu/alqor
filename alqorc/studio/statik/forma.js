@@ -243,8 +243,8 @@ function fdÜslub() {
   return `${css}
   *{box-sizing:border-box}
   button,input,select,textarea{font:inherit}
-  :host{display:block;min-height:100%;background:var(--v-fon);color:var(--v-mətn);font:14px/1.5 system-ui,"Segoe UI",sans-serif}
-  .fd-qab{min-height:100%;height:100%}
+  :host{display:block;height:100%;background:var(--v-fon);color:var(--v-mətn);font:14px/1.5 system-ui,"Segoe UI",sans-serif}
+  .fd-qab{height:100%}
   .dz-o{position:relative;min-width:8px;min-height:8px}
   .dz-o *{pointer-events:none}
   .dz-o .dz-o{pointer-events:auto}
@@ -277,8 +277,20 @@ function fdÇək() {
   requestAnimationFrame(fdÖrtüyüÇək);
 }
 
+/** Siyahı eynidirsə yalnız seçim sinifləri dəyişir (iki klik itməsin). */
+function fdYalnızSeçim(qab, açar) {
+  if (qab.dataset.açar === açar) {
+    const s = new Set(FD.seçim);
+    for (const e of qab.querySelectorAll("[data-dz]")) e.classList.toggle("seçili", e.dataset.dz ? s.has(e.dataset.dz) : !s.size);
+    return true;
+  }
+  qab.dataset.açar = açar;
+  return false;
+}
+
 function fdGörünməzləriÇək() {
   const s = (FD.cavab.forma.obyektlər || []).filter((o) => o.görünməz);
+  if (fdYalnızSeçim($("#fd-gz"), JSON.stringify(s.map((o) => [o.ad, o.növ])))) return;
   $("#fd-gz").innerHTML = s.length ? s.map((o) =>
     `<div class="fd-gz-element${FD.seçim.includes(o.ad) ? " seçili" : ""}" data-dz="${qaç(o.ad)}" title="${qaç(o.növ)} — iki klik: ${o.növ === "VerilənlərBazası" ? "cədvəllər" : "xüsusiyyətlər"}">` +
     `<span class="fd-gz-ikon">${fdİkon(o.növ === "VerilənlərBazası" ? "baza" : "sorğu", 22)}</span>` +
@@ -882,6 +894,8 @@ function fdAğacıÇək() {
   const f = FD.cavab?.forma;
   if (!f) return;
   const seç = new Set(FD.seçim);
+  const quruluş = (s) => s.map((o) => [o.ad, o.növ, quruluş(o.uşaqlar)]);
+  if (fdYalnızSeçim($("#fd-agac"), JSON.stringify([f.ad, quruluş(f.obyektlər)]))) return;
   const düyün = (o, d) =>
     `<div class="fd-ağ-düyün${seç.has(o.ad) ? " seçili" : ""}" draggable="true" data-dz="${qaç(o.ad)}" style="padding-left:${8 + d * 14}px" role="treeitem">` +
     `<span class="fd-ağ-ikon">${o.görünməz ? fdİkon(o.növ === "Sorğu" ? "sorğu" : "baza", 13) : o.konteyner ? "▭" : "◆"}</span>` +

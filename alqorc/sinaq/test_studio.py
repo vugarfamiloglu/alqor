@@ -1855,5 +1855,260 @@ class Brauzer(unittest.TestCase):
         self.assertIn("ALQ-T001", self.səhifə.inner_text("#problemler"))
 
 
+# ═══════════════════════════════════════════════════════════════════════
+#  Forma dizayneri (`.forma`) — həqiqi brauzerdə
+# ═══════════════════════════════════════════════════════════════════════
+
+SƏRBƏST_FORMA = """\
+forma Kətanlı
+    başlıq = "Sərbəst"
+    en = 600
+    hündürlük = 400
+    düzülüş = "sərbəst"
+
+    obyekt A: düymə
+        mətn = "Birinci"
+        sol = 40
+        yuxarı = 40
+    son
+    obyekt B: düymə
+        mətn = "İkinci"
+        sol = 200
+        yuxarı = 160
+    son
+son
+"""
+
+
+class FormaDizayneri(unittest.TestCase):
+    """Vizual forma dizayneri: palet, inspektor, hadisələr, verilənlər."""
+
+    @classmethod
+    def setUpClass(cls):
+        sp = _playwright()
+        if sp is None:
+            raise unittest.SkipTest("playwright quraşdırılmayıb")
+        cls.qovluq = Path(tempfile.mkdtemp(prefix="studio-forma-"))
+        cls.studio = Studio(cls.qovluq).fonda_başlat()
+        try:
+            cls.pw = sp().start()
+            cls.brauzer = cls.pw.chromium.launch()
+        except Exception as x:                          # noqa: BLE001
+            cls.studio.dayandır()
+            raise unittest.SkipTest(f"brauzer işə düşmədi: {x}")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.brauzer.close()
+        cls.pw.stop()
+        cls.studio.dayandır()
+        shutil.rmtree(cls.qovluq, ignore_errors=True)
+
+    def setUp(self):
+        self.səhifə = self.brauzer.new_page(
+            viewport={"width": 1500, "height": 950})
+        self.xətalar = []
+        self.səhifə.on("pageerror", lambda x: self.xətalar.append(str(x)))
+        self.səhifə.goto(self.studio.ünvan())
+        self.səhifə.wait_for_selector("#agac")
+
+    def tearDown(self):
+        self.səhifə.close()
+        self.assertEqual(self.xətalar, [])
+
+    def gözləŞərt(self, f, mesaj, müddət=10.0):
+        son = time.monotonic() + müddət
+        while time.monotonic() < son:
+            if f():
+                return
+            self.səhifə.wait_for_timeout(100)
+        self.fail(mesaj() if callable(mesaj) else mesaj)
+
+    def fayl(self, ad):
+        y = self.qovluq / ad
+        return y.read_text(encoding="utf-8") if y.is_file() else ""
+
+    def gözləFayl(self, ad, parça, var=True):
+        self.gözləŞərt(lambda: (parça in self.fayl(ad)) == var,
+                       lambda: f"{ad}: {parça!r} {'gözlənilirdi' if var else 'qalıb'}"
+                       f":\n{self.fayl(ad)}")
+        return self.fayl(ad)
+
+    def formanı_aç(self, ad, mətn):
+        (self.qovluq / ad).write_text(mətn, encoding="utf-8")
+        p = self.səhifə
+        p.click("#dym-agac-yenile")
+        p.click(f'.düyün[data-yol="{ad}"]')
+        p.wait_for_selector("#fd:not([hidden]) #fd-host")
+        self.gözləŞərt(lambda: p.locator("#fd-host .dz-kök").count() == 1,
+                       "kətan çəkilmədi")
+
+    def obyekt(self, ad):
+        return self.səhifə.locator(f'#fd-host [data-dz="{ad}"]')
+
+    def test_yeni_forma_palet_inspektor_hadisə_kod_geri_al(self):
+        p = self.səhifə
+        # 1. «Fayl → Yeni forma…»
+        p.click('#menyu-setri .m-başlıq:has-text("Fayl")')
+        p.click('.menyu-qutu .m-element:has-text("Yeni forma")')
+        p.fill("#dialoq-giris", "Giriş")
+        p.click("#dialoq-tamam")
+        p.wait_for_selector('.tab.aktiv[data-yol="Giriş.forma"]')
+        p.wait_for_selector("#fd:not([hidden])")
+        self.assertIn("komponent Giriş", self.fayl("Giriş.alq"))
+        self.assertIn("pəncərə.formaAç(Giriş)", self.fayl("Giriş.alq"))
+        self.assertIn("Giriş", p.inner_text("#fd-baslik"))
+        # 2. Paletdən düymə kətana
+        p.locator('[data-fd-vidjet="düymə"]').drag_to(p.locator("#fd-mezmun"))
+        self.gözləFayl("Giriş.forma", "obyekt Düymə1: düymə")
+        self.obyekt("Düymə1").wait_for()
+        self.assertIn("v-düymə", self.obyekt("Düymə1").inner_html())
+        self.gözləŞərt(lambda: "Düymə1" in p.inner_text("#fd-ins-baslik"),
+                       "yeni obyekt seçilmədi")
+        # 3. İnspektorda mətn
+        g = p.locator('#fd-ins [data-fx="mətn"]')
+        g.fill("Daxil ol")
+        g.press("Enter")
+        self.gözləFayl("Giriş.forma", 'mətn = "Daxil ol"')
+        self.gözləŞərt(lambda: "Daxil ol" in self.obyekt("Düymə1").inner_text(),
+                       "kətan yenilənmədi")
+        # 4. İki klik — idarəedici `.alq`-da, kod açılır
+        self.obyekt("Düymə1").dblclick()
+        p.wait_for_selector('.tab.aktiv[data-yol="Giriş.alq"]')
+        alq = self.gözləFayl("Giriş.alq", "əməl Düymə1_klik()")
+        self.assertIn("klik = Düymə1_klik", self.fayl("Giriş.forma"))
+        self.assertIn("əməl Düymə1_klik()", p.locator(".r-giriş").input_value())
+        self.assertTrue(alq.rstrip().endswith("son"))
+        # 5. Forma tabı: Kod / Dizayn
+        p.click('.tab[data-yol="Giriş.forma"]')
+        p.wait_for_selector("#fd:not([hidden])")
+        p.click('.fd-seqment [data-fd="kod"]')
+        p.wait_for_selector("#fd", state="hidden")
+        ta = p.locator(".r-giriş")
+        self.assertIn("forma Giriş", ta.input_value())
+        ta.fill(ta.input_value().replace('"Daxil ol"', '"Təsdiq"'))
+        p.click("#fd-kecid")
+        p.wait_for_selector("#fd:not([hidden])")
+        self.gözləŞərt(lambda: "Təsdiq" in self.obyekt("Düymə1").inner_text(),
+                       "mətndəki dəyişiklik dizaynda görünmədi")
+        # Alt+F12 də keçir
+        p.keyboard.press("Alt+F12")
+        p.wait_for_selector("#fd", state="hidden")
+        p.keyboard.press("Alt+F12")
+        p.wait_for_selector("#fd:not([hidden])")
+        # 6. Təkrarla (Ctrl+D) və geri al (Ctrl+Z)
+        self.obyekt("Düymə1").click()
+        p.keyboard.press("Control+d")
+        self.gözləFayl("Giriş.forma", "obyekt Düymə2: düymə")
+        p.keyboard.press("Control+z")
+        self.gözləFayl("Giriş.forma", "Düymə2", var=False)
+        p.keyboard.press("Control+y")
+        self.gözləFayl("Giriş.forma", "obyekt Düymə2: düymə")
+        # Delete
+        self.obyekt("Düymə2").click()
+        p.keyboard.press("Delete")
+        self.gözləFayl("Giriş.forma", "Düymə2", var=False)
+
+    def test_axında_konteynerə_daşıma_və_struktur(self):
+        p = self.səhifə
+        self.formanı_aç("Axın.forma", "forma Axın\n    obyekt S: sətir\n"
+                        "    son\n    obyekt D: düymə\n        mətn = \"D\"\n"
+                        "    son\nson\n")
+        # Düyməni boş sətir konteynerinin içinə
+        d = self.obyekt("D").bounding_box()
+        s = p.locator('#fd-host [data-dz="S"] .dz-boş').bounding_box()
+        p.mouse.move(d["x"] + 10, d["y"] + 10)
+        p.mouse.down()
+        p.mouse.move(d["x"] + 30, d["y"] - 10, steps=4)
+        p.mouse.move(s["x"] + 20, s["y"] + s["height"] / 2, steps=6)
+        p.wait_for_selector("#fd-ortuk .fd-yer")
+        p.mouse.up()
+        self.gözləFayl("Axın.forma", "    obyekt S: sətir\n        obyekt D:")
+        # Struktur ağacı: D sətrin uşağıdır; ağacdan seçim
+        p.click('#fd-agac [data-dz="D"]')
+        self.gözləŞərt(lambda: p.locator("#fd-ortuk .fd-seçim").count() == 1,
+                       "ağacdan seçim kətanda görünmədi")
+        self.assertIn("D", p.inner_text("#fd-ins-baslik"))
+
+    def test_sərbəst_düzülüş_daşıma_ölçü_və_hizalama(self):
+        p = self.səhifə
+        self.formanı_aç("Kətanlı.forma", SƏRBƏST_FORMA)
+        b = self.obyekt("A").bounding_box()
+        p.mouse.move(b["x"] + 10, b["y"] + 10)
+        p.mouse.down()
+        p.mouse.move(b["x"] + 30, b["y"] + 20, steps=3)
+        p.mouse.move(b["x"] + 47, b["y"] + 31, steps=3)
+        p.mouse.up()
+        m = self.gözləFayl("Kətanlı.forma", "sol = 80")
+        self.assertIn("yuxarı = 64", m)                     # 8 px tora
+        # Ölçü tutacağı
+        self.obyekt("A").click()
+        t = p.locator('#fd-ortuk .fd-tutacaq[data-t="e"]').bounding_box()
+        p.mouse.move(t["x"] + 4, t["y"] + 4)
+        p.mouse.down()
+        p.mouse.move(t["x"] + 60, t["y"] + 4, steps=5)
+        p.mouse.up()
+        self.gözləFayl("Kətanlı.forma", "en = ")
+        # Ox düyməsi — 1 px
+        p.keyboard.press("ArrowRight")
+        self.gözləFayl("Kətanlı.forma", "sol = 81")
+        # Çoxlu seçim + sola düzlə (istinad — ilk seçilən)
+        self.obyekt("B").click(modifiers=["Shift"])
+        self.assertEqual(p.locator("#fd-ortuk .fd-seçim").count(), 2)
+        p.click('[data-hizala="sol"]')
+        self.gözləŞərt(lambda: self.fayl("Kətanlı.forma").count("sol = 81") == 2,
+                       lambda: self.fayl("Kətanlı.forma"))
+        p.keyboard.press("Control+z")
+        self.gözləFayl("Kətanlı.forma", "sol = 200")
+
+    def test_verilənlər_bazası_cədvəllər_və_crud(self):
+        p = self.səhifə
+        self.formanı_aç("Məktəb.forma", "forma Məktəb\n    başlıq = \"M\"\nson\n")
+        p.click('#fd-palet-nisanlar [data-kat="verilənlər"]')
+        p.locator('[data-fd-vidjet="VerilənlərBazası"]').drag_to(
+            p.locator("#fd-gorunmez"))
+        self.gözləFayl("Məktəb.forma", "obyekt Baza1: VerilənlərBazası")
+        el = p.locator('#fd-gz [data-dz="Baza1"]')
+        el.wait_for()
+        # İki klik — cədvəl redaktoru
+        el.dblclick()
+        p.wait_for_selector("#fd-sxem[open]")
+        p.click('#fd-sxem [data-sx="cədvəlƏlavə"]')
+        p.fill("#fd-sxem-cad", "kitablar")
+        p.click('#fd-sxem [data-sx="sahəƏlavə"]')
+        sətir = p.locator("#fd-sxem-sahe tr").nth(1)
+        sətir.locator('[data-f="ad"]').fill("ad")
+        sətir.locator('[data-f="məcburi"]').check()
+        p.click('#fd-sxem [data-sx="sahəƏlavə"]')
+        sətir = p.locator("#fd-sxem-sahe tr").nth(2)
+        sətir.locator('[data-f="ad"]').fill("il")
+        sətir.locator('[data-f="tip"]').select_option("tam")
+        sətir.locator('[data-f="standart"]').fill("2024")
+        p.click('#fd-sxem [data-sx="saxla"]')
+        p.wait_for_selector("#fd-sxem", state="hidden")
+        sxem = self.gözləFayl("Baza1.sxem", "cədvəl kitablar")
+        from alqor import sxem as SX
+        s = SX.mətndən(sxem)
+        self.assertIsNotNone(s)
+        self.assertEqual([(f.ad, f.tip) for f in s.cədvəl("kitablar").sahələr],
+                         [("id", "tam"), ("ad", "mətn"), ("il", "tam")])
+        self.assertTrue(s.cədvəl("kitablar").sahə("ad").məcburi)
+        self.assertEqual(s.cədvəl("kitablar").sahə("il").standart, 2024)
+        self.assertIn('sxem = "Baza1.sxem"', self.fayl("Məktəb.forma"))
+        # «Cədvəldən forma yarat»
+        p.click('.fd-alətlər [data-fd="crud"]')
+        p.wait_for_selector("#dialoq[open] #fd-crud-cedvel")
+        p.click("#dialoq-tamam")
+        m = self.gözləFayl("Məktəb.forma", "obyekt Kitablar: Sorğu")
+        self.assertIn("obyekt KitablarNaviqator: naviqator", m)
+        self.assertIn('sütun = "il"', m)
+        self.obyekt("KitablarSiyahısı").wait_for()
+        self.assertIn("il", self.obyekt("KitablarSiyahısı").inner_text())
+        # Bağlı sahənin inspektorunda `sütun` açılan siyahısı
+        self.obyekt("İlSahəsi").click()
+        opts = p.locator('#fd-ins select[data-fx="sütun"] option').all_inner_texts()
+        self.assertIn("il", opts)
+
+
 if __name__ == "__main__":
     unittest.main()
