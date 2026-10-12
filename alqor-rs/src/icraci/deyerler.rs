@@ -1007,6 +1007,12 @@ pub fn tip_adı(d: &D) -> String {
 
 /// `tip_adı` kökü ("siyahı[tam]" → "siyahı")
 pub fn tip_kökü(d: &D) -> String {
+    match d {
+        D::Siyahı(_) => return "siyahı".into(),
+        D::Lüğət(_) => return "lüğət".into(),
+        D::Kortej(_) => return "kortej".into(),
+        _ => {}
+    }
     let t = tip_adı(d);
     match t.find('[') {
         Some(i) => t[..i].to_string(),

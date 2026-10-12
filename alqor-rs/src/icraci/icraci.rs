@@ -445,11 +445,11 @@ impl İcraçı {
             Cümlə::Şərt { budaqlar, yoxsa, .. } => {
                 for (ş, g) in budaqlar {
                     if self.məntiq(ş, m)? {
-                        return self.blok(g, &m.alt());
+                        return self.blok(g, &əhatə(g, m));
                     }
                 }
                 if let Some(y) = yoxsa {
-                    self.blok(y, &m.alt())?;
+                    self.blok(y, &əhatə(y, m))?;
                 }
                 Ok(())
             }
@@ -459,7 +459,7 @@ impl İcraçı {
                     let d = self.ifadə(e, &alt)?;
                     if matches!(d, D::Boş | D::M(false)) {
                         if let Some(y) = yoxsa {
-                            self.blok(y, &m.alt())?;
+                            self.blok(y, &əhatə(y, m))?;
                         }
                         return Ok(());
                     }
@@ -482,14 +482,14 @@ impl İcraçı {
                     }
                 }
                 if !hamısı {
-                    self.blok(gövdə, &m.alt())?;
+                    self.blok(gövdə, &əhatə(gövdə, m))?;
                 }
                 Ok(())
             }
             Cümlə::Seç { yer, ifadə, hallar, digər } => self.c_seç(*yer, ifadə.as_ref(), hallar, digər.as_ref(), m),
             Cümlə::NəQədərKi { şərt, gövdə, etiket, .. } => {
                 while self.məntiq(şərt, m)? {
-                    if self.dövr_gövdəsi(gövdə, &m.alt(), etiket)? {
+                    if self.dövr_gövdəsi(gövdə, &əhatə(gövdə, m), etiket)? {
                         break;
                     }
                 }
@@ -497,7 +497,7 @@ impl İcraçı {
             }
             Cümlə::Həmişə { gövdə, etiket, .. } => {
                 loop {
-                    if self.dövr_gövdəsi(gövdə, &m.alt(), etiket)? {
+                    if self.dövr_gövdəsi(gövdə, &əhatə(gövdə, m), etiket)? {
                         break;
                     }
                 }
@@ -520,7 +520,7 @@ impl İcraçı {
                 let sayğac = sayğac.as_ref().map(|s| ad(s));
                 let mut i = 1;
                 while i <= n {
-                    let alt = m.alt();
+                    let alt = if sayğac.is_some() { m.alt() } else { əhatə(gövdə, m) };
                     if let Some(s) = &sayğac {
                         alt.elan(s.clone(), D::T(i), false);
                     }
@@ -533,7 +533,7 @@ impl İcraçı {
             }
             Cümlə::TəkrarlaNəQədər { gövdə, şərt, etiket, .. } => {
                 loop {
-                    if self.dövr_gövdəsi(gövdə, &m.alt(), etiket)? {
+                    if self.dövr_gövdəsi(gövdə, &əhatə(gövdə, m), etiket)? {
                         break;
                     }
                     if !self.məntiq(şərt, m)? {
@@ -620,7 +620,7 @@ impl İcraçı {
             }
             Cümlə::Təmin(_, ş, gövdə) => {
                 if !self.məntiq(ş, m)? {
-                    self.blok(gövdə, &m.alt())?;
+                    self.blok(gövdə, &əhatə(gövdə, m))?;
                 }
                 Ok(())
             }
@@ -720,7 +720,7 @@ impl İcraçı {
             Cümlə::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı } => {
                 self.c_idxal(*yer, yol, mətn_yolu.as_deref(), ləqəb.as_deref(), elementlər, *hamısı, m)
             }
-            Cümlə::Başlanğıc(_, g) => self.blok(g, &m.alt()),
+            Cümlə::Başlanğıc(_, g) => self.blok(g, &əhatə(g, m)),
             Cümlə::Artırma(yer, hədəf, op) => {
                 let cari = self.ifadə(hədəf, m)?;
                 let yeni = match &cari {
@@ -893,7 +893,7 @@ impl İcraçı {
         }
         let Some(mut i) = başla else {
             if let Some(g) = digər {
-                self.blok(g, &m.alt())?;
+                self.blok(g, &əhatə(g, m))?;
             }
             return Ok(());
         };
@@ -908,7 +908,7 @@ impl İcraçı {
             i += 1;
         }
         if let Some(g) = digər {
-            self.blok(g, &m.alt())?;
+            self.blok(g, &əhatə(g, m))?;
         }
         Ok(())
     }
@@ -1174,7 +1174,7 @@ impl İcraçı {
         }
         if !dayandı {
             if let Some(y) = yoxsa {
-                self.blok(y, &m.alt())?;
+                self.blok(y, &əhatə(y, m))?;
             }
         }
         Ok(())
@@ -1183,7 +1183,7 @@ impl İcraçı {
     // ── Xətalar ───────────────────────────────────────────────────────
 
     fn c_cəhd(&self, gövdə: &aac::Gövdə, tutmalar: &[aac::Tutma], nəhayət: Option<&aac::Gövdə>, m: &Mühit) -> Nəticə<()> {
-        let mut r = self.blok(gövdə, &m.alt());
+        let mut r = self.blok(gövdə, &əhatə(gövdə, m));
         if let Err(Siqnal::Xəta(x)) = r {
             let mut tutuldu = None;
             for t in tutmalar {
@@ -1210,7 +1210,7 @@ impl İcraçı {
             r = tutuldu.unwrap_or(Err(Siqnal::Xəta(x)));
         }
         if let Some(n) = nəhayət {
-            let f = self.blok(n, &m.alt());
+            let f = self.blok(n, &əhatə(n, m));
             if f.is_err() {
                 return f;
             }
@@ -1538,7 +1538,7 @@ impl İcraçı {
                     None => Ok(D::Boş),
                 }
             }
-            İfadə::Blok(_, gövdə) => match self.blok(gövdə, &m.alt()) {
+            İfadə::Blok(_, gövdə) => match self.blok(gövdə, &əhatə(gövdə, m)) {
                 Ok(()) => Ok(D::Boş),
                 Err(Siqnal::Ver(d)) => Ok(d),
                 Err(x) => Err(x),
