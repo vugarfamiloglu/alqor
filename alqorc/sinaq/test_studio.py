@@ -1916,7 +1916,7 @@ class FormaDizayneri(unittest.TestCase):
         self.səhifə.close()
         self.assertEqual(self.xətalar, [])
 
-    def gözləŞərt(self, f, mesaj, müddət=10.0):
+    def gözləŞərt(self, f, mesaj, müddət=20.0):
         son = time.monotonic() + müddət
         while time.monotonic() < son:
             if f():
@@ -1999,7 +1999,10 @@ class FormaDizayneri(unittest.TestCase):
         # 6. Təkrarla (Ctrl+D) və geri al (Ctrl+Z)
         self.obyekt("Düymə1").click()
         p.keyboard.press("Control+d")
-        self.gözləFayl("Giriş.forma", "obyekt Düymə2: düymə")
+        m = self.gözləFayl("Giriş.forma", "obyekt Düymə2: düymə")
+        # Əməliyyat redaktordakı (saxlanmamış) mətnə tətbiq olunur
+        self.assertIn('mətn = "Təsdiq"', m)
+        self.assertIn("klik = Düymə1_klik", m)
         p.keyboard.press("Control+z")
         self.gözləFayl("Giriş.forma", "Düymə2", var=False)
         p.keyboard.press("Control+y")

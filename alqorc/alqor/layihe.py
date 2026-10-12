@@ -289,7 +289,7 @@ təsvir = "{təsvir}"
 lisenziya = "MIT"
 
 [qurma]
-giriş = "mənbə/əsas.alq"
+giriş = "mənbə/{giriş}"
 çıxış = "qurma/"
 
 [tip]
@@ -359,36 +359,34 @@ son
 //
 //   alqor işlət                 pəncərəni açır
 //   alqor sına                  sınaqları pəncərə açmadan işlədir
+//
+// Pəncərənin görünüşü `Əsas.forma` faylındadır — Alqor Studio-da açın
+// (vizual dizayner, Alt+F12 — mətn). Hadisə idarəediciləri (`əməl`)
+// bu komponentdədir: dizaynerdə obyektə iki klik yenisini yazır.
 
 gətir pəncərə
-gətir vidjet
 
-ixrac et komponent Tətbiq
+ixrac et komponent Əsas
     vəziyyət say: tam = 0
 
-    göstər()
-        qaytar vidjet.sütun(boşluq: 16, məzmun: [
-            vidjet.başlıq(mətn: "{ad}"),
-            vidjet.statistika(etiket: "Basılma", dəyər: "{{özü.say}}"),
-            vidjet.sətir(məzmun: [
-                vidjet.düymə(mətn: "Artır", klik: () => özü.say += 1),
-                vidjet.düymə(mətn: "Sıfırla", növ: "ikinci",
-                             klik: () => özü.say = 0)
-            ])
-        ])
+    əməl Artır_klik()
+        özü.say += 1
+        özü.Sayğac.dəyər = "{{özü.say}}"
+    son
+
+    əməl Sıfırla_klik()
+        özü.say = 0
+        özü.Sayğac.dəyər = "0"
     son
 son
 
 /// Pəncərəni qurur — sınaqlar da bunu işlədir.
 ixrac et funksiya pəncərəQur() -> istənilən
-    dəyişən p = yeni pəncərə.Pəncərə("{ad}", 420, 320)
-    p.məzmun(<Tətbiq />)
-    qaytar p
+    qaytar pəncərə.formaAç(Əsas, göstər: yanlış)
 son
 
 funksiya əsas()
-    dəyişən p = pəncərəQur()
-    p.mərkəzə().göstər()
+    pəncərə.formaAç(Əsas)
     pəncərə.işlət()
 son
 ''',
@@ -446,7 +444,7 @@ son
     "desktop": '''\
 gətir test
 gətir pəncərə
-gətir "../mənbə/əsas.alq" kimi proqram
+gətir "../mənbə/Əsas.alq" kimi proqram
 
 @sınaq("düymə sayğacı artırır")
 funksiya sayğac()
@@ -479,7 +477,39 @@ son
 ''',
 }
 
-_GITIGNORE = "qurma/\nsənəd/\n__pycache__/\n"
+#  Desktop şablonunun görünüşü — `forma.yaz()` formatında (dizayner onu
+#  yenidən yazanda fərq yaranmasın)
+_DESKTOP_FORMA = '''\
+// Əsas.forma — Alqor Studio dizayneri yaradıb; kod: Əsas.alq
+forma Əsas
+    başlıq = "{ad}"
+    en = 420
+    hündürlük = 320
+
+    obyekt Başlıq1: başlıq
+        mətn = "{ad}"
+    son
+
+    obyekt Sayğac: statistika
+        etiket = "Basılma"
+        dəyər = "0"
+    son
+
+    obyekt Düymələr: sətir
+        obyekt Artır: düymə
+            mətn = "Artır"
+            klik = Artır_klik
+        son
+        obyekt Sıfırla: düymə
+            mətn = "Sıfırla"
+            növ = "ikinci"
+            klik = Sıfırla_klik
+        son
+    son
+son
+'''
+
+_GITIGNORE ="qurma/\nsənəd/\n__pycache__/\n"
 
 _README = '''\
 # {ad}
@@ -513,13 +543,21 @@ def yarat(qovluq: Path, ad: str, şablon: str = "konsol") -> list[Path]:
     if qovluq.exists() and any(qovluq.iterdir()):
         raise ValueError(f"`{qovluq}` qovluğu boş deyil")
     təsvir = _TƏSVİRLƏR[şablon]
+    # Desktop: `Əsas.forma` (görünüş) + `Əsas.alq` (`komponent Əsas`) —
+    # giriş faylı da `Əsas.alq`-dır (Windows/macOS-da `əsas.alq` ilə eyni
+    # ad sayıldığından ikinci fayl yaradılmır)
+    giriş = "Əsas.alq" if şablon == "desktop" else "əsas.alq"
     fayllar = {
-        MANİFEST: _MANİFEST_ŞABLONU.format(ad=ad, təsvir=təsvir),
-        "mənbə/əsas.alq": _ƏSAS[şablon].format(ad=ad),
+        MANİFEST: _MANİFEST_ŞABLONU.format(ad=ad, təsvir=təsvir,
+                                           giriş=giriş),
+        f"mənbə/{giriş}": _ƏSAS[şablon].format(ad=ad),
         "sınaq/əsas_sınaq.alq": _SINAQ[şablon],
         ".gitignore": _GITIGNORE,
         "README.md": _README.format(ad=ad, təsvir=təsvir),
     }
+    if şablon == "desktop":
+        fayllar["mənbə/Əsas.forma"] = _DESKTOP_FORMA.format(
+            ad=ad.replace("{", "\\{").replace("}", "\\}"))
     yaradılan: list[Path] = []
     for nisbi, məzmun in fayllar.items():
         yol = qovluq / nisbi
