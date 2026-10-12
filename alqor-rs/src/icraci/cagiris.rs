@@ -24,6 +24,33 @@ pub fn elandır(c: &Cümlə) -> bool {
     )
 }
 
+/// Blok üçün yeni əhatə — yalnız blok ad elan edirsə yaradılır. Ad elan
+/// etməyən blokda boş alt əhatə ilə üst əhatə arasında fərq yoxdur.
+#[inline]
+pub fn əhatə(g: &[Cümlə], m: &Mühit) -> Mühit {
+    let lazım = g.iter().any(|c| {
+        matches!(
+            c,
+            Cümlə::DəyişənElanı { .. }
+                | Cümlə::Funksiya(_)
+                | Cümlə::Sinif(_)
+                | Cümlə::İnterfeys { .. }
+                | Cümlə::Sadalama { .. }
+                | Cümlə::Qarışıq { .. }
+                | Cümlə::TipAliası { .. }
+                | Cümlə::Modul { .. }
+                | Cümlə::İdxal { .. }
+                | Cümlə::Global(..)
+                | Cümlə::Yoxdursa { .. }
+        )
+    });
+    if lazım {
+        m.alt()
+    } else {
+        m.clone()
+    }
+}
+
 pub fn standart_dəyər(t: Option<&Tip>) -> D {
     match t {
         Some(Tip::Ad { yol, ixtiyari: false, .. }) => match yol.join(".").as_str() {
@@ -395,7 +422,7 @@ impl İcraçı {
     }
 
     fn funksiya_gövdəsi(&self, f: &Rc<Funksiya>, args: Vec<D>, adlı: Adlı, yer: Option<Yer>) -> Nəticə {
-        let m = f.mühit.alt();
+        let m = f.mühit.alt_tutumla(f.parametrlər.len() + if f.özü.is_some() { 2 } else { 0 });
         if let Some(özü) = &f.özü {
             m.elan(ad("özü"), özü.clone(), false);
             let sinif = f.sinif.clone().or_else(|| match özü {

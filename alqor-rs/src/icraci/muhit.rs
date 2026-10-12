@@ -23,7 +23,15 @@ const İNDEKS_HƏDDİ: usize = 12;
 
 #[inline]
 fn eyni_ad(a: &Ad, b: &str) -> bool {
-    a.len() == b.len() && (std::ptr::eq(a.as_ptr(), b.as_ptr()) || **a == *b)
+    let (x, y) = (a.as_bytes(), b.as_bytes());
+    if x.len() != y.len() {
+        return false;
+    }
+    if std::ptr::eq(x.as_ptr(), y.as_ptr()) {
+        return true;
+    }
+    // Qısa adlar üçün memcmp çağırışından tez
+    x.iter().zip(y.iter()).all(|(p, q)| p == q)
 }
 
 impl MühitD {
@@ -136,6 +144,15 @@ impl MühitD {
                 }
             }
         }
+    }
+
+    pub fn alt_tutumla(self: &Mühit, n: usize) -> Mühit {
+        Rc::new(MühitD {
+            adlar: RefCell::new(Vec::with_capacity(n)),
+            indeks: RefCell::new(None),
+            qloballar: RefCell::new(Vec::new()),
+            üst: Some(self.clone()),
+        })
     }
 
     pub fn alt(self: &Mühit) -> Mühit {

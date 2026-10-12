@@ -447,3 +447,214 @@ m **= 10
 m ~/= 3
 m %= 100
 yaz(m)
+=====
+funksiya d(n) əgər n == 0 onda qaytar 0 son qaytar 1 + d(n - 1) son
+yaz(d(990))
+yaz(d(1001))
+=====
+sinif MənimXətam miras Xəta
+    qurucu(m: mətn)
+        özü.mesaj = m
+    son
+son
+cəhd et
+    at MənimXətam("pis oldu")
+tut (e: MənimXətam)
+    yaz("tutuldu", e.mesaj, tip(e))
+son
+at MənimXətam("tutulmadı")
+=====
+cəhd et
+    at ArqumentXətası("a", kod: "K1")
+tut e əgər e.kod == "K2"
+    yaz("K2")
+tut e
+    yaz("digər", e.kod, e.tip, e)
+son
+=====
+funksiya f(x)
+    qaytar x?
+son
+yaz(f(5), f(Xəta("səhv")))
+=====
+dayan(3)
+=====
+yaz("a")
+sistem.dayan(7)
+=====
+funksiya əsas()
+    yaz("əsas")
+son
+=====
+asinxron funksiya əsas()
+    qaytar 4
+son
+=====
+yazXəta("stderr", 1)
+çap(1, "a", [1])
+=====
+dəyişən n = 3
+seç n
+    hal 1, 2 → yaz("kiçik")
+    hal 3..5 əgər n > 3 → yaz("orta>3")
+    hal 3..<5 → yaz("orta")
+    digər hallarda → yaz("?")
+son
+seç "x"
+    hal "x"
+        yaz("x")
+        keç
+    hal "y"
+        yaz("y")
+son
+=====
+varsa a = 1, b = boş onda
+    yaz("hər ikisi")
+yoxsa
+    yaz("yox")
+son
+funksiya f(x)
+    yoxdursa y = x onda
+        qaytar "boş"
+    son
+    qaytar "var {y}"
+son
+yaz(f(boş), f(2))
+=====
+modul m
+    sabit A = 1
+    funksiya f() qaytar A + 1 son
+    sinif K
+        metod s() qaytar "k" son
+    son
+son
+yaz(m.A, m.f(), m.K().s(), m)
+=====
+sinif A
+    hesablanan h: tam
+        qaytar 5
+    son
+son
+dəyişən a = A()
+yaz(a.h)
+a.h = 3
+=====
+generator funksiya ic()
+    ver 1
+    hər x üçün dış() içində
+        ver x * 10
+    son
+son
+generator funksiya dış()
+    ver 2
+    ver 3
+    qaytar
+    ver 4
+son
+yaz(ic().siyahıyaÇevir())
+=====
+generator funksiya g()
+    gecikdir yaz("gecikdi")
+    ver 1
+    ver 2
+son
+hər x üçün g() içində
+    yaz(x)
+son
+=====
+dəyişən g = (x) => x * 2
+yaz(g, yaz, A, riyaziyyat.kök, [1].əlavə, (1..3), Xəta)
+sinif A son
+=====
+sinif A
+    xassə a = 1
+son
+yaz(A(), A, [A()], {"k": A()})
+sadalama R
+    Q
+son
+yaz(R, R.Q, [R.Q])
+=====
+yaz("{1 + 2} {"iç {3}"} {[1, 2].çevir((x) => x * 2)} \{literal\}")
+=====
+yaz(<p>{1.5}{doğru}{[1, "a"]}</p>, <a ünvan="x" klik={() => 1} />)
+dəyişən e = <ul><li>a</li><li>b</li></ul>
+yaz(e.uzunluq(), e.HTML(), e.uşaqlar, e.atributlar, e.tap("li"))
+=====
+komponent Kart
+    xassə başlıq: mətn = "x"
+    göstər()
+        qaytar <div>{özü.başlıq}</div>
+    son
+son
+funksiya Düymə(mətn, uşaqlar = [])
+    qaytar <button>{mətn}{uşaqlar}</button>
+son
+yaz(<Kart başlıq="b" />, <Düymə mətn="ok"><i>!</i></Düymə>)
+=====
+dəyişən x = 5
+dəyişən f = () => x
+x = 6
+yaz(f())
+dəyişən fs = []
+hər i üçün 1..3 içində
+    fs.əlavə(() => i)
+son
+yaz(fs.çevir((f) => f()))
+=====
+yaz(5 kimi mətn, 1.0 kimi mətn, "1e3" kimi onluq, " 7 " kimi tam, "1_000" kimi tam)
+yaz("abc" kimi tam)
+=====
+dəyişən a = [3, 1, 2]
+dəyişən b = a
+b.əlavə(4)
+yaz(a, a == b, eynidir(a, b), klonla(a) == a, eynidir(klonla(a), a))
+=====
+yaz(boşdur([]), boşdur(boş), boşdur("a"), uzunluq({1: 2}), uzunluq(1..10 addım 2), siyahı("ab"), dəst([1, 1, 2]), lüğət([["a", 1]]), kortej([1]))
+=====
+yaz(riyaziyyat.Pİ, riyaziyyat.E, riyaziyyat.maks(1, 2.5), riyaziyyat.min("b", "a"), riyaziyyat.məhdudla(15, 0, 10), riyaziyyat.işarə(-3.2), riyaziyyat.kubKök(-27), riyaziyyat.hipsin(1))
+yaz(riyaziyyat.ƏKOB(4, 6), riyaziyyat.modQüvvət(3, 200, 7), riyaziyyat.sadəBölənlər(360), riyaziyyat.dərəcəyə(riyaziyyat.Pİ), riyaziyyat.qüvvət(2, 0.5), riyaziyyat.tamdır(2.0))
+=====
+yaz(vaxt.ayAdı(1), vaxt.günAdı(7), vaxt.ayAdıBaş(3), uzunluq(vaxt.ayAdları()), tip(vaxt.möhür()), vaxt.formatla("YYYY", 0))
+=====
+yaz(yol.birləşdir("a", "b", "c.txt"), yol.fayl("/x/y.tar.gz"), yol.ad("/x/y.tar.gz"), yol.uzantı("a/b.c"), yol.qovluq("a/b/c"), yol.normalizə("a/./b/../c"), yol.nisbi("/a/b", "/a/c/d"))
+=====
+fayl.yaz("t.txt", "salam\ndünya")
+yaz(fayl.oxu("t.txt"), fayl.oxuSətirlər("t.txt"), fayl.vardır("t.txt"), fayl.ölçü("t.txt"))
+fayl.əlavəEt("t.txt", "!")
+yaz(fayl.oxu("t.txt"))
+fayl.sil("t.txt")
+yaz(fayl.vardır("t.txt"))
+fayl.oxu("yoxdur.txt")
+=====
+yaz(oxu(), oxu("sual: "))
+yaz(oxu())
+=====
+dəyişən t = oxuTam()
+yaz(t)
+=====
+yaz(json.yaz([1, "a", (1, 2), dəst(3)]), json.yaz(1.0), json.yaz("x\ty"))
+=====
+yaz(2 ** 0.5 * 2 ** 0.5 == 2, 0.1 * 3, 1e300 * 1e10, -1e300 * 1e10, 9007199254740993, 9007199254740993 * 1.0, 10 ** 20 / 10 ** 10)
+=====
+yaz(1 < 2 < 3)
+=====
+dəyişən x = 1
+x++
+x++
+x--
+yaz(x)
+dəyişən s = "a"
+s++
+=====
+funksiya f(a: tam) -> tam qaytar a son
+yaz(f(a: 1))
+f(b: 2)
+=====
+funksiya f(*, a) qaytar a son
+f()
+=====
+yaz(Xəta("m"), ArqumentXətası("x", kod: 5).kod, tip(TipXətası("a")), Xəta("m").mesaj)
+=====
+dəyişən l = [1, 2, 3, 4, 5, 6]
+yaz(l[1..3], l[-2..], l[..-2], l[3..1], l[0..<0], "salam"[-3..])
