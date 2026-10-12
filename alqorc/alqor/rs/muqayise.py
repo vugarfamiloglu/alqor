@@ -9,6 +9,12 @@ Python etalonu ilə `alqor-rs` arasında diferensial müqayisə.
     python -m alqor.rs.muqayise aac --korpus         # test_icraci kod parçaları
     python -m alqor.rs.muqayise aac --parçalar       # sınaqlarda ayrılan bütün
                                                      # mətnlər (xətalılar daxil)
+    python -m alqor.rs.muqayise işlət --korpus       # test_icraci parçalarını icra:
+                                                     # stdout sətirləri + xəta tipi
+    python -m alqor.rs.muqayise işlət [fayl...]      # proqramlar (standart: js_numuneler
+                                                     # və numuneler): stdout + çıxış kodu
+    python -m alqor.rs.muqayise işlət --parçalar     # sinaq/rs_icra_parcalari.alq:
+                                                     # stdout + stderr + çıxış kodu
 """
 
 from __future__ import annotations
@@ -264,7 +270,182 @@ def korpus_faylları(q: Path) -> list[Path]:
     return n
 
 
+# ═══════════════════════════════════════════════════════════════════════
+#  İcra müqayisəsi (`işlət`)
+# ═══════════════════════════════════════════════════════════════════════
+
+#  Proqramlara verilən standart giriş (fayl adı → stdin)
+GİRİŞLƏR = {
+    "konsol.alq": "\nmavi\nx\nhə\n3,1\n",
+    "01-salam.alq": "Aysel\n21\n",
+    "03-kalkulyator.alq": "2 + 3\n10 / 4\n7 * 6\nçıx\n",
+}
+
+#  Proqramlara verilən arqumentlər (`-- …`)
+ARQUMENTLƏR = {
+    "07-fayl-emali.alq": ["../README.md"],
+}
+
+#  Qrafik/veb mühit tələb edən nümunələr — müqayisə olunmur
+İSTİSNA_SÖZLƏR = ("veb", "pəncərə", "vidjet")
+
+
+def _mühit() -> dict:
+    m = dict(os.environ)
+    m["ALQOR_RENG"] = "0"
+    m["NO_COLOR"] = "1"
+    m["PYTHONIOENCODING"] = "utf-8"
+    m["PYTHONHASHSEED"] = "0"
+    return m
+
+
+def _xəta_tipi(stderr: str) -> str | None:
+    """`✖ ALQ-R004  BoşDəyərXətası: ...` → `BoşDəyərXətası`"""
+    import re
+    m = re.search(r"✖ ALQ-\S+\s+(\S+?):", stderr)
+    return m.group(1) if m else None
+
+
+def rust_işlət(b: Path, yol: Path, giriş: str = "",
+               arq: list[str] | None = None) -> tuple[str, str, int]:
+    r = subprocess.run([str(b), "işlət", str(yol), "--", *(arq or [])],
+                       input=giriş.encode("utf-8"), capture_output=True,
+                       env=_mühit(), cwd=yol.parent, timeout=120)
+    return (r.stdout.decode("utf-8", "replace"),
+            r.stderr.decode("utf-8", "replace"), r.returncode)
+
+
+def python_işlət(yol: Path, giriş: str = "",
+                 arq: list[str] | None = None) -> tuple[str, str, int]:
+    r = subprocess.run([sys.executable, str(REPO / "alqorc" / "alqorc.py"),
+                        "işlət", str(yol), "--", *(arq or [])],
+                       input=giriş.encode("utf-8"), capture_output=True,
+                       env=_mühit(), cwd=yol.parent, timeout=300)
+    return (r.stdout.decode("utf-8", "replace"),
+            r.stderr.decode("utf-8", "replace"), r.returncode)
+
+
+def proqramlar() -> list[Path]:
+    """İcra müqayisəsinə daxil olan nümunə proqramlar."""
+    n = sorted((REPO / "alqorc" / "sinaq" / "js_numuneler").glob("*.alq"))
+    for p in sorted((REPO / "numuneler").glob("*.alq")):
+        mətn = p.read_text(encoding="utf-8")
+        if any(f"gətir {s}" in mətn or f"{s}." in mətn
+               for s in İSTİSNA_SÖZLƏR):
+            continue
+        n.append(p)
+    return n
+
+
+def korpus_işlət(b: Path, çıxış=print) -> tuple[int, int]:
+    """test_icraci korpusu: (eyni, cəmi)."""
+    import tempfile
+    q = Path(tempfile.mkdtemp(prefix="alqor-rs-isl-"))
+    k = korpus()
+    eyni = 0
+    for i, x in enumerate(k):
+        f = q / f"k{i:04d}.alq"
+        f.write_text(x["kod"], encoding="utf-8")
+        giriş = "".join(s + "\n" for s in x["giriş"])
+        try:
+            o, e, kod = rust_işlət(b, f, giriş)
+        except subprocess.TimeoutExpired:
+            çıxış(f"✖ {f}: vaxt bitdi")
+            continue
+        sətirlər = o.split("\n")
+        if sətirlər and sətirlər[-1] == "":
+            sətirlər.pop()
+        gözlənilən = "\n".join(x["çıxış"]).split("\n") if x["çıxış"] else []
+        tip = _xəta_tipi(e) if kod != 0 else None
+        if sətirlər == gözlənilən and tip == x["xəta"]:
+            eyni += 1
+            continue
+        j = next((j for j, (a, c) in enumerate(zip(gözlənilən, sətirlər))
+                  if a != c), min(len(gözlənilən), len(sətirlər)))
+        çıxış(f"✖ {f}: sətir {j + 1}\n"
+              f"    py: {gözlənilən[j] if j < len(gözlənilən) else '—'}\n"
+              f"    rs: {sətirlər[j] if j < len(sətirlər) else '—'}"
+              + ("" if tip == x["xəta"]
+                 else f"\n    xəta: py={x['xəta']} rs={tip} {e.strip()[:300]}"))
+    return eyni, len(k)
+
+
+def proqram_işlət(b: Path, fayllar: list[Path], çıxış=print) -> int:
+    """Proqramlar: stdout + çıxış kodu. Fərqli faylların sayı."""
+    pis = 0
+    for f in fayllar:
+        giriş = GİRİŞLƏR.get(f.name, "")
+        arq = ARQUMENTLƏR.get(f.name)
+        po, pe, pk = python_işlət(f, giriş, arq)
+        ro, re_, rk = rust_işlət(b, f, giriş, arq)
+        # Python `paralel`/`başlat` sapları çıxışı bəzən qarışdırır —
+        # fərq olarsa etalonu bir neçə dəfə təkrar işlədirik
+        for _ in range(3):
+            if po == ro and pk == rk:
+                break
+            po, pe, pk = python_işlət(f, giriş, arq)
+        if po == ro and pk == rk:
+            continue
+        pis += 1
+        ps, rsl = po.splitlines(), ro.splitlines()
+        i = next((i for i, (x, y) in enumerate(zip(ps, rsl)) if x != y),
+                 min(len(ps), len(rsl)))
+        çıxış(f"✖ {f}: sətir {i + 1}\n"
+              f"    py: {ps[i] if i < len(ps) else '—'}\n"
+              f"    rs: {rsl[i] if i < len(rsl) else '—'}"
+              + ("" if pk == rk else f"\n    kod: py={pk} rs={rk} {re_.strip()[:300]}"))
+    return pis
+
+
+PARÇALAR = REPO / "alqorc" / "sinaq" / "rs_icra_parcalari.alq"
+
+
+def parçalar_işlət(b: Path, fayl: Path = PARÇALAR,
+                   çıxış=print) -> tuple[int, int]:
+    """`=====` ilə ayrılmış parçalar: stdout, stderr və kod tam eyni olmalıdır."""
+    import tempfile
+    q = Path(tempfile.mkdtemp(prefix="alqor-rs-par-"))
+    parçalar = fayl.read_text(encoding="utf-8").split("=====\n")
+    eyni = 0
+    for k, kod in enumerate(parçalar):
+        f = q / f"p{k:03d}.alq"
+        f.write_text(kod, encoding="utf-8")
+        giriş, arq = "bir\niki\n", ["x", "y"]
+        py = python_işlət(f, giriş, arq)
+        rs = rust_işlət(b, f, giriş, arq)
+        if py == rs:
+            eyni += 1
+            continue
+        çıxış(f"✖ parça #{k} ({f}): kod py={py[2]} rs={rs[2]}")
+        for ad, x, y in (("stdout", py[0], rs[0]), ("stderr", py[1], rs[1])):
+            x, y = x.splitlines(), y.splitlines()
+            if x != y:
+                i = next((i for i, (m, n) in enumerate(zip(x, y)) if m != n),
+                         min(len(x), len(y)))
+                çıxış(f"    {ad} py: {x[i] if i < len(x) else '—'}\n"
+                      f"    {ad} rs: {y[i] if i < len(y) else '—'}")
+    return eyni, len(parçalar)
+
+
 def main(a: list[str]) -> int:
+    if a and a[0] in ("işlət", "islet"):
+        b = qur()
+        if b is None:
+            print("alqor-rs qurulmadı", file=sys.stderr)
+            return 2
+        if a[1:] == ["--korpus"]:
+            eyni, cəmi = korpus_işlət(b)
+            print(f"{eyni}/{cəmi} parça eyni")
+            return 0 if eyni == cəmi else 1
+        if a[1:2] == ["--parçalar"]:
+            eyni, cəmi = parçalar_işlət(
+                b, Path(a[2]) if len(a) > 2 else PARÇALAR)
+            print(f"{eyni}/{cəmi} parça eyni")
+            return 0 if eyni == cəmi else 1
+        fayllar = [Path(x).resolve() for x in a[1:]] or proqramlar()
+        pis = proqram_işlət(b, fayllar)
+        print(f"{len(fayllar) - pis}/{len(fayllar)} proqram eyni")
+        return 1 if pis else 0
     if not a or a[0] not in ("tokenlər", "tokenler", "aac"):
         print(__doc__)
         return 3
