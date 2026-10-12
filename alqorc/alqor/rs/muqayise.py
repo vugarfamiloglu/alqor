@@ -15,6 +15,8 @@ Python etalonu ilə `alqor-rs` arasında diferensial müqayisə.
                                                      # və numuneler): stdout + çıxış kodu
     python -m alqor.rs.muqayise işlət --parçalar     # sinaq/rs_icra_parcalari.alq:
                                                      # stdout + stderr + çıxış kodu
+    python -m alqor.rs.muqayise wasm                 # WebAssembly paketi (node) yerli
+                                                     # binarla eyni nəticə verir
 """
 
 from __future__ import annotations
@@ -427,7 +429,91 @@ def parçalar_işlət(b: Path, fayl: Path = PARÇALAR,
     return eyni, len(parçalar)
 
 
+WASM = RS / "wasm" / "alqor.wasm"
+
+
+def wasm_qur() -> Path | None:
+    """`wasm/alqor.wasm`-ı qurur (wasm32 hədəfi quraşdırılıbsa)."""
+    cargo = shutil.which("cargo") or str(Path.home() / ".cargo" / "bin" / "cargo")
+    if not Path(cargo).exists():
+        return WASM if WASM.is_file() else None
+    rustup = Path(cargo).with_name("rustup")
+    if rustup.exists():
+        r = subprocess.run([str(rustup), "target", "list", "--installed"],
+                           capture_output=True, text=True)
+        if "wasm32-unknown-unknown" not in r.stdout:
+            return WASM if WASM.is_file() else None
+    env = dict(os.environ,
+               RUSTFLAGS="-C link-arg=-zstack-size=33554432",
+               PATH=str(Path(cargo).parent) + os.pathsep + os.environ.get("PATH", ""))
+    r = subprocess.run([cargo, "rustc", "-q", "--lib", "--crate-type", "cdylib",
+                        "--target", "wasm32-unknown-unknown", "--profile", "wasm"],
+                       cwd=RS, capture_output=True, text=True, env=env)
+    if r.returncode != 0:
+        sys.stderr.write(r.stderr)
+        return None
+    shutil.copy(RS / "target" / "wasm32-unknown-unknown" / "wasm" / "deps"
+                / "alqor.wasm", WASM)
+    return WASM
+
+
+def node_tap() -> str | None:
+    return shutil.which("node") or next(
+        (str(p) for p in Path("/opt").glob("node*/bin/node") if p.is_file()), None)
+
+
+def wasm_işlət(node: str, fayl: Path) -> list[tuple[str, str, int]]:
+    """`=====` parçalarını wasm paketi ilə icra edir."""
+    import json
+    r = subprocess.run([node, str(RS / "wasm" / "sina.mjs"), "--parçalar",
+                        str(fayl)], capture_output=True, timeout=600)
+    if r.returncode != 0:
+        raise RuntimeError(r.stderr.decode("utf-8", "replace"))
+    n = []
+    for s in r.stdout.decode("utf-8").splitlines():
+        d = json.loads(s)
+        n.append((d["stdout"], d["stderr"], d["kod"]))
+    return n
+
+
+#  wasm-da işləməyən parçalar (fayl sistemi, mühit, platforma)
+WASM_İSTİSNA = ("fayl.", "sistem.", "konsol.terminaldır", "vaxt.")
+
+
+def wasm_müqayisə(b: Path, node: str, fayl: Path = PARÇALAR,
+                  çıxış=print) -> tuple[int, int]:
+    """WebAssembly nəticəsi yerli binarla eyni olmalıdır (fayl adı istisna)."""
+    import tempfile
+    q = Path(tempfile.mkdtemp(prefix="alqor-wasm-"))
+    parçalar = fayl.read_text(encoding="utf-8").split("=====\n")
+    wn = wasm_işlət(node, fayl)
+    eyni = cəmi = 0
+    for k, (kod, w) in enumerate(zip(parçalar, wn)):
+        if any(x in kod for x in WASM_İSTİSNA):
+            continue
+        cəmi += 1
+        f = q / "proqram.alq"
+        f.write_text(kod, encoding="utf-8")
+        r = rust_işlət(b, f, "bir\niki\n")
+        if r == w:
+            eyni += 1
+            continue
+        çıxış(f"✖ wasm parça #{k}: kod yerli={r[2]} wasm={w[2]}\n"
+              f"    yerli: {(r[0] + r[1])[-300:]!r}\n    wasm:  {(w[0] + w[1])[-300:]!r}")
+    return eyni, cəmi
+
+
 def main(a: list[str]) -> int:
+    if a and a[0] == "wasm":
+        b, node = qur(), node_tap()
+        if not WASM.is_file():
+            wasm_qur()
+        if b is None or node is None or not WASM.is_file():
+            print("alqor-rs, node və ya wasm/alqor.wasm yoxdur", file=sys.stderr)
+            return 2
+        eyni, cəmi = wasm_müqayisə(b, node)
+        print(f"{eyni}/{cəmi} parça eyni (wasm)")
+        return 0 if eyni == cəmi else 1
     if a and a[0] in ("işlət", "islet"):
         b = qur()
         if b is None:

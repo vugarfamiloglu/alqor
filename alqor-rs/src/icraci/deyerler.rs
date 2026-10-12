@@ -102,6 +102,8 @@ pub enum Siqnal {
     Davam(Option<Ad>),
     Ver(D),
     Dayanma(D),
+    /// `wasm32` generator təkrarında hədəf `ver`-ə çatıldı
+    GenVer(D),
 }
 
 impl Clone for Siqnal {
@@ -113,6 +115,7 @@ impl Clone for Siqnal {
             Siqnal::Davam(e) => Siqnal::Davam(e.clone()),
             Siqnal::Ver(d) => Siqnal::Ver(d.clone()),
             Siqnal::Dayanma(d) => Siqnal::Dayanma(d.clone()),
+            Siqnal::GenVer(d) => Siqnal::GenVer(d.clone()),
         }
     }
 }
@@ -748,10 +751,24 @@ impl Element {
 
 // ── Generator və Gələcək ───────────────────────────────────────────────
 
+#[cfg(not(target_arch = "wasm32"))]
 pub type KorutinT = corosensei::Coroutine<(), D, Nəticə<()>, corosensei::stack::DefaultStack>;
 
+/// `wasm32`-də stek dəyişdirmə yoxdur: generator gövdəsi hər `növbəti`-də
+/// yenidən işlədilir, əvvəlki `ver`-lər (çıxış susdurularaq) keçilir.
+#[cfg(target_arch = "wasm32")]
+pub struct Təkrar {
+    pub f: Rc<Funksiya>,
+    pub args: Vec<D>,
+    pub adlı: Adlı,
+    pub verilən: usize,
+}
+
 pub enum GenMənbə {
+    #[cfg(not(target_arch = "wasm32"))]
     Korutin(Box<KorutinT>, Ad),
+    #[cfg(target_arch = "wasm32")]
+    Təkrar(Təkrar),
     Siyahı(std::vec::IntoIter<D>),
     Çevir(Rc<Generator>, D),
     Filtr(Rc<Generator>, D),
