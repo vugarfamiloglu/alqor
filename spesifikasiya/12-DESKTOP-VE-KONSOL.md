@@ -680,6 +680,25 @@ açar söz olan sütun adı `@sütun("sinif") xassə sinif_` olur) ·
 `… tətbiq ÜNVAN` · `alqor sxem idxal ÜNVAN --çıxış baza.sxem` (mövcud
 bazadan).
 
+### 12.6.6 Eyni forma — desktop və veb
+
+Forma proqramı kodu dəyişmədən veb tətbiqi kimi də işləyir:
+
+| Necə | Nə olur |
+|---|---|
+| `pəncərə.formaAç(Əsas)` + `pəncərə.işlət()` (adi) | desktop pəncərəsi |
+| eyni proqram `ALQOR_VEB=1` ilə | pəncərə açılmır; `pəncərə.işlət()` veb serveri qaldırır (`PORT` / `ALQOR_PORT`, `ALQOR_HOST`); ilk forma `/`-da, digərləri `/Ad`-da |
+| `s.komponent("/", Əsas)` (`gətir veb`) | forma veb serverin istənilən yolunda (§ 11) |
+
+Vebdə **hər brauzer sessiyası öz komponent nümunəsini** alır: öz forma
+obyektləri, öz `Sorğu` kursoru və redaktə buferi; baza isə ortaqdır.
+
+`alqor yerləşdir` `.forma` faylı olan layihəni Docker paketi kimi qurur
+(`ALQOR_VEB=1` daxil) və əvvəlcə bütün `.forma` / `.sxem` fayllarını
+yoxlayır — xətalı forma yerləşdirilmir (`qur --exe` də eyni yoxlamanı
+edir). Konteynerdə SQLite faylı itə bildiyi üçün vebdə
+`ünvanMühiti = "DATABASE_URL"` ilə PostgreSQL/MySQL tövsiyə olunur.
+
 ## 12.7 Mobil (gələcək — v2.0)
 
 | Platforma | Yanaşma |

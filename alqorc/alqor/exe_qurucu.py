@@ -133,6 +133,16 @@ def sintaksisi_yoxla(layihə) -> None:
             Parser(Lekser(m, x).leksə(), m, x).ayır()
         if not x.uğurludur():
             raise QurmaXətası("proqramda xəta var:\n\n" + x.hesabat())
+    # Vizual dizaynerin faylları da yoxlanır
+    from . import forma, sxem
+    for f in sorted(layihə.kök.rglob("*")):
+        if "qurma" in f.parts or f.suffix not in (".forma", ".sxem"):
+            continue
+        x = XətaToplayıcı()
+        (forma if f.suffix == ".forma" else sxem).fayldan(f, x)
+        if not x.uğurludur():
+            raise QurmaXətası(f"`{f.name}` faylında xəta var:\n\n"
+                              + x.hesabat())
 
 
 def qur(layihə, alqorc_kökü: Path, konsol: bool | None = None) -> Path:
