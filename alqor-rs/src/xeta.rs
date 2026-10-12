@@ -311,16 +311,23 @@ impl XətaToplayıcı {
         x.iter().map(|d| d.formatla(r)).collect::<Vec<_>>().join("\n\n")
     }
     pub fn çap(&self) {
-        let r = rəngli();
+        eprint!("{}", self.çap_mətni(rəngli()));
+    }
+
+    /// `çap()`-ın stderr-ə yazdığı mətn (sətir sonları daxil).
+    pub fn çap_mətni(&self, r: bool) -> String {
+        let mut ç = String::new();
         let h = self.hesabat(Some(r));
         if !h.is_empty() {
-            eprintln!("{}\n", h);
+            ç.push_str(&h);
+            ç.push_str("\n\n");
         }
         let x = self.xəta_sayı();
         let xb = self.siyahı.len() - x;
         if x == 0 && xb == 0 {
-            eprintln!("{}", boya("✓ Xəta yoxdur", "32", r));
-            return;
+            ç.push_str(&boya("✓ Xəta yoxdur", "32", r));
+            ç.push('\n');
+            return ç;
         }
         let mut h = vec![];
         if x > 0 {
@@ -329,6 +336,8 @@ impl XətaToplayıcı {
         if xb > 0 {
             h.push(boya(&format!("{} xəbərdarlıq", xb), "33", r));
         }
-        eprintln!("{}", h.join(", "));
+        ç.push_str(&h.join(", "));
+        ç.push('\n');
+        ç
     }
 }

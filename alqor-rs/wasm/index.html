@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alqor WebAssembly nümunəsi</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 2em auto; padding: 0 1em; }
+  textarea, pre { width: 100%; box-sizing: border-box; font-family: ui-monospace, monospace; font-size: 14px; }
+  textarea { height: 14em; }
+  pre { background: #f4f4f4; padding: .6em; min-height: 3em; white-space: pre-wrap; }
+  #stderr { color: #b00020; }
+</style>
+</head>
+<body>
+<h1>Alqor → WebAssembly</h1>
+<p>Bu səhifə <code>alqor.wasm</code>-ı yükləyib Alqor kodunu brauzerdə icra edir.</p>
+<textarea id="kod">funksiya fib(n: tam) -> tam
+    əgər n < 2 onda qaytar n son
+    qaytar fib(n - 1) + fib(n - 2)
+son
+generator funksiya kvadratlar()
+    dəyişən i = 1
+    həmişə
+        ver i * i
+        i += 1
+    son
+son
+dəyişən ad = oxu()
+yaz("Salam, {ad}!")
+yaz("fib(20) =", fib(20))
+yaz(kvadratlar().ilk(5), "ışıq".böyüyə())</textarea>
+<p>Giriş (<code>oxu()</code> üçün sətirlər):</p>
+<textarea id="giris" style="height:3em">Dünya</textarea>
+<p><button id="islet" disabled>İşlət</button> <span id="veziyyet">yüklənir…</span></p>
+<p>stdout:</p><pre id="stdout"></pre>
+<p>stderr:</p><pre id="stderr"></pre>
+<script type="module">
+import { yüklə } from "./alqor.js";
+const $ = (id) => document.getElementById(id);
+const alqor = await yüklə(new URL("./alqor.wasm", import.meta.url));
+window.alqor = alqor;
+$("veziyyet").textContent = "hazır (alqor-rs " + alqor.versiya() + ")";
+$("islet").disabled = false;
+$("islet").onclick = () => {
+  const giriş = $("giris").value.split("\n").filter((s, i, a) => i < a.length - 1 || s !== "");
+  const t = performance.now();
+  const n = alqor.işlət($("kod").value, giriş);
+  $("stdout").textContent = n.stdout;
+  $("stderr").textContent = n.stderr;
+  $("veziyyet").textContent = `çıxış kodu ${n.kod} · ${(performance.now() - t).toFixed(1)} ms`;
+  document.body.dataset.netice = JSON.stringify(n);
+};
+</script>
+</body>
+</html>

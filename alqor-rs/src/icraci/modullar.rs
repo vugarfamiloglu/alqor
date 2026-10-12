@@ -75,9 +75,7 @@ impl MT {
         MT::toxum(&key)
     }
     pub fn təsadüfi() -> MT {
-        let t = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(1);
-        let p = std::process::id() as u128;
-        let x = t ^ (p << 64);
+        let x = super::platforma::entropiya();
         MT::toxum(&[x as u32, (x >> 32) as u32, (x >> 64) as u32, (x >> 96) as u32])
     }
     pub fn növbəti(&mut self) -> u32 {
@@ -257,22 +255,9 @@ pub struct YerliVaxt {
 }
 
 pub fn yerli_vaxt(möhür: Option<i64>) -> YerliVaxt {
-    let t: libc::time_t = möhür.unwrap_or_else(|| {
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0)
-    }) as libc::time_t;
-    let mut tm: libc::tm = unsafe { std::mem::zeroed() };
-    unsafe {
-        libc::localtime_r(&t, &mut tm);
-    }
-    YerliVaxt {
-        il: tm.tm_year + 1900,
-        ay: (tm.tm_mon + 1) as u32,
-        gün: tm.tm_mday as u32,
-        saat: tm.tm_hour as u32,
-        dəq: tm.tm_min as u32,
-        san: tm.tm_sec as u32,
-        həftə_günü: ((tm.tm_wday + 6) % 7) as u32,
-    }
+    let t = möhür.unwrap_or_else(|| super::platforma::indi_san() as i64);
+    let (il, ay, gün, saat, dəq, san, həftə_günü) = super::platforma::yerli_vaxt(t);
+    YerliVaxt { il, ay, gün, saat, dəq, san, həftə_günü }
 }
 
 fn vaxt_formatla(f: &str, möhür: Option<i64>) -> String {
@@ -290,13 +275,11 @@ const AYLAR: [&str; 12] =
 const GÜNLƏR: [&str; 7] = ["bazar ertəsi", "çərşənbə axşamı", "çərşənbə", "cümə axşamı", "cümə", "şənbə", "bazar"];
 
 fn möhür() -> f64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs_f64()).unwrap_or(0.0)
+    super::platforma::indi_san()
 }
 
 fn yat(ms: f64) {
-    if ms > 0.0 {
-        std::thread::sleep(std::time::Duration::from_secs_f64(ms / 1000.0));
-    }
+    super::platforma::yat(ms)
 }
 
 // ── Fayl ───────────────────────────────────────────────────────────────
@@ -1190,7 +1173,7 @@ fn vaxt() -> Rc<Modul> {
             yat(ədəd(&a[0], "gözləSaniyə")? * 1000.0);
             Ok(D::Boş)
         }))),
-        ("ölç", D_("ölç", 0, Some(0), Box::new(|i, _, _| Ok(D::O(i.ölçü_başlanğıc.elapsed().as_secs_f64()))))),
+        ("ölç", D_("ölç", 0, Some(0), Box::new(|i, _, _| Ok(D::O(super::platforma::monoton_san() - i.ölçü_başlanğıc))))),
         ("limitlə", D_("limitlə", 2, Some(2), Box::new(|i, a, _| i.gözlə(a[1].clone(), None)))),
     ])
 }
@@ -1473,7 +1456,7 @@ fn sistem() -> Rc<Modul> {
             })
         }))),
         ("mühitQoy", D_("mühitQoy", 2, Some(2), Box::new(|_, a, _| {
-            std::env::set_var(&*mətn_yoxla(&a[0], "mühitQoy")?, &*mətn_yoxla(&a[1], "mühitQoy")?);
+            super::platforma::mühit_qoy(&mətn_yoxla(&a[0], "mühitQoy")?, &mətn_yoxla(&a[1], "mühitQoy")?);
             Ok(D::Boş)
         }))),
         ("platforma", D_("platforma", 0, Some(0), Box::new(|_, _, _| {
@@ -1490,12 +1473,7 @@ fn sistem() -> Rc<Modul> {
             Ok(D::str(std::env::var("USERNAME").or_else(|_| std::env::var("USER")).unwrap_or_default()))
         }))),
         ("hostAdı", D_("hostAdı", 0, Some(0), Box::new(|_, _, _| {
-            let mut b = [0u8; 256];
-            unsafe {
-                libc::gethostname(b.as_mut_ptr() as *mut libc::c_char, b.len());
-            }
-            let n = b.iter().position(|x| *x == 0).unwrap_or(0);
-            Ok(D::str(String::from_utf8_lossy(&b[..n]).to_string()))
+            Ok(D::str(super::platforma::host_adı()))
         }))),
         ("dayan", D_("dayan", 0, Some(1), Box::new(|_, a, _| Err(Siqnal::Dayanma(a.first().cloned().unwrap_or(D::T(0))))))),
     ])

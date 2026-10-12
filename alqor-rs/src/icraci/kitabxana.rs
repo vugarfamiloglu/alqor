@@ -252,9 +252,9 @@ pub fn qlobal_qur(i: &İcraçı) {
         Ok(D::Boş)
     }));
     d("ölç", 1, Some(1), Box::new(|i, a, _| {
-        let b = std::time::Instant::now();
+        let b = super::platforma::monoton_san();
         let n = i.çağır(&a[0], vec![], vec![], None)?;
-        let ms = b.elapsed().as_secs_f64() * 1000.0;
+        let ms = (super::platforma::monoton_san() - b) * 1000.0;
         i.yaz(&format!("⏱ {:.3} ms", ms));
         Ok(n)
     }));
