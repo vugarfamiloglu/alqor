@@ -308,13 +308,18 @@ def _xəta_tipi(stderr: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _çıxış(r) -> tuple[str, str, int]:
+    """Windows-da Python mətn axını `\\r\\n` yazır — sətir sonları eyniləşdirilir."""
+    oxu = lambda b: b.decode("utf-8", "replace").replace("\r\n", "\n")  # noqa: E731
+    return oxu(r.stdout), oxu(r.stderr), r.returncode
+
+
 def rust_işlət(b: Path, yol: Path, giriş: str = "",
                arq: list[str] | None = None) -> tuple[str, str, int]:
     r = subprocess.run([str(b), "işlət", str(yol), "--", *(arq or [])],
                        input=giriş.encode("utf-8"), capture_output=True,
                        env=_mühit(), cwd=yol.parent, timeout=120)
-    return (r.stdout.decode("utf-8", "replace"),
-            r.stderr.decode("utf-8", "replace"), r.returncode)
+    return _çıxış(r)
 
 
 def python_işlət(yol: Path, giriş: str = "",
@@ -323,8 +328,7 @@ def python_işlət(yol: Path, giriş: str = "",
                         "işlət", str(yol), "--", *(arq or [])],
                        input=giriş.encode("utf-8"), capture_output=True,
                        env=_mühit(), cwd=yol.parent, timeout=300)
-    return (r.stdout.decode("utf-8", "replace"),
-            r.stderr.decode("utf-8", "replace"), r.returncode)
+    return _çıxış(r)
 
 
 def proqramlar() -> list[Path]:
