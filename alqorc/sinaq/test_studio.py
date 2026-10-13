@@ -1195,12 +1195,22 @@ class ÖnbaxışVəŞablon(ServerSınağı):
     def test_şablonlar_təmizdir(self):
         for növ in ("konsol", "veb", "desktop"):
             f = sablonlar.fayllar(növ, "Sınaq")
-            self.assertEqual(xətalar(f["əsas.alq"]), [], növ)
+            giriş = "mənbə/Əsas.alq" if növ == "desktop" else "əsas.alq"
+            self.assertEqual(xətalar(f[giriş]), [], növ)
+        f = sablonlar.fayllar("desktop", "Sınaq")
+        from alqor import forma as FM
+        from alqor.xeta import XətaToplayıcı
+        x = XətaToplayıcı()
+        t = FM.mətndən(f["mənbə/Əsas.forma"], "Əsas.forma", x)
+        self.assertIsNotNone(t)
+        FM.yoxla(t, x)
+        self.assertTrue(x.uğurludur())
 
     def test_şablon_api(self):
         kod, d = self.api("/api/sablon", {"növ": "desktop", "ad": "tətbiqim"})
         self.assertEqual(kod, 200, d)
-        self.assertEqual(d["fayl"], "tətbiqim/əsas.alq")
+        self.assertEqual(d["fayl"], "tətbiqim/mənbə/Əsas.forma")
+        self.assertTrue((self.layihə / "tətbiqim" / "mənbə" / "Əsas.alq").exists())
         self.assertTrue((self.layihə / "tətbiqim" / "layihe.alq").exists())
         kod, _ = self.api("/api/sablon", {"növ": "desktop", "ad": "tətbiqim"})
         self.assertEqual(kod, 409)

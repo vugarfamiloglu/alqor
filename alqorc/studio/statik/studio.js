@@ -462,7 +462,7 @@ function şablonlarıQur(şablonlar) {
   const izah = {
     konsol: "oxu / yaz ilə terminal proqramı",
     veb: "`veb` modulu ilə server + vidjet səhifəsi",
-    desktop: "komponent + vidjetlər + pəncərə",
+    desktop: "vizual forma dizayneri (.forma + .alq)",
   };
   $("#sablonlar").innerHTML = şablonlar.map((ş) =>
     `<button class="şablon" data-sablon="${ş.növ}"><b>${qaç(ş.ad)}</b>` +
