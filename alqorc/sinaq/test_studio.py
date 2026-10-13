@@ -1956,6 +1956,32 @@ class FormaDizayneri(unittest.TestCase):
     def obyekt(self, ad):
         return self.səhifə.locator(f'#fd-host [data-dz="{ad}"]')
 
+    def test_əsas_palet_formaya_obyekt_əlavə_edir_və_önbaxış(self):
+        """Soldakı «Elementlər» paleti `.forma` açıq olanda kod yazmır."""
+        p = self.səhifə
+        (self.qovluq / "Pal.alq").write_text(
+            "gətir pəncərə\n\nkomponent Pal\nson\n\nfunksiya əsas()\n"
+            "    pəncərə.formaAç(Pal)\n    pəncərə.işlət()\nson\n",
+            encoding="utf-8")
+        self.formanı_aç("Pal.forma", 'forma Pal\n    başlıq = "Pal"\nson\n')
+        p.click('[data-panel="palet"]')
+        el = p.locator('#palet [data-vidjet="düymə"]').first
+        el.scroll_into_view_if_needed()
+        el.dblclick()
+        mətn = self.gözləFayl("Pal.forma", "obyekt Düymə1: düymə")
+        self.assertNotIn("gətir", mətn)
+        self.assertNotIn("komponent", mətn)
+        # Tək klik də formaya əlavə edir (koda nümunə qoymur)
+        p.locator('#palet [data-vidjet="başlıq"]').first.click()
+        mətn = self.gözləFayl("Pal.forma", ": başlıq")
+        self.assertNotIn("vidjet.", mətn)
+        # Önbaxış formanın kodunu işlədir
+        p.click("#dym-onbaxis")
+        self.gözləŞərt(lambda: (p.locator("#onbaxis-cercive").get_attribute("src") or "")
+                       .startswith("http"), lambda: p.inner_text("#onbaxis-xeta"))
+        çərçivə = p.frame_locator("#onbaxis-cercive")
+        çərçivə.locator("text=Düymə1").first.wait_for(timeout=20000)
+
     def test_yeni_forma_palet_inspektor_hadisə_kod_geri_al(self):
         p = self.səhifə
         # 1. «Fayl → Yeni forma…»
@@ -1967,7 +1993,8 @@ class FormaDizayneri(unittest.TestCase):
         p.wait_for_selector("#fd:not([hidden])")
         self.assertIn("komponent Giriş", self.fayl("Giriş.alq"))
         self.assertIn("pəncərə.formaAç(Giriş)", self.fayl("Giriş.alq"))
-        self.assertIn("Giriş", p.inner_text("#fd-baslik"))
+        self.gözləŞərt(lambda: "Giriş" in p.inner_text("#fd-baslik"),
+                       "dizayner başlığı çəkilmədi")
         # 2. Paletdən düymə kətana
         p.locator('[data-fd-vidjet="düymə"]').drag_to(p.locator("#fd-mezmun"))
         self.gözləFayl("Giriş.forma", "obyekt Düymə1: düymə")
