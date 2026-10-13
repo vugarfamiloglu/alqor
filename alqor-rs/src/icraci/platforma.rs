@@ -57,8 +57,13 @@ pub fn yerli_vaxt(t: i64) -> (i32, u32, u32, u32, u32, u32, u32) {
     {
         let t = t as libc::time_t;
         let mut tm: libc::tm = unsafe { std::mem::zeroed() };
+        #[cfg(unix)]
         unsafe {
             libc::localtime_r(&t, &mut tm);
+        }
+        #[cfg(windows)]
+        unsafe {
+            libc::localtime_s(&mut tm, &t);
         }
         (
             tm.tm_year + 1900,
@@ -107,7 +112,7 @@ pub fn terminaldır() -> bool {
 }
 
 pub fn terminal_ölçüsü() -> Option<(i64, i64)> {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(unix)]
     {
         let mut w: libc::winsize = unsafe { std::mem::zeroed() };
         if unsafe { libc::ioctl(1, libc::TIOCGWINSZ, &mut w) } == 0 && w.ws_col > 0 {
@@ -115,12 +120,22 @@ pub fn terminal_ölçüsü() -> Option<(i64, i64)> {
         }
         None
     }
-    #[cfg(target_arch = "wasm32")]
-    None
+    #[cfg(not(unix))]
+    {
+        let ədəd = |a: &str| std::env::var(a).ok().and_then(|v| v.trim().parse::<i64>().ok());
+        match (ədəd("COLUMNS"), ədəd("LINES")) {
+            (Some(e), Some(h)) if e > 0 => Some((e, h)),
+            _ => None,
+        }
+    }
 }
 
 pub fn host_adı() -> String {
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(windows)]
+    {
+        std::env::var("COMPUTERNAME").unwrap_or_else(|_| "localhost".into())
+    }
+    #[cfg(unix)]
     {
         let mut b = [0u8; 256];
         unsafe {
