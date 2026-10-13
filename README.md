@@ -133,7 +133,14 @@ alqor yerləşdir                       # → Netlify / GitHub Pages üçün qov
 ## Alqor Studio
 
 Redaktor, element paleti, canlı önbaxış, vizual dizayner, debaq — kod
-yazmadan interfeys qurmaq və kodu addım-addım izləmək üçün:
+yazmadan interfeys qurmaq və kodu addım-addım izləmək üçün.
+
+**Forma dizayneri** (Delphi üslubu): pəncərəni `.forma` faylında
+sürüklə-burax ilə qurun, xassələri inspektorda dəyişin, hadisəyə iki klik
+— əməl `.alq` faylında yaranır. `VerilənlərBazası` və `Sorğu`
+komponentləri, cədvəl redaktoru (`.sxem`: SQLite, PostgreSQL, MySQL) və
+"Cədvəldən forma yarat" ilə CRUD formaları bir neçə klikdə hazırdır; eyni
+forma `ALQOR_VEB=1` ilə brauzerdə işləyir.
 
 ![Alqor Studio — qaranlıq tema](sened/ekranlar/studio-qaranliq.png)
 

@@ -51,6 +51,11 @@
 - Avtomatik tamamlama və imza ipucu (`alqorls`)
 - Debaq: dayanma nöqtələri, addımlar, yığın, dəyişənlər, ifadə hesablama
 - Vizual dizayner (⊞ Dizayn): sürüklə-burax, daşı, sil — kod yenilənir
+- Forma dizayneri (Delphi üslubu): `.forma` + `.alq` cütü, palitra
+  (Verilənlər tabı ilə), inspektor (Xüsusiyyətlər / Hadisələr — iki klik
+  `.alq`-da hadisə əməlini yaradır), görünməyən komponentlər zolağı,
+  cədvəl redaktoru (`.sxem`), "Cədvəldən forma yarat", Alt+F12 Kod/Dizayn,
+  geri al / təkrarla, axın və sərbəst düzülüş (hizalama)
 - IDE qabığı: ikonlu menyu sətri (9 menyu, alt menyular, Alt+hərf),
   kontekst menyular, əmr palitrası (Ctrl+Shift+P, fayl, `:` sətir, `@`
   simvol), fəaliyyət zolağı, layihədə axtarış/əvəzləmə, Struktur paneli,
@@ -134,14 +139,28 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
 ### Mərhələ 4 — Rust kompilyatoru (sürət və tək binar) 🟡
 17. `alqor-rs/`: lekser ✅ və parser ✅ — Python etalonu ilə eyni tokenlər
     və eyni AAC (`python -m alqor.rs.muqayise tokenlər|aac [--korpus]`);
-    icraçı yarımçıq (dəyərlər, mühit, ifadələr), standart kitabxana yoxdur. Sınaq: Python etalonu ilə eyni çıxış (JS hədəfindəki
-    müqayisə qoşqusu ilə). Sonra: native binar və WASM.
+    icraçı ✅ (müqayisə korpuslarında Python ilə eyni çıxış, ~23–39x sürətli),
+    WASM qurulması ✅ (`alqor-rs/wasm/`). Qalır: veb, pəncərə, vidjet və
+    əlavə standart modullar.
 
 ### Ekosistem (Vüqar Familoğlu özü hazırlayır) ⏸
 - Sayt: [vuqar.pro/alqor](https://vuqar.pro/alqor) — xəta mesajlarındakı
   linklər `vuqar.pro/alqor/xeta/<KOD>` formasındadır.
 - Paket deposu: [vuqar.pro/hub](https://vuqar.pro/hub) — `alqorpm`-in
   standart deposu; server `alqor hub --önək /hub` (spes. § 8.9).
+
+### Vizual forma dizayneri (RAD) ✅
+- `.forma` faylları (spes. § 12.6): obyektlər, xassələr, hadisələr;
+  `komponent Ad` ilə avtomatik birləşir, `pəncərə.formaAç`.
+- `.sxem` faylları: SQLite / PostgreSQL / MySQL üçün DDL, `tətbiq_et`
+  (yalnız əlavə edir), `idxal`, model kodu (`alqor sxem …`).
+- Görünməyən komponentlər: `VerilənlərBazası`, `Sorğu`; vidjetlərdə
+  `mənbə` + `sütun` bağlaması, `naviqator`.
+- Veb rejimi: `ALQOR_VEB=1` — eyni forma brauzerdə (hər sessiyaya ayrı
+  nümunə); `yerləşdir` forma layihəsini server/Docker paketinə çevirir.
+- Qalan məhdudiyyətlər: formalar üçün statik JS (serversiz) yerləşdirmə
+  yoxdur; dizayner `.forma`-nı yenidən yazır (şərhlər itir); inspektor
+  yalnız əsas seçimi redaktə edir.
 
 ### Linux və macOS quraşdırıcıları ✅
 - `alqor qur --alqor --platforma linux|macos [--arx x86_64|aarch64]`:
