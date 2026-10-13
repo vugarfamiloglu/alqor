@@ -186,6 +186,11 @@ function fdCavab(n, mətnYenilə = true) {
   gəz(n.forma.obyektlər);
   FD.seçim = FD.seçim.filter((a) => adlar.has(a));
   fdÇək();
+  // Önbaxış açıqdırsa formanın işləyən görünüşü də yenilənsin
+  if (S.önbaxışAçıq) {
+    clearTimeout(FD.önbaxışTaymeri);
+    FD.önbaxışTaymeri = setTimeout(() => { if (fdFormadırMı(cari())) önbaxışıYenilə(true); }, 400);
+  }
 }
 
 /** Bir dizayner əməliyyatı — ardıcıl (növbə ilə), geri al tarixçəsi ilə. */
@@ -386,6 +391,26 @@ $("#fd-palet").addEventListener("dblclick", (h) => {
   fdƏməliyyat({ növ: "əlavə", vidjet: v.dataset.fdVidjet, ana, xassələr: x });
 });
 
+/**
+ * Studio-nun əsas element paletindən (soldakı «Elementlər») formaya əlavə:
+ * `.forma` açıq olanda palet kod yazmır, obyekt əlavə edir.
+ * `hd` — buraxma yeri (yoxdursa seçilmiş konteyner və ya formanın sonu).
+ */
+function fdPaletdənƏlavə(vidjet, hd = null) {
+  if (!FD.kataloq?.növlər?.[vidjet]) {
+    bildir(`\`${vidjet}\` formada istifadə oluna bilməz`, "xəta", 3200);
+    return;
+  }
+  if (cari()?.fdKod) fdKodDizayn(false);
+  const x = {};
+  if (!hd) {
+    const s = FD.seçim.length === 1 ? fdTap(FD.seçim[0]) : null;
+    hd = { ana: s?.konteyner ? s.ad : null };
+    if (fdSərbəstdir(hd.ana)) { x.sol = 16; x.yuxarı = 16; }
+  } else if (hd.sərbəst) { x.sol = Math.max(0, fdTora(hd.sol)); x.yuxarı = Math.max(0, fdTora(hd.yuxarı)); }
+  fdƏməliyyat({ növ: "əlavə", vidjet, ana: hd.ana, indeks: hd.indeks ?? null, xassələr: x });
+}
+
 // ══ Hədəf (buraxma yeri) ═════════════════════════════════════════════
 /**
  * Göstəricinin altındakı konteyner və yer: {ana, indeks, sərbəst, sol, yuxarı, xətt}.
@@ -473,8 +498,10 @@ function fdGöstəriciniGizlət() { fdGöstərici(null); $$("#fd-ortuk .fd-bəl�
 const fdTora = (v) => (FD.tor ? Math.round(v / 8) * 8 : Math.round(v));
 
 // Paletdən buraxma (HTML5 DnD)
+const fdPaletNövü = (h) => ["application/x-alqor-forma", "application/x-alqor-vidjet"]
+  .find((n) => [...h.dataTransfer.types].includes(n));
 $("#fd-mezmun").addEventListener("dragover", (h) => {
-  if (![...h.dataTransfer.types].includes("application/x-alqor-forma")) return;
+  if (!fdPaletNövü(h)) return;
   h.preventDefault();
   h.dataTransfer.dropEffect = "copy";
   const n = FD.sürüklənən ? fdNöv(FD.sürüklənən) : null;
@@ -484,7 +511,8 @@ $("#fd-mezmun").addEventListener("dragleave", (h) => {
   if (!$("#fd-mezmun").contains(h.relatedTarget)) fdGöstəriciniGizlət();
 });
 $("#fd-mezmun").addEventListener("drop", (h) => {
-  const vidjet = h.dataTransfer.getData("application/x-alqor-forma");
+  const vidjet = h.dataTransfer.getData("application/x-alqor-forma") ||
+    h.dataTransfer.getData("application/x-alqor-vidjet");
   if (!vidjet) return;
   h.preventDefault();
   fdGöstəriciniGizlət();

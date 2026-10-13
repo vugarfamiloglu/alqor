@@ -676,7 +676,10 @@ $("#palet").addEventListener("dragstart", (h) => {
   if (!v) return;
   const x = S.kataloq.vidjetlər.find((y) => y.ad === v.dataset.vidjet);
   h.dataTransfer.setData("application/x-alqor-vidjet", v.dataset.vidjet);
-  h.dataTransfer.setData("text/plain", x.nümunə);
+  if (fdFormadırMı(cari())) {
+    // Forma dizayneri: kətan buraxma yerini göstərsin, mətn kimi düşməsin
+    if (typeof FD !== "undefined") FD.sürüklənən = v.dataset.vidjet;
+  } else h.dataTransfer.setData("text/plain", x.nümunə);
   h.dataTransfer.effectAllowed = "copy";
 });
 
@@ -694,7 +697,15 @@ async function faylLazımdır() {
   } catch (x) { xəta(x); return false; }
 }
 
+/** `.forma` açıqdırsa palet kod yazmır — obyekt formaya əlavə olunur. */
+function formayaYönəlt(ad) {
+  if (!fdFormadırMı(cari()) || typeof fdPaletdənƏlavə !== "function") return false;
+  fdPaletdənƏlavə(ad);
+  return true;
+}
+
 async function nümunəniQoy(ad) {
+  if (formayaYönəlt(ad)) return;
   if (!(await faylLazımdır())) return;
   try {
     const n = await API.göndər("/api/vidjet/numune", { mətn: R.mətn, vidjet: ad, kursor: R.kursor });
@@ -704,6 +715,7 @@ async function nümunəniQoy(ad) {
 }
 
 async function vidjetiƏlavəEt(ad, kursor = null) {
+  if (formayaYönəlt(ad)) return;
   if (!(await faylLazımdır())) return;
   try {
     const n = await API.göndər("/api/vidjet/elave", {
@@ -1251,6 +1263,7 @@ async function dizaynıYenilə() {
   if (!S.dizayn) return;
   const yer = $("#dizayn-agac");
   const t = cari();
+  if (fdFormadırMı(t)) { yer.innerHTML = '<div class="dz-xəta">Bu forma faylıdır — dizayn ortadakı kətandadır.</div>'; return; }
   if (!t || !/\.(alqor|alq)$/.test(t.yol)) { yer.innerHTML = '<div class="dz-xəta">.alq faylı açın.</div>'; return; }
   try {
     const n = await API.göndər("/api/dizayn/agac", {
@@ -1404,6 +1417,7 @@ async function önbaxışıYenilə(canlı = false) {
   const xət = $("#onbaxis-xeta");
   const çərçivə = $("#onbaxis-cercive");
   if (!t) { komponentSeçiminiSıfırla(); xət.hidden = false; xət.textContent = "Fayl açıq deyil."; return; }
+  if (fdFormadırMı(t)) return formanınÖnbaxışı(t, canlı);
   if (!/\bkomponent\s+[\p{L}_]/u.test(R.mətn)) {
     komponentSeçiminiSıfırla();
     xət.hidden = false;
@@ -1440,6 +1454,36 @@ async function önbaxışıYenilə(canlı = false) {
     komponentSeçiminiSıfırla();
     xət.textContent = x.message;
   }
+}
+
+/** `.forma` tabı: önbaxış formanın kodu (`Ad.alq`, `komponent Ad`) ilə. */
+async function formanınÖnbaxışı(t, canlı) {
+  const xət = $("#onbaxis-xeta");
+  const çərçivə = $("#onbaxis-cercive");
+  komponentSeçiminiSıfırla();
+  const c = typeof FD !== "undefined" ? FD.cavab : null;
+  if (!c?.forma) {
+    xət.hidden = false;
+    xət.textContent = "Forma mətnində xəta var — düzəldin, önbaxış özü yenilənəcək.";
+    return;
+  }
+  if (!c.alqVar) {
+    xət.hidden = false;
+    xət.textContent = `Formanın kodu (${c.alq}) tapılmadı.\n\n` +
+      `Eyni qovluqda \`komponent ${c.forma.ad}\` olan .alq faylı yaradın ` +
+      "(Fayl → Yeni forma… ikisini birlikdə yaradır).";
+    return;
+  }
+  if (çirklidir(t) && !(await saxla(t, canlı))) return;
+  const alq = S.tablar.find((x) => x.yol === c.alq);
+  if (alq && çirklidir(alq) && !(await saxla(alq, canlı))) return;
+  if (!canlı) { xət.hidden = false; xət.textContent = "Yüklənir…"; }
+  try {
+    const n = await API.göndər("/api/onbaxis", { yol: c.alq, komponent: c.forma.ad, canlı });
+    if (n.xəta) { xət.hidden = false; xət.textContent = n.xəta; if (!canlı) çərçivə.src = "about:blank"; return; }
+    çərçivə.src = önbaxışÜnvanı(n.ünvan, n.yeniləndi);
+    xət.hidden = true;
+  } catch (x) { xət.hidden = false; xət.textContent = x.message; }
 }
 
 /** Komponent seçimini boşaldır və gizlədir (boş açılan siyahı görünməsin). */
