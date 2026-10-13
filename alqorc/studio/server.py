@@ -414,7 +414,7 @@ class Studio:
         for nisbi, mətn in fayllar.items():
             self.layihə.yarat(f"{ad}/{nisbi}", "fayl", mətn)
         return {"qovluq": self.layihə.nisbi(qovluq),
-                "fayl": f"{self.layihə.nisbi(qovluq)}/əsas.alq"}
+                "fayl": f"{self.layihə.nisbi(qovluq)}/{sablonlar.açılacaq(növ)}"}
 
     # ── Vidjetlər ─────────────────────────────────────────────────────
 

@@ -139,12 +139,33 @@ def siyahı() -> list[dict]:
 
 
 def fayllar(növ: str, ad: str) -> dict[str, str]:
-    """Şablonun faylları: nisbi yol → məzmun."""
+    """Şablonun faylları: nisbi yol → məzmun.
+
+    Desktop şablonu `alqor yeni --şablon desktop` ilə eynidir:
+    `mənbə/Əsas.forma` (vizual dizaynerdə açılır) + `mənbə/Əsas.alq`."""
     if növ not in ŞABLONLAR:
         raise KeyError(f"`{növ}` şablonu yoxdur. Mövcud: "
                        f"{', '.join(ŞABLONLAR)}")
+    if növ == "desktop":
+        return _cli_şablonu(növ, ad)
     _, mətn = ŞABLONLAR[növ]
     return {
         "əsas.alq": mətn.format(ad=ad),
         "layihe.alq": LAYİHƏ.format(ad=ad, növ=növ),
     }
+
+
+def açılacaq(növ: str) -> str:
+    """Layihə yaradılandan sonra redaktorda açılan fayl (nisbi yol)."""
+    return "mənbə/Əsas.forma" if növ == "desktop" else "əsas.alq"
+
+
+def _cli_şablonu(növ: str, ad: str) -> dict[str, str]:
+    import tempfile
+    from pathlib import Path
+    from alqor import layihe
+    with tempfile.TemporaryDirectory(prefix="alqor-sablon-") as t:
+        kök = Path(t) / "l"
+        layihe.yarat(kök, ad, növ)
+        return {y.relative_to(kök).as_posix(): y.read_text(encoding="utf-8")
+                for y in sorted(kök.rglob("*")) if y.is_file()}
