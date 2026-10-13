@@ -33,7 +33,8 @@ class İcraçı:
     def __init__(self, çıxış=None, giriş=None):
         from .kitabxana import qlobal_mühit
         self.qlobal = qlobal_mühit(self)
-        self.çıxış = çıxış or (lambda s: print(s))
+        # Bir yazı ilə (mətn + sətir sonu): paralel `gözlə`-də sətirlər qarışmasın
+        self.çıxış = çıxış or (lambda s: print(s + "\n", end=""))
         self.giriş = giriş or input
         self.proqram_arqumentləri: list[str] = []
         # Əsas skriptin qovluğu — şablonlar və nisbi yollar buna görə

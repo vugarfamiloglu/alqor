@@ -1649,7 +1649,7 @@ class Brauzer(unittest.TestCase):
         p.click('.menyu-qutu .m-element:has-text("Klaviatura qısayolları")')
         d = p.locator("#dialoq")
         d.wait_for(state="visible")
-        başlıqlar = d.locator(".qısayollar h4").all_text_contents()
+        başlıqlar = d.locator(".qısayol-cədvəli h4").all_text_contents()
         for ad in ("Fayl", "Redaktə", "Debaq", "Kömək"):
             self.assertIn(ad, başlıqlar)
         saxla = d.locator('.qısayol:has-text("Saxla")').first
@@ -1675,6 +1675,45 @@ class Brauzer(unittest.TestCase):
         if os.environ.get("ALQOR_EKRAN"):
             d.screenshot(path=os.environ["ALQOR_EKRAN"])
         p.click("#dialoq-tamam")
+
+    def test_brauzer_kontekst_menyusu_heç_yerdə_açılmır(self):
+        """Sağ klik — həmişə Studio-nun menyusu (brauzerinki yox)."""
+        p = self.səhifə
+        p.wait_for_selector("#xos-geldin:not([hidden])")
+
+        def sağ_klik(seçici):
+            # Brauzer menyusu yalnız `preventDefault` olmayanda açılır
+            return p.evaluate("""(s) => {
+                const el = document.querySelector(s);
+                const r = el.getBoundingClientRect();
+                const h = new MouseEvent("contextmenu", {bubbles: true, cancelable: true,
+                    clientX: r.left + 5, clientY: r.top + 5, button: 2});
+                return !el.dispatchEvent(h);
+            }""", seçici)
+
+        def menyu_mətni():
+            m = p.locator(".menyu-qutu").last
+            m.wait_for(state="visible")
+            t = m.inner_text()
+            p.keyboard.press("Escape")
+            return t
+
+        # Xoş gəldin ekranı: boş yer, şablon, fayl
+        self.assertTrue(sağ_klik("#xos-geldin .xoş-qutu h3"))
+        t = menyu_mətni()
+        for ad in ("Yeni fayl", "Yeni forma", "Yeni layihə", "haqqında"):
+            self.assertIn(ad, t)
+        self.assertTrue(sağ_klik('#sablonlar [data-sablon="desktop"]'))
+        self.assertIn("layihəsi yarat", menyu_mətni())
+        self.assertTrue(sağ_klik("#son-fayllar [data-ac]"))
+        self.assertIn("Aç və işlət", menyu_mətni())
+        # Giriş sahəsi: öz kəs / kopyala / yapışdır menyusu
+        p.click('[data-panel="palet"]')
+        self.assertTrue(sağ_klik("#palet-axtar"))
+        self.assertIn("Yapışdır", menyu_mətni())
+        # Status sətri kimi menyusuz yer
+        self.assertTrue(sağ_klik("body"))
+        self.assertIn("Əmr palitrası", menyu_mətni())
 
     def test_menyu_sətri(self):
         p = self.səhifə

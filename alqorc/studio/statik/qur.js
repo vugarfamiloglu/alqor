@@ -445,7 +445,7 @@ function qısayollarıGöstər() {
   }
   const sıra = [...new Set(QISAYOL_QRUPLARI.map(([, a]) => a)), "Digər"];
   const k = document.createElement("div");
-  k.className = "qısayollar";
+  k.className = "qısayol-cədvəli";
   for (const ad of sıra) {
     const əmrlər = qruplar.get(ad);
     if (!əmrlər) continue;
@@ -627,6 +627,62 @@ $("#cixis").addEventListener("contextmenu", (h) => {
     { ad: "Hamısını kopyala", ikon: "kopyala", işlə: () => mətniKopyala($("#cixis").textContent) },
     "-", "işlət.çıxışıTəmizlə",
   ]);
+});
+
+// Brauzerin öz menyusu Studio-da heç yerdə açılmır: xüsusi menyusu olmayan
+// yerlərdə (xoş gəldin ekranı, panellər, dialoqlar, giriş sahələri) Studio-nun
+// menyusu. `window`-da — sahələrin və `document`-in öz işləyicilərindən sonra.
+function sahəMenyusu(el) {
+  const yazılır = !el.readOnly && !el.disabled;
+  const seçilib = () => el.selectionStart !== el.selectionEnd;
+  const seçilmiş = () => el.value.slice(el.selectionStart, el.selectionEnd);
+  const qoy = (m) => { el.focus(); el.setRangeText(m, el.selectionStart, el.selectionEnd, "end");
+    el.dispatchEvent(new Event("input", { bubbles: true })); };
+  return [
+    { ad: "Kəs", ikon: "kəs", qısayol: "Ctrl+X", aktiv: () => yazılır && seçilib(),
+      işlə: () => { mətniKopyala(seçilmiş(), "Kəsildi"); qoy(""); } },
+    { ad: "Kopyala", ikon: "kopyala", qısayol: "Ctrl+C", aktiv: seçilib, işlə: () => mətniKopyala(seçilmiş()) },
+    { ad: "Yapışdır", ikon: "yapışdır", qısayol: "Ctrl+V", aktiv: () => yazılır,
+      işlə: async () => { try { qoy(await navigator.clipboard.readText()); } catch (_) { bildir("Bufer əlçatan deyil — Ctrl+V", "xəta"); } } },
+    "-",
+    { ad: "Hamısını seç", qısayol: "Ctrl+A", işlə: () => { el.focus(); el.select(); } },
+  ];
+}
+
+function xoşGəldinMenyusu(h) {
+  const ş = h.target.closest("[data-sablon]");
+  const f = h.target.closest("[data-ac]");
+  return [
+    ...(ş ? [{ ad: `«${ş.querySelector("b")?.textContent || ş.dataset.sablon}» layihəsi yarat…`, ikon: "fayl-yeni",
+      işlə: () => ş.click() }, "-"] : []),
+    ...(f ? [{ ad: "Aç", ikon: "fayl", işlə: () => faylıAç(f.dataset.ac).catch(xəta) },
+      { ad: "Aç və işlət", ikon: "işlət", işlə: async () => { await faylıAç(f.dataset.ac); işlət(); } },
+      { ad: "Yolu kopyala", ikon: "kopyala", işlə: () => mətniKopyala(f.dataset.ac, "Yol kopyalandı") }, "-"] : []),
+    "fayl.yeni", "fayl.yeniForma", "fayl.yeniLayihə", "fayl.yeniQovluq", "-",
+    "keç.fayl", "görünüş.palitra", "-",
+    { ad: "Kömək", ikon: "kitab", alt: ["kömək.ilk", "kömək.dərslik", "kömək.nümunələr", "kömək.sənədlər", "kömək.qısayollar"] },
+    "görünüş.tema", "-", "kömək.haqqında",
+  ];
+}
+
+window.addEventListener("contextmenu", (h) => {
+  if (h.defaultPrevented) return;
+  h.preventDefault();
+  const el = h.target instanceof Element ? h.target : h.target.parentElement;
+  if (!el) return;
+  const sahə = el.closest("input:not([type=checkbox]):not([type=radio]):not([type=range]), textarea");
+  let elementlər;
+  if (sahə && sahə !== R.ta) elementlər = sahəMenyusu(sahə);
+  else if (el.closest("#xos-geldin")) elementlər = xoşGəldinMenyusu(h);
+  else {
+    const seç = getSelection().toString();
+    elementlər = [
+      ...(seç ? [{ ad: "Kopyala", ikon: "kopyala", qısayol: "Ctrl+C", işlə: () => mətniKopyala(seç) }, "-"] : []),
+      "görünüş.palitra", "keç.fayl", "-", "fayl.yeni", "fayl.yeniForma", "-",
+      "görünüş.tema", "görünüş.xoşGəldin", "kömək.qısayollar", "-", "kömək.haqqında",
+    ];
+  }
+  KontekstMenyu.göstər(h.clientX, h.clientY, elementlər);
 });
 
 // ══ Klaviatura ═══════════════════════════════════════════════════════
