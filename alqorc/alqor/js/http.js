@@ -17,7 +17,7 @@ const METODLAR = {
   "GET": "GET", "POST": "POST", "PUT": "PUT", "PATCH": "PATCH",
   "DELETE": "DELETE", "HEAD": "HEAD", "OPTIONS": "OPTIONS",
 };
-const AGENT = "Alqor-http/2.3.0";
+const AGENT = "Alqor-http/2.3.1";
 const hx = (t, m) => xəta(t, m, "ALQ-R010");
 
 function urlYoxla(url) {

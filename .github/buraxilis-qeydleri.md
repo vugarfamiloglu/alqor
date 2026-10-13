@@ -1,10 +1,21 @@
-## Alqor 2.3
+## Alqor 2.3.1
 
 Azərbaycan dilində proqramlaşdırma dili: dil, **Alqor Studio** IDE, paket meneceri,
 linter, formatlayıcı, debaqçı və oflayn sənədlər. Hər quraşdırıcıda Python daxildir,
 əlavə heç nə lazım deyil.
 
-### Yeniliklər
+### 2.3.1-də düzəlişlər
+
+- **Studio: öz kontekst menyusu hər yerdə.** Sağ klik artıq heç yerdə brauzerin menyusunu açmır:
+  xoş gəldin ekranında yeni fayl, forma və layihə, şablondan layihə, faylı açmaq və işlətmək;
+  giriş sahələrində kəs, kopyala, yapışdır; qalan yerlərdə əmr palitrası, tema və kömək
+- **Forma dizayneri:** `.forma` açıq olanda soldakı «Elementlər» paleti formaya obyekt əlavə edir
+  (əvvəl forma faylına kod yazıb onu pozurdu); önbaxış formanı öz kodu ilə göstərir və dəyişəndə yenilənir
+- **Xoş gəldin ekranı:** «Qısayollar» siyahısının düzülüşü düzəldi
+- **Windows:** `yol.qovluq` da digər `yol` funksiyaları kimi `/` qaytarır
+- Paralel `gözlə` zamanı `yaz` sətirlərinin qarışması aradan qalxdı
+
+## 2.3-ün yenilikləri
 
 **Vizual forma dizayneri (Delphi üslubu)**
 - Pəncərəni `.forma` faylında sürüklə-burax ilə qurun, kod `.alq` faylında qalır
