@@ -1311,7 +1311,8 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
         "birləşdir": D("birləşdir",
                        lambda *p: str(Path(*p)).replace("\\", "/"), 1),
         "mütləq": D("mütləq", lambda p: str(Path(p).resolve()), 1, 1),
-        "qovluq": D("qovluq", lambda p: str(Path(p).parent), 1, 1),
+        "qovluq": D("qovluq", lambda p: str(Path(p).parent).replace(
+            "\\", "/"), 1, 1),
         "fayl": D("fayl", lambda p: Path(p).name, 1, 1),
         "ad": D("ad", lambda p: Path(p).stem, 1, 1),
         "uzantı": D("uzantı", lambda p: Path(p).suffix, 1, 1),
