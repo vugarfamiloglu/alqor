@@ -305,3 +305,35 @@ class ManifestSınağı(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HTMLCavabSınağı(unittest.TestCase):
+    """Depo ünvanında alqorhub yox, adi veb sayt varsa — aydın xəta."""
+
+    def test_html_qaytaran_ünvan(self):
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        class Sayt(BaseHTTPRequestHandler):
+            def log_message(self, *a):
+                pass
+
+            def do_GET(self):
+                b = b"<!DOCTYPE html><html><title>sayt</title></html>"
+                self.send_response(404)
+                self.send_header("Content-Type", "text/html")
+                self.send_header("Content-Length", str(len(b)))
+                self.end_headers()
+                self.wfile.write(b)
+
+        s = ThreadingHTTPServer(("127.0.0.1", 0), Sayt)
+        threading.Thread(target=s.serve_forever, daemon=True).start()
+        try:
+            d = P.Depo(f"http://127.0.0.1:{s.server_port}/hub")
+            with self.assertRaises(P.PMXətası) as x:
+                d.axtar("test")
+            m = str(x.exception)
+            self.assertIn("alqorhub API-si tapılmadı", m)
+            self.assertIn("/hub/api/", m)
+            self.assertNotIn("<!DOCTYPE", m)
+        finally:
+            s.shutdown()

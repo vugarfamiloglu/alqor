@@ -117,6 +117,13 @@ class Depo:
         try:
             d = json.loads(b or b"null")
         except ValueError:
+            if b.lstrip()[:1] == b"<":
+                # JSON yox, HTML — ünvanda veb sayt var, alqorhub API-si yox
+                raise PMXətası(
+                    f"{self.ünvan} ünvanında alqorhub API-si tapılmadı: "
+                    f"{self._url(yol).split('?')[0]} JSON yox, HTML səhifə "
+                    f"qaytardı (HTTP {kod}). Depo ünvanını yoxlayın və ya "
+                    f"serverdə `alqor hub` işlədin (spes. § 8.9)", "ALQ-M001")
             d = {"xəta": b[:200].decode("utf-8", "replace")}
         if kod not in gözlə:
             mesaj = d.get("xəta") if isinstance(d, dict) else None
