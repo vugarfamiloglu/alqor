@@ -143,11 +143,12 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
     WASM qurulması ✅ (`alqor-rs/wasm/`). Qalır: veb, pəncərə, vidjet və
     əlavə standart modullar.
 
-### Ekosistem (Vüqar Familoğlu özü hazırlayır) ⏸
+### Ekosistem (Vüqar Familoğlu özü hazırlayır — ayrıca sessiyada) 🟡
 - Sayt: [vuqar.pro/alqor](https://vuqar.pro/alqor) — xəta mesajlarındakı
   linklər `vuqar.pro/alqor/xeta/<KOD>` formasındadır.
-- Paket deposu: [vuqar.pro/hub](https://vuqar.pro/hub) — `alqorpm`-in
-  standart deposu; server `alqor hub --önək /hub` (spes. § 8.9).
+- Paket deposu: [vuqar.pro/hub](https://vuqar.pro/hub) ✅ hazırdır —
+  `alqorpm`-in standart deposu (spes. § 8.9). Növbəti iş: depoya ilk
+  faydalı paketlərin yüklənməsi.
 
 ### Vizual forma dizayneri (RAD) ✅
 - `.forma` faylları (spes. § 12.6): obyektlər, xassələr, hadisələr;
