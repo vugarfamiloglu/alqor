@@ -1,0 +1,135 @@
+gətir kodlaşdırma
+yaz(kodlaşdırma.base64Kodla("Salam"), kodlaşdırma.base64AçMətn("U2FsYW0="), kodlaşdırma.base64Kodla([1, 2, 255]))
+yaz(kodlaşdırma.urlKodla("ə ş/?&"), kodlaşdırma.yolKodla("a b/c"), kodlaşdırma.urlAç("%C9%99%20x%zz"))
+yaz(kodlaşdırma.sorğuKodla({"q": "çay", "s": 2, "b": doğru, "l": [1, 2], "n": boş, "f": 2.5}))
+yaz(kodlaşdırma.sorğuAç("?q=%C3%A7ay&s=2&s=3&boş=&x"))
+yaz(kodlaşdırma.slug("Şəki xanlığı!"), kodlaşdırma.slug("  İlk -- Söz  ", "_"))
+yaz(kodlaşdırma.htmlQaç("<a href='x'>&\"</a>"), kodlaşdırma.htmlAç("&lt;b&gt; &amp; &#65; &#x42; &copy; &foo;"))
+yaz(kodlaşdırma.hexKodla("az"), kodlaşdırma.hexAç("61 7a"), kodlaşdırma.crc32("salam"), kodlaşdırma.baytlar("ə"))
+yaz(kodlaşdırma.base64URLKodla("??>>"), kodlaşdırma.base64URLAç("Pz8-Pg"), kodlaşdırma.utf8Kodla("ə"), kodlaşdırma.utf8Aç([200, 153]))
+cəhd et
+    kodlaşdırma.base64Aç("@@@")
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+cəhd et
+    kodlaşdırma.hexAç("abc")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    kodlaşdırma.utf8Aç([255])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+gətir şifrə
+yaz(şifrə.heş("salam"), şifrə.heş("salam", "md5"), şifrə.heş("salam", alqoritm: "SHA-1"))
+hər a üçün şifrə.alqoritmlər içində
+    yaz(a, şifrə.heş("abc", a))
+son
+yaz(şifrə.HMAC("mesaj", "açar"), şifrə.HMAC("mesaj", "açar", "sha512"))
+cəhd et
+    şifrə.heş("x", "sha9")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən h = şifrə.parolHeş("gizli123")
+yaz(h.başlayır("$scrypt$ln=15,r=8,p=1$"), şifrə.parolYoxla("gizli123", h), şifrə.parolYoxla("yanlış", h), şifrə.parolYoxla("x", "pis"))
+yaz(şifrə.parolYoxla("gizli123", "$scrypt$ln=4,r=8,p=1$c2FsdA$NO3e7nqf8NeA2Zp76Dzs7hR6uMPkjqrGqeLLsePbuEY"))
+yaz(şifrə.parolAçarı("p", "duz").uzunluq())
+dəyişən açar = şifrə.açarYarat()
+dəyişən ş = şifrə.şifrələ("məxfi mətn", açar)
+yaz(uzunluq(ş), şifrə.şifrəAçMətn(ş, açar))
+cəhd et
+    şifrə.şifrəAç(ş, şifrə.açarYarat())
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    şifrə.şifrəAç(ş, "açar")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən t = şifrə.tokenYarat({"id": 5, "ad": "Əli"}, "gizli")
+yaz(t)
+yaz(şifrə.tokenOxu(t, "gizli"))
+yaz(şifrə.tokenYarat({"id": 5}, "gizli", alqoritm: "HS512"))
+cəhd et
+    şifrə.tokenOxu(t, "başqa")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    şifrə.tokenOxu(şifrə.tokenYarat({"a": 1}, "k", müddət: -10), "k")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(şifrə.tokenOxu(şifrə.tokenYarat({"a": 1}, "k", müddət: 100), "k")["a"])
+yaz(uzunluq(şifrə.UUID()), uzunluq(şifrə.təsadüfiMətn(10)), uzunluq(şifrə.təsadüfiBayt()), şifrə.bərabərdir("a", "a"))
+=====
+gətir sıxma
+dəyişən g = sıxma.gzipSıx("salam " * 100)
+yaz(sıxma.gzipAçMətn(g), uzunluq(g) < 100)
+yaz(sıxma.zlibAç(sıxma.zlibSıx("xyz")))
+cəhd et
+    sıxma.gzipAç("salam")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    sıxma.zlibAç("salam")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+gətir sıxma
+dəyişən q = yol.birləşdir(qovluq.müvəqqəti(), "alqor-sixma-sinaq")
+qovluq.silDərin(q)
+qovluq.yaratDərin(q)
+qovluq.dəyiş(q)
+qovluq.yaratDərin("layihə/alt")
+fayl.yaz("layihə/a.txt", "salam")
+fayl.yaz("layihə/alt/b.txt", "dünya " * 50)
+fayl.yaz("tək.txt", "tək fayl")
+yaz(sıxma.zipYarat("arxiv.zip", ["layihə", "tək.txt"]))
+hər f üçün sıxma.zipSiyahı("arxiv.zip") içində
+    yaz(f["ad"], f["ölçü"], f["qovluq"])
+son
+yaz(sıxma.zipAç("arxiv.zip", "çıxış/"))
+yaz(fayl.oxu("çıxış/layihə/alt/b.txt").uzunluq(), sıxma.zipOxu("arxiv.zip", "tək.txt"))
+cəhd et
+    sıxma.zipOxu("arxiv.zip", "yox.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    sıxma.zipSiyahı("tək.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    sıxma.zipSiyahı("yoxdur.zip")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(sıxma.tarYarat("e.tar.gz", ["layihə"]), sıxma.tarYarat("e.tar", "tək.txt"))
+yaz(sıxma.tarSiyahı("e.tar.gz"))
+yaz(sıxma.tarSiyahı("e.tar"))
+yaz(sıxma.tarAç("e.tar.gz", "bərpa"))
+yaz(fayl.oxu("bərpa/layihə/a.txt"))
+cəhd et
+    sıxma.tarSiyahı("tək.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(sıxma.faylSıx("./tək.txt"))
+fayl.sil("tək.txt")
+yaz(sıxma.faylAç("tək.txt.gz"), fayl.oxu("tək.txt"))
+cəhd et
+    sıxma.faylAç("tək.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+qovluq.dəyiş("/")
+qovluq.silDərin(q)

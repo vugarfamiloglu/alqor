@@ -99,7 +99,7 @@ fn yuvarla(x: f64) -> i64 {
 }
 
 fn obyekt(tip: &'static str, üzvlər: Vec<(&'static str, D)>, mətn: Option<Box<dyn Fn() -> String>>) -> D {
-    D::Obyekt(Rc::new(Obyekt { tip, üzvlər: üzvlər.into_iter().collect::<IndexMap<_, _, Fx>>(), mətn }))
+    D::Obyekt(Rc::new(Obyekt { tip, üzvlər: üzvlər.into_iter().collect::<IndexMap<_, _, Fx>>(), mətn, veri: None }))
 }
 
 struct İrəliləyiş {
