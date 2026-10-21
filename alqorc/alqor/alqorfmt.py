@@ -479,6 +479,16 @@ def _qur(a: _Ayrılmış, ascii_düzəlt: bool,
     return "\n".join(çıxış) + "\n", ascii_say
 
 
+def _python_prefiksidir(tokenlər: list[Token], i: int) -> bool:
+    """`gətir python:` + `i` tokeni (§ 8.14)?"""
+    if i < 3:
+        return False
+    ə, p, g = tokenlər[i - 1], tokenlər[i - 2], tokenlər[i - 3]
+    return (ə.növ is Növ.OP and ə.dəyər == ":" and p.növ is Növ.AD
+            and p.dəyər == "python" and g.növ is Növ.ACAR
+            and g.dəyər == "gətir")
+
+
 def _sətri_qur(sətir: str, sətir_başı: int, indekslər: list[int],
                tokenlər: list[Token], m: str, ascii_düzəlt: bool,
                boşluqlar: bool, sayğac: list[int]) -> str:
@@ -509,7 +519,9 @@ def _sətri_qur(sətir: str, sətir_başı: int, indekslər: list[int],
             hissələr.append(mətn)
         else:
             orijinal = m[son_ofset:b]
-            if boşluqlar and əvvəlki is not None and "\n" not in orijinal:
+            if boşluqlar and _python_prefiksidir(tokenlər, i):
+                ara = ""                   # `gətir python:numpy` bitişik
+            elif boşluqlar and əvvəlki is not None and "\n" not in orijinal:
                 ara = _arasında(əvvəlki, t, əvvəlkindən_əvvəl, orijinal)
             else:
                 ara = orijinal

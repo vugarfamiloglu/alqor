@@ -782,12 +782,14 @@ class İdxal(Cümlə):
     `gətir riyaziyyat.{kök, Pİ}`
     `gətir riyaziyyat.*`
     `gətir "./yerli.alq" kimi y`
+    `gətir python:numpy kimi np`       (Python kitabxanası, § 8.14)
     """
     yol: list[str]
     mətn_yolu: str | None = None       # `"./fayl.alq"` forması
     ləqəb: str | None = None
     elementlər: list[İdxalElementi] = field(default_factory=list)
     hamısı: bool = False               # `.*`
+    python: bool = False               # `python:` prefiksi
 
 
 @dataclass

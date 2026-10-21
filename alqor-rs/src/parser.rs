@@ -430,7 +430,14 @@ impl<'a> Parser<'a> {
         let yer = self.al().yer;
         let mut mətn_yolu = None;
         let mut yol = vec![];
-        if self.növ(0) == Növ::Mətn {
+        // `gətir python:numpy` — Python kitabxanası (§ 8.14); `python`
+        // yalnız ardınca `:` gələndə prefiksdir
+        let python = self.növ(0) == Növ::Ad && self.bax(0).s == "python" && self.op_i(1, &[":"]);
+        if python {
+            self.al();
+            self.al();
+        }
+        if !python && self.növ(0) == Növ::Mətn {
             mətn_yolu = Some(self.al().s);
         } else {
             yol.push(self.tələb_ad("modul adı")?);
@@ -465,7 +472,7 @@ impl<'a> Parser<'a> {
             ləqəb = Some(self.tələb_ad("ləqəb")?);
         }
         self.cümlə_sonu()?;
-        Ok(Cümlə::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı })
+        Ok(Cümlə::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı, python })
     }
 
     fn ixrac(&mut self) -> N<Cümlə> {

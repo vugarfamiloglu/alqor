@@ -353,7 +353,16 @@ class Parser:
 
         mətn_yolu = None
         yol: list[str] = []
-        if self._bax().növ is Növ.METN:
+        # `gətir python:numpy` — Python kitabxanası (§ 8.14). `python`
+        # kontekstli sözdür: yalnız ardınca `:` gələndə prefiksdir.
+        python = False
+        if (self._bax().növ is Növ.AD and self._bax().dəyər == "python"
+                and self._bax(1).növ is Növ.OP
+                and self._bax(1).dəyər == ":"):
+            self._al()
+            self._al()
+            python = True
+        if not python and self._bax().növ is Növ.METN:
             mətn_yolu = self._al().dəyər
         else:
             yol.append(self._tələb_ad("modul adı"))
@@ -395,7 +404,8 @@ class Parser:
             ləqəb = self._tələb_ad("ləqəb")
 
         self._cümlə_sonu()
-        return A.İdxal(yer, yol, mətn_yolu, ləqəb, elementlər, hamısı)
+        return A.İdxal(yer, yol, mətn_yolu, ləqəb, elementlər, hamısı,
+                       python)
 
     def _ixrac(self) -> A.Cümlə:
         yer = self._al().yer                     # `ixrac et`

@@ -296,7 +296,7 @@ pub enum Cümlə {
     DayanNöqtəsi(Yer),
     Global(Yer, Vec<String>),
     İdxal { yer: Yer, yol: Vec<String>, mətn_yolu: Option<String>, ləqəb: Option<String>,
-            elementlər: Vec<İdxalElementi>, hamısı: bool },
+            elementlər: Vec<İdxalElementi>, hamısı: bool, python: bool },
     İxracSiyahısı(Yer),
     Başlanğıc(Yer, Gövdə),
     Bitiş(Yer, Gövdə),
