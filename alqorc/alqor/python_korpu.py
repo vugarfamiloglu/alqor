@@ -375,6 +375,12 @@ class PythonObyekti:
                               slice(b, s)))
 
     # ── Dövr, üzvlük, uzunluq ─────────────────────────────────────────
+    @property
+    def alqor_lüğətdir(self) -> bool:
+        """`hər a, d üçün sayğac içində` — Mapping lüğət kimi gəzilir."""
+        from collections.abc import Mapping
+        return isinstance(self.obyekt, Mapping)
+
     def alqor_iterasiya(self, yer):
         try:
             it = iter(self.obyekt)
@@ -476,3 +482,129 @@ class PythonFunksiyası(PythonObyekti, Çağırılan):
 
     __hash__ = PythonObyekti.__hash__
     __eq__ = PythonObyekti.__eq__
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Paket idarəsi — `alqor python qur | siyahı | sil`
+# ═══════════════════════════════════════════════════════════════════════
+
+# Dəyər alan pip seçimləri: `--find-links Q` → hər ikisi pip-ə ötürülür
+_PIP_DƏYƏRLİ = {"-f", "--find-links", "-i", "--index-url",
+                "--extra-index-url", "--platform", "--python-version",
+                "--implementation", "--abi", "--only-binary", "--no-binary",
+                "-c", "--constraint", "-r", "--requirement", "--proxy",
+                "--trusted-host", "--cert", "--timeout", "--retries"}
+
+
+class PaketXətası(Exception):
+    pass
+
+
+def arqumentləri_ayır(arqumentlər: list[str]) -> tuple[list[str], list[str]]:
+    """`[paket..., pip seçimləri...]` → (paketlər, pip seçimləri)."""
+    paketlər: list[str] = []
+    seçimlər: list[str] = []
+    i = 0
+    while i < len(arqumentlər):
+        a = arqumentlər[i]
+        if a == "--":
+            seçimlər.extend(arqumentlər[i + 1:])
+            break
+        if a.startswith("-"):
+            seçimlər.append(a)
+            if a in _PIP_DƏYƏRLİ and i + 1 < len(arqumentlər):
+                seçimlər.append(arqumentlər[i + 1])
+                i += 1
+        else:
+            paketlər.append(a)
+        i += 1
+    return paketlər, seçimlər
+
+
+def pip_hazırla(çıxış=print) -> None:
+    """pip yoxdursa `ensurepip` ilə quraşdırmağa çalışır."""
+    import importlib.util
+    import subprocess
+    if importlib.util.find_spec("pip") is not None:
+        return
+    if importlib.util.find_spec("ensurepip") is not None:
+        çıxış("… pip tapılmadı — `ensurepip` ilə quraşdırılır")
+        r = subprocess.run([sys.executable, "-m", "ensurepip",
+                            "--default-pip"], capture_output=True, text=True)
+        importlib.invalidate_caches()
+        if r.returncode == 0 and importlib.util.find_spec("pip") is not None:
+            return
+    raise PaketXətası(
+        f"pip tapılmadı ({sys.executable}). Quraşdırın: "
+        f"`{Path(sys.executable).name} -m ensurepip --upgrade` və ya "
+        "əməliyyat sisteminin `python3-pip` paketi")
+
+
+def paket_qur(qovluq: Path, paketlər: list[str],
+              seçimlər: list[str] | None = None, çıxış=print) -> int:
+    """`pip install --target python_paketlər/ ...` — pip-in çıxış kodu."""
+    import subprocess
+    pip_hazırla(çıxış)
+    qovluq.mkdir(parents=True, exist_ok=True)
+    əmr = [sys.executable, "-m", "pip", "install", "--target", str(qovluq),
+           "--upgrade", "--disable-pip-version-check", "--no-input",
+           *(seçimlər or []), *paketlər]
+    return subprocess.run(əmr).returncode
+
+
+def _norm(ad: str) -> str:
+    import re
+    return re.sub(r"[-_.]+", "-", ad).lower()
+
+
+def _paylamalar(qovluq: Path):
+    from importlib import metadata
+    if not qovluq.is_dir():
+        return []
+    return [d for d in metadata.distributions(path=[str(qovluq)])
+            if d.metadata["Name"]]
+
+
+def paket_siyahısı(qovluq: Path) -> list[tuple[str, str]]:
+    """Quraşdırılmış paketlər: [(ad, versiya)] — əlifba sırası ilə."""
+    return sorted({(d.metadata["Name"], d.version)
+                   for d in _paylamalar(qovluq)},
+                  key=lambda c: _norm(c[0]))
+
+
+def paket_sil(qovluq: Path, adlar: list[str]) -> list[str]:
+    """
+    `pip uninstall` `--target` qovluğunu tanımır — paketin `RECORD`
+    siyahısındakı faylları özümüz silirik. Silinən adları qaytarır.
+    """
+    import shutil
+    istənən = {_norm(a) for a in adlar}
+    silinən: list[str] = []
+    kök = qovluq.resolve()
+    for d in _paylamalar(qovluq):
+        ad = d.metadata["Name"]
+        if _norm(ad) not in istənən:
+            continue
+        qovluqlar: set[Path] = set()
+        for f in d.files or []:
+            yol = (kök / str(f)).resolve()
+            try:
+                yol.relative_to(kök)          # qovluqdan kənara çıxmasın
+            except ValueError:
+                continue
+            if yol.is_file() or yol.is_symlink():
+                yol.unlink()
+            qovluqlar.update(p for p in yol.parents
+                             if p != kök and kök in p.parents)
+        for q in sorted(qovluqlar, key=lambda p: len(p.parts), reverse=True):
+            if q.name == "__pycache__":
+                shutil.rmtree(q, ignore_errors=True)
+            try:
+                q.rmdir()                     # yalnız boşdursa
+            except OSError:
+                pass
+        info = getattr(d, "_path", None)
+        if info is not None and Path(info).exists():
+            shutil.rmtree(info, ignore_errors=True)
+        silinən.append(ad)
+    return silinən
