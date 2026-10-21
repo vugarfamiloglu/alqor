@@ -641,17 +641,31 @@ class İcraçı:
     def _c_istifadə(self, c: A.İstifadə, m: Mühit) -> None:
         alt = m.alt()
         açıqlar: list[Any] = []
+        xəta: BaseException | None = None
         try:
             for ad, ifadə in c.bağlamalar:
                 dəyər = self._ifadə(ifadə, alt)
-                alt.elan(ad, dəyər)
+                # Kontekst meneceri protokolu (Python `with`, § 8.14)
+                aç = getattr(type(dəyər), "alqor_kontekst_aç", None)
+                bağlanan = aç(dəyər, c.yer) if aç is not None \
+                    else NotImplemented
+                alt.elan(ad, dəyər if bağlanan is NotImplemented
+                         else bağlanan)
                 açıqlar.append(dəyər)
             self._blok(c.gövdə, alt)
+        except BaseException as x:
+            xəta = x
+            raise
         finally:
             for dəyər in reversed(açıqlar):
-                self._bağla_resurs(dəyər, c.yer)
+                self._bağla_resurs(dəyər, c.yer, xəta)
 
-    def _bağla_resurs(self, dəyər: Any, yer: Yer | None) -> None:
+    def _bağla_resurs(self, dəyər: Any, yer: Yer | None,
+                      xəta: BaseException | None = None) -> None:
+        bağla_k = getattr(type(dəyər), "alqor_kontekst_bağla", None)
+        if bağla_k is not None:
+            bağla_k(dəyər, xəta, yer)
+            return
         if isinstance(dəyər, Nümunə):
             metod = dəyər.sinif.metod_tap("bağla")
             if metod is not None:
@@ -854,6 +868,9 @@ class İcraçı:
         m.elan(c.ad, Modul(c.ad, dict(alt.adlar)))
 
     def _c_idxal(self, c: A.İdxal, m: Mühit) -> None:
+        if c.python:
+            self._python_idxal(c, m)
+            return
         from .kitabxana import modul_yüklə
         ad = c.mətn_yolu or ".".join(c.yol)
         modul = modul_yüklə(self, ad, c.yer)
@@ -872,6 +889,22 @@ class İcraçı:
                 m.elan(e.ləqəb or e.ad, modul.üzvlər[e.ad])
             return
         m.elan(c.ləqəb or (c.yol[-1] if c.yol else modul.ad), modul)
+
+    def _python_idxal(self, c: A.İdxal, m: Mühit) -> None:
+        """`gətir python:numpy kimi np` (§ 8.14)."""
+        from . import python_korpu as P
+        from .kitabxana import _idxal_bazası
+        ad = ".".join(c.yol)
+        modul = P.modul_yüklə(ad, c.yer, _idxal_bazası(self, c.yer))
+        if c.hamısı:
+            for a, d in P.hamısı(modul).items():
+                m.elan(a, d)
+            return
+        if c.elementlər:
+            for e in c.elementlər:
+                m.elan(e.ləqəb or e.ad, P.üzv(modul, ad, e.ad, c.yer))
+            return
+        m.elan(c.ləqəb or c.yol[-1], modul)
 
     def _c_ixrac_siyahısı(self, c: A.İxracSiyahısı, m: Mühit) -> None:
         pass
@@ -1419,6 +1452,10 @@ class İcraçı:
                             f"lüğətdə `{mətnə(indeks, self)}` açarı yoxdur",
                             yer, "ALQ-R003")
 
+        f = getattr(type(obyekt), "alqor_indeks", None)
+        if f is not None:
+            return f(obyekt, self, indeks, yer)
+
         if isinstance(obyekt, (list, str, tuple, bytes)):
             if not isinstance(indeks, int) or isinstance(indeks, bool):
                 raise AlqorXəta("TipXətası",
@@ -1449,6 +1486,10 @@ class İcraçı:
         if isinstance(obyekt, dict):
             obyekt[indeks] = dəyər
             return
+        f = getattr(type(obyekt), "alqor_indeks_qoy", None)
+        if f is not None:
+            f(obyekt, self, indeks, dəyər, yer)
+            return
         if isinstance(obyekt, list):
             n = len(obyekt)
             i = indeks + n if isinstance(indeks, int) and indeks < 0 \
@@ -1469,6 +1510,11 @@ class İcraçı:
 
     def _e_dilim(self, e: A.Dilim, m: Mühit) -> Any:
         obyekt = self._ifadə(e.obyekt, m)
+        f = getattr(type(obyekt), "alqor_dilim", None)
+        if f is not None:
+            b = None if e.başlanğıc is None else self._ifadə(e.başlanğıc, m)
+            s = None if e.son is None else self._ifadə(e.son, m)
+            return f(obyekt, self, b, s, not e.xaric, e.yer)
         if not isinstance(obyekt, (list, str, tuple, bytes)):
             raise AlqorXəta("TipXətası",
                             f"`{tip_adı(obyekt)}` dilimlənə bilməz", e.yer,
@@ -1820,6 +1866,11 @@ class İcraçı:
             raise
 
     def _çevir(self, dəyər: Any, hədəf: str, yer: Yer | None) -> Any:
+        f = getattr(type(dəyər), "alqor_çevir", None)
+        if f is not None:
+            n = f(dəyər, hədəf, yer)
+            if n is not NotImplemented:
+                return n
         if hədəf == "tam":
             if isinstance(dəyər, bool):
                 return 1 if dəyər else 0
@@ -1928,6 +1979,9 @@ class İcraçı:
                                                 [element], {}, e.yer))
         if isinstance(kolleksiya, dict):
             return element in kolleksiya
+        f = getattr(type(kolleksiya), "alqor_ehtiva", None)
+        if f is not None:
+            return f(kolleksiya, element, e.yer)
         if isinstance(kolleksiya, (list, set, tuple, str, AlqorDiapazon)):
             return element in kolleksiya
         raise AlqorXəta("TipXətası",
@@ -2235,6 +2289,9 @@ class İcraçı:
             return iter(dəyər)
         if isinstance(dəyər, Sadalama):
             return iter([dəyər.variantlar[a] for a in dəyər.sıra])
+        f = getattr(type(dəyər), "alqor_iterasiya", None)
+        if f is not None:
+            return f(dəyər, yer)
         raise AlqorXəta("TipXətası",
                         f"`{tip_adı(dəyər)}` üzərində dövr qurulmur", yer,
                         "ALQ-T009")

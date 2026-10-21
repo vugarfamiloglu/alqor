@@ -261,6 +261,25 @@ class Layihə:
     def sənəd_qovluğu(self) -> Path:
         return self.kök / "sənəd"
 
+    @property
+    def python_asılılıqları(self) -> list[str]:
+        """`[python] asılılıqlar = ["requests>=2"]` (§ 8.14)."""
+        a = self._al("python", "asılılıqlar", [])
+        if isinstance(a, str):
+            return [a]
+        if isinstance(a, dict):              # { requests = ">=2" } forması
+            n = []
+            for ad, v in a.items():
+                v = str(v).strip() if v is not None else ""
+                if v in ("", "*"):
+                    n.append(ad)
+                elif v[0] in "<>=!~":
+                    n.append(ad + v)
+                else:
+                    n.append(f"{ad}=={v}")
+            return n
+        return [str(x) for x in a] if isinstance(a, list) else []
+
 
 def tap(başlanğıc: Path | str = ".") -> Layihə | None:
     """`layihe.alq`-u cari və yuxarı qovluqlarda axtarır."""
@@ -509,7 +528,7 @@ forma Əsas
 son
 '''
 
-_GITIGNORE ="qurma/\nsənəd/\n__pycache__/\n"
+_GITIGNORE = "qurma/\nsənəd/\n__pycache__/\npython_paketlər/\n"
 
 _README = '''\
 # {ad}
