@@ -473,7 +473,9 @@ class İcraçı:
         #   lüğət + 2 bağlama  → (açar, dəyər)
         #   digər + 2+ bağlama → (indeks, element...)
         #   1 bağlama          → element
-        lüğətdir = isinstance(mənbə, dict)
+        # Python `Mapping` proksisi də lüğət kimi (`alqor_lüğətdir`)
+        lüğətdir = isinstance(mənbə, dict) or \
+            bool(getattr(mənbə, "alqor_lüğətdir", False))
         çoxlu = len(c.bağlamalar) >= 2
 
         dayandı = False
@@ -482,8 +484,9 @@ class İcraçı:
                 element = self.gözlə(element, c.yer)
             alt = m.alt()
             if çoxlu and lüğətdir:
-                self._dövr_bağla(c.bağlamalar,
-                                 (element, mənbə[element]), alt, c.yer)
+                dəyər = (mənbə[element] if isinstance(mənbə, dict) else
+                         self._indeks_al(mənbə, element, c.yer))
+                self._dövr_bağla(c.bağlamalar, (element, dəyər), alt, c.yer)
             elif çoxlu:
                 self._bağla(c.bağlamalar[0], indeks, alt, elan=True)
                 qalan = c.bağlamalar[1:]

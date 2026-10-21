@@ -10,6 +10,11 @@ yoxdur; `qur` Python zipapp yaradır:
     ├── alqor/              icra mühiti (lekser, parser, interpretator…)
     └── layihə/             layihənin faylları (mənbə, şablon, statik…)
 
+Layihənin `python_paketlər/` qovluğu (`alqor python qur`, § 8.14) də
+`layihə/`-yə düşür və açıldıqdan sonra `sys.path`-a əlavə olunur. Təmiz
+Python paketləri hər yerdə işləyir; ikili (C uzantılı) təkərlər yalnız
+quraşdırıldıqları platformada (OS + arxitektura + Python versiyası).
+
 İşə salınanda `layihə/` qovluğu bir dəfə keş qovluğuna açılır
 (`~/.cache/alqor/<ad>-<həş>/`; `ALQOR_KES` ilə dəyişdirilir), çünki
 şablonlar, statik fayllar və `gətir "./x.alq"` həqiqi fayl yolu

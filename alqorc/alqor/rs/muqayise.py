@@ -288,8 +288,9 @@ ARQUMENTLƏR = {
     "07-fayl-emali.alq": ["../README.md"],
 }
 
-#  Qrafik/veb mühit tələb edən nümunələr — müqayisə olunmur
-İSTİSNA_SÖZLƏR = ("veb", "pəncərə", "vidjet")
+#  Qrafik/veb mühit tələb edən nümunələr — müqayisə olunmur; Python
+#  kitabxanaları (`gətir python:…`) yalnız Python icraçısındadır
+İSTİSNA_SÖZLƏR = ("veb", "pəncərə", "vidjet", "python")
 
 
 def _mühit() -> dict:

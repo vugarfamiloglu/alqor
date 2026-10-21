@@ -89,6 +89,21 @@ class RustİcraMüqayisəsi(unittest.TestCase):
         pis = M.proqram_işlət(_B, fayllar, çıxış=fərqlər.append)
         self.assertEqual(pis, 0, "\n".join(fərqlər))
 
+    def test_python_kitabxanası_aydın_xəta(self):
+        """`gətir python:…` Rust icraçısında aydın xəta verir (§ 8.14)."""
+        import subprocess
+        with tempfile.TemporaryDirectory() as q:
+            f = Path(q) / "p.alq"
+            f.write_text("gətir python:math\nyaz(math.pi)\n",
+                         encoding="utf-8")
+            r = subprocess.run([str(_B), "işlət", str(f)],
+                               capture_output=True, timeout=60)
+        çıxış = (r.stdout + r.stderr).decode("utf-8", "replace")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("Python kitabxanaları yalnız əsas (Python) "
+                      "icraçısında işləyir", çıxış)
+        self.assertIn("ALQ-M015", çıxış)
+
     def test_icra_parçaları(self):
         fərqlər: list[str] = []
         eyni, cəmi = M.parçalar_işlət(_B, çıxış=fərqlər.append)
