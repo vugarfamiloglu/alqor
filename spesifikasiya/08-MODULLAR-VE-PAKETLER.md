@@ -118,7 +118,7 @@ gətir python:numpy kimi np            // PyPI paketi (`alqor python qur numpy`)
 gətir python:os.path                  // alt modul → `path` adı
 gətir python:math.{sqrt, pi kimi PI}  // seçmə idxal
 ```
-Ətraflı: [§ 8.14](#814-python-kitabxanaları).
+Ətraflı: [§ 8.14](#814-python-kitabxanalari).
 
 ### Şərti idxal
 ```alqor
