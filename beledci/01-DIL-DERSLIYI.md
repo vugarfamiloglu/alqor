@@ -704,7 +704,7 @@ Bir neçə qayda:
 - `layihe.alq`-da `[python] asılılıqlar = ["requests>=2"]` yazsanız,
   arqumentsiz `alqor python qur` hamısını quraşdırır.
 
-Ətraflı: [Spesifikasiya § 8.14](../spesifikasiya/08-MODULLAR-VE-PAKETLER.md#814-python-kitabxanaları).
+Ətraflı: [Spesifikasiya § 8.14](../spesifikasiya/08-MODULLAR-VE-PAKETLER.md#814-python-kitabxanalari).
 
 ---
 
