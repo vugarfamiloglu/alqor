@@ -194,6 +194,8 @@ gətir riyaziyyat kimi r
 gətir riyaziyyat.{kök, Pİ}
 gətir riyaziyyat.{kök kimi k}
 gətir "./yerli.alq" kimi y
+gətir python:numpy kimi np       // Python kitabxanası (alqor python qur numpy)
+gətir python:math.{sqrt, pi}
 
 ixrac et funksiya f() ... son
 ixrac et {a, b}
@@ -282,6 +284,7 @@ alqor söhbət                # REPL
 alqor paketlə --hədəf deb|appimage|flatpak
 alqor yerləşdir --növ docker|systemd|statik
 alqorpm əlavə|sil|yüklə|yenilə|axtar <paket>
+alqor python qur|siyahı|sil [paket]   # Python paketləri → python_paketlər/
 alqorfmt [--yoxla] [--ascii-düzəlt] .
 alqorlint [--düzəlt] .
 ```

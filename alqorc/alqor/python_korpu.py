@@ -189,8 +189,11 @@ def pydən(x: Any, _görülən: dict | None = None) -> Any:
         return x
     if isinstance(x, numbers.Integral) and not isinstance(x, bool):
         return int(x)                    # IntEnum, numpy.int64 …
-    if isinstance(x, float):
-        return float(x)                  # numpy.float64 …
+    if isinstance(x, float) or (isinstance(x, numbers.Real)
+                                and not isinstance(x, numbers.Rational)):
+        return float(x)                  # numpy.float64, numpy.float32 …
+    if t.__name__ == "bool_" and hasattr(x, "item"):
+        return bool(x)                   # numpy.bool_
     if isinstance(x, str) and not hasattr(x, "__dict__"):
         return str(x)
     if t in (list, tuple, dict, set, frozenset):

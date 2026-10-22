@@ -652,6 +652,60 @@ gətir "./riyazi.alq".{kvadrat, Pİ}
 yaz(kvadrat(5))
 ```
 
+### Python kitabxanaları
+
+Alqor istənilən Python kitabxanasını birbaşa idxal edə bilər — `gətir`
+yolunun əvvəlinə `python:` yazın. Python-un standart kitabxanası dərhal
+hazırdır:
+
+```alqor
+gətir python:statistics kimi st
+gətir python:collections.{Counter}
+gətir python:datetime.{date, timedelta}
+
+yaz(st.mean([87, 92, 78, 95]))                // 88.0
+yaz(Counter("azərbaycan").most_common(1))     // [("a", 3)]
+
+dəyişən novruz = date(2025, 3, 20)
+yaz((novruz + timedelta(days: 40)).isoformat())   // adlı arqument → days=40
+```
+
+PyPI paketləri (numpy, requests, pillow …) layihə qovluğunda bir əmrlə
+quraşdırılır — layihənin `python_paketlər/` qovluğuna düşür, sistemə
+toxunmur:
+
+```bash
+alqor python qur requests numpy
+alqor python siyahı
+```
+
+```alqor
+gətir python:numpy kimi np
+gətir python:requests
+
+dəyişən a = np.array([1, 2, 3])
+yaz(a * 2, a.sum())                    // [2 4 6] 12
+
+dəyişən c = requests.get("https://vuqar.pro/alqor", timeout: 5)
+yaz(c.status_code)
+```
+
+Bir neçə qayda:
+
+- `tam`, `onluq`, `mətn`, `siyahı`, `lüğət`… avtomatik Python tiplərinə
+  (və geri) çevrilir; qalan obyektlər (`np.array`, `date`) olduğu kimi
+  işlənir: üzv, metod, indeks, `hər … içində`, operatorlar.
+- Alqor funksiyası Python-a ötürülə bilər:
+  `sorted(sözlər, key: (s) => uzunluq(s))`.
+- Python xətası `PythonXətası` kimi tutulur; `x.pythonTipi` — Python
+  sinfinin adı (`"ValueError"`).
+- Paket yoxdursa xəta nə etməli olduğunuzu deyir:
+  `` `numpy` Python paketi tapılmadı — `alqor python qur numpy` ilə quraşdırın ``.
+- `layihe.alq`-da `[python] asılılıqlar = ["requests>=2"]` yazsanız,
+  arqumentsiz `alqor python qur` hamısını quraşdırır.
+
+Ətraflı: [Spesifikasiya § 8.14](../spesifikasiya/08-MODULLAR-VE-PAKETLER.md#814-python-kitabxanaları).
+
 ---
 
 ## Dərs 15 — Testlər
