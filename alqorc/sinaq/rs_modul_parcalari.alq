@@ -133,3 +133,140 @@ tut x
 son
 qovluq.dəyiş("/")
 qovluq.silDərin(q)
+=====
+gətir csv
+yaz(csv.oxu("ad,bal\nAysel,95\nKamran,88\n"))
+yaz(csv.oxu("ad;bal\r\nAysel;95\r\n\r\nKamran;88", ayırıcı: "avto", çevir: doğru))
+yaz(csv.oxu("ad\tbal\tqeyd\nA\t1\t\nB\t2.5\tdoğru", ayırıcı: "avto", çevir: doğru))
+yaz(csv.oxu("a|b\n1|2\n3|4", ayırıcı: "avto"))
+yaz(csv.oxu("\"x, y\",z\n\"a \"\"q\"\"\",\"çox\nsətir\"\n", başlıq: yanlış))
+yaz(csv.oxu("a,b,c\n1,2\n", çevir: doğru), csv.oxu("a,b\n1,2", çevir: yanlış))
+yaz(csv.oxu("'a';'b'\n'1';'2'", ayırıcı: "avto", başlıq: yanlış))
+yaz(csv.oxu("\"a\";\"b\"\n\"1\";\"2\"", ayırıcı: "avto"))
+yaz(csv.oxu("x,-5,1e3,.5,1.,abc,true,false,yanlış", başlıq: yanlış, çevir: doğru))
+yaz(csv.oxu(""), csv.oxu("\n\n")))
+cəhd et
+    csv.oxu("a,a\n1,2")
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+cəhd et
+    csv.oxu("a\n1,2,3")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu("\"a\"b,c")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu("\"abc")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu("a", ayırıcı: ";;")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(csv.yaz([{"ad": "Aysel", "bal": 95}, {"ad": "Ka,mran", "bal": 88.0, "qeyd": doğru}]))
+yaz(csv.yaz([[1, "a\"b", boş], ["x\ny", 2.5, yanlış]], ayırıcı: ";"))
+yaz(csv.yaz([{"a": 1, "b": 2}], sütunlar: ["b", "a", "c"], başlıq: yanlış))
+yaz(csv.yaz([[""], [], ["a", ""]]))
+yaz(csv.yaz([], bom: doğru).uzunluq(), csv.yaz([{"a": [1, 2]}], bom: doğru))
+cəhd et
+    csv.yaz([1, 2])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.yaz("x")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən q = yol.birləşdir(qovluq.müvəqqəti(), "alqor-csv-sinaq.csv")
+csv.faylYaz(q, [{"ş": "ə", "n": 1}], bom: doğru)
+yaz(csv.faylOxu(q, çevir: doğru))
+fayl.yazBayt(q, [97, 44, 98, 10, 253, 44, 222, 10])
+yaz(csv.faylOxu(q))
+fayl.sil(q)
+cəhd et
+    csv.faylOxu(q)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+gətir toml
+dəyişən m = """
+# şərh
+baslik = "TOML nümunə"
+ad = 'literal \\n'
+eded = 1_000
+hex = 0xDEAD_beef
+okt = 0o755
+bin = 0b1101
+onluq = -3.14e-2
+sonsuz = -inf
+dogru = true
+tarix = 1979-05-27T07:32:00-08:00
+tarix2 = 1979-05-27 00:32:00.999999Z
+gunu = 1979-05-27
+vaxt = 07:32:00.5
+massiv = [ 1, 2, 3, ]
+qarisiq = [[1, 2], ["a", "b"], \{x = 1\}]
+"dırnaq açar" = 1
+a.b.c = 5
+
+[server]
+host = "127.0.0.1"
+port = 8080
+inline = \{ x = 1, y = \{ z = 2 \} \}
+
+[server.alt]
+k = "v"
+
+[[mehsul]]
+ad = "Çəkic"
+
+[[mehsul]]
+ad = "Mismar"
+reng = "boz"
+
+[[mehsul.olcu]]
+en = 1
+"""
+yaz(toml.oxu(m))
+dəyişən səhvlər = ["a = \"\"\"\n  bir\n  iki \\\n   üç\"\"\"\nb = '''\nx''''", "a = ", "a = 1\na = 2", "[a]\n[a]", "a = 1 b", "a = \"x", "[a\nb=1", "x = 2023-02-30", "x = 01",
+    "x = [1, 2", "x = \{a = 1, a = 2\}", "a.b = 1\n[a]\nc=2", "x = \{a=1\}\n[x]", "= 1", "x = \"\\q\"", "x = \"\\uZZZZ\"",
+    "x = 1\n[[x]]", "a = [1]\n[[a]]", "x = 'a\tb'", "x = '''a''''", "x = \"\"\"a\"\"\"\"\"", "[[a]]\n[a]\nb=1", "x = tru", "a = 1 # \u{1}"]
+hər s üçün səhvlər içində
+    yaz(s)
+    cəhd et
+        yaz(toml.oxu(s))
+    tut x
+        yaz(x.tip, x.mesaj, x.kod)
+    son
+son
+yaz(toml.yaz({"ad": "Alqor", "versiya": 2.0, "server": {"port": 8080, "host": "x\"y", "boş": boş}, "s": [1, 2.5, "a"], "b": {"c": {"d": 1}},
+    "boşcədvəl": {}, "məhsul": [{"ad": "a", "x": {"y": 1}}, {"ad": "b"}], "ğ ad": doğru, "inf": -1/0.0, "qt": {"a": 1}}))
+cəhd et
+    toml.yaz([1])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    toml.yaz({"a": [boş]})
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    toml.oxu(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son
