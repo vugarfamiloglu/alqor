@@ -27,6 +27,11 @@ PARÇALAR = Path(__file__).parent / "rs_modul_parcalari.alq"
 ŞƏBƏKƏ_PARÇALARI = Path(__file__).parent / "rs_sebeke_parcalari.alq"
 
 
+class _SəssizServer(ThreadingHTTPServer):
+    def handle_error(self, request, client_address):
+        pass                    # vaxtı bitmiş müştərilər — səs-küy yox
+
+
 class _Əks(BaseHTTPRequestHandler):
     """Sınaq serveri: sorğunu JSON kimi qaytarır (`/əks`), statuslar,
     yönləndirmə, gecikmə, fayl."""
@@ -103,7 +108,7 @@ class RustModulMüqayisəsi(unittest.TestCase):
 
     def test_şəbəkə_parçaları(self):
         """http, şəbəkə, veb — yerli sınaq serveri ilə (internet lazım deyil)."""
-        server = ThreadingHTTPServer(("127.0.0.1", 0), _Əks)
+        server = _SəssizServer(("127.0.0.1", 0), _Əks)
         server.daemon_threads = True
         threading.Thread(target=server.serve_forever, daemon=True).start()
         köhnə = os.environ.get("ALQOR_SINAQ_URL")
@@ -120,6 +125,71 @@ class RustModulMüqayisəsi(unittest.TestCase):
                 os.environ.pop("ALQOR_SINAQ_URL", None)
             else:
                 os.environ["ALQOR_SINAQ_URL"] = köhnə
+
+    def test_veb_server_dinlə(self):
+        """`server.dinlə()` — həqiqi HTTP üzərindən Python və Rust eyni cavab verir."""
+        import socket
+        import subprocess
+        import tempfile
+        import urllib.error
+        import urllib.request
+        q = Path(tempfile.mkdtemp(prefix="alqor-veb-"))
+        (q / "server.alq").write_text(_VEB_SERVERİ, encoding="utf-8")
+
+        def boş_port():
+            with socket.socket() as s:
+                s.bind(("127.0.0.1", 0))
+                return s.getsockname()[1]
+
+        def işlət(əmr):
+            port = boş_port()
+            env = dict(os.environ, PORT=str(port), PYTHONIOENCODING="utf-8")
+            p = subprocess.Popen(əmr + [str(q / "server.alq")], cwd=q, env=env,
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            try:
+                for _ in range(200):
+                    try:
+                        socket.create_connection(("127.0.0.1", port), 0.1).close()
+                        break
+                    except OSError:
+                        time.sleep(0.05)
+                n = []
+                for metod, yol, gövdə in (("GET", "/", None), ("GET", "/salam/%C6%8Fli?x=1", None),
+                                          ("POST", "/json", b'{"a": [1, 2]}'), ("GET", "/yox", None),
+                                          ("DELETE", "/", None), ("GET", "/x", None), ("HEAD", "/", None),
+                                          ("GET", "/xəta", None)):
+                    r = urllib.request.Request(
+                        f"http://127.0.0.1:{port}{urllib.parse.quote(yol, safe='/%?=')}",
+                        data=gövdə, method=metod,
+                        headers={"Content-Type": "application/json"})
+                    try:
+                        c = urllib.request.urlopen(r, timeout=10)
+                    except urllib.error.HTTPError as x:
+                        c = x
+                    b = {k: v for k, v in c.headers.items() if k not in ("Date",)}
+                    n.append((c.status, b, c.read()))
+                return n
+            finally:
+                p.kill()
+                p.communicate()
+
+        import urllib.parse
+        py = işlət([sys.executable, str(M.REPO / "alqorc" / "alqorc.py"), "işlət"])
+        rs = işlət([str(_B), "işlət"])
+        for a, b in zip(py, rs):
+            b[1].pop("Connection", None)
+            self.assertEqual(a, b)
+
+
+_VEB_SERVERİ = """\
+dəyişən s = yeni veb.Server()
+s.al("/", (r) => veb.mətn("Salam!"))
+s.al("/salam/:ad", (r) => {"ad": r.parametr("ad"), "x": r.sorğuParametr("x")})
+s.göndər("/json", (r) => r.json())
+s.al("/x", (r) => veb.mətn("x").kuki("a", "b").başlıq("X-Y", "z"))
+s.al("/xəta", (r) => 1 / 0)
+s.dinlə()
+"""
 
 
 if __name__ == "__main__":
