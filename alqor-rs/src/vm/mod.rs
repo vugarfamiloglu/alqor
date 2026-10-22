@@ -29,6 +29,7 @@ struct Hesabat {
     vm_çağırış: u64,
     ağac_çağırış: u64,
     ağac_adları: Vec<String>,
+    generator_çağırış: u64,
     kök_vm: bool,
 }
 
@@ -78,7 +79,13 @@ fn parametrlər_eynidir(a: &[crate::aac::Parametr], b: &[crate::aac::Parametr]) 
 
 /// Funksiyanın bayt-kodu (VM-də işləyə bilmirsə `None`).
 pub fn kod_tap(f: &Funksiya) -> Option<Rc<Kod>> {
-    if f.generator || !aktiv() {
+    if !aktiv() {
+        return None;
+    }
+    if f.generator {
+        if hesabat_aktiv() {
+            SAY.with(|s| s.borrow_mut().generator_çağırış += 1);
+        }
         return None;
     }
     let açar = gövdə_açarı(&f.gövdə);
@@ -155,15 +162,20 @@ pub fn hesabat_çap() {
     if !hesabat_aktiv() {
         return;
     }
+    if !aktiv() {
+        eprintln!("[vm] söndürülüb — bütün kod ağac icraçısında");
+        return;
+    }
     SAY.with(|s| {
         let s = s.borrow();
         eprintln!(
-            "[vm] yuxarı səviyyə: {} | funksiyalar: VM {}, ağac {} | çağırışlar: VM {}, ağac {}{}",
+            "[vm] yuxarı səviyyə: {} | funksiyalar: VM {}, ağac {} | çağırışlar: VM {}, ağac {}, generator {}{}",
             if s.kök_vm { "VM" } else { "ağac" },
             s.vm_funksiya,
             s.ağac_funksiya,
             s.vm_çağırış,
             s.ağac_çağırış,
+            s.generator_çağırış,
             if s.ağac_adları.is_empty() { String::new() } else { format!(" | ağacda: {}", s.ağac_adları.join(", ")) }
         );
     });

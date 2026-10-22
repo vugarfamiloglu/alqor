@@ -1,6 +1,7 @@
 //! `alqor-rs` — Alqor-un Rust implementasiyası.
 //!
-//!     alqor-rs işlət fayl.alq [-- arq…]
+//!     alqor-rs işlət fayl.alq [--vm yox] [-- arq…]   (`--vm yox` / `ALQOR_VM=0`:
+//!                                       bayt-kod maşını əvəzinə ağac icraçısı)
 //!     alqor-rs tokenlər fayl.alq       (maşın üçün: sətir:sütun NÖV dəyər)
 //!     alqor-rs aac fayl.alq [--diaq]   (AAC-nin kanonik çapı; `--diaq`:
 //!                                       diaqnostikalar da stdout-a, maşın formatında)
@@ -115,6 +116,17 @@ fn işlət_sapda(a: &[String]) -> i32 {
         Some(k) => (a[..k].to_vec(), a[k + 1..].to_vec()),
         None => (a.to_vec(), vec![]),
     };
+    // `--vm yox` / `--vm=yox`: bayt-kod maşınını söndür (ağac icraçısı)
+    let mut öz = öz;
+    if let Some(k) = öz.iter().position(|x| x == "--vm" || x.starts_with("--vm=")) {
+        let dəyər = match öz[k].strip_prefix("--vm=") {
+            Some(v) => v.to_string(),
+            None if k + 1 < öz.len() => öz.remove(k + 1),
+            None => "hə".into(),
+        };
+        öz.remove(k);
+        alqor::vm::aktiv_et(!matches!(dəyər.as_str(), "yox" | "0" | "false" | "xeyr"));
+    }
     let Some(yol) = öz.iter().find(|x| !x.starts_with("--") || *x == "-").cloned() else {
         eprintln!("xəta: `işlət` əmri üçün fayl adı lazımdır");
         return 3;
