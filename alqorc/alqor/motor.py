@@ -29,6 +29,13 @@ from pathlib import Path
 
 MOTORLAR = ("py", "rs", "avto")
 
+# Rust icraçısında hələ olmayan üzvlər (modul → üzv adları). Proqram
+# modulu işlədir və bu adda üzvə müraciət edirsə — Python icraçısı.
+RS_ƏSKİK_ÜZVLƏR: dict[str, frozenset[str]] = {
+    "veb": frozenset({"komponent", "soket"}),
+    "http": frozenset({"vebSoket"}),
+}
+
 _ALQORC = Path(__file__).resolve().parents[1]          # alqorc/
 _KÖK = _ALQORC.parent                                   # quraşdırma / repo kökü
 _AD = "alqor-rs.exe" if os.name == "nt" else "alqor-rs"
@@ -140,13 +147,26 @@ def rs_uyğunluğu(ağac, yol: Path | None, b: Path) -> str | None:
     def yoxla(ağac, baza: Path | None) -> str | None:
         səbəb: list[str] = []
 
+        işlənən: set[str] = set()
+        üzvlər: set[str] = set()
+
         def ziyarət(d):
             if səbəb:
                 return
             if isinstance(d, A.İdxal):
                 səbəb.extend(_idxal(d, baza))
-            elif isinstance(d, A.Ad) and d.ad in yalnız_py:
-                səbəb.append(f"`{d.ad}` Rust icraçısında yoxdur")
+                if d.yol:
+                    işlənən.add(d.yol[0])
+            elif isinstance(d, A.Ad):
+                if d.ad in yalnız_py:
+                    səbəb.append(f"`{d.ad}` Rust icraçısında yoxdur")
+                işlənən.add(d.ad)
+            elif isinstance(d, A.Üzv):
+                üzvlər.add(d.ad)
+            elif isinstance(d, A.TipAdı) and d.yol:
+                if d.yol[0] in yalnız_py:
+                    səbəb.append(f"`{d.yol[0]}` Rust icraçısında yoxdur")
+                işlənən.add(d.yol[0])
 
         def _idxal(d, baza):
             if getattr(d, "python", False):
@@ -181,6 +201,12 @@ def rs_uyğunluğu(ağac, yol: Path | None, b: Path) -> str | None:
             return [f"`{ad}` modulu Rust icraçısında yoxdur"]
 
         _gəz(ağac, ziyarət)
+        if not səbəb:
+            for m, adlar in RS_ƏSKİK_ÜZVLƏR.items():
+                if m in işlənən and adlar & üzvlər:
+                    ad = sorted(adlar & üzvlər)[0]
+                    səbəb.append(f"`{m}` modulunun `{ad}` üzvü Rust "
+                                 "icraçısında yoxdur")
         return səbəb[0] if səbəb else None
 
     return yoxla(ağac, yol.resolve().parent if yol is not None else None)

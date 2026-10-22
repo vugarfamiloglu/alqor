@@ -181,6 +181,79 @@ class RustModulMüqayisəsi(unittest.TestCase):
             self.assertEqual(a, b)
 
 
+@unittest.skipIf(_B is None, "cargo / alqor-rs mövcud deyil")
+class MotorSeçimi(unittest.TestCase):
+    """`alqor işlət --motor py|rs|avto` (alqor/motor.py)."""
+
+    @classmethod
+    def setUpClass(cls):
+        import tempfile
+        cls.q = Path(tempfile.mkdtemp(prefix="alqor-motor-"))
+        cls.köhnə = os.environ.get("ALQOR_RS")
+        os.environ["ALQOR_RS"] = str(_B)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.q, ignore_errors=True)
+        if cls.köhnə is None:
+            os.environ.pop("ALQOR_RS", None)
+        else:
+            os.environ["ALQOR_RS"] = cls.köhnə
+
+    def seçim(self, kod: str, ad: str = "p.alq") -> str:
+        from alqor import motor
+        f = self.q / ad
+        f.write_text(kod, encoding="utf-8")
+        return motor.seç("avto", motor._ayır(f), f)[0]
+
+    def test_rs_seçilir(self):
+        for kod in ('yaz(1)\n', 'gətir şifrə\nyaz(şifrə.heş("a"))\n',
+                    'gətir riyaziyyat.{kök}\nyaz(kök(4))\n',
+                    'dəyişən s = yeni veb.Server()\n',
+                    'gətir http kimi h\nyaz(h)\n'):
+            self.assertEqual(self.seçim(kod), "rs", kod)
+
+    def test_python_seçilir(self):
+        for kod in ('gətir yaml\n', 'gətir python:math\n',
+                    'pəncərə.başlıq("x")\n', 'vidjet.düymə(mətn: "a")\n',
+                    'dəyişən s = yeni veb.Server()\ns.komponent("/", 1)\n',
+                    'gətir naməlumPaket\n', 'gətir "./yoxdur.alq"\n'):
+            self.assertEqual(self.seçim(kod), "py", kod)
+
+    def test_yerli_modul_rekursiv(self):
+        (self.q / "alt.alq").write_text("gətir yaml\n", encoding="utf-8")
+        (self.q / "orta.alq").write_text('gətir "./alt.alq"\n',
+                                         encoding="utf-8")
+        self.assertEqual(self.seçim('gətir "./orta.alq" kimi o\n'), "py")
+        (self.q / "alt.alq").write_text("dəyişən x = 1\n",
+                                        encoding="utf-8")
+        self.assertEqual(self.seçim('gətir "./orta.alq" kimi o\n'), "rs")
+
+    def test_cli_motorları_eyni_nəticə(self):
+        import subprocess
+        f = self.q / "cli.alq"
+        f.write_text('gətir kodlaşdırma\nyaz(kodlaşdırma.slug("Şəki"), '
+                     'sistem.arqumentlər())\nyaz(oxu())\n', encoding="utf-8")
+        n = {}
+        for m in ("py", "rs", "avto"):
+            r = subprocess.run(
+                [sys.executable, str(M.REPO / "alqorc" / "alqorc.py"), "işlət",
+                 "--motor", m, str(f), "--", "a", "b"],
+                input="dünya\n".encode(), capture_output=True,
+                env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+            n[m] = (r.returncode, r.stdout.decode("utf-8"))
+        self.assertEqual(n["py"], (0, 'seki ["a", "b"]\ndünya\n'))
+        self.assertEqual(n["rs"], n["py"])
+        self.assertEqual(n["avto"], n["py"])
+
+    def test_naməlum_motor(self):
+        import subprocess
+        r = subprocess.run(
+            [sys.executable, str(M.REPO / "alqorc" / "alqorc.py"), "işlət",
+             "--motor", "xyz", "x.alq"], capture_output=True)
+        self.assertEqual(r.returncode, 3)
+
+
 _VEB_SERVERİ = """\
 dəyişən s = yeni veb.Server()
 s.al("/", (r) => veb.mətn("Salam!"))
