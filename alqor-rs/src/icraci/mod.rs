@@ -12,10 +12,13 @@ pub mod konsol;
 pub mod metodlar;
 pub mod modullar;
 pub mod mod_csv;
+#[cfg(all(feature = "http", not(target_arch = "wasm32")))]
+pub mod mod_http;
 pub mod mod_kodlasdirma;
 pub mod mod_sifre;
 pub mod mod_sixma;
 pub mod mod_toml;
+pub mod mod_veb_ortaq;
 pub mod muhit;
 pub mod platforma;
 pub mod sinifler;

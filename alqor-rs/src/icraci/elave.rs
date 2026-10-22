@@ -22,7 +22,11 @@ use std::rc::{Rc, Weak};
 
 /// Rust icraçısının dəstəklədiyi əlavə modullar (bu platformada).
 pub fn adlar() -> Vec<&'static str> {
-    vec!["kodlaşdırma", "şifrə", "sıxma", "csv", "toml"]
+    #[allow(unused_mut)]
+    let mut v = vec!["kodlaşdırma", "şifrə", "sıxma", "csv", "toml"];
+    #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
+    v.push("http");
+    v
 }
 
 /// Python-da olub bu platformada olmayan modullar — aydın xəta üçün.
@@ -42,6 +46,8 @@ fn qur(i: &İcraçı, ad_: &str) -> Option<Nəticə<Rc<Modul>>> {
         "sıxma" => super::mod_sixma::qur(),
         "csv" => super::mod_csv::qur(),
         "toml" => super::mod_toml::qur(),
+        #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
+        "http" => super::mod_http::qur(),
         x if PLATFORMADA_YOX.contains(&x) => {
             return Some(Err(xəta(
                 "ArqumentXətası",
@@ -261,6 +267,27 @@ pub fn cütlər(d: &D) -> Option<Vec<(D, D)>> {
         D::Lüğət(l) => Some(l.borrow().iter().map(|(k, v)| (k.0.clone(), v.clone())).collect()),
         D::Nümunə(n) => Some(n.sahələr.borrow().iter().map(|(k, v)| (D::S(k.clone()), v.clone())).collect()),
         _ => None,
+    }
+}
+
+/// `_json_hazırla(x)`: nümunə → lüğət (açarlar `str()`), kortej/dəst → siyahı
+pub fn json_hazırla(d: &D) -> D {
+    match d {
+        D::Nümunə(_) | D::Lüğət(_) => {
+            let mut l = Lüğət::default();
+            for (a, v) in cütlər(d).unwrap() {
+                let a = match a {
+                    D::S(_) => a,
+                    x => D::str(py_s(&x)),
+                };
+                l.insert(Açar(a), json_hazırla(&v));
+            }
+            D::lüğət(l)
+        }
+        D::Siyahı(l) => D::siyahı(l.borrow().iter().map(json_hazırla).collect()),
+        D::Kortej(k) => D::siyahı(k.iter().map(json_hazırla).collect()),
+        D::Dəst(s) => D::siyahı(dəst_sırası(&s.borrow()).iter().map(json_hazırla).collect()),
+        x => x.clone(),
     }
 }
 
