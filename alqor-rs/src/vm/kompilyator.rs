@@ -269,6 +269,7 @@ impl<'r> Kompilyator<'r> {
             | Əmr::Sayğac(_, _, x)
             | Əmr::TutmaYoxla(_, _, x)
             | Əmr::Qaç(x, _, _)
+            | Əmr::MüqAtla(_, x)
             | Əmr::ŞərtYT(_, _, _, x)
             | Əmr::ŞərtYY(_, _, _, x) => *x = h,
             _ => unreachable!("yamaq: keçid əmri deyil"),
@@ -419,7 +420,11 @@ impl<'r> Kompilyator<'r> {
                 y
             }
         };
-        self.əmr(if sabit { Əmr::YuvaElanSabit(y) } else { Əmr::YuvaElan(y) }, yer);
+        if !sabit && matches!(self.əmrlər.last(), Some(Əmr::Kopya)) {
+            *self.əmrlər.last_mut().unwrap() = Əmr::YuvaElanK(y);
+        } else {
+            self.əmr(if sabit { Əmr::YuvaElanSabit(y) } else { Əmr::YuvaElan(y) }, yer);
+        }
         Ok(Some(y))
     }
 
@@ -1014,7 +1019,7 @@ impl<'r> Kompilyator<'r> {
     fn təyin(&mut self, h: &İfadə) -> K {
         match h {
             İfadə::Ad(yer, a) => {
-                self.e(Əmr::Kopya);
+                // `YuvaQoy`/`AdQoy` dəyəri özləri kopyalayır
                 self.ad_yaz(a, *yer);
             }
             İfadə::Üzv(yer, o, a, _) => {
@@ -1059,10 +1064,7 @@ impl<'r> Kompilyator<'r> {
         if op == "=" {
             self.ifadə(&dəyərlər[0])?;
         } else {
-            self.ifadə(h)?;
-            self.ifadə(&dəyərlər[0])?;
-            let o = &op[..op.len() - 1];
-            self.ikili_əmr(o, yer);
+            self.ikili(h, &op[..op.len() - 1], &dəyərlər[0], yer)?;
         }
         if dəyər_lazım {
             self.e(Əmr::Dup);
@@ -1108,6 +1110,26 @@ impl<'r> Kompilyator<'r> {
         };
     }
 
+    /// `sol op sağ` (yuva/sabit operandlar üçün birləşdirilmiş əmrlər)
+    fn ikili(&mut self, sol: &aac::E, op: &str, sağ: &aac::E, yer: Yer) -> K {
+        if let Some(o) = Op::yeni(op) {
+            if let Some(y) = self.yuva_ifadəsi(sol) {
+                if let Some(n) = kiçik_tam(sağ) {
+                    self.əmr(Əmr::İkiliYT(o, y, n), yer);
+                    return Ok(());
+                }
+                if let Some(y2) = self.yuva_ifadəsi(sağ) {
+                    self.əmr(Əmr::İkiliYY(o, y, y2), yer);
+                    return Ok(());
+                }
+            }
+        }
+        self.ifadə(sol)?;
+        self.ifadə(sağ)?;
+        self.ikili_əmr(op, yer);
+        Ok(())
+    }
+
     /// İfadə yerli yuvadırsa onun nömrəsi
     fn yuva_ifadəsi(&self, e: &aac::E) -> Option<u32> {
         match &**e {
@@ -1128,6 +1150,9 @@ impl<'r> Kompilyator<'r> {
                         return Ok(self.əmr(Əmr::ŞərtYY(o, y, y2, 0), *yer));
                     }
                 }
+                self.ifadə(sol)?;
+                self.ifadə(sağ)?;
+                return Ok(self.əmr(Əmr::MüqAtla(o, 0), *yer));
             }
         }
         self.ifadə(ş)?;
@@ -1228,23 +1253,7 @@ impl<'r> Kompilyator<'r> {
                     let h = self.pc();
                     self.yamaq(j, h);
                 }
-                _ => {
-                    if let Some(o) = Op::yeni(op) {
-                        if let Some(y) = self.yuva_ifadəsi(sol) {
-                            if let Some(n) = kiçik_tam(sağ) {
-                                self.əmr(Əmr::İkiliYT(o, y, n), *yer);
-                                return Ok(());
-                            }
-                            if let Some(y2) = self.yuva_ifadəsi(sağ) {
-                                self.əmr(Əmr::İkiliYY(o, y, y2), *yer);
-                                return Ok(());
-                            }
-                        }
-                    }
-                    self.ifadə(sol)?;
-                    self.ifadə(sağ)?;
-                    self.ikili_əmr(op, *yer);
-                }
+                _ => self.ikili(sol, op, sağ, *yer)?,
             },
             İfadə::Tək(yer, op, x) => {
                 if op == "deyil" || op == "!" {
@@ -1315,7 +1324,14 @@ impl<'r> Kompilyator<'r> {
                     match self.arqumentlər(arq, *yer)? {
                         Some(n) => {
                             let k = self.çağırış_keşi();
-                            self.əmr(Əmr::MetodÇağır(ai, n, k), *yer)
+                            let tez = match a.as_ref() {
+                                "əlavə" => 1,
+                                "uzunluq" => 2,
+                                "al" => 3,
+                                "qoy" => 4,
+                                _ => 0,
+                            };
+                            self.əmr(Əmr::MetodÇağır(ai, n, k, tez), *yer)
                         }
                         None => self.əmr(Əmr::MetodÇağırArq(ai), *yer),
                     };

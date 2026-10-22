@@ -12,7 +12,7 @@ təkrarla 60 dəfə
 son
 yaz(t)
 dəyişən s = ""
-hər i üçün 0..<100000 içində
+hər i üçün 0..<20000 içində
     s += "ab"
 son
 yaz(s.uzunluq())

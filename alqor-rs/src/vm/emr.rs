@@ -81,6 +81,8 @@ pub enum Əmr {
     YuvaQoy(u32),
     YuvaElan(u32),
     YuvaElanSabit(u32),
+    /// `Kopya` + `YuvaElan`
+    YuvaElanK(u32),
     // ── Adlar (Mühit zənciri) ──────────────────────────────────────────
     /// (ad, keş)
     AdAl(u32, u32),
@@ -101,6 +103,8 @@ pub enum Əmr {
     İkiliYT(Op, u32, i32),
     /// Birləşdirilmiş: yuva ⊕ yuva
     İkiliYY(Op, u32, u32),
+    /// Müqayisə + keçid (yanlışdırsa): yığındakı iki dəyər
+    MüqAtla(Op, u32),
     /// Birləşdirilmiş müqayisə + keçid (yanlışdırsa): yuva ⊕ tam sabit
     ŞərtYT(Op, u32, i32, u32),
     /// Birləşdirilmiş müqayisə + keçid: yuva ⊕ yuva
@@ -137,8 +141,8 @@ pub enum Əmr {
     ÇağırArq,
     /// (ad, təhlükəsiz, boş halında keçid)
     MetodAl(u32, bool, u32, u32),
-    /// (ad, arqument sayı, çağırış keşi)
-    MetodÇağır(u32, u32, u32),
+    /// (ad, arqument sayı, çağırış keşi, sürətli daxili metod kodu)
+    MetodÇağır(u32, u32, u32, u8),
     MetodÇağırArq(u32),
     // ── Üzv və indeks ──────────────────────────────────────────────────
     /// (ad, təhlükəsiz, üzv keşi)

@@ -3,7 +3,7 @@
     python3 meyar/olc.py            # alqor-rs qovluğundan; Rust: ağac və VM
     python3 meyar/olc.py --python   # Python etalonunu da ölç (çox yavaşdır)
 
-Hər ölçmə 3 dəfə təkrarlanır, ən kiçik vaxt götürülür.
+Hər ölçmə 5 dəfə təkrarlanır, ən kiçik vaxt götürülür.
 """
 import os
 import subprocess
@@ -17,7 +17,7 @@ B = RS / "target" / "release" / ("alqor-rs.exe" if os.name == "nt" else "alqor-r
 PY = RS.parent / "alqorc" / "alqorc.py"
 
 
-def ölç(arq, mühit, n=3):
+def ölç(arq, mühit, n=5):
     ən = None
     çıxış = None
     for _ in range(n):

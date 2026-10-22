@@ -541,6 +541,44 @@ fn yuva_oxu(kod: &Kod, ç: &Çərçivə, y: u32) -> Nəticə {
     }
 }
 
+/// Tez-tez çağırılan daxili metodlar (`metodlar::metod_çağır` ilə eyni nəticə).
+/// Yığında `[obyekt, _, 1, arqumentlər...]`, `fi` — bayrağın indeksi.
+#[inline]
+fn tez_metod(kod: u8, ç: &mut Çərçivə, fi: usize, n: usize) -> Option<Nəticə> {
+    let o = &ç.yığın[fi - 2];
+    match (kod, o) {
+        (1, D::Siyahı(l)) if n >= 1 => {
+            let l = l.clone();
+            let x = ç.yığın.götür(fi + 1);
+            l.borrow_mut().push(x);
+            Some(Ok(D::Boş))
+        }
+        (2, D::Siyahı(l)) if n == 0 => Some(Ok(D::T(l.borrow().len() as i64))),
+        (2, D::Lüğət(l)) if n == 0 => Some(Ok(D::T(l.borrow().len() as i64))),
+        (3, D::Lüğət(l)) if n == 1 || n == 2 => {
+            let l = l.clone();
+            let st = if n == 2 { ç.yığın[fi + 2].clone() } else { D::Boş };
+            let k = match Açar::yeni(ç.yığın.götür(fi + 1)) {
+                Ok(k) => k,
+                Err(e) => return Some(Err(e)),
+            };
+            let r = l.borrow().get(&k).cloned().unwrap_or(st);
+            Some(Ok(r))
+        }
+        (4, D::Lüğət(l)) if n >= 2 => {
+            let l = l.clone();
+            let k = match Açar::yeni(ç.yığın.götür(fi + 1)) {
+                Ok(k) => k,
+                Err(e) => return Some(Err(e)),
+            };
+            let v = ç.yığın.götür(fi + 2);
+            l.borrow_mut().insert(k, v);
+            Some(Ok(D::Boş))
+        }
+        _ => None,
+    }
+}
+
 #[cold]
 fn boş_üzv_xətası(a: &str, yer: Yer) -> Siqnal {
     xəta_yer("BoşDəyərXətası", format!("`boş` dəyərdə `{}` üzvü yoxdur", a), Some(yer), "ALQ-R004")
@@ -751,8 +789,32 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         };
                         ç.yığın.push(d);
                     }
+                    Əmr::YuvaElanK(y) => {
+                        let d = dəyər_kopyası(ç.pop());
+                        ç.yuvalar[*y as usize] = Some(d);
+                    }
+                    Əmr::MüqAtla(op, h) => {
+                        let n = ç.yığın.len();
+                        if let (D::T(x), D::T(y)) = (&ç.yığın[n - 2], &ç.yığın[n - 1]) {
+                            let b = müq(*op, *x, *y);
+                            unsafe {
+                                ç.yığın.set_len(n - 2);
+                            }
+                            if !b {
+                                pc = *h as usize;
+                            }
+                            continue;
+                        }
+                        let b = ç.pop();
+                        let a = ç.pop();
+                        match t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x) {
+                            D::M(true) => {}
+                            D::M(false) => pc = *h as usize,
+                            d => break 'x məntiq_xətası(&d, kod.yerlər[pc - 1]),
+                        }
+                    }
                     Əmr::YuvaQoy(y) => {
-                        let d = ç.pop();
+                        let d = dəyər_kopyası(ç.pop());
                         let yi = *y as usize;
                         if ç.yuvalar[yi].is_some() && (!kod.sabit_var || !ç.sabitdir(yi)) {
                             ç.yuvalar[yi] = Some(d);
@@ -769,7 +831,7 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         ç.yığın.push(d);
                     }
                     Əmr::AdQoy(a, k) => {
-                        let d = ç.pop();
+                        let d = dəyər_kopyası(ç.pop());
                         t!(ad_qoy(kod, ç.m(), &kod.adlar[*a as usize], *k, d), 'x);
                     }
                     Əmr::Kopya => {
@@ -928,8 +990,18 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                             ç.yığın.push(D::T(0));
                         }
                     }
-                    Əmr::MetodÇağır(a, n, keş) => {
+                    Əmr::MetodÇağır(a, n, keş, tez) => {
                         let fi = ç.yığın.len() - *n as usize - 1;
+                        if *tez != 0 {
+                            if let D::T(1) = &ç.yığın[fi] {
+                                if let Some(r) = tez_metod(*tez, ç, fi, *n as usize) {
+                                    let r = t!(yer_qoy(r, Some(kod.yerlər[pc - 1])), 'x);
+                                    ç.yığın.truncate(fi - 2);
+                                    ç.yığın.push(r);
+                                    continue;
+                                }
+                            }
+                        }
                         if let D::T(2) = &ç.yığın[fi] {
                             if let (D::Funksiya(fr), o) = (&ç.yığın[fi - 1], &ç.yığın[fi - 2]) {
                                 let (fr, o) = (fr.clone(), o.clone());
@@ -958,6 +1030,21 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         }
                         let r = t!(üzv_al_keşli(i, kod, *k, &o, a, kod.yerlər[pc - 1]), 'x);
                         ç.yığın.push(r);
+                    }
+                    Əmr::İndeksQoy => {
+                        let x = ç.pop();
+                        let o = ç.pop();
+                        let d = ç.pop();
+                        if let (D::Siyahı(l), D::T(j)) = (&o, &x) {
+                            let mut l = l.borrow_mut();
+                            let n = l.len() as i64;
+                            let k = if *j < 0 { *j + n } else { *j };
+                            if k >= 0 && k < n {
+                                l[k as usize] = d;
+                                continue;
+                            }
+                        }
+                        t!(i.indeks_qoy(&o, x, d, Some(kod.yerlər[pc - 1])), 'x);
                     }
                     Əmr::İndeksAl => {
                         let x = ç.pop();
