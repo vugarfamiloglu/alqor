@@ -5,7 +5,7 @@
 //! icraçısının `Mühit` zəncirində qalır (bax: `kompilyator.rs`).
 
 use crate::aac;
-use crate::icraci::deyerler::{Ad, D};
+use crate::icraci::deyerler::{Ad, Funksiya, Sinif, D};
 use crate::xeta::Yer;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -136,14 +136,15 @@ pub enum Əmr {
     ArqYay,
     ÇağırArq,
     /// (ad, təhlükəsiz, boş halında keçid)
-    MetodAl(u32, bool, u32),
+    MetodAl(u32, bool, u32, u32),
     /// (ad, arqument sayı, çağırış keşi)
     MetodÇağır(u32, u32, u32),
     MetodÇağırArq(u32),
     // ── Üzv və indeks ──────────────────────────────────────────────────
-    ÜzvAl(u32, bool),
+    /// (ad, təhlükəsiz, üzv keşi)
+    ÜzvAl(u32, bool, u32),
     ÜzvAlXam(u32),
-    ÜzvQoy(u32),
+    ÜzvQoy(u32, u32),
     İndeksAl,
     İndeksQoy,
     /// (başlanğıc var, son var, xaric)
@@ -317,6 +318,8 @@ pub struct Kod {
     pub gövdə_pc: u32,
     /// Çağırış yerlərinin keşi: (gövdə göstəricisi, kod)
     pub çağırış_keşləri: Vec<RefCell<Option<(usize, Rc<Kod>)>>>,
+    /// Üzv keşləri: (sinif, sahə indeksi, metod)
+    pub üzv_keşləri: Vec<RefCell<Option<(Rc<Sinif>, u32, Option<Rc<Funksiya>>)>>>,
     /// Parametr siyahısı (uyğunluq yoxlaması üçün)
     pub parametrlər: Option<Rc<Vec<aac::Parametr>>>,
     /// Gövdəni yaşadır

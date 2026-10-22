@@ -74,6 +74,7 @@ struct Kompilyator<'r> {
     gecikdir_var: bool,
     sabit_var: bool,
     çağırış_keş_sayı: u32,
+    üzv_keş_sayı: u32,
     param_yuvaları: Option<Vec<u32>>,
     gövdə_pc: u32,
 }
@@ -230,6 +231,7 @@ impl<'r> Kompilyator<'r> {
             gecikdir_var: false,
             sabit_var: false,
             çağırış_keş_sayı: 0,
+            üzv_keş_sayı: 0,
             param_yuvaları: None,
             gövdə_pc: 0,
         }
@@ -263,7 +265,7 @@ impl<'r> Kompilyator<'r> {
             | Əmr::DiapazonDeyilsəAtla(x)
             | Əmr::ParamAl(_, x)
             | Əmr::ParamAdlı(_, x)
-            | Əmr::MetodAl(_, _, x)
+            | Əmr::MetodAl(_, _, x, _)
             | Əmr::Sayğac(_, _, x)
             | Əmr::TutmaYoxla(_, _, x)
             | Əmr::Qaç(x, _, _)
@@ -304,6 +306,11 @@ impl<'r> Kompilyator<'r> {
     fn keş(&mut self) -> u32 {
         self.keş_sayı += 1;
         self.keş_sayı as u32 - 1
+    }
+
+    fn üzv_keşi(&mut self) -> u32 {
+        self.üzv_keş_sayı += 1;
+        self.üzv_keş_sayı - 1
     }
 
     fn çağırış_keşi(&mut self) -> u32 {
@@ -1013,7 +1020,8 @@ impl<'r> Kompilyator<'r> {
             İfadə::Üzv(yer, o, a, _) => {
                 self.ifadə(o)?;
                 let i = self.ad_i(a);
-                self.əmr(Əmr::ÜzvQoy(i), *yer);
+                let k = self.üzv_keşi();
+                self.əmr(Əmr::ÜzvQoy(i, k), *yer);
             }
             İfadə::İndeks(yer, o, i) => {
                 self.ifadə(o)?;
@@ -1302,7 +1310,8 @@ impl<'r> Kompilyator<'r> {
                     }
                     self.ifadə(obyekt)?;
                     let ai = self.ad_i(a);
-                    let m = self.əmr(Əmr::MetodAl(ai, *təhlükəsiz, 0), *üyer);
+                    let k = self.üzv_keşi();
+                    let m = self.əmr(Əmr::MetodAl(ai, *təhlükəsiz, 0, k), *üyer);
                     match self.arqumentlər(arq, *yer)? {
                         Some(n) => {
                             let k = self.çağırış_keşi();
@@ -1329,7 +1338,8 @@ impl<'r> Kompilyator<'r> {
             İfadə::Üzv(yer, o, a, təhlükəsiz) => {
                 self.ifadə(o)?;
                 let i = self.ad_i(a);
-                self.əmr(Əmr::ÜzvAl(i, *təhlükəsiz), *yer);
+                let k = self.üzv_keşi();
+                self.əmr(Əmr::ÜzvAl(i, *təhlükəsiz, k), *yer);
             }
             İfadə::İndeks(yer, o, i) => {
                 self.ifadə(o)?;
@@ -1627,6 +1637,7 @@ impl<'r> Kompilyator<'r> {
             param_yuvaları: self.param_yuvaları,
             gövdə_pc: self.gövdə_pc,
             çağırış_keşləri: (0..self.çağırış_keş_sayı).map(|_| Default::default()).collect(),
+            üzv_keşləri: (0..self.üzv_keş_sayı).map(|_| Default::default()).collect(),
             parametrlər,
             _gövdə: gövdə,
         }

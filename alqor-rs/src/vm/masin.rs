@@ -541,6 +541,79 @@ fn yuva_oxu(kod: &Kod, ç: &Çərçivə, y: u32) -> Nəticə {
     }
 }
 
+#[cold]
+fn boş_üzv_xətası(a: &str, yer: Yer) -> Siqnal {
+    xəta_yer("BoşDəyərXətası", format!("`boş` dəyərdə `{}` üzvü yoxdur", a), Some(yer), "ALQ-R004")
+}
+
+/// `üzv_al` + sinif üzrə sahə indeksi keşi
+#[inline]
+fn üzv_al_keşli(i: &İcraçı, kod: &Kod, k: u32, o: &D, a: &Ad, yer: Yer) -> Nəticə {
+    if let D::Nümunə(n) = o {
+        let keş = &kod.üzv_keşləri[k as usize];
+        if let Some((s, idx, _)) = &*keş.borrow() {
+            if Rc::ptr_eq(s, &n.sinif) {
+                if let Some((açar, v)) = n.sahələr.borrow().get_index(*idx as usize) {
+                    if eyni_ad(açar, a) {
+                        return Ok(v.clone());
+                    }
+                }
+            }
+        }
+        let r = i.üzv_al(o, a, Some(yer))?;
+        if let Some(idx) = n.sahələr.borrow().get_index_of(&**a) {
+            *keş.borrow_mut() = Some((n.sinif.clone(), idx as u32, None));
+        }
+        return Ok(r);
+    }
+    i.üzv_al(o, a, Some(yer))
+}
+
+/// `üzv_qoy` + keş (yazıcısı və hesablananı olmayan mövcud sahələr üçün)
+fn üzv_qoy_keşli(i: &İcraçı, kod: &Kod, k: u32, o: &D, a: &Ad, d: D, yer: Yer) -> Nəticə<()> {
+    if let D::Nümunə(n) = o {
+        let keş = &kod.üzv_keşləri[k as usize];
+        if let Some((s, idx, _)) = &*keş.borrow() {
+            if Rc::ptr_eq(s, &n.sinif) {
+                if let Some((açar, v)) = n.sahələr.borrow_mut().get_index_mut(*idx as usize) {
+                    if eyni_ad(açar, a) {
+                        *v = d;
+                        return Ok(());
+                    }
+                }
+            }
+        }
+        i.üzv_qoy(o, a, d, Some(yer))?;
+        if n.sinif.yazıcı_tap(a).is_none() && n.sinif.hesablanan_tap(a).is_none() {
+            if let Some(idx) = n.sahələr.borrow().get_index_of(&**a) {
+                *keş.borrow_mut() = Some((n.sinif.clone(), idx as u32, None));
+            }
+        }
+        return Ok(());
+    }
+    i.üzv_qoy(o, a, d, Some(yer))
+}
+
+/// Nümunənin metodu (`nümunə_üzvü` sırası: sahə → hesablanan → metod), keşli
+#[inline]
+fn metod_tap_keşli(kod: &Kod, k: u32, n: &Rc<Nümunə>, a: &Ad) -> Option<Rc<Funksiya>> {
+    if n.sahələr.borrow().contains_key(&**a) {
+        return None;
+    }
+    let keş = &kod.üzv_keşləri[k as usize];
+    if let Some((s, _, Some(f))) = &*keş.borrow() {
+        if Rc::ptr_eq(s, &n.sinif) {
+            return Some(f.clone());
+        }
+    }
+    if n.sinif.hesablanan_tap(a).is_some() {
+        return None;
+    }
+    let f = n.sinif.metod_tap(a)?;
+    *keş.borrow_mut() = Some((n.sinif.clone(), 0, Some(f.clone())));
+    Some(f)
+}
+
 fn məntiq_xətası(d: &D, yer: Yer) -> Siqnal {
     xəta_yer(
         "TipXətası",
@@ -825,7 +898,7 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         let r = t!(i.çağır(&f, args, vec![], Some(kod.yerlər[pc - 1])), 'x);
                         ç.yığın.push(r);
                     }
-                    Əmr::MetodAl(a, təhlükəsiz, h) => {
+                    Əmr::MetodAl(a, təhlükəsiz, h, k) => {
                         let o = ç.pop();
                         let a = &kod.adlar[*a as usize];
                         if o.boşdur() {
@@ -834,20 +907,10 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                                 pc = *h as usize;
                                 continue;
                             }
-                            break 'x xəta_yer(
-                                "BoşDəyərXətası",
-                                format!("`boş` dəyərdə `{}` üzvü yoxdur", a),
-                                Some(kod.yerlər[pc - 1]),
-                                "ALQ-R004",
-                            );
+                            break 'x boş_üzv_xətası(a, kod.yerlər[pc - 1]);
                         }
                         if let D::Nümunə(nm) = &o {
-                            let metod = if !nm.sahələr.borrow().contains_key(&**a) && nm.sinif.hesablanan_tap(a).is_none() {
-                                nm.sinif.metod_tap(a)
-                            } else {
-                                None
-                            };
-                            if let Some(f) = metod {
+                            if let Some(f) = metod_tap_keşli(kod, *k, nm, a) {
                                 ç.yığın.push(o);
                                 ç.yığın.push(D::Funksiya(f));
                                 ç.yığın.push(D::T(2));
@@ -883,7 +946,7 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         let r = t!(metod_çağır(i, kod, ç, *a, args, vec![], pc - 1), 'x);
                         ç.yığın.push(r);
                     }
-                    Əmr::ÜzvAl(a, təhlükəsiz) => {
+                    Əmr::ÜzvAl(a, təhlükəsiz, k) => {
                         let o = ç.pop();
                         let a = &kod.adlar[*a as usize];
                         if o.boşdur() {
@@ -891,14 +954,9 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                                 ç.yığın.push(D::Boş);
                                 continue;
                             }
-                            break 'x xəta_yer(
-                                "BoşDəyərXətası",
-                                format!("`boş` dəyərdə `{}` üzvü yoxdur", a),
-                                Some(kod.yerlər[pc - 1]),
-                                "ALQ-R004",
-                            );
+                            break 'x boş_üzv_xətası(a, kod.yerlər[pc - 1]);
                         }
-                        let r = t!(i.üzv_al(&o, a, Some(kod.yerlər[pc - 1])), 'x);
+                        let r = t!(üzv_al_keşli(i, kod, *k, &o, a, kod.yerlər[pc - 1]), 'x);
                         ç.yığın.push(r);
                     }
                     Əmr::İndeksAl => {
@@ -1101,10 +1159,10 @@ fn soyuq(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, ə: &Əmr, pc: usize) -
                 let r = (i.üzv_al(&o, &kod.adlar[*a as usize], Some(kod.yerlər[pc - 1])))?;
                 ç.yığın.push(r);
             }
-            Əmr::ÜzvQoy(a) => {
+            Əmr::ÜzvQoy(a, k) => {
                 let o = ç.pop();
                 let d = ç.pop();
-                (i.üzv_qoy(&o, &kod.adlar[*a as usize], d, Some(kod.yerlər[pc - 1])))?;
+                üzv_qoy_keşli(i, kod, *k, &o, &kod.adlar[*a as usize], d, kod.yerlər[pc - 1])?;
             }
             Əmr::İndeksQoy => {
                 let x = ç.pop();
