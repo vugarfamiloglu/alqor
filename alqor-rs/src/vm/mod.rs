@@ -97,6 +97,7 @@ pub fn kod_tap(f: &Funksiya) -> Option<Rc<Kod>> {
                 ad: &f.ad,
                 parametrlər: &f.parametrlər,
                 gövdə: &f.gövdə,
+                generator: false,
             })
             .ok()
             .map(Rc::new);
@@ -133,6 +134,49 @@ pub fn kod_tap(f: &Funksiya) -> Option<Rc<Kod>> {
         });
     }
     k
+}
+
+/// Generator gövdəsi üçün bayt-kod (korutində icra olunur)
+#[cfg(not(target_arch = "wasm32"))]
+pub fn generator_kodu(f: &Funksiya) -> Option<Rc<Kod>> {
+    if !aktiv() {
+        return None;
+    }
+    let açar = gövdə_açarı(&f.gövdə) | 1;
+    let k = KEŞ.with(|k| k.borrow().get(&açar).cloned());
+    let k = match k {
+        Some(k) => k,
+        None => {
+            let k = kompilyator::kompilyasiya(&kompilyator::Mənbə::Funksiya {
+                ad: &f.ad,
+                parametrlər: &f.parametrlər,
+                gövdə: &f.gövdə,
+                generator: true,
+            })
+            .ok()
+            .map(Rc::new);
+            if let Some(k) = &k {
+                kod_çap(k);
+            }
+            if hesabat_aktiv() {
+                SAY.with(|s| {
+                    let mut s = s.borrow_mut();
+                    if k.is_some() {
+                        s.vm_funksiya += 1;
+                    } else {
+                        s.ağac_funksiya += 1;
+                        s.ağac_adları.push(f.ad.to_string());
+                    }
+                });
+            }
+            KEŞ.with(|c| c.borrow_mut().insert(açar, k.clone()));
+            k
+        }
+    };
+    k.filter(|k| match &k.parametrlər {
+        Some(p) => Rc::ptr_eq(p, &f.parametrlər) || parametrlər_eynidir(p, &f.parametrlər),
+        None => false,
+    })
 }
 
 /// Keşdən tapılan VM çağırışını hesabata əlavə edir

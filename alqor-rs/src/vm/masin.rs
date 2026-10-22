@@ -375,6 +375,17 @@ fn sürətli_çağır(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, f: &Rc<Fun
     Some(r)
 }
 
+/// Generator gövdəsi (korutin daxilində): parametrlər artıq `m`-də bağlanıb
+#[cfg(not(target_arch = "wasm32"))]
+pub fn generator_işlət(i: &İcraçı, kod: &Kod, f: &Rc<Funksiya>, m: Mühit) -> Nəticə<()> {
+    let mut ç = Çərçivə::yeni(i, kod, f.mühit.clone());
+    ç.mühitlər.push(m);
+    match icra(i, kod, &mut ç, kod.gövdə_pc as usize) {
+        Ok(_) | Err(Siqnal::Qaytar(_)) | Err(Siqnal::Dayan(_)) => Ok(()),
+        Err(x) => Err(x),
+    }
+}
+
 /// Proqramın yuxarı səviyyəsi (qlobal əhatədə)
 pub fn kök_işlət(i: &İcraçı, kod: &Kod) -> Nəticə<()> {
     let mut ç = Çərçivə::yeni(i, kod, i.qlobal.clone());

@@ -41,7 +41,9 @@ struct DövrK {
 
 /// Kompilyasiya mənbəyi
 pub enum Mənbə<'a> {
-    Funksiya { ad: &'a str, parametrlər: &'a Rc<Vec<aac::Parametr>>, gövdə: &'a FGövdə },
+    /// `generator` — gövdə korutində işləyir: parametrlər əvvəlcədən Mühit-də
+    /// bağlanıb (ağac icraçısının `parametrləri_bağla`-sı), son ifadə dəyəri yoxdur
+    Funksiya { ad: &'a str, parametrlər: &'a Rc<Vec<aac::Parametr>>, gövdə: &'a FGövdə, generator: bool },
     Kök(&'a [Cümlə]),
 }
 
@@ -1675,7 +1677,7 @@ fn bir_dəfə(m: &Mənbə, r: &HashSet<String>) -> K<(Kod, HashSet<String>)> {
             let lazım = std::mem::take(&mut k.lazım);
             Ok((k.bitir("<kök>", KodNövü::Kök, None, None, (None, None), false), lazım))
         }
-        Mənbə::Funksiya { ad: a, parametrlər, gövdə } => {
+        Mənbə::Funksiya { ad: a, parametrlər, gövdə, generator } => {
             let mut k = Kompilyator::yeni(r, false);
             let mut adlar: Vec<String> = parametrlər.iter().map(|p| p.ad.clone()).collect();
             adlar.push("özü".into());
@@ -1705,16 +1707,31 @@ fn bir_dəfə(m: &Mənbə, r: &HashSet<String>) -> K<(Kod, HashSet<String>)> {
                     }
                 }
             }
-            k.parametrlər(parametrlər)?;
+            if *generator {
+                for p in parametrlər.iter() {
+                    k.əhatələr[0].adlar.push((ad(&p.ad), None));
+                }
+            } else {
+                k.parametrlər(parametrlər)?;
+            }
             let növ = match gövdə {
                 FGövdə::Blok(g) => {
-                    if gecikdir_axtar(&**g) {
-                        // Dəqiq yoxlama cümlə səviyyəsində aparılır
-                    }
                     for c in g.iter() {
                         k.cümlə(c)?;
                     }
-                    k.son_ifadə(g)?;
+                    if *generator {
+                        k.e(Əmr::Boş);
+                        k.e(Əmr::Qaytar);
+                        // korutində `gecikdir` ağac icraçısındakı kimi dərhal icra olunur
+                        k.gecikdir_var = false;
+                    } else {
+                        k.son_ifadə(g)?;
+                    }
+                    KodNövü::Blok
+                }
+                FGövdə::İfadə(_) if *generator => {
+                    k.e(Əmr::Boş);
+                    k.e(Əmr::Qaytar);
                     KodNövü::Blok
                 }
                 FGövdə::İfadə(e) => {
@@ -1732,6 +1749,11 @@ fn bir_dəfə(m: &Mənbə, r: &HashSet<String>) -> K<(Kod, HashSet<String>)> {
 /// Sabit nöqtəyə qədər kompilyasiya: Mühit-də saxlanılmalı adlar dəyişməyənə qədər.
 pub fn kompilyasiya(m: &Mənbə) -> K<Kod> {
     let mut r: HashSet<String> = HashSet::new();
+    if let Mənbə::Funksiya { parametrlər, generator: true, .. } = m {
+        r.extend(parametrlər.iter().map(|p| p.ad.clone()));
+        r.insert("özü".into());
+        r.insert("__sinif__".into());
+    }
     for _ in 0..6 {
         let (kod, lazım) = bir_dəfə(m, &r)?;
         if lazım.iter().all(|a| r.contains(a)) {

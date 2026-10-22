@@ -514,9 +514,13 @@ impl İcraçı {
             FGövdə::İfadə(_) => Rc::new(vec![]),
         };
         let stek = corosensei::stack::DefaultStack::new(KORUTİN_STEKİ).expect("korutin steki");
+        let vm = crate::vm::generator_kodu(f).map(|k| (k, f.clone()));
         let co = corosensei::Coroutine::with_stack(stek, move |y: &corosensei::Yielder<(), D>, ()| {
             i.ver.set(y as *const _);
             i.dərinlik.set(0);
+            if let Some((k, f)) = &vm {
+                return crate::vm::masin::generator_işlət(i, k, f, m.clone());
+            }
             match i.blok(&gövdə, &m) {
                 Ok(()) | Err(Siqnal::Qaytar(_)) | Err(Siqnal::Dayan(_)) => Ok(()),
                 Err(x) => Err(x),
