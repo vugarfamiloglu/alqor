@@ -385,10 +385,12 @@ class Yoxlayıcı:
                 if c.hamısı or c.elementlər:
                     adlar = [(e.ləqəb or e.ad) for e in c.elementlər]
                     if c.hamısı:
+                        yol = ("python:" if c.python else "") + \
+                            ".".join(c.yol)
                         self.bildir("gətir-ulduz", c.yer,
-                                    f"`gətir {'.'.join(c.yol)}.*`",
+                                    f"`gətir {yol}.*`",
                                     "lazım olan adları açıq yazın: "
-                                    f"`gətir {'.'.join(c.yol)}.{{a, b}}`")
+                                    f"`gətir {yol}.{{a, b}}`")
                         continue
                     if all(a not in istifadə for a in adlar):
                         self._idxal_bildir(c, ", ".join(adlar))

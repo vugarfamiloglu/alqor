@@ -26,9 +26,16 @@
   tarix/ədəd formatı), poçt (SMTP, əlavələr), şəkil (PNG/JPEG/GIF/BMP/PPM,
   filtrlər, çəkmə), qrafik (SVG diaqramlar), pdf (TrueType alt dəsti,
   cədvəllər, şəkillər), ffi (C kitabxanaları)
+- **Python kitabxanaları** (spes. § 8.14): `gətir python:numpy kimi np`,
+  `gətir python:math.{sqrt}` — istənilən Python/PyPI modulu birbaşa;
+  dərin tip çevrilməsi, geri çağırışlar, `PythonXətası`, kontekst
+  menecerləri; `alqor python qur|siyahı|sil` → layihənin
+  `python_paketlər/` qovluğu (`layihe.alq` → `[python] asılılıqlar`),
+  `alqor qur` (.pyz/.exe) onu daxil edir. Yalnız Python icraçısında —
+  JS hədəfi və `alqor-rs` aydın xəta verir (ALQ-M015)
 
 **Alətlər**
-- `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls / dap`
+- `alqor işlət / yoxla / tip / format / yeni / sına / sənəd / qur / təmizlə / studio / ls / dap / python`
 - `alqorpm` (paket meneceri: semver aralıqları, həlledici, `alqor.kilid`,
   SHA256, yol/qit asılılıqları, audit) + `alqorhub` (paket deposu serveri,
   veb səhifələr, API); `gətir paket` `paketlər/`-dan yüklənir
@@ -63,7 +70,7 @@
 
 **Tip yoxlayıcısı**: generiklərin çıxarılması, modul tipləri annotasiyada, `sərt` rejim tam əhatə ilə
 
-**Sənədlər**: spesifikasiya (§ 1–14), bələdçi dərslikləri, 10 nümunə proqram
+**Sənədlər**: spesifikasiya (§ 1–14), bələdçi dərslikləri, 11 nümunə proqram
 
 ## 🎯 Hədəf
 

@@ -988,6 +988,87 @@ def əmr_pm(arqumentlər: list[str]) -> int:
     return pm_əsas(arqumentlər)
 
 
+def əmr_python(arqumentlər: list[str]) -> int:
+    """
+    `python qur [paket...]` — Python paketlərini layihənin
+    `python_paketlər/` qovluğuna quraşdırır (paket verilməyibsə
+    `layihe.alq` → `[python] asılılıqlar`); `python siyahı`;
+    `python sil <paket>...`. `--qovluq Q` — layihəsiz hədəf qovluq.
+    Qalan `-…` seçimləri pip-ə ötürülür (`--no-index --find-links q`).
+    """
+    from alqor import python_korpu as P
+
+    if not arqumentlər or arqumentlər[0] in ("kömək", "--kömək", "-k"):
+        print("İSTİFADƏ:\n"
+              "    alqor python qur [paket...] [pip seçimləri]\n"
+              "    alqor python siyahı\n"
+              "    alqor python sil <paket>...\n"
+              "    --qovluq Q   layihəsiz: paketlər Q qovluğuna\n"
+              "Paketlər `python_paketlər/` qovluğuna düşür; kodda: "
+              "`gətir python:paket`")
+        return 0 if arqumentlər else 3
+    alt, qalan = arqumentlər[0], list(arqumentlər[1:])
+
+    qovluq: Path | None = None
+    if "--qovluq" in qalan:
+        i = qalan.index("--qovluq")
+        if i + 1 >= len(qalan):
+            çap_xəta("`--qovluq` qovluq adı gözləyir")
+            return 3
+        qovluq = Path(qalan[i + 1]).resolve()
+        del qalan[i:i + 2]
+    layihə = _layihə(".")
+    if qovluq is None:
+        if layihə is None:
+            çap_xəta("`alqor python` `layihe.alq` olan qovluqda işlədilir "
+                     "(və ya `--qovluq Q`)")
+            return 3
+        qovluq = layihə.kök / P.PAKET_QOVLUĞU
+
+    if alt in ("qur", "əlavə", "install"):
+        paketlər, seçimlər = P.arqumentləri_ayır(qalan)
+        if not paketlər and not any(s in ("-r", "--requirement")
+                                    for s in seçimlər):
+            paketlər = layihə.python_asılılıqları if layihə else []
+            if not paketlər:
+                print("Quraşdırılacaq paket yoxdur: `alqor python qur "
+                      "<paket>` və ya `layihe.alq` → `[python] "
+                      "asılılıqlar = [\"paket\"]`")
+                return 0
+        try:
+            kod = P.paket_qur(qovluq, paketlər, seçimlər)
+        except P.PaketXətası as x:
+            çap_xəta(str(x))
+            return 4
+        if kod != 0:
+            çap_xəta(f"pip xəta ilə bitdi (kod {kod})")
+            return 4
+        print(f"✓ {', '.join(paketlər) or 'asılılıqlar'} → {qovluq.name}/")
+        return 0
+    if alt in ("siyahı", "siyahi", "list"):
+        siyahı = P.paket_siyahısı(qovluq)
+        if not siyahı:
+            print(f"{qovluq.name}/ boşdur — `alqor python qur <paket>`")
+            return 0
+        for ad, v in siyahı:
+            print(f"{ad}=={v}")
+        return 0
+    if alt in ("sil", "uninstall"):
+        if not qalan:
+            çap_xəta("silinəcək paketin adını yazın: alqor python sil <paket>")
+            return 3
+        silinən = P.paket_sil(qovluq, qalan)
+        for ad in silinən:
+            print(f"✓ silindi: {ad}")
+        tapılmayan = [a for a in qalan if P._norm(a) not in
+                      {P._norm(s) for s in silinən}]
+        for a in tapılmayan:
+            çap_xəta(f"`{a}` quraşdırılmayıb")
+        return 4 if tapılmayan else 0
+    çap_xəta(f"naməlum `python` əmri: {alt!r} (qur, siyahı, sil)")
+    return 3
+
+
 def əmr_hub(arqumentlər: list[str]) -> int:
     from alqor.alqorhub import əsas as hub_əsas
     return hub_əsas(arqumentlər)
@@ -1165,6 +1246,9 @@ def əmr_kömək(_: list[str]) -> int:
     pm <əmr>             Paket meneceri (alqorpm): əlavə, sil, yüklə,
                          yenilə, siyahı, ağac, axtar, yayımla, yoxla …
     hub                  Paket deposu serveri (alqorhub): --port --qovluq
+    python <əmr>         Python paketləri (`gətir python:paket`):
+                         qur [paket...], siyahı, sil <paket>...
+                         → layihənin python_paketlər/ qovluğu
     lint <fayl|qovluq>   Statik təhlil (alqorlint): üslub, təhlükəsizlik,
                          mürəkkəblik --düzəlt --sərtlik S --json --qaydalar
     sına [yol]           Sınaqlar (@sınaq): --filtr söz  --sənəd  --ətraflı
@@ -1238,6 +1322,7 @@ VƏZİYYƏT:
     "lint": əmr_lint, "alqorlint": əmr_lint,
     "pm": əmr_pm, "alqorpm": əmr_pm, "paket": əmr_pm,
     "hub": əmr_hub, "alqorhub": əmr_hub,
+    "python": əmr_python,
     "yeni": əmr_yeni, "new": əmr_yeni,
     "sına": əmr_sına, "sina": əmr_sına, "test": əmr_sına,
     "sənəd": əmr_sənəd, "sened": əmr_sənəd, "doc": əmr_sənəd,

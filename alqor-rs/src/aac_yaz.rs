@@ -488,16 +488,17 @@ impl Yazıcı {
             C::Keç(yer) => self.s(l, &format!("Keç {}", y(yer))),
             C::DayanNöqtəsi(yer) => self.s(l, &format!("DayanNöqtəsi {}", y(yer))),
             C::Global(yer, adlar) => self.s(l, &format!("Global {} adlar={}", y(yer), qs(adlar))),
-            C::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı } => {
+            C::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı, python } => {
                 self.s(
                     l,
                     &format!(
-                        "İdxal {} yol={} mətn_yolu={} ləqəb={} hamısı={}",
+                        "İdxal {} yol={} mətn_yolu={} ləqəb={} hamısı={} python={}",
                         y(yer),
                         qs(yol),
                         oq(mətn_yolu),
                         oq(ləqəb),
-                        hamısı
+                        hamısı,
+                        python
                     ),
                 );
                 self.iç(|w| {

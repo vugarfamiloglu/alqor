@@ -47,6 +47,7 @@ alqor sənəd                      # sənəd yarat
 alqor söhbət                     # REPL başlat
 alqor paketlə                    # quraşdırıcı yarat
 alqor yerləşdir                  # yerləşdir
+alqor python qur <paket>         # Python paketi (`gətir python:paket`)
 alqor versiya
 alqor kömək <əmr>
 ```
@@ -76,6 +77,7 @@ Azərbaycan hərfləri yazmaq çətin olanda.
 | `sənəd [yol] [--format html\|markdown] [--çıxış]` | ✅ § 13.6 |
 | `qur [--tip]` | ✅ `qurma/<ad>.pyz` — aşağıya baxın |
 | `təmizlə` | ✅ yalnız layihə daxilindəki `qurma/` |
+| `python qur [paket…] \| siyahı \| sil <paket>…` | ✅ Python paketləri → `python_paketlər/` (§ 8.14) |
 
 Repo kökündəki `alqor.cmd` (Windows) və `alqor` (Linux/macOS) bu
 əmrləri `alqor yeni …` kimi çağırmağa imkan verir.

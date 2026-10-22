@@ -197,6 +197,9 @@ def qlobal_mühit(icraçı) -> Mühit:
         if isinstance(x, (str, list, dict, set, tuple, bytes,
                           AlqorDiapazon)):
             return len(x)
+        f = getattr(type(x), "alqor_uzunluq", None)
+        if f is not None:
+            return f(x)
         raise _xəta("TipXətası",
                     f"`{tip_adı(x)}` tipinin uzunluğu yoxdur", "ALQ-T006")
 

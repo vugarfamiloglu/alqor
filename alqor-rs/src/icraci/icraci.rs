@@ -819,7 +819,13 @@ impl İcraçı {
                 m.elan(ad(a), D::Modul(md), false);
                 Ok(())
             }
-            Cümlə::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı } => {
+            Cümlə::İdxal { yer, python: true, .. } => Err(super::deyerler::xəta_yer(
+                "ArqumentXətası",
+                "Python kitabxanaları yalnız əsas (Python) icraçısında işləyir — `alqor işlət` istifadə edin",
+                Some(*yer),
+                "ALQ-M015",
+            )),
+            Cümlə::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı, .. } => {
                 self.c_idxal(*yer, yol, mətn_yolu.as_deref(), ləqəb.as_deref(), elementlər, *hamısı, m)
             }
             Cümlə::Başlanğıc(_, g) => self.blok(g, &əhatə(g, m)),

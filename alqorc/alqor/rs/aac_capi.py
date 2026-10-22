@@ -422,7 +422,8 @@ class _Yazıcı:
             self.s(l, f"Global {Y} adlar={_qs(c.adlar)}")
         elif t is A.İdxal:
             self.s(l, f"İdxal {Y} yol={_qs(c.yol)} mətn_yolu={_oq(c.mətn_yolu)}"
-                      f" ləqəb={_oq(c.ləqəb)} hamısı={_b(c.hamısı)}")
+                      f" ləqəb={_oq(c.ləqəb)} hamısı={_b(c.hamısı)}"
+                      f" python={_b(c.python)}")
             with self.iç():
                 self.siyahı("elementlər", c.elementlər, lambda e: self.s(
                     "", f"Element ad={_q(e.ad)} ləqəb={_oq(e.ləqəb)}"))

@@ -112,6 +112,14 @@ gətir @şirkət/analitika           // ad fəzalı paket
 gətir tarix_alətləri              // alqorhub paketi
 ```
 
+### Python kitabxanasından
+```alqor
+gətir python:numpy kimi np            // PyPI paketi (`alqor python qur numpy`)
+gətir python:os.path                  // alt modul → `path` adı
+gətir python:math.{sqrt, pi kimi PI}  // seçmə idxal
+```
+Ətraflı: [§ 8.14](#814-python-kitabxanalari).
+
 ### Şərti idxal
 ```alqor
 @əgərHədəf("veb")
@@ -410,7 +418,8 @@ ilə saxlanır.
 4. Qlobal keş: `~/.alq/paketlər/`
 5. Sistem: `/usr/lib/alqor/paketlər/`
 
-Tapılmasa: `ALQ-M001`.
+Tapılmasa: `ALQ-M001`. `gətir python:X` bu sıraya daxil deyil — Python
+modulu Python-un öz idxal sistemi ilə axtarılır (§ 8.14).
 
 ---
 
@@ -465,3 +474,201 @@ son
 | `ALQ-M010` | Paket imzası doğrulanmadı |
 | `ALQ-M011` | ⚠ İstifadə olunmayan idxal |
 | `ALQ-M012` | ⚠ `gətir *` tövsiyə olunmur |
+| `ALQ-M013` | Python paketi tapılmadı (`alqor python qur …`) |
+| `ALQ-M014` | Python istisnası — `PythonXətası` |
+| `ALQ-M015` | Python kitabxanaları bu hədəfdə işləmir (JS, veb, `alqor-rs`) |
+
+---
+
+## 8.14 Python kitabxanaları ✅
+
+Alqor-un əsas icraçısı Python-da yazılıb, ona görə **istənilən Python
+modulu** — standart kitabxana və ya PyPI-dən quraşdırılmış paket —
+birbaşa idxal oluna bilər. Alqor beləliklə PyPI-nin bütün ekosistemini
+(numpy, requests, pandas, pillow …) dərhal əldə edir.
+
+### Sintaksis
+
+`python:` prefiksi `gətir`-in bütün formaları ilə işləyir:
+
+```alqor
+gətir python:numpy kimi np                    // bütöv modul, ləqəblə
+gətir python:os.path                          // alt modul → `path` adı
+gətir python:math.{sqrt, pi kimi PI}          // seçmə idxal
+gətir python:statistics.*                     // hamısı (tövsiyə olunmur)
+```
+
+`python` **kontekstli** sözdür: yalnız `gətir`-dən sonra və ardınca `:`
+gələndə prefiksdir. `gətir python` (adı `python` olan Alqor modulu) və
+`dəyişən python = 1` əvvəlki kimi işləyir. Bağlanan ad Alqor qaydasıdır:
+`gətir python:os.path` → `path` (Python-un `import os.path` → `os`
+qaydası yox). Seçmə idxalda `{…}` içindəki ad modulun üzvü deyilsə,
+alt modul kimi axtarılır (`gətir python:xml.{dom}`).
+
+### İşlətmə
+
+```alqor
+gətir python:collections kimi kol
+gətir python:datetime.{date, timedelta}
+gətir python:builtins.{sorted}
+
+dəyişən say = kol.Counter("azərbaycan")
+yaz(say.most_common(2))                       // [("a", 3), ("z", 1)]
+yaz(say["a"])                                 // indeks
+
+dəyişən g = date(2025, 3, 20) + timedelta(days: 40)   // adlı arqument
+yaz(g.isoformat(), g > date(2025, 1, 1))      // operatorlar
+
+hər söz, n üçün kol.Counter(["a", "b", "a"]) içində    // Mapping → lüğət kimi
+    yaz(söz, n)
+son
+
+yaz(sorted(["alma", "ət"], key: (s) => uzunluq(s)))   // geri çağırış
+```
+
+| Alqor əməliyyatı | Python qarşılığı |
+|---|---|
+| `o.ad`, `o.ad = d` | `getattr` / `setattr` (paketdə alt modul avtomatik idxal olunur) |
+| `f(a, ad: d)` | `f(a, ad=d)` — adlı arqumentlər `kwargs` olur |
+| `o[i]`, `o[i] = d` | `__getitem__` / `__setitem__` |
+| `o[1..3]`, `o[1..<3]` | `o[1:4]`, `o[1:3]` — Alqor dilimi son həddi daxil edir |
+| `hər x üçün o içində` | `iter(o)` (tənbəl; generatorlar da) |
+| `x içindədir o`, `uzunluq(o)` | `x in o`, `len(o)` |
+| `+ - * / ~/ % ** & \| ^ << >> < > <= >= <=>` | uyğun Python operatoru (`~/` → `//`) |
+| `-o` | `-o` |
+| `==` | `==` |
+| `o kimi tam/onluq/məntiq/siyahı/dəst`, `məntiqƏt(o)` | `int` / `float` / `bool` / `list` / `set` |
+| `yaz(o)`, `"{o}"`, `mətnƏt(o)` | `str(o)` |
+| `istifadə f = open("a.txt")` | `with open("a.txt") as f` (`__enter__`/`__exit__`) |
+| `tip(o)` | `python:<sinif adı>`, `python:modul[ad]`, `python:sinif[ad]`, `python:funksiya[ad]` |
+
+Alqor şərtləri yalnız `məntiq` qəbul etdiyindən `əgər o` əvəzinə
+`əgər o kimi məntiq` (Python `bool(o)`) yazılır.
+
+### Çevrilmə qaydaları
+
+Hər iki istiqamətdə **dərin** çevrilmə:
+
+| Alqor | Python |
+|---|---|
+| `tam`, `onluq`, `mətn`, `məntiq`, `boş`, `bayt` | `int`, `float`, `str`, `bool`, `None`, `bytes` |
+| `siyahı`, `lüğət`, `dəst`, `kortej` | `list`, `dict`, `set`, `tuple` (`frozenset` → `dəst`) |
+| `diapazon` | `list` |
+| funksiya, lambda, metod | Python çağırıla bilən obyekti |
+| qalan hər şey | proksi (`PythonObyekti`) |
+
+- `int`/`float` alt sinifləri (`IntEnum`, `numpy.int64`, `numpy.float64`)
+  `tam`/`onluq` olur.
+- `list`/`dict`/`tuple`-ın **alt sinifləri** (`Counter`, `OrderedDict`,
+  `namedtuple`, `deque`) proksi qalır — öz metodları itməsin.
+- Kolleksiyanın heç bir elementi çevrilmə tələb etmirsə, **eyni obyekt**
+  ötürülür: `bisect.insort(s, 4)` və `random.shuffle(s)` Alqor
+  siyahısını yerində dəyişir. Element çevrilibsə (məs. içində Alqor
+  funksiyası var) — surət ötürülür.
+- Alqor funksiyası Python-a ötürüləndə (`key: f`, geri çağırışlar)
+  arqumentləri Alqor dəyərinə, nəticəsi Python dəyərinə çevrilir.
+  Geri çağırışın atdığı Alqor xətası Python kodundan **olduğu kimi**
+  keçir (`tut (x: BölməXətası)` işləyir).
+
+### Xətalar
+
+Python istisnası `PythonXətası` (`Xəta`-nın alt tipi, `ALQ-M014`) olur:
+
+```alqor
+cəhd et
+    json.loads(mətn)
+tut (x: PythonXətası) əgər x.pythonTipi == "JSONDecodeError"
+    yaz("pozulmuş JSON:", x.mesaj)    // "JSONDecodeError: Expecting value…"
+son
+```
+
+| Sahə | Məna |
+|---|---|
+| `x.mesaj` | `"<Sinif>: <mesaj>"` |
+| `x.pythonTipi` | istisnanın sinif adı (`"ValueError"`) |
+| `x.istisna` | istisna obyektinin özü (proksi) |
+| `x.kod` | `"ALQ-M014"` |
+
+Quraşdırılmamış paket: `ALQ-M013`, mesaj quraşdırma əmrini göstərir:
+
+```
+✖ ALQ-M013  PythonXətası: `numpy` Python paketi tapılmadı — `alqor python qur numpy` ilə quraşdırın
+```
+
+İdxal adı pip adından fərqli olan məşhur paketlər üçün düzgün ad
+göstərilir (`yaml` → `pyyaml`, `PIL` → `pillow`, `sklearn` →
+`scikit-learn`, `cv2` → `opencv-python`, `bs4` → `beautifulsoup4`).
+
+### Paketlərin quraşdırılması — `alqor python`
+
+Paketlər layihənin (`layihe.alq` olan qovluğun) **`python_paketlər/`**
+qovluğuna quraşdırılır — sistem Python-una toxunulmur, layihə öz
+asılılıqlarını daşıyır. Bu qovluq `alqor yeni` şablonunun `.gitignore`
+faylındadır.
+
+```bash
+alqor python qur requests "numpy>=2"   # pip install --target python_paketlər/
+alqor python qur                       # layihe.alq → [python] asılılıqlar
+alqor python siyahı                    # quraşdırılmışlar: ad==versiya
+alqor python sil requests              # RECORD siyahısına görə silir
+alqor python qur --no-index --find-links ./təkərlər paket   # internetsiz
+alqor python siyahı --qovluq q/        # layihəsiz: istənilən qovluq
+```
+
+`-` ilə başlayan seçimlər pip-ə ötürülür (`--find-links Q`, `--index-url
+URL`, `--pre`, `--no-deps` …); `--`-dan sonrakı hər şey də.
+
+```toml
+[python]
+asılılıqlar = ["requests>=2.31", "numpy"]
+# və ya: asılılıqlar = { requests = ">=2.31", numpy = "*", rich = "13.7" }
+#        (versiya operatorsuz yazılsa `==` sayılır)
+```
+
+**İdxal yolu.** `gətir python:X` icra olunanda `sys.path`-a (sistem
+paketlərindən öndə, venv kimi) əlavə olunur:
+
+1. `ALQOR_PYTHON_YOLU` mühit dəyişənindəki qovluqlar (`os.pathsep` ilə);
+2. idxal edən fayldan yuxarı ilk `layihe.alq`-un yanındakı
+   `python_paketlər/`.
+
+Sonra Python-un adi axtarışı (sistem `site-packages` daxil) gəlir.
+
+**pip.** Alqor-un quraşdırıcılarındakı daxili Python
+(python-build-standalone) pip-i daxil edir. pip yoxdursa `alqor python
+qur` əvvəlcə `python -m ensurepip` ilə quraşdırmağa çalışır; alınmasa
+nə etmək lazım olduğunu yazır (məs. Debian/Ubuntu: `sudo apt install
+python3-pip`). `--target` quraşdırması PEP 668 ("externally managed")
+qadağasına düşmür.
+
+### Paketləmə — `alqor qur`
+
+`alqor qur` (`.pyz`) və `alqor qur --exe` layihənin `python_paketlər/`
+qovluğunu paketə daxil edir; işə salınanda o, keş qovluğuna açılır və
+`sys.path`-a düşür.
+
+- **Təmiz Python paketləri** (`py3-none-any` təkərləri) hər platformada
+  işləyir.
+- **İkili (C uzantılı) təkərlər** (numpy, pillow …) yalnız quraşdırıldıqları
+  platforma + arxitektura + Python versiyası üçündür. Linux-da qurulan
+  `.exe` üçün Windows təkərlərini ayrıca layihə surətində pip seçimləri ilə
+  quraşdırın: `alqor python qur --platform win_amd64 --only-binary=:all:
+  --python-version 3.12 numpy` (daxili Python 3.12-dir).
+
+### Məhdudiyyətlər
+
+- Yalnız əsas (Python) icraçısı: `alqor işlət --js`, veb hədəfi
+  (`alqor qur --hədəf js|veb`) kompilyasiya xətası verir — "Python
+  kitabxanaları JS hədəfində işləmir"; `alqor-rs` icra xətası verir
+  (`ALQ-M015`).
+- Tip yoxlayıcısı Python obyektlərini `istənilən` sayır (yoxlama yoxdur).
+  `gətir python:X.*` üçün adları bilmək məqsədilə yoxlayıcı modulu idxal
+  edir.
+- Python `async` korutinləri Alqor `gözlə`-si ilə gözlənilmir —
+  `asyncio.run(...)` işlədin.
+- Kontekst menecerinin `__exit__`-i xətanı "uda" bilməz — xəta yenə atılır.
+- Python-dan qayıdan kolleksiya **surətdir** (elementləri çevrilibsə);
+  obyektin daxili siyahısını dəyişmək üçün onun öz metodlarını çağırın.
+- Python kodu Alqor-un təhlükəsizlik zəmanətlərindən kənardadır:
+  quraşdırdığınız paketə etibar etməlisiniz (PyPI-dəki hər paket kimi).
+

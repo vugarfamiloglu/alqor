@@ -63,6 +63,7 @@ Bu bir oyuncaq dil deyil. Alqor müasir dillərin gücünü daşıyır:
 | 💬 **Anlaşılan xətalar** | Hər xəta Azərbaycanca, kodu ilə, səhvin yeri göstərilir və düzəliş təklif olunur |
 | ⌨️ **Hər klaviaturada** | `eger` yazsanız `əgər` kimi qəbul olunur — Azərbaycan klaviaturası olmayan kompüterdə də işləyir |
 | 🌐 **Bir dil — dörd hədəf** | Konsol, veb server, desktop pəncərə və **JavaScript** (Node.js / brauzer) |
+| 🐍 **Python ekosistemi** | `gətir python:numpy kimi np` — istənilən Python/PyPI kitabxanası birbaşa; `alqor python qur requests` layihəyə quraşdırır |
 | 🛠 **Tam alət dəsti** | IDE, paket meneceri, formatlayıcı, linter, sınaq işlədicisi, sənəd generatoru, LSP, debaqçı |
 
 ## Xətalar sizinlə danışır
@@ -128,6 +129,20 @@ serversiz statik sayta çevrilir:
 alqor işlət --js proqram.alq          # dərhal işlət (~10× sürətli)
 alqor qur --hədəf veb proqram.alq     # → qurma/veb/index.html
 alqor yerləşdir                       # → Netlify / GitHub Pages üçün qovluq
+```
+
+**Python kitabxanaları** — PyPI-nin bütün ekosistemi birbaşa Alqor-dan:
+
+```bash
+alqor python qur numpy                # → layihənin python_paketlər/ qovluğu
+```
+
+```alqor
+gətir python:numpy kimi np
+gətir python:statistics.{mean}
+
+dəyişən a = np.array([3, 1, 4, 1, 5])
+yaz(a * 2, a.max(), mean([1, 2, 3, 4]))     // [ 6  2  8  2 10] 5 2.5
 ```
 
 ## Alqor Studio
@@ -201,6 +216,7 @@ cd mənim-saytım
 | `alqor` | İşlətmək, layihə yaratmaq, qurmaq, sınaq, sənəd, REPL |
 | **Alqor Studio** | IDE: redaktor, vizual dizayner, önbaxış, debaq |
 | `alqorpm` / `alqorhub` | Paket meneceri və paket deposu serveri |
+| `alqor python` | Python/PyPI paketləri layihənin `python_paketlər/` qovluğuna (`gətir python:…`) |
 | `alqorfmt` | Kodu səliqəyə salır; ASCII açar sözləri düzəldir (`eger` → `əgər`) |
 | `alqorlint` | 35 qaydalı statik təhlil, avtomatik düzəlişlər |
 | `alqorls` | LSP serveri — VS Code, Neovim, Helix |

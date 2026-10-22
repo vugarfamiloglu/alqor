@@ -269,6 +269,28 @@ gətir həndəsə.{kök}                   // ✖
 gətir həndəsə.{kök kimi həndəsiKök}   // ✓
 ```
 
+### ✖ ALQ-M013 — Python paketi tapılmadı
+```
+`numpy` Python paketi tapılmadı — `alqor python qur numpy` ilə quraşdırın
+```
+**Həll:** layihə qovluğunda `alqor python qur <paket>` (paket
+`python_paketlər/` qovluğuna düşür). İdxal adı pip adından fərqlənə
+bilər — mesaj düzgün adı göstərir (`yaml` → `pyyaml`, `PIL` → `pillow`).
+
+### ✖ ALQ-M014 — Python istisnası (`PythonXətası`)
+Python kodu istisna atıb. `x.pythonTipi` istisnanın sinfidir:
+```alqor
+cəhd et
+    json.loads(mətn)
+tut (x: PythonXətası) əgər x.pythonTipi == "JSONDecodeError"
+    yaz("JSON pozulub")
+son
+```
+
+### ✖ ALQ-M015 — Python kitabxanaları bu hədəfdə işləmir
+`gətir python:…` yalnız əsas (Python) icraçısında işləyir: `alqor işlət`,
+`alqor qur` (.pyz / .exe). `--js`, veb hədəfi və `alqor-rs` dəstəkləmir.
+
 ---
 
 ## R — İcra xətaları
