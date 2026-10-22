@@ -414,7 +414,10 @@ impl İcraçı {
             ));
         }
         self.dərinlik.set(d);
-        let r = self.funksiya_gövdəsi(f, args, adlı, yer);
+        let r = match crate::vm::kod_tap(f) {
+            Some(k) => crate::vm::masin::gövdə_işlət(self, f, &k, args, adlı, yer),
+            None => self.funksiya_gövdəsi(f, args, adlı, yer),
+        };
         self.dərinlik.set(self.dərinlik.get() - 1);
         let r = r?;
         if let (Some(a), Some(y)) = (açar, &f.yaddaş) {

@@ -1613,7 +1613,7 @@ fn bir_dəfə(m: &Mənbə, r: &HashSet<String>) -> K<(Kod, HashSet<String>)> {
                 }
             };
             let lazım = std::mem::take(&mut k.lazım);
-            Ok((k.bitir(a, növ, Some((*parametrlər).clone()), Some(gövdə.clone()), özü, mühitli), lazım))
+            Ok((k.bitir(a, növ, Some((*parametrlər).clone()), Some((*gövdə).clone()), özü, mühitli), lazım))
         }
     }
 }

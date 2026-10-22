@@ -12,6 +12,7 @@ pub mod icraci;
 pub mod lekser;
 pub mod parser;
 pub mod parser_jsx;
+pub mod vm;
 pub mod xeta;
 
 #[cfg(target_arch = "wasm32")]

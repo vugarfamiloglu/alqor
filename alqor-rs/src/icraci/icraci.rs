@@ -422,9 +422,14 @@ impl İcraçı {
         let m = self.qlobal.clone();
         let r = (|| -> Nəticə<i32> {
             self.elanları_qaldır(gövdə, &m)?;
-            for c in gövdə {
-                if !elandır(c) {
-                    self.cümlə(c, &m)?;
+            match crate::vm::kök_kodu(gövdə) {
+                Some(k) => crate::vm::masin::kök_işlət(self, &k)?,
+                None => {
+                    for c in gövdə {
+                        if !elandır(c) {
+                            self.cümlə(c, &m)?;
+                        }
+                    }
                 }
             }
             if let Some(əsas) = m.burada_al("əsas") {
@@ -454,6 +459,7 @@ impl İcraçı {
             Ok(0)
         })();
         self.boşalt();
+        crate::vm::hesabat_çap();
         match r {
             Ok(k) => Ok(k),
             Err(Siqnal::Dayanma(k)) => Ok(match k {
@@ -1677,6 +1683,11 @@ impl İcraçı {
             return Ok(D::M(!self.məntiq(e, m)?));
         }
         let d = self.ifadə(e, m)?;
+        self.tək_dəyər(yer, op, d)
+    }
+
+    /// Tək operator (`-`, `+`, `~`) hesablanmış dəyərə
+    pub fn tək_dəyər(&self, yer: Yer, op: &str, d: D) -> Nəticə {
         match op {
             "-" => {
                 if let D::Nümunə(n) = &d {
@@ -1872,24 +1883,35 @@ impl İcraçı {
 
     fn e_dilim(&self, yer: Yer, o: &aac::E, b: Option<&aac::E>, s: Option<&aac::E>, xaric: bool, m: &Mühit) -> Nəticə {
         let o = self.ifadə(o, m)?;
-        let n = match &o {
-            D::Siyahı(l) => l.borrow().len(),
-            D::S(x) => x.chars().count(),
-            D::Kortej(k) => k.len(),
-            D::Bayt(x) => x.len(),
-            _ => {
-                return Err(xəta_yer("TipXətası", format!("`{}` dilimlənə bilməz", tip_adı(&o)), Some(yer), "ALQ-T009"))
-            }
-        } as i64;
-        let son_verilib = s.is_some();
+        let n = dilim_uzunluğu(&o, yer)?;
         let bd = match b {
-            Some(e) => self.ifadə(e, m)?,
-            None => D::T(0),
+            Some(e) => Some(self.ifadə(e, m)?),
+            None => None,
         };
         let sd = match s {
-            Some(e) => self.ifadə(e, m)?,
-            None => D::T(n),
+            Some(e) => Some(self.ifadə(e, m)?),
+            None => None,
         };
+        dilim_tətbiq(&o, n, bd, sd, xaric, yer)
+    }
+}
+
+/// Dilimlənən dəyərin uzunluğu (tip yoxlaması hədlərdən əvvəl)
+pub fn dilim_uzunluğu(o: &D, yer: Yer) -> Nəticə<i64> {
+    Ok(match o {
+        D::Siyahı(l) => l.borrow().len(),
+        D::S(x) => x.chars().count(),
+        D::Kortej(k) => k.len(),
+        D::Bayt(x) => x.len(),
+        _ => return Err(xəta_yer("TipXətası", format!("`{}` dilimlənə bilməz", tip_adı(o)), Some(yer), "ALQ-T009")),
+    } as i64)
+}
+
+pub fn dilim_tətbiq(o: &D, n: i64, bd: Option<D>, sd: Option<D>, xaric: bool, yer: Yer) -> Nəticə {
+    {
+        let son_verilib = sd.is_some();
+        let bd = bd.unwrap_or(D::T(0));
+        let sd = sd.unwrap_or(D::T(n));
         let (Some(mut bi), Some(mut si)) = (bd.i64(), sd.i64()) else {
             return Err(xəta_yer("TipXətası", "dilim hədləri tam ədəd olmalıdır", Some(yer), "ALQ-T009"));
         };
@@ -1905,7 +1927,7 @@ impl İcraçı {
         let a = bi.max(0).min(n) as usize;
         let z = si.min(n).max(0) as usize;
         let (a, z) = if a > z { (0, 0) } else { (a, z) };
-        Ok(match &o {
+        Ok(match o {
             D::Siyahı(l) => D::siyahı(l.borrow()[a..z].to_vec()),
             D::Kortej(k) => D::kortej(k[a..z].to_vec()),
             D::Bayt(x) => D::Bayt(Rc::new(x[a..z].to_vec())),

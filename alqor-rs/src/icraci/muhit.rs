@@ -53,6 +53,11 @@ impl MühitD {
         a.iter().position(|g| eyni_ad(&g.ad, ad))
     }
 
+    /// Adın bu əhatədəki indeksi (indekslər dəyişmir — VM keşi üçün)
+    pub fn indeks(&self, ad: &str) -> Option<usize> {
+        self.tap(ad)
+    }
+
     pub fn burada_al(&self, ad: &str) -> Option<D> {
         self.tap(ad).map(|i| self.adlar.borrow()[i].d.clone())
     }
@@ -164,6 +169,6 @@ impl MühitD {
     }
 }
 
-fn sabit_xətası(ad: &str) -> super::deyerler::Siqnal {
+pub fn sabit_xətası(ad: &str) -> super::deyerler::Siqnal {
     xəta("ArqumentXətası", format!("`{}` sabitdir, dəyişdirilə bilməz", ad), "ALQ-T020")
 }
