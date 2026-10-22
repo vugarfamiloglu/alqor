@@ -149,6 +149,9 @@ def rs_uyğunluğu(ağac, yol: Path | None, b: Path) -> str | None:
                 səbəb.append(f"`{d.ad}` Rust icraçısında yoxdur")
 
         def _idxal(d, baza):
+            if getattr(d, "python", False):
+                return [f"`gətir python:{'.'.join(d.yol)}` yalnız Python "
+                        "icraçısında"]
             if d.mətn_yolu is not None:
                 p = Path(d.mətn_yolu)
                 if not p.is_absolute() and baza is not None:
