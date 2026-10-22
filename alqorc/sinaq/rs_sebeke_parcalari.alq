@@ -85,3 +85,51 @@ yaz(tip(g))
 hər c üçün paralel.hamısı([http.al(u + "/kod/201"), http.al(u + "/kod/202")]) içində
     yaz(c.kod())
 son
+=====
+gətir şəbəkə
+dəyişən server = şəbəkə.TCPServer(0, (k) => k.göndər("əks: " + k.sətirAl() + "\n"))
+server.başlat()
+dəyişən p = server.port()
+yaz(p > 0, tip(server))
+dəyişən s = şəbəkə.TCPBağlan("127.0.0.1", p)
+yaz(tip(s), s.ünvan() == "127.0.0.1:{p}")
+yaz(s.göndər("salam\n"))
+yaz(s.sətirAl())
+yaz(s.sətirAl())
+s.bağla()
+dəyişən s2 = şəbəkə.TCPBağlan("127.0.0.1", p, 3000)
+s2.göndər(b"bayt\r\n")
+yaz(s2.alMətn())
+s2.bağla()
+dəyişən xs = şəbəkə.TCPServer(0, (k) => xəta_at())
+xs.başlat()
+dəyişən s3 = şəbəkə.TCPBağlan("127.0.0.1", xs.port())
+yaz(s3.al())
+yaz(xs.xətalar().uzunluq())
+xs.dayandır()
+server.dayandır()
+cəhd et
+    şəbəkə.TCPBağlan("127.0.0.1", 1)
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+yaz(şəbəkə.portAçıqdır("127.0.0.1", 1), şəbəkə.portAçıqdır("127.0.0.1", p + 0, 200) tipidir məntiq)
+dəyişən u1 = şəbəkə.UDPSoket()
+dəyişən u2 = şəbəkə.UDPSoket(0, "127.0.0.1")
+yaz(u1.göndər("udp ə", "127.0.0.1", u2.port()))
+dəyişən m = u2.al()
+yaz(m["verilən"], m["ünvan"], m["port"] == u1.port())
+u2.vaxtLimiti(100)
+cəhd et
+    u2.al()
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+u1.bağla()
+u2.bağla()
+yaz("127.0.0.1" içindədir şəbəkə.ünvanTap("localhost"), tip(şəbəkə.yerliIP()), şəbəkə.hostAdı() == sistem.hostAdı())
+cəhd et
+    s.göndər(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son

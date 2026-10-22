@@ -26,6 +26,8 @@ pub fn adlar() -> Vec<&'static str> {
     let mut v = vec!["kodlaşdırma", "şifrə", "sıxma", "csv", "toml"];
     #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
     v.push("http");
+    #[cfg(not(target_arch = "wasm32"))]
+    v.push("şəbəkə");
     v
 }
 
@@ -48,6 +50,8 @@ fn qur(i: &İcraçı, ad_: &str) -> Option<Nəticə<Rc<Modul>>> {
         "toml" => super::mod_toml::qur(),
         #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
         "http" => super::mod_http::qur(),
+        #[cfg(not(target_arch = "wasm32"))]
+        "şəbəkə" => super::mod_sebeke::qur(),
         x if PLATFORMADA_YOX.contains(&x) => {
             return Some(Err(xəta(
                 "ArqumentXətası",
