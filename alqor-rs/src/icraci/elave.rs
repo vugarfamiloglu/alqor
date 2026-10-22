@@ -22,13 +22,13 @@ use std::rc::{Rc, Weak};
 
 /// Rust icraçısının dəstəklədiyi əlavə modullar (bu platformada).
 pub fn adlar() -> Vec<&'static str> {
-    vec!["kodlaşdırma", "şifrə", "sıxma"]
+    vec!["kodlaşdırma", "şifrə", "sıxma", "csv", "toml"]
 }
 
 /// Python-da olub bu platformada olmayan modullar — aydın xəta üçün.
 /// Yalnız Python icraçısında olan modullar.
 pub const PYTHON_YALNIZ: &[&str] = &[
-    "csv", "toml", "xml", "pul", "validasiya", "lokalizasiya", "keş", "növbə", "konfiq", "yaml", "html",
+    "xml", "pul", "validasiya", "lokalizasiya", "keş", "növbə", "konfiq", "yaml", "html",
     "planlayıcı", "poçt", "şəkil", "qrafik", "pdf", "ffi", "pəncərə", "vidjet", "verilənlər", "http", "şəbəkə",
 ];
 
@@ -40,6 +40,8 @@ fn qur(i: &İcraçı, ad_: &str) -> Option<Nəticə<Rc<Modul>>> {
         "kodlaşdırma" => super::mod_kodlasdirma::qur(),
         "şifrə" => super::mod_sifre::qur(),
         "sıxma" => super::mod_sixma::qur(),
+        "csv" => super::mod_csv::qur(),
+        "toml" => super::mod_toml::qur(),
         x if PLATFORMADA_YOX.contains(&x) => {
             return Some(Err(xəta(
                 "ArqumentXətası",
