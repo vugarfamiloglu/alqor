@@ -183,6 +183,14 @@ fn blok_adları(g: &[Cümlə], n: &mut Vec<String>) -> K {
     Ok(())
 }
 
+fn kiçik_tam(e: &aac::E) -> Option<i32> {
+    use num_traits::ToPrimitive;
+    match &**e {
+        İfadə::Literal(_, LiteralD::Tam(b)) => b.to_i32(),
+        _ => None,
+    }
+}
+
 fn onluq_tipidir(t: Option<&aac::Tip>) -> bool {
     matches!(t, Some(aac::Tip::Ad { yol, .. }) if yol.len() == 1 && yol[0] == "onluq")
 }
@@ -258,7 +266,9 @@ impl<'r> Kompilyator<'r> {
             | Əmr::MetodAl(_, _, x)
             | Əmr::Sayğac(_, _, x)
             | Əmr::TutmaYoxla(_, _, x)
-            | Əmr::Qaç(x, _, _) => *x = h,
+            | Əmr::Qaç(x, _, _)
+            | Əmr::ŞərtYT(_, _, _, x)
+            | Əmr::ŞərtYY(_, _, _, x) => *x = h,
             _ => unreachable!("yamaq: keçid əmri deyil"),
         }
     }
@@ -581,8 +591,7 @@ impl<'r> Kompilyator<'r> {
             Cümlə::Şərt { budaqlar, yoxsa, .. } => {
                 let mut sonlar = vec![];
                 for (ş, g) in budaqlar {
-                    self.ifadə(ş)?;
-                    let j = self.əmr(Əmr::ŞərtAtla(0), ş.yer());
+                    let j = self.şərt_atla(ş)?;
                     self.blok(g)?;
                     sonlar.push(self.e(Əmr::Atla(0)));
                     let h = self.pc();
@@ -598,8 +607,7 @@ impl<'r> Kompilyator<'r> {
             }
             Cümlə::NəQədərKi { şərt, gövdə, etiket, .. } => {
                 let baş = self.pc();
-                self.ifadə(şərt)?;
-                let j = self.əmr(Əmr::ŞərtAtla(0), şərt.yer());
+                let j = self.şərt_atla(şərt)?;
                 self.dövr_başla(etiket);
                 let b = self.pc();
                 self.blok(gövdə)?;
@@ -655,8 +663,7 @@ impl<'r> Kompilyator<'r> {
                 self.dövr_başla(etiket);
                 self.blok(gövdə)?;
                 let s = self.pc();
-                self.ifadə(şərt)?;
-                let j = self.əmr(Əmr::ŞərtAtla(0), şərt.yer());
+                let j = self.şərt_atla(şərt)?;
                 self.e(Əmr::Atla(baş));
                 let son = self.pc();
                 self.yamaq(j, son);
@@ -880,8 +887,7 @@ impl<'r> Kompilyator<'r> {
         }
         let mut şərt_j = None;
         if let Some(ş) = şərt {
-            self.ifadə(ş)?;
-            şərt_j = Some(self.əmr(Əmr::ŞərtAtla(0), ş.yer()));
+            şərt_j = Some(self.şərt_atla(ş)?);
         }
         self.dövr_başla(etiket);
         // Dövr bölgəsinin dərinlikləri: iterator daxil, iterasiya əhatəsi xaric
@@ -951,8 +957,7 @@ impl<'r> Kompilyator<'r> {
             }
             let mut mühafizə_j = None;
             if let Some(g) = &t.mühafizə {
-                self.ifadə(g)?;
-                mühafizə_j = Some(self.əmr(Əmr::ŞərtAtla(0), g.yer()));
+                mühafizə_j = Some(self.şərt_atla(g)?);
             }
             self.e(Əmr::CəhdTəmizlə(id));
             for c in t.gövdə.iter() {
@@ -1049,8 +1054,7 @@ impl<'r> Kompilyator<'r> {
             self.ifadə(h)?;
             self.ifadə(&dəyərlər[0])?;
             let o = &op[..op.len() - 1];
-            let oo = Op::yeni(o, || self.ad_i(o));
-            self.əmr(Əmr::İkili(oo), yer);
+            self.ikili_əmr(o, yer);
         }
         if dəyər_lazım {
             self.e(Əmr::Dup);
@@ -1084,6 +1088,42 @@ impl<'r> Kompilyator<'r> {
             }
         }
         Ok(None)
+    }
+
+    fn ikili_əmr(&mut self, op: &str, yer: Yer) {
+        match Op::yeni(op) {
+            Some(o) => self.əmr(Əmr::İkili(o), yer),
+            None => {
+                let i = self.ad_i(op);
+                self.əmr(Əmr::İkiliDigər(i), yer)
+            }
+        };
+    }
+
+    /// İfadə yerli yuvadırsa onun nömrəsi
+    fn yuva_ifadəsi(&self, e: &aac::E) -> Option<u32> {
+        match &**e {
+            İfadə::Ad(_, a) => self.həll(a),
+            _ => None,
+        }
+    }
+
+    /// Şərti hesablayıb yanlışdırsa keçir; keçid əmrinin indeksi
+    fn şərt_atla(&mut self, ş: &aac::E) -> K<usize> {
+        if let İfadə::İkili(yer, sol, op, sağ) = &**ş {
+            if let Some(o) = Op::yeni(op).filter(|o| o.müqayisədir()) {
+                if let Some(y) = self.yuva_ifadəsi(sol) {
+                    if let Some(n) = kiçik_tam(sağ) {
+                        return Ok(self.əmr(Əmr::ŞərtYT(o, y, n, 0), *yer));
+                    }
+                    if let Some(y2) = self.yuva_ifadəsi(sağ) {
+                        return Ok(self.əmr(Əmr::ŞərtYY(o, y, y2, 0), *yer));
+                    }
+                }
+            }
+        }
+        self.ifadə(ş)?;
+        Ok(self.əmr(Əmr::ŞərtAtla(0), ş.yer()))
     }
 
     fn ifadə(&mut self, e: &aac::E) -> K {
@@ -1181,10 +1221,21 @@ impl<'r> Kompilyator<'r> {
                     self.yamaq(j, h);
                 }
                 _ => {
+                    if let Some(o) = Op::yeni(op) {
+                        if let Some(y) = self.yuva_ifadəsi(sol) {
+                            if let Some(n) = kiçik_tam(sağ) {
+                                self.əmr(Əmr::İkiliYT(o, y, n), *yer);
+                                return Ok(());
+                            }
+                            if let Some(y2) = self.yuva_ifadəsi(sağ) {
+                                self.əmr(Əmr::İkiliYY(o, y, y2), *yer);
+                                return Ok(());
+                            }
+                        }
+                    }
                     self.ifadə(sol)?;
                     self.ifadə(sağ)?;
-                    let o = Op::yeni(op, || self.ad_i(op));
-                    self.əmr(Əmr::İkili(o), *yer);
+                    self.ikili_əmr(op, *yer);
                 }
             },
             İfadə::Tək(yer, op, x) => {
@@ -1394,8 +1445,7 @@ impl<'r> Kompilyator<'r> {
                 self.bağla(bağlama, false)?;
                 let mut şj = None;
                 if let Some(ş) = şərt {
-                    self.ifadə(ş)?;
-                    şj = Some(self.əmr(Əmr::ŞərtAtla(0), ş.yer()));
+                    şj = Some(self.şərt_atla(ş)?);
                 }
                 if növ == "lüğət" {
                     self.ifadə(ifadə)?;
@@ -1432,8 +1482,7 @@ impl<'r> Kompilyator<'r> {
             İfadə::ŞərtIfadəsi(_, budaqlar, yoxsa) => {
                 let mut sonlar = vec![];
                 for (ş, d) in budaqlar {
-                    self.ifadə(ş)?;
-                    let j = self.əmr(Əmr::ŞərtAtla(0), ş.yer());
+                    let j = self.şərt_atla(ş)?;
                     self.ifadə(d)?;
                     sonlar.push(self.e(Əmr::Atla(0)));
                     let h = self.pc();

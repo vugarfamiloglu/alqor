@@ -10,7 +10,7 @@ use crate::xeta::Yer;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
-/// İkili operator
+/// İkili operator (sürətli yolu olanlar; digərləri `İkiliDigər`)
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Op {
     Topla,
@@ -25,13 +25,11 @@ pub enum Op {
     BöyükBərabər,
     Bərabər,
     Fərqli,
-    /// Digər operatorlar — mətn kimi (`adlar` hovuzunda indeks)
-    Digər(u32),
 }
 
 impl Op {
-    pub fn yeni(s: &str, ad_indeksi: impl FnOnce() -> u32) -> Op {
-        match s {
+    pub fn yeni(s: &str) -> Option<Op> {
+        Some(match s {
             "+" => Op::Topla,
             "-" => Op::Çıx,
             "*" => Op::Vur,
@@ -44,8 +42,8 @@ impl Op {
             ">=" => Op::BöyükBərabər,
             "==" => Op::Bərabər,
             "!=" => Op::Fərqli,
-            _ => Op::Digər(ad_indeksi()),
-        }
+            _ => return None,
+        })
     }
     pub fn mətn(self) -> &'static str {
         match self {
@@ -61,8 +59,10 @@ impl Op {
             Op::BöyükBərabər => ">=",
             Op::Bərabər => "==",
             Op::Fərqli => "!=",
-            Op::Digər(_) => "",
         }
+    }
+    pub fn müqayisədir(self) -> bool {
+        matches!(self, Op::Kiçik | Op::Böyük | Op::KiçikBərabər | Op::BöyükBərabər | Op::Bərabər | Op::Fərqli)
     }
 }
 
@@ -95,6 +95,16 @@ pub enum Əmr {
     Genişlət,
     // ── Hesab ──────────────────────────────────────────────────────────
     İkili(Op),
+    /// Digər operatorlar (`adlar` hovuzunda mətn)
+    İkiliDigər(u32),
+    /// Birləşdirilmiş: yuva ⊕ tam sabit
+    İkiliYT(Op, u32, i32),
+    /// Birləşdirilmiş: yuva ⊕ yuva
+    İkiliYY(Op, u32, u32),
+    /// Birləşdirilmiş müqayisə + keçid (yanlışdırsa): yuva ⊕ tam sabit
+    ŞərtYT(Op, u32, i32, u32),
+    /// Birləşdirilmiş müqayisə + keçid: yuva ⊕ yuva
+    ŞərtYY(Op, u32, u32, u32),
     /// "-", "+", "~"
     Tək(u8),
     /// Yığının başı `məntiq` olmalıdır (əks halda TipXətası)

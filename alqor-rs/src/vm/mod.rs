@@ -93,6 +93,9 @@ pub fn kod_tap(f: &Funksiya) -> Option<Rc<Kod>> {
             })
             .ok()
             .map(Rc::new);
+            if let Some(k) = &k {
+                kod_çap(k);
+            }
             if hesabat_aktiv() {
                 SAY.with(|s| {
                     let mut s = s.borrow_mut();
@@ -138,6 +141,9 @@ pub fn kök_kodu(gövdə: &[crate::aac::Cümlə]) -> Option<Kod> {
         return None;
     }
     let k = kompilyator::kompilyasiya(&kompilyator::Mənbə::Kök(gövdə)).ok();
+    if let Some(k) = &k {
+        kod_çap(k);
+    }
     if hesabat_aktiv() {
         SAY.with(|s| s.borrow_mut().kök_vm = k.is_some());
     }
@@ -161,4 +167,21 @@ pub fn hesabat_çap() {
             if s.ağac_adları.is_empty() { String::new() } else { format!(" | ağacda: {}", s.ağac_adları.join(", ")) }
         );
     });
+}
+
+/// `ALQOR_VM_KOD=1`: kompilyasiya olunmuş bayt-kodu stderr-ə çap edir
+fn kod_çap(k: &Kod) {
+    thread_local! {
+        static Ç: bool = std::env::var("ALQOR_VM_KOD").map(|v| v == "1").unwrap_or(false);
+    }
+    if !Ç.with(|c| *c) {
+        return;
+    }
+    eprintln!("── {} ({:?}, {} yuva, adlar {:?})", k.ad, k.növ, k.yuva_sayı, k.yuva_adları);
+    for (i, ə) in k.əmrlər.iter().enumerate() {
+        eprintln!("{:5} {:?}", i, ə);
+    }
+    for b in &k.bölgələr {
+        eprintln!("  bölgə {:?}", b);
+    }
 }
