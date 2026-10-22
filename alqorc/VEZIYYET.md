@@ -50,6 +50,7 @@ alqorc/
 │   ├── alqorfmt.py       formatlayıcı (§ 13.3) — `alqorfmt.py` / `format`
 │   ├── alqorls.py        LSP serveri (§ 13.8) — `alqor ls --stdio`
 │   ├── modullar/         əlavə standart modullar (§ 10.17), tənbəl yüklənir
+│   ├── python_korpu.py   Python kitabxanaları (§ 8.14): `gətir python:…`, `alqor python`
 │   ├── qrammatika.py     VS Code TextMate qrammatikası (açar sözlərdən)
 │   ├── layihe.py         `layihe.alq` parseri + `yeni` şablonları
 │   ├── sinaqci.py        `test` modulu + `sına` işlədicisi
