@@ -59,6 +59,64 @@ def binar() -> Path | None:
     return max(namizədlər, key=lambda p: p.stat().st_mtime)
 
 
+# Paylama platforması → Rust hədəf üçlüyü (birincisi üstündür)
+HƏDƏFLƏR: dict[tuple[str, str], tuple[str, ...]] = {
+    ("windows", "x86_64"): ("x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu"),
+    ("linux", "x86_64"): ("x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl"),
+    ("linux", "aarch64"): ("aarch64-unknown-linux-gnu", "aarch64-unknown-linux-musl"),
+    ("macos", "aarch64"): ("aarch64-apple-darwin",),
+    ("macos", "x86_64"): ("x86_64-apple-darwin",),
+}
+
+
+def _host() -> tuple[str, str]:
+    import platform
+    s = {"win32": "windows", "darwin": "macos"}.get(sys.platform, "linux")
+    m = platform.machine().lower()
+    return s, {"amd64": "x86_64", "arm64": "aarch64"}.get(m, m)
+
+
+def paylama_binarı(platforma: str, arx: str) -> Path | None:
+    """
+    Quraşdırıcıya daxil ediləcək `alqor-rs` binarı:
+      1. `ALQOR_RS_BINAR` (və ya `ALQOR_RS_BINAR_<PLATFORMA>_<ARX>`);
+      2. `alqor-rs/target/<üçlük>/release/` (çarpaz qurma);
+      3. host platformasıdırsa `alqor-rs/target/release/`.
+    """
+    for açar in (f"ALQOR_RS_BINAR_{platforma}_{arx}".upper(), "ALQOR_RS_BINAR"):
+        m = os.environ.get(açar)
+        if m and Path(m).is_file():
+            return Path(m)
+    ad = "alqor-rs.exe" if platforma == "windows" else "alqor-rs"
+    t = _KÖK / "alqor-rs" / "target"
+    for üçlük in HƏDƏFLƏR.get((platforma, arx), ()):
+        p = t / üçlük / "release" / ad
+        if p.is_file():
+            return p
+    if _host() == (platforma, arx) and (t / "release" / ad).is_file():
+        return t / "release" / ad
+    return None
+
+
+def paylamaya_əlavə_et(bin_qovluğu: Path, platforma: str, arx: str) -> Path | None:
+    """`alqor-rs` binarını paylamanın `bin/` qovluğuna köçürür
+    (`alqor işlət --motor avto|rs` onu orada tapır)."""
+    import shutil
+    b = paylama_binarı(platforma, arx)
+    if b is None:
+        print(f"⚠ alqor-rs binarı tapılmadı ({platforma}-{arx}) — paylama "
+              "yalnız Python icraçısı ilə qurulur. Qurmaq üçün: cd alqor-rs "
+              f"&& cargo build --release --target "
+              f"{HƏDƏFLƏR.get((platforma, arx), ('?',))[0]}",
+              file=sys.stderr)
+        return None
+    h = bin_qovluğu / ("alqor-rs.exe" if platforma == "windows" else "alqor-rs")
+    shutil.copyfile(b, h)
+    if platforma != "windows":
+        h.chmod(0o755)
+    return h
+
+
 @lru_cache(maxsize=None)
 def _sorğu(b: str, əmr: str) -> frozenset[str]:
     try:

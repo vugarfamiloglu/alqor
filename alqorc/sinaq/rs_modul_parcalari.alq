@@ -382,3 +382,105 @@ c = m.sil("/st/x")
 yaz(c.vəziyyət(), c.mətnƏt())
 qovluq.dəyiş("/")
 qovluq.silDərin(q)
+=====
+gətir verilənlər
+dəyişən b = verilənlər.bağlan("sqlite::yaddaş:")
+yaz(b, tip(b))
+yaz(b.icra("CREATE TABLE tələbə (id INTEGER PRIMARY KEY, ad TEXT NOT NULL UNIQUE, bal INTEGER, qeyd BLOB, ort REAL)"))
+yaz(b.icra("INSERT INTO tələbə (ad, bal) VALUES ($1, $2)", "Aysel", 95), b.sonId())
+yaz(b.icra("INSERT INTO tələbə (ad, bal, qeyd, ort) VALUES (?, ?, ?, ?)", "Kamran", 88, b"\x00\x01", 4.5), b.sonId())
+yaz(b.icra("INSERT INTO tələbə (ad, bal) VALUES ('$1 dollar', 1)"))
+yaz(b.sorğu("SELECT * FROM tələbə WHERE bal > $1 ORDER BY id", 80))
+yaz(b.birSətir("SELECT ad FROM tələbə WHERE id = ?", 2), b.birSətir("SELECT ad FROM tələbə WHERE id = 99"))
+yaz(b.birDəyər("SELECT COUNT(*) FROM tələbə"), b.birDəyər("SELECT ad FROM tələbə WHERE id = 99"))
+yaz(b.icra("UPDATE tələbə SET bal = bal + 1"), b.icra("DELETE FROM tələbə WHERE id = 99"))
+hər s üçün ["SELECT * FROM yox", "SELEC 1", "INSERT INTO tələbə (ad) VALUES ('Aysel')", "INSERT INTO tələbə (bal) VALUES (1)", "SELECT 1; SELECT 2"] içində
+    cəhd et
+        b.icra(s)
+    tut x
+        yaz(x.tip, x.mesaj, x.kod)
+    son
+son
+cəhd et
+    b.icra("SELECT ?", [1])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    b.icra("SELECT ?, ?", 1)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    b.icra(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(b.cədvəllər(), b.sütunlar("tələbə"))
+yaz(b.cədvəl("tələbə").seç("ad", "bal").harada("bal", ">=", 90).sırala("bal", "azalan").limit(10).al())
+dəyişən q = b.cədvəl("tələbə").harada("ad", "bənzər", "A%").yaHarada("id", "içində", [2, 3])
+yaz(q.sql(), q.say(), q.ilk())
+yaz(b.cədvəl("tələbə").harada("qeyd", "=", boş).say(), b.cədvəl("tələbə").harada("qeyd", "!=", boş).al())
+yaz(b.cədvəl("tələbə").harada("id", "IN", []).say(), b.cədvəl("tələbə").atla(1).limit(1).sql())
+yaz(b.cədvəl("tələbə").əlavəEt({"ad": "Nigar", "bal": 70}))
+yaz(b.cədvəl("tələbə").əlavəEt([{"ad": "Ə1"}, {"ad": "Ə2"}]))
+yaz(b.cədvəl("tələbə").harada("ad", "=", "Nigar").yenilə({"bal": 71}), b.cədvəl("tələbə").harada("bal", "<", 72).sil())
+hər f üçün [() => b.cədvəl("tələbə").yenilə({"bal": 1}), () => b.cədvəl("tələbə").sil(), () => b.cədvəl("tələbə; DROP"), () => b.cədvəl("tələbə").harada("a", "~", 1), () => b.cədvəl("tələbə").sırala("ad", "yuxarı"), () => b.cədvəl("tələbə").əlavəEt({}), () => b.icra("SELECT ?", [1, 2])] içində
+    cəhd et
+        f()
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son
+b.icra("CREATE TABLE hesab (ad TEXT, balans INTEGER)")
+b.icra("INSERT INTO hesab VALUES ('a', 100), ('b', 0)")
+b.tranzaksiya(funksiya(t)
+    t.icra("UPDATE hesab SET balans = balans - 50 WHERE ad = 'a'")
+    t.icra("UPDATE hesab SET balans = balans + 50 WHERE ad = 'b'")
+son)
+cəhd et
+    b.tranzaksiya(funksiya(t)
+        t.icra("UPDATE hesab SET balans = 0")
+        t.tranzaksiya((t2) => t2.icra("UPDATE hesab SET balans = 7"))
+        xəta_at()
+    son)
+tut x
+    yaz(x.tip)
+son
+yaz(b.sorğu("SELECT * FROM hesab"))
+yaz(b.tranzaksiya((t) => t == b))
+b.skript("CREATE TABLE x (a); INSERT INTO x VALUES (1); INSERT INTO x VALUES (2);")
+yaz(b.birDəyər("SELECT SUM(a) FROM x"))
+dəyişən mq = yol.birləşdir(qovluq.müvəqqəti(), "alqor-miq-sinaq")
+qovluq.silDərin(mq)
+qovluq.yaratDərin(mq)
+fayl.yaz(yol.birləşdir(mq, "001_bir.sql"), "CREATE TABLE m1 (a INTEGER);")
+fayl.yaz(yol.birləşdir(mq, "002_iki.sql"), "INSERT INTO m1 VALUES (5)")
+yaz(b.miqrasiyaEt(mq), b.miqrasiyaEt(mq), b.birDəyər("SELECT a FROM m1"))
+fayl.yaz(yol.birləşdir(mq, "003_pis.sql"), "INSERT INTO yox VALUES (1)")
+cəhd et
+    b.miqrasiyaEt(mq)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+qovluq.silDərin(mq)
+b.bağla()
+cəhd et
+    b.icra("SELECT 1")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+hər u üçün ["xyz://a", "sqlite://", 5] içində
+    cəhd et
+        verilənlər.bağlan(u)
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son
+dəyişən fy = yol.birləşdir(qovluq.müvəqqəti(), "alqor-vb-sinaq/a.db")
+fayl.sil(fy)
+dəyişən b2 = verilənlər.bağlan("sqlite://" + fy)
+b2.icra("CREATE TABLE IF NOT EXISTS t (x)")
+yaz(b2.cədvəllər())
+b2.bağla()
+qovluq.silDərin(yol.qovluq(fy))

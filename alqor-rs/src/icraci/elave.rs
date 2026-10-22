@@ -28,6 +28,8 @@ pub fn adlar() -> Vec<&'static str> {
     v.push("http");
     #[cfg(not(target_arch = "wasm32"))]
     v.push("şəbəkə");
+    #[cfg(all(feature = "sqlite", not(target_arch = "wasm32")))]
+    v.push("verilənlər");
     v
 }
 
@@ -52,6 +54,8 @@ fn qur(i: &İcraçı, ad_: &str) -> Option<Nəticə<Rc<Modul>>> {
         "http" => super::mod_http::qur(),
         #[cfg(not(target_arch = "wasm32"))]
         "şəbəkə" => super::mod_sebeke::qur(),
+        #[cfg(all(feature = "sqlite", not(target_arch = "wasm32")))]
+        "verilənlər" => super::mod_verilenler::qur(),
         x if PLATFORMADA_YOX.contains(&x) => {
             return Some(Err(xəta(
                 "ArqumentXətası",

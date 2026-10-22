@@ -35,11 +35,13 @@ getrandom = "0.3"
 # http müştərisi (rustls TLS, saf Rust sertifikat kökləri)
 ureq = { version = "2.12", default-features = false, features = ["tls"], optional = true }
 idna = { version = "1", optional = true }
+# verilənlər: SQLite (C mənbəsi paketlə qurulur)
+rusqlite = { version = "0.32", features = ["bundled"], optional = true }
 
 [features]
 default = ["http", "sqlite"]
 http = ["dep:ureq", "dep:idna"]
-sqlite = []
+sqlite = ["dep:rusqlite"]
 
 [lib]
 name = "alqor"

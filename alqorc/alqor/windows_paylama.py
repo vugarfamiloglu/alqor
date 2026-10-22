@@ -338,6 +338,9 @@ def paylama_qovluğu(alqorc_kökü: Path, çıxış: Path,
     (b / "alqor-terminal.cmd").write_text(
         _TERMİNAL.format(versiya=v).replace("\n", "\r\n"), encoding="ascii")
     (b / "studio.pyw").write_text(_STUDIO, encoding="utf-8")
+    # Rust icraçısı (`alqor işlət --motor avto|rs`)
+    from .motor import paylamaya_əlavə_et
+    paylamaya_əlavə_et(b, "windows", "x86_64")
 
     # 4. Nümunələr, bələdçilər, ikon
     for ad in ("numuneler", "beledci"):
