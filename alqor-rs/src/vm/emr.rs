@@ -7,7 +7,7 @@
 use crate::aac;
 use crate::icraci::deyerler::{Ad, D};
 use crate::xeta::Yer;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
 /// İkili operator
@@ -118,7 +118,8 @@ pub enum Əmr {
     SiqnalQaytar,
     Qaytar,
     // ── Çağırışlar ─────────────────────────────────────────────────────
-    Çağır(u32),
+    /// (arqument sayı, çağırış keşi)
+    Çağır(u32, u32),
     ArqYeni,
     ArqMövqe,
     ArqAdlı(u32),
@@ -126,7 +127,8 @@ pub enum Əmr {
     ÇağırArq,
     /// (ad, təhlükəsiz, boş halında keçid)
     MetodAl(u32, bool, u32),
-    MetodÇağır(u32, u32),
+    /// (ad, arqument sayı, çağırış keşi)
+    MetodÇağır(u32, u32, u32),
     MetodÇağırArq(u32),
     // ── Üzv və indeks ──────────────────────────────────────────────────
     ÜzvAl(u32, bool),
@@ -300,6 +302,11 @@ pub struct Kod {
     pub mövqeli_say: usize,
     pub variadic_var: bool,
     pub sabit_var: bool,
+    /// Sadə parametrlərin yuvaları (sürətli çağırış üçün) və gövdənin başlanğıcı
+    pub param_yuvaları: Option<Vec<u32>>,
+    pub gövdə_pc: u32,
+    /// Çağırış yerlərinin keşi: (gövdə göstəricisi, kod)
+    pub çağırış_keşləri: Vec<RefCell<Option<(usize, Rc<Kod>)>>>,
     /// Parametr siyahısı (uyğunluq yoxlaması üçün)
     pub parametrlər: Option<Rc<Vec<aac::Parametr>>>,
     /// Gövdəni yaşadır

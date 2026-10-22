@@ -10,16 +10,16 @@ pub mod emr;
 pub mod kompilyator;
 pub mod masin;
 
-use crate::icraci::deyerler::{FGövdə, Funksiya};
+use crate::icraci::deyerler::{FGövdə, Funksiya, FxMap};
 use emr::Kod;
 use std::cell::{Cell, RefCell};
-use std::collections::HashMap;
 use std::rc::Rc;
 
 thread_local! {
     static AKTİV: Cell<Option<bool>> = const { Cell::new(None) };
-    static KEŞ: RefCell<HashMap<usize, Option<Rc<Kod>>>> = RefCell::new(HashMap::new());
+    static KEŞ: RefCell<FxMap<usize, Option<Rc<Kod>>>> = RefCell::new(FxMap::default());
     static SAY: RefCell<Hesabat> = RefCell::new(Hesabat::default());
+    static HESABAT: bool = std::env::var("ALQOR_VM_HESABAT").map(|v| v == "1").unwrap_or(false);
 }
 
 #[derive(Default)]
@@ -33,10 +33,7 @@ struct Hesabat {
 }
 
 fn hesabat_aktiv() -> bool {
-    thread_local! {
-        static H: bool = std::env::var("ALQOR_VM_HESABAT").map(|v| v == "1").unwrap_or(false);
-    }
-    H.with(|h| *h)
+    HESABAT.with(|h| *h)
 }
 
 /// VM aktivdirmi (standart: bəli; `ALQOR_VM=0` və ya `--vm yox` söndürür)
@@ -126,6 +123,13 @@ pub fn kod_tap(f: &Funksiya) -> Option<Rc<Kod>> {
         });
     }
     k
+}
+
+/// Keşdən tapılan VM çağırışını hesabata əlavə edir
+pub fn vm_çağırışı_say() {
+    if hesabat_aktiv() {
+        SAY.with(|s| s.borrow_mut().vm_çağırış += 1);
+    }
 }
 
 /// Proqramın yuxarı səviyyəsi üçün bayt-kod

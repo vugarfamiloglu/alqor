@@ -73,6 +73,9 @@ struct Kompilyator<'r> {
     cəhd_sayı: u32,
     gecikdir_var: bool,
     sabit_var: bool,
+    çağırış_keş_sayı: u32,
+    param_yuvaları: Option<Vec<u32>>,
+    gövdə_pc: u32,
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -218,6 +221,9 @@ impl<'r> Kompilyator<'r> {
             cəhd_sayı: 0,
             gecikdir_var: false,
             sabit_var: false,
+            çağırış_keş_sayı: 0,
+            param_yuvaları: None,
+            gövdə_pc: 0,
         }
     }
 
@@ -288,6 +294,11 @@ impl<'r> Kompilyator<'r> {
     fn keş(&mut self) -> u32 {
         self.keş_sayı += 1;
         self.keş_sayı as u32 - 1
+    }
+
+    fn çağırış_keşi(&mut self) -> u32 {
+        self.çağırış_keş_sayı += 1;
+        self.çağırış_keş_sayı - 1
     }
 
     fn gizli_yuva(&mut self) -> u32 {
@@ -361,6 +372,11 @@ impl<'r> Kompilyator<'r> {
 
     /// Cari əhatədə ad elan edir (dəyər yığındadır).
     fn ad_elan(&mut self, a: &str, sabit: bool, yer: Yer) -> K {
+        self.ad_elan_yuva(a, sabit, yer).map(|_| ())
+    }
+
+    /// `ad_elan`; ad yuvaya düşübsə onun nömrəsi
+    fn ad_elan_yuva(&mut self, a: &str, sabit: bool, yer: Yer) -> K<Option<u32>> {
         if sabit {
             self.sabit_var = true;
         }
@@ -372,7 +388,7 @@ impl<'r> Kompilyator<'r> {
             let i = self.ad_i(a);
             self.əmr(if sabit { Əmr::AdElanSabit(i) } else { Əmr::AdElan(i) }, yer);
             self.əhatələr.last_mut().unwrap().adlar.push((ad(a), None));
-            return Ok(());
+            return Ok(None);
         }
         let mövcud = self.əhatələr.last().unwrap().adlar.iter().rev().find(|(x, _)| &**x == a).map(|(_, y)| *y);
         let y = match mövcud {
@@ -387,7 +403,7 @@ impl<'r> Kompilyator<'r> {
             }
         };
         self.əmr(if sabit { Əmr::YuvaElanSabit(y) } else { Əmr::YuvaElan(y) }, yer);
-        Ok(())
+        Ok(Some(y))
     }
 
     // ── Bağlama (dağıtma) ─────────────────────────────────────────────
@@ -1237,7 +1253,10 @@ impl<'r> Kompilyator<'r> {
                     let ai = self.ad_i(a);
                     let m = self.əmr(Əmr::MetodAl(ai, *təhlükəsiz, 0), *üyer);
                     match self.arqumentlər(arq, *yer)? {
-                        Some(n) => self.əmr(Əmr::MetodÇağır(ai, n), *yer),
+                        Some(n) => {
+                            let k = self.çağırış_keşi();
+                            self.əmr(Əmr::MetodÇağır(ai, n, k), *yer)
+                        }
                         None => self.əmr(Əmr::MetodÇağırArq(ai), *yer),
                     };
                     let h = self.pc();
@@ -1248,7 +1267,10 @@ impl<'r> Kompilyator<'r> {
                 } else {
                     self.ifadə(f)?;
                     match self.arqumentlər(arq, *yer)? {
-                        Some(n) => self.əmr(Əmr::Çağır(n), *yer),
+                        Some(n) => {
+                            let k = self.çağırış_keşi();
+                            self.əmr(Əmr::Çağır(n, k), *yer)
+                        }
                         None => self.əmr(Əmr::ÇağırArq, *yer),
                     };
                 }
@@ -1449,6 +1471,8 @@ impl<'r> Kompilyator<'r> {
 
     fn parametrlər(&mut self, ps: &[aac::Parametr]) -> K {
         let mövqeli: Vec<usize> = (0..ps.len()).filter(|&i| !ps[i].variadic && !ps[i].adlı_variadic && !ps[i].yalnız_adlı).collect();
+        let mut sadə = mövqeli.len() == ps.len() && ps.iter().all(|p| p.xassə_görünüşü.is_none());
+        let mut yuvalar = vec![];
         for &pi in &mövqeli {
             let p = &ps[pi];
             let j = self.e(Əmr::ParamAl(pi as u32, 0));
@@ -1460,9 +1484,13 @@ impl<'r> Kompilyator<'r> {
             self.yamaq(j, h);
             if onluq_tipidir(p.tip.as_ref()) {
                 self.e(Əmr::Genişlət);
+                sadə = false;
             }
             self.e(Əmr::Kopya);
-            self.ad_elan(&p.ad, false, p.yer)?;
+            match self.ad_elan_yuva(&p.ad, false, p.yer)? {
+                Some(y) => yuvalar.push(y),
+                None => sadə = false,
+            }
         }
         for (pi, p) in ps.iter().enumerate().filter(|(_, p)| p.yalnız_adlı) {
             let j = self.e(Əmr::ParamAdlı(pi as u32, 0));
@@ -1488,6 +1516,10 @@ impl<'r> Kompilyator<'r> {
                 let i = self.ad_i(&p.ad);
                 self.e(Əmr::XassəQoy(i));
             }
+        }
+        self.gövdə_pc = self.pc();
+        if sadə {
+            self.param_yuvaları = Some(yuvalar);
         }
         Ok(())
     }
@@ -1543,6 +1575,9 @@ impl<'r> Kompilyator<'r> {
             mövqeli_say,
             variadic_var,
             sabit_var: self.sabit_var,
+            param_yuvaları: self.param_yuvaları,
+            gövdə_pc: self.gövdə_pc,
+            çağırış_keşləri: (0..self.çağırış_keş_sayı).map(|_| Default::default()).collect(),
             parametrlər,
             _gövdə: gövdə,
         }
