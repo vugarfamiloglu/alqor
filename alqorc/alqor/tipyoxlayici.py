@@ -1524,6 +1524,9 @@ class TipYoxlayıcı:
     def _c_idxal(self, c: A.İdxal, ə: Əhatə) -> bool:
         if id(c) in self._qaldırılmış_idxallar:
             return False                     # artıq qaldırılıb
+        if c.python:
+            self._python_idxal(c, ə)
+            return False
         ad = ".".join(c.yol) if c.yol else (c.mətn_yolu or "")
         modul = self.modullar.get(ad)
         if modul is None and c.mətn_yolu is not None and \
@@ -1564,6 +1567,34 @@ class TipYoxlayıcı:
         ə.elan(Bağlama(yerli_ad, modul or T.ModulTipi(yerli_ad), True,
                        c.yer, False, "modul"))
         return False
+
+    def _python_idxal(self, c: A.İdxal, ə: Əhatə) -> None:
+        """
+        `gətir python:numpy kimi np` (§ 8.14) — Python obyektləri dinamikdir,
+        hamısı `istənilən` tipindədir. `.*` üçün adları bilmək lazımdır:
+        modul yalnız bu halda idxal olunur (alınmasa adlar naməlum qalır).
+        """
+        if c.hamısı:
+            try:
+                from pathlib import Path
+                from . import python_korpu as P
+                mənbə = getattr(c.yer, "mənbə", None)
+                əsas = getattr(mənbə, "yol", None)
+                baza = Path(əsas).resolve().parent if əsas else Path.cwd()
+                m = P.modul_yüklə(".".join(c.yol), c.yer, baza)
+                adlar = list(P.hamısı(m))
+            except Exception:
+                adlar = []
+            for a in adlar:
+                ə.elan(Bağlama(a, T.İSTƏNİLƏN, True, c.yer, True, "idxal"))
+            return
+        if c.elementlər:
+            for e in c.elementlər:
+                ə.elan(Bağlama(e.ləqəb or e.ad, T.İSTƏNİLƏN, True, c.yer,
+                               False, "idxal"))
+            return
+        ə.elan(Bağlama(c.ləqəb or c.yol[-1], T.İSTƏNİLƏN, True, c.yer,
+                       False, "modul"))
 
     def _paket_modulu(self, c: A.İdxal, ad: str) -> T.ModulTipi | None:
         """`gətir tarix_alətləri` — quraşdırılmış paket (§ 8.10)."""

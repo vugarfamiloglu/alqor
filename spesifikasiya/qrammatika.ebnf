@@ -107,7 +107,10 @@ idxalHədəfi     = modulYolu , [ "kimi" , identifikator ]
 idxalSiyahısı   = idxalElementi , { "," , idxalElementi } ;
 idxalElementi   = identifikator , [ "kimi" , identifikator ] ;
 modulYolu       = identifikator , { "." , identifikator }
+                | "python" , ":" , identifikator , { "." , identifikator }
                 | mətnLiteral ;
+(* `python:` — Python kitabxanası (§ 8.14). `python` kontekstli sözdür:
+   yalnız `gətir`-dən sonra və ardınca `:` gələndə prefiksdir *)
 
 ixracElanı      = "ixrac" , "et" , ( [ "standart" ] , elan
                                    | "{" , idxalSiyahısı , "}"

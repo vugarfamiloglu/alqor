@@ -1284,6 +1284,11 @@ class Kompilyator:
         return açar
 
     def _c_İdxal(self, c: A.İdxal) -> list[str]:
+        if c.python:
+            raise KompilyasiyaXətası(
+                f"`python:{'.'.join(c.yol)}` — Python kitabxanaları JS "
+                "hədəfində işləmir (ALQ-M015); bu proqramı Python "
+                "icraçısı ilə işlədin (`alqor işlət`)", c.yer)
         ad = c.mətn_yolu or ".".join(c.yol)
         kök = ad.split(".")[0]
         if c.mətn_yolu is None and kök == "veb" and self.interfeys:

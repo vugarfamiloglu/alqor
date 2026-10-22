@@ -80,6 +80,7 @@ XETA_AGACI: dict[str, str | None] = {
     "VerilənlərXətası": "Xəta",
     "MəhdudiyyətXətası": "VerilənlərXətası",
     "BoşDəyərXətası": "Xəta",
+    "PythonXətası": "Xəta",              # § 8.14 — Python kitabxanaları
     "VaxtXətası": "Xəta",
     "KritikXəta": "Atılan",
     "YaddaşBitdiXətası": "KritikXəta",
@@ -796,6 +797,10 @@ def tip_adı(dəyər: Any) -> str:
         return "element"
     if type(dəyər).__name__ == "Gələcək":
         return "gələcək"
+    # Dinamik tip adı (Python körpüsü: `python:ndarray`)
+    tip_adı_f = getattr(type(dəyər), "alqor_tip_adı", None)
+    if tip_adı_f is not None:
+        return tip_adı_f(dəyər)
     if type(dəyər).__name__ == "LəğvNişanı":
         return "ləğvNişanı"
     if isinstance(dəyər, Çağırılan):

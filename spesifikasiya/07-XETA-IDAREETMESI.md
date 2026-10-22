@@ -146,6 +146,7 @@ Atılan
 │   │   ├── ƏlaqəXətası
 │   │   └── TranzaksiyaXətası
 │   ├── BoşDəyərXətası
+│   ├── PythonXətası              (Python kitabxanaları, § 8.14)
 │   ├── VaxtXətası
 │   └── İcazəsizXəta
 │
