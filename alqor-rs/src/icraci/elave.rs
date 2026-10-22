@@ -93,6 +93,8 @@ pub fn bütün_adlar() -> Vec<&'static str> {
         "paralel", "sap", "riyaziyyat", "mətn", "təsadüfi", "vaxt", "fayl", "qovluq", "yol", "json", "naxış",
         "sistem", "konsol", "jurnal", "test",
     ];
+    #[cfg(not(target_arch = "wasm32"))]
+    v.push("veb");
     v.extend(adlar());
     v
 }

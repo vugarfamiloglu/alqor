@@ -19,7 +19,10 @@ pub mod mod_kodlasdirma;
 pub mod mod_sebeke;
 pub mod mod_sifre;
 pub mod mod_sixma;
+pub mod mod_sablon;
 pub mod mod_toml;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod mod_veb;
 pub mod mod_veb_ortaq;
 pub mod muhit;
 pub mod platforma;

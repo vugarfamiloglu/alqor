@@ -260,7 +260,7 @@ pub fn yerli_vaxt(möhür: Option<i64>) -> YerliVaxt {
     YerliVaxt { il, ay, gün, saat, dəq, san, həftə_günü }
 }
 
-fn vaxt_formatla(f: &str, möhür: Option<i64>) -> String {
+pub fn vaxt_formatla(f: &str, möhür: Option<i64>) -> String {
     let t = yerli_vaxt(möhür);
     f.replace("YYYY", &format!("{:04}", t.il))
         .replace("MM", &format!("{:02}", t.ay))
@@ -580,6 +580,25 @@ impl<'a> JsonOxu<'a> {
     }
 }
 
+/// Python `json.loads` xətası kimi: (mesaj, simvol mövqeyi)
+pub fn json_oxu_mövqe(m: &str) -> Result<D, (String, usize)> {
+    let mut p = JsonOxu { s: m.as_bytes(), m, i: 0 };
+    let r = p.dəyər().and_then(|d| {
+        p.boşluq();
+        if p.i < m.len() {
+            return Err(p.xəta("Extra data"));
+        }
+        Ok(d)
+    });
+    r.map_err(|e| {
+        let mesaj = match e {
+            Siqnal::Xəta(x) => x.mesaj.split_once("): ").map(|(_, b)| b.to_string()).unwrap_or(x.mesaj),
+            _ => String::new(),
+        };
+        (mesaj, m.char_indices().take_while(|(b, _)| *b < p.i).count())
+    })
+}
+
 pub fn json_oxu(m: &str) -> Nəticə {
     let mut p = JsonOxu { s: m.as_bytes(), m, i: 0 };
     let d = p.dəyər()?;
@@ -794,6 +813,8 @@ pub fn modulları_qur(_i: &İcraçı) -> Vec<(&'static str, Rc<Modul>)> {
         ("konsol", super::konsol::modul()),
         ("jurnal", jurnal()),
         ("test", test_modulu()),
+        #[cfg(not(target_arch = "wasm32"))]
+        ("veb", super::mod_veb::qur()),
     ]
 }
 
