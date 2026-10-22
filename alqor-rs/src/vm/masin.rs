@@ -6,7 +6,8 @@ use crate::icraci::deyerler::*;
 use crate::icraci::icraci::{dilim_tətbiq, dilim_uzunluğu, İcraçı, İter, STEK_HƏDDİ};
 use crate::icraci::muhit::{sabit_xətası, Mühit};
 use crate::xeta::Yer;
-use std::cell::RefCell;
+use std::cell::{RefCell, UnsafeCell};
+use std::ops::{Index, IndexMut};
 use std::rc::Rc;
 
 struct VmIter {
@@ -26,47 +27,181 @@ struct Əlavə<'f> {
     çağırış_yeri: Option<Yer>,
 }
 
+/// Paylaşılan dəyər anbarı: hər çərçivənin yuvaları və operand yığını
+/// ardıcıl yerləşir (LIFO). Korutin daxilində yaradılan çərçivələr (dayandırıla
+/// bilər) öz ayrıca anbarından istifadə edir.
+type Anbar = Vec<Option<D>>;
+
+thread_local! {
+    static ANBAR: UnsafeCell<Anbar> = UnsafeCell::new(Vec::with_capacity(4096));
+}
+
+/// Çərçivənin yuvaları (anbarda `baz..baz+n`)
+struct Yuvalar {
+    st: *mut Anbar,
+    baz: usize,
+}
+
+impl Index<usize> for Yuvalar {
+    type Output = Option<D>;
+    #[inline(always)]
+    fn index(&self, i: usize) -> &Option<D> {
+        unsafe { (&*self.st).get_unchecked(self.baz + i) }
+    }
+}
+
+impl IndexMut<usize> for Yuvalar {
+    #[inline(always)]
+    fn index_mut(&mut self, i: usize) -> &mut Option<D> {
+        unsafe { (&mut *self.st).get_unchecked_mut(self.baz + i) }
+    }
+}
+
+/// Operand yığını (anbarda `alt..`)
+struct Yığın {
+    st: *mut Anbar,
+    alt: usize,
+}
+
+impl Yığın {
+    #[inline(always)]
+    #[allow(clippy::mut_from_ref)]
+    fn v(&self) -> &mut Anbar {
+        unsafe { &mut *self.st }
+    }
+    #[inline(always)]
+    fn push(&mut self, d: D) {
+        self.v().push(Some(d));
+    }
+    #[inline(always)]
+    fn pop(&mut self) -> Option<D> {
+        let v = self.v();
+        if v.len() > self.alt {
+            v.pop().flatten()
+        } else {
+            None
+        }
+    }
+    #[inline(always)]
+    fn len(&self) -> usize {
+        self.v().len() - self.alt
+    }
+    #[inline(always)]
+    fn last(&self) -> Option<&D> {
+        let v = self.v();
+        if v.len() > self.alt {
+            v.last().and_then(|x| x.as_ref())
+        } else {
+            None
+        }
+    }
+    #[inline(always)]
+    fn last_mut(&mut self) -> Option<&mut D> {
+        let alt = self.alt;
+        let v = self.v();
+        if v.len() > alt {
+            v.last_mut().and_then(|x| x.as_mut())
+        } else {
+            None
+        }
+    }
+    fn clear(&mut self) {
+        let alt = self.alt;
+        self.v().truncate(alt);
+    }
+    fn truncate(&mut self, k: usize) {
+        let alt = self.alt;
+        self.v().truncate(alt + k);
+    }
+    /// Yalnız buraxılacaq resursu olmayan dəyərlər üçün
+    unsafe fn set_len(&mut self, k: usize) {
+        let alt = self.alt;
+        self.v().set_len(alt + k);
+    }
+    fn split_off(&mut self, k: usize) -> Vec<D> {
+        let alt = self.alt;
+        self.v().drain(alt + k..).map(|x| x.unwrap_or(D::Boş)).collect()
+    }
+    fn extend(&mut self, it: impl IntoIterator<Item = D>) {
+        let v = self.v();
+        for d in it {
+            v.push(Some(d));
+        }
+    }
+    /// `k`-cı elementi götürür (yerində `None` qalır)
+    #[inline(always)]
+    fn götür(&mut self, k: usize) -> D {
+        let alt = self.alt;
+        self.v()[alt + k].take().unwrap_or(D::Boş)
+    }
+}
+
+impl Index<usize> for Yığın {
+    type Output = D;
+    #[inline(always)]
+    fn index(&self, k: usize) -> &D {
+        match &self.v()[self.alt + k] {
+            Some(d) => d,
+            None => unreachable!("boş operand"),
+        }
+    }
+}
+
 /// Bir çağırışın çərçivəsi
 struct Çərçivə<'f> {
-    yuvalar: Vec<Option<D>>,
-    yığın: Vec<D>,
+    yuvalar: Yuvalar,
+    yığın: Yığın,
+    st: *mut Anbar,
+    baz: usize,
+    _özəl: Option<Box<Anbar>>,
     baza: Mühit,
     mühitlər: Vec<Mühit>,
     iterlər: Vec<VmIter>,
     əl: Option<Box<Əlavə<'f>>>,
 }
 
-thread_local! {
-    /// Çərçivə vektorlarının təkrar istifadəsi (ayırmaları azaldır)
-    static HOVUZ: RefCell<Vec<(Vec<Option<D>>, Vec<D>)>> = const { RefCell::new(Vec::new()) };
-}
-
 impl Drop for Çərçivə<'_> {
     fn drop(&mut self) {
-        let mut y = std::mem::take(&mut self.yuvalar);
-        let mut s = std::mem::take(&mut self.yığın);
-        y.clear();
-        s.clear();
-        let _ = HOVUZ.try_with(|h| {
-            if let Ok(mut h) = h.try_borrow_mut() {
-                if h.len() < 64 {
-                    h.push((y, s));
-                }
-            }
-        });
+        unsafe { (*self.st).truncate(self.baz) };
     }
 }
 
 impl<'f> Çərçivə<'f> {
     #[inline(always)]
-    fn yeni(kod: &Kod, baza: Mühit) -> Self {
-        let (mut yuvalar, yığın) = HOVUZ
-            .try_with(|h| h.try_borrow_mut().ok().and_then(|mut h| h.pop()))
-            .ok()
-            .flatten()
-            .unwrap_or_else(|| (Vec::new(), Vec::with_capacity(16)));
-        yuvalar.resize(kod.yuva_sayı, None);
-        Çərçivə { yuvalar, yığın, baza, mühitlər: vec![], iterlər: vec![], əl: None }
+    fn yeni(i: &İcraçı, kod: &Kod, baza: Mühit) -> Self {
+        Self::anbarda(i, kod, baza, None)
+    }
+
+    /// `ana` — çağıranın anbarı (eyni icra kontekstində iç-içə çərçivə)
+    #[inline(always)]
+    fn anbarda(i: &İcraçı, kod: &Kod, baza: Mühit, ana: Option<*mut Anbar>) -> Self {
+        let mut özəl = None;
+        let st: *mut Anbar = if let Some(a) = ana {
+            a
+        } else if i.ver.get().is_null() {
+            ANBAR.with(|a| a.get())
+        } else {
+            let mut b: Box<Anbar> = Box::new(Vec::with_capacity(kod.yuva_sayı + 16));
+            let p = &mut *b as *mut Anbar;
+            özəl = Some(b);
+            p
+        };
+        let v = unsafe { &mut *st };
+        let baz = v.len();
+        for _ in 0..kod.yuva_sayı {
+            v.push(None);
+        }
+        Çərçivə {
+            yuvalar: Yuvalar { st, baz },
+            yığın: Yığın { st, alt: baz + kod.yuva_sayı },
+            st,
+            baz,
+            _özəl: özəl,
+            baza,
+            mühitlər: vec![],
+            iterlər: vec![],
+            əl: None,
+        }
     }
 
     fn əl(&mut self) -> &mut Əlavə<'f> {
@@ -127,7 +262,7 @@ impl<'f> Çərçivə<'f> {
 
 /// Funksiya gövdəsini VM-də icra edir (`funksiya_gövdəsi`-nin əvəzi).
 pub fn gövdə_işlət(i: &İcraçı, f: &Rc<Funksiya>, kod: &Kod, args: Vec<D>, adlı: Adlı, yer: Option<Yer>) -> Nəticə {
-    let mut ç = çərçivə_qur(kod, f, f.özü.as_ref());
+    let mut ç = çərçivə_qur(i, kod, f, f.özü.as_ref(), None);
     if args.len() > kod.mövqeli_say && !kod.variadic_var {
         return Err(xəta_yer(
             "ArqumentXətası",
@@ -147,8 +282,9 @@ pub fn gövdə_işlət(i: &İcraçı, f: &Rc<Funksiya>, kod: &Kod, args: Vec<D>,
 }
 
 /// Çərçivə: funksiya Mühit-i, `özü` və `__sinif__`
-fn çərçivə_qur<'f>(kod: &Kod, f: &Rc<Funksiya>, özü: Option<&D>) -> Çərçivə<'f> {
-    let mut ç = Çərçivə::yeni(kod, f.mühit.clone());
+#[inline(always)]
+fn çərçivə_qur<'f>(i: &İcraçı, kod: &Kod, f: &Rc<Funksiya>, özü: Option<&D>, ana: Option<*mut Anbar>) -> Çərçivə<'f> {
+    let mut ç = Çərçivə::anbarda(i, kod, f.mühit.clone(), ana);
     if kod.funksiya_mühiti {
         let n = f.parametrlər.len() + if özü.is_some() { 2 } else { 0 };
         ç.mühitlər.push(f.mühit.alt_tutumla(n));
@@ -227,10 +363,11 @@ fn sürətli_çağır(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, f: &Rc<Fun
             "ALQ-R010",
         )));
     }
-    let mut yeni = çərçivə_qur(&hədəf, f, özü);
     let k = ç.yığın.len() - n;
-    for (j, d) in ç.yığın.drain(k..).enumerate() {
-        yeni.yuvalar[py[j] as usize] = Some(dəyər_kopyası(d));
+    let mut yeni = çərçivə_qur(i, &hədəf, f, özü, Some(ç.st));
+    for (j, y) in py.iter().enumerate() {
+        let d = ç.yığın.götür(k + j);
+        yeni.yuvalar[*y as usize] = Some(dəyər_kopyası(d));
     }
     i.dərinlik.set(d);
     let r = icra_gecikdirli(i, &hədəf, &mut yeni, hədəf.gövdə_pc as usize);
@@ -240,7 +377,7 @@ fn sürətli_çağır(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, f: &Rc<Fun
 
 /// Proqramın yuxarı səviyyəsi (qlobal əhatədə)
 pub fn kök_işlət(i: &İcraçı, kod: &Kod) -> Nəticə<()> {
-    let mut ç = Çərçivə::yeni(kod, i.qlobal.clone());
+    let mut ç = Çərçivə::yeni(i, kod, i.qlobal.clone());
     icra(i, kod, &mut ç, 0).map(|_| ())
 }
 
@@ -677,7 +814,7 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                             let özü = fr.özü.clone();
                             if let Some(r) = sürətli_çağır(i, kod, ç, &fr, özü.as_ref(), *n as usize, *keş, kod.yerlər[pc - 1]) {
                                 let r = t!(r, 'x);
-                                ç.yığın.pop();
+                                ç.yığın.truncate(fi);
                                 ç.yığın.push(r);
                                 continue;
                             }
@@ -1057,8 +1194,8 @@ fn soyuq(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, ə: &Əmr, pc: usize) -
             Əmr::Birləşdir(n) => {
                 let k = ç.yığın.len() - *n as usize;
                 let mut s = String::new();
-                for d in &ç.yığın[k..] {
-                    if let D::S(x) = d {
+                for j in k..ç.yığın.len() {
+                    if let D::S(x) = &ç.yığın[j] {
                         s.push_str(x);
                     }
                 }
