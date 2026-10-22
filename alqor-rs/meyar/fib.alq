@@ -1,0 +1,8 @@
+// Rekursiv Fibonaççi — çağırış ağırlıqlı
+funksiya fib(n)
+    əgər n < 2 onda
+        qaytar n
+    son
+    qaytar fib(n - 1) + fib(n - 2)
+son
+yaz(fib(25))

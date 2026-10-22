@@ -1,0 +1,21 @@
+// Dövrlər və hesab
+dəyişən cəm = 0
+hər i üçün 0..<300000 içində
+    dəyişən x = i * 3 + 1
+    əgər x % 7 == 0 onda
+        cəm += x ~/ 7
+    yoxsa
+        cəm -= 1
+    son
+son
+yaz(cəm)
+funksiya hesabla(n)
+    dəyişən s = 0
+    dəyişən i = 0
+    nə qədər ki i < n
+        s = (s + i * i) % 1000003
+        i += 1
+    son
+    qaytar s
+son
+yaz(hesabla(300000))

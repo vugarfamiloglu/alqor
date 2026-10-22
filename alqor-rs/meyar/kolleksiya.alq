@@ -1,0 +1,16 @@
+// Siyahı və lüğət əməliyyatları
+funksiya say(n)
+    dəyişən l = {}
+    dəyişən siy = []
+    hər i üçün 0..<n içində
+        dəyişən a = i % 97
+        l[a] = (l.al(a) ?? 0) + 1
+        siy.əlavə(i * 2)
+    son
+    dəyişən c = 0
+    hər x üçün siy içində
+        c += x
+    son
+    qaytar c + uzunluq(l)
+son
+yaz(say(150000))

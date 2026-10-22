@@ -1,0 +1,18 @@
+// Mətn qurma
+funksiya qur(n)
+    dəyişən hissələr = []
+    hər i üçün 0..<n içində
+        hissələr.əlavə("s{i}")
+    son
+    qaytar hissələr.birləşdir(",")
+son
+dəyişən t = 0
+təkrarla 20 dəfə
+    t += qur(5000).uzunluq()
+son
+yaz(t)
+dəyişən s = ""
+hər i üçün 0..<20000 içində
+    s += "ab"
+son
+yaz(s.uzunluq())

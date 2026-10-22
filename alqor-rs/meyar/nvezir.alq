@@ -1,0 +1,58 @@
+// N vəzir və Eratosfen ələyi
+funksiya yerləşdir(n, sıra, sütunlar, d1, d2)
+    əgər sıra == n onda
+        qaytar 1
+    son
+    dəyişən say = 0
+    hər s üçün 0..<n içində
+        əgər !sütunlar[s] && !d1[sıra + s] && !d2[sıra - s + n] onda
+            sütunlar[s] = doğru
+            d1[sıra + s] = doğru
+            d2[sıra - s + n] = doğru
+            say += yerləşdir(n, sıra + 1, sütunlar, d1, d2)
+            sütunlar[s] = yanlış
+            d1[sıra + s] = yanlış
+            d2[sıra - s + n] = yanlış
+        son
+    son
+    qaytar say
+son
+funksiya vəzirlər(n)
+    dəyişən a = []
+    dəyişən b = []
+    dəyişən c = []
+    hər i üçün 0..<2 * n + 1 içində
+        a.əlavə(yanlış)
+        b.əlavə(yanlış)
+        c.əlavə(yanlış)
+    son
+    qaytar yerləşdir(n, 0, a, b, c)
+son
+yaz(vəzirlər(8))
+funksiya ələk(n)
+    dəyişən sadə = []
+    hər i üçün 0..n içində
+        sadə.əlavə(doğru)
+    son
+    sadə[0] = yanlış
+    sadə[1] = yanlış
+    dəyişən i = 2
+    nə qədər ki i * i <= n
+        əgər sadə[i] onda
+            dəyişən j = i * i
+            nə qədər ki j <= n
+                sadə[j] = yanlış
+                j += i
+            son
+        son
+        i += 1
+    son
+    dəyişən say = 0
+    hər x üçün sadə içində
+        əgər x onda
+            say += 1
+        son
+    son
+    qaytar say
+son
+yaz(ələk(300000))

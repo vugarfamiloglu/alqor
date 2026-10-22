@@ -1,0 +1,18 @@
+// Sinif metod çağırışları
+sinif Nöqtə
+    xassə x: tam = 0
+    xassə y: tam = 0
+    qurucu(x: tam, y: tam)
+        özü.x = x
+        özü.y = y
+    son
+    metod əlavə(b) qaytar Nöqtə(özü.x + b.x, özü.y + b.y) son
+    metod norma() qaytar özü.x * özü.x + özü.y * özü.y son
+son
+dəyişən p = Nöqtə(0, 0)
+dəyişən c = 0
+hər i üçün 0..<60000 içində
+    p = p.əlavə(Nöqtə(1, 2))
+    c += p.norma() % 10
+son
+yaz(p.x, p.y, c)
