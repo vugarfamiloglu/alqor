@@ -13,4 +13,4 @@ funksiya say(n)
     son
     qaytar c + uzunluq(l)
 son
-yaz(say(150000))
+yaz(say(400000))

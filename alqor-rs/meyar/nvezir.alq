@@ -28,7 +28,7 @@ funksiya vəzirlər(n)
     son
     qaytar yerləşdir(n, 0, a, b, c)
 son
-yaz(vəzirlər(8))
+yaz(vəzirlər(9))
 funksiya ələk(n)
     dəyişən sadə = []
     hər i üçün 0..n içində
@@ -55,4 +55,4 @@ funksiya ələk(n)
     son
     qaytar say
 son
-yaz(ələk(300000))
+yaz(ələk(1000000))

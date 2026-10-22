@@ -5,4 +5,4 @@ funksiya fib(n)
     son
     qaytar fib(n - 1) + fib(n - 2)
 son
-yaz(fib(25))
+yaz(fib(27))

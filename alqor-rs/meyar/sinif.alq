@@ -11,7 +11,7 @@ sinif Nöqtə
 son
 dəyişən p = Nöqtə(0, 0)
 dəyişən c = 0
-hər i üçün 0..<60000 içində
+hər i üçün 0..<200000 içində
     p = p.əlavə(Nöqtə(1, 2))
     c += p.norma() % 10
 son

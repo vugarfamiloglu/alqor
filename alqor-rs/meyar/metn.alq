@@ -7,12 +7,12 @@ funksiya qur(n)
     qaytar hissələr.birləşdir(",")
 son
 dəyişən t = 0
-təkrarla 20 dəfə
+təkrarla 60 dəfə
     t += qur(5000).uzunluq()
 son
 yaz(t)
 dəyişən s = ""
-hər i üçün 0..<20000 içində
+hər i üçün 0..<100000 içində
     s += "ab"
 son
 yaz(s.uzunluq())

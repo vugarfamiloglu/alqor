@@ -1,6 +1,6 @@
 // Dövrlər və hesab
 dəyişən cəm = 0
-hər i üçün 0..<300000 içində
+hər i üçün 0..<1000000 içində
     dəyişən x = i * 3 + 1
     əgər x % 7 == 0 onda
         cəm += x ~/ 7
@@ -18,4 +18,4 @@ funksiya hesabla(n)
     son
     qaytar s
 son
-yaz(hesabla(300000))
+yaz(hesabla(1000000))
