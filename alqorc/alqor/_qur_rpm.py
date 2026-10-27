@@ -158,6 +158,10 @@ def rpm(ad: str, versiya: str, xülasə: str, təsvir: str, naşir: str,
         1124: (_STRING, "cpio"), 1125: (_STRING, "gzip"),
         1126: (_STRING, "9"),
         5011: (_INT32, [8]),                           # SHA256 fayl həzmi
+        # Yük həzmləri (rpm ≥ 4.14; yeni rpm versiyaları -K-da yoxlayır)
+        5092: (_ARRAY, [hashlib.sha256(sıxılmış).hexdigest()]),
+        5093: (_INT32, [8]),                           # SHA256
+        5097: (_ARRAY, [hashlib.sha256(payload).hexdigest()]),
     }
     if url:
         teqlər[1020] = (_STRING, url)

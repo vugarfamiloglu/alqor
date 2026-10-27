@@ -24,7 +24,12 @@ pub fn os_xəta_mətni(e: &std::io::Error) -> String {
     match e.raw_os_error() {
         Some(n) => {
             let m = s.split(" (os error").next().unwrap_or(&s).to_string();
-            format!("[Errno {}] {}", n, m)
+            // Python Windows-da `[WinError N] mesaj` yazır (sonda nöqtəsiz)
+            if cfg!(windows) {
+                format!("[WinError {}] {}", n, m.trim_end().trim_end_matches('.'))
+            } else {
+                format!("[Errno {}] {}", n, m)
+            }
         }
         None => {
             if s.contains("failed to lookup address") || s.contains("Name or service not known") {

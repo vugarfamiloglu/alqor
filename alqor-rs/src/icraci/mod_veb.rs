@@ -700,9 +700,24 @@ impl ServerV {
     }
 }
 
+/// Windows-da `canonicalize` `\\?\C:\...` qaytarır; mövcud olmayan yol isə
+/// `C:\...` qalır — müqayisə üçün ikisi eyni formaya salınır.
+fn sadə_yol(p: PathBuf) -> PathBuf {
+    #[cfg(windows)]
+    {
+        let s = p.to_string_lossy();
+        if let Some(q) = s.strip_prefix(r"\\?\") {
+            if !q.starts_with("UNC\\") {
+                return PathBuf::from(q.to_string());
+            }
+        }
+    }
+    p
+}
+
 fn mütləq_yol(p: &Path) -> PathBuf {
     if let Ok(c) = std::fs::canonicalize(p) {
-        return c;
+        return sadə_yol(c);
     }
     let tam = if p.is_absolute() { p.to_path_buf() } else { std::env::current_dir().unwrap_or_default().join(p) };
     let mut n = PathBuf::new();
@@ -713,6 +728,28 @@ fn mütləq_yol(p: &Path) -> PathBuf {
             }
             std::path::Component::CurDir => {}
             x => n.push(x.as_os_str()),
+        }
+    }
+    // Mövcud olan ən yaxın üst qovluğu kanonikləşdir, qalanını ona əlavə et —
+    // belə ki, mövcud və mövcud olmayan yollar eyni formada müqayisə olunsun
+    let mut qalan: Vec<std::ffi::OsString> = vec![];
+    let mut üst = n.clone();
+    loop {
+        if let Ok(c) = std::fs::canonicalize(&üst) {
+            let mut r = sadə_yol(c);
+            for h in qalan.iter().rev() {
+                r.push(h);
+            }
+            return r;
+        }
+        match üst.file_name() {
+            Some(a) => {
+                qalan.push(a.to_os_string());
+                if !üst.pop() {
+                    break;
+                }
+            }
+            None => break,
         }
     }
     n

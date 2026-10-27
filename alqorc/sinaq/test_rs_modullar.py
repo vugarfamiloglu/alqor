@@ -242,7 +242,7 @@ class MotorSeçimi(unittest.TestCase):
                  "--motor", m, str(f), "--", "a", "b"],
                 input="dünya\n".encode(), capture_output=True,
                 env=dict(os.environ, PYTHONIOENCODING="utf-8"))
-            n[m] = (r.returncode, r.stdout.decode("utf-8"))
+            n[m] = (r.returncode, r.stdout.decode("utf-8").replace("\r\n", "\n"))
         self.assertEqual(n["py"], (0, 'seki ["a", "b"]\ndünya\n'))
         self.assertEqual(n["rs"], n["py"])
         self.assertEqual(n["avto"], n["py"])

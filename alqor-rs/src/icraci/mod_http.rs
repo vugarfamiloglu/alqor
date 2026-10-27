@@ -345,7 +345,11 @@ impl SorğuV {
         }
         let səbəb = match t.kind() {
             ureq::ErrorKind::Dns => "[Errno -2] Name or service not known".to_string(),
-            ureq::ErrorKind::ConnectionFailed if mətn.contains("refused") => "[Errno 111] Connection refused".to_string(),
+            ureq::ErrorKind::ConnectionFailed if mətn.contains("refused") => match io.filter(|e| e.raw_os_error().is_some()) {
+                Some(e) => super::mod_sebeke::os_xəta_mətni(e),
+                None if cfg!(windows) => "[WinError 10061] No connection could be made because the target machine actively refused it".to_string(),
+                None => "[Errno 111] Connection refused".to_string(),
+            },
             _ if mətn.to_lowercase().contains("certificate") || mətn.contains("tls") || mətn.contains("TLS") => {
                 return x_("BağlantıXətası", format!("{}: TLS sertifikatı yoxlanmadı ({})", self.url, mətn));
             }
