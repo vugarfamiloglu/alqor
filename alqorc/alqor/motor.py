@@ -290,7 +290,7 @@ def rs_işlət(b: Path, yol: str, proqram_arqumentləri: list[str],
     """`alqor-rs işlət` — stdin/stdout/stderr ötürülür, çıxış kodu qaytarılır."""
     sys.stdout.flush()
     sys.stderr.flush()
-    arq = [str(b), "işlət", yol, "--", *proqram_arqumentləri]
+    arq = [str(b), "run", yol, "--", *proqram_arqumentləri]   # ASCII əmr adı (Windows konsolları)
     try:
         if mətn is not None:
             r = subprocess.run(arq, input=mətn.encode("utf-8"))

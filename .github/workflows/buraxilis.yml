@@ -25,6 +25,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: alqor-rs (Rust icraçısı — quraşdırıcıya daxil edilir)
+        shell: pwsh
+        working-directory: alqor-rs
+        run: |
+          rustup target add x86_64-pc-windows-msvc
+          cargo build --release --target x86_64-pc-windows-msvc
+
       - name: Paylama və quraşdırıcı
         shell: pwsh
         run: |
@@ -67,6 +74,12 @@ jobs:
           "yaz(`"Salam, Windows!`")" | Out-File -Encoding utf8 s.alq
           $c = alqor işlət s.alq
           if ($c -ne "Salam, Windows!") { throw "işlət: $c" }
+          if (-not (Test-Path "$kok\bin\alqor-rs.exe")) { throw "alqor-rs.exe quraşdırılmayıb" }
+          "gətir şifrə`nyaz(şifrə.heş(`"a`", `"md5`"))" | Out-File -Encoding utf8 r.alq
+          $c = alqor işlət --motor rs r.alq
+          if ($c -ne "0cc175b9c0f1b6a831c399e269772661") { throw "--motor rs: $c" }
+          $c = alqor işlət --motor avto r.alq
+          if ($c -ne "0cc175b9c0f1b6a831c399e269772661") { throw "--motor avto: $c" }
           Start-Process "$kok\unins000.exe" -ArgumentList "/VERYSILENT","/SUPPRESSMSGBOXES" -Wait
           Start-Sleep 3
           if (Test-Path "$kok\bin") { throw "silinmədi" }
@@ -88,6 +101,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: alqor-rs (x86_64, aarch64 — çarpaz)
+        working-directory: alqor-rs
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q gcc-aarch64-linux-gnu
+          rustup target add x86_64-unknown-linux-gnu aarch64-unknown-linux-gnu
+          cargo build --release --target x86_64-unknown-linux-gnu
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc \
+          CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
+            cargo build --release --target aarch64-unknown-linux-gnu
       - name: Paylamalar (x86_64, aarch64)
         run: |
           python alqorc/alqorc.py qur --alqor qurma --platforma linux --arx x86_64
@@ -106,6 +128,10 @@ jobs:
             alqor sına
             alqor lint .
             alqor yerləşdir
+            test -x /opt/alqor/bin/alqor-rs
+            printf "gətir şifrə\\nyaz(şifrə.heş(\\"a\\", \\"md5\\"))\\n" > r.alq
+            test "$(alqor işlət --motor rs r.alq)" = 0cc175b9c0f1b6a831c399e269772661
+            test "$(alqor işlət --motor avto r.alq)" = 0cc175b9c0f1b6a831c399e269772661
             cd ..
             alqor yeni forma-layihe --şablon desktop >/dev/null
             cd forma-layihe
@@ -126,6 +152,7 @@ jobs:
             alqor yeni t >/dev/null
             cd t
             echo dünya | alqor işlət
+            echo dünya | alqor işlət --motor rs
             alqor qur'
           env -i HOME="$T/ev" PATH=/usr/bin:/bin sh "$T/ev/.local/share/alqor/sil.sh"
           test ! -e "$T/ev/.local/bin/alqor"
@@ -145,6 +172,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: alqor-rs (aarch64, x86_64)
+        working-directory: alqor-rs
+        run: |
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
       - name: Paylamalar (aarch64, x86_64)
         run: |
           python alqorc/alqorc.py qur --alqor qurma --platforma macos --arx aarch64
@@ -157,6 +190,7 @@ jobs:
           APP="/tmp/alqor-dmg/Alqor Studio.app"
           test -x "$APP/Contents/MacOS/alqor-studio"
           "$APP/Contents/Resources/alqor/bin/alqor" versiya
+          "$APP/Contents/Resources/alqor/bin/alqor-rs" versiya
           hdiutil detach /tmp/alqor-dmg
       - name: Tüstü sınağı — .tar.gz + qurasdir.sh
         run: |
@@ -170,6 +204,7 @@ jobs:
             alqor yeni t >/dev/null
             cd t
             echo dünya | alqor işlət
+            echo dünya | alqor işlət --motor rs
             alqor sına
             alqor yerləşdir'
       - uses: actions/upload-artifact@v4
@@ -213,8 +248,9 @@ jobs:
             "  alqor-rs işlət proqram.alq      proqramı işlədir" \
             "  alqor-rs versiya" \
             "" \
-            "Konsol proqramları üçündür; veb, pəncərə və vidjet modulları üçün" \
-            "əsas Alqor quraşdırıcısını istifadə edin. Sənədlər: https://vuqar.pro/alqor" \
+            "Konsol, veb (server, http), verilənlər (SQLite), şifrə, csv, toml, xml və s." \
+            "modulları dəstəklənir; pəncərə və vidjet üçün əsas Alqor quraşdırıcısını" \
+            "istifadə edin (\`alqor işlət --motor avto\`). Sənədlər: https://vuqar.pro/alqor" \
             > "../qurma/$Q/OXU.txt"
           if [ "${{ matrix.hedef }}" != "x86_64-apple-darwin" ]; then
             "../qurma/$Q/alqor-rs$SON" versiya
