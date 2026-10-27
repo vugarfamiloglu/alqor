@@ -286,6 +286,11 @@ pub struct AltFunksiya {
     pub yaddaşla: bool,
 }
 
+/// Çağırış yerinin keşi: (gövdə göstəricisi, kod)
+pub type ÇağırışKeşi = RefCell<Option<(usize, Rc<Kod>)>>;
+/// Üzv keşi: (sinif, sahə indeksi, metod)
+pub type ÜzvKeşi = RefCell<Option<(Rc<Sinif>, u32, Option<Rc<Funksiya>>)>>;
+
 /// Kompilyasiya olunmuş funksiya gövdəsi
 pub struct Kod {
     pub ad: String,
@@ -321,9 +326,9 @@ pub struct Kod {
     pub param_yuvaları: Option<Vec<u32>>,
     pub gövdə_pc: u32,
     /// Çağırış yerlərinin keşi: (gövdə göstəricisi, kod)
-    pub çağırış_keşləri: Vec<RefCell<Option<(usize, Rc<Kod>)>>>,
+    pub çağırış_keşləri: Vec<ÇağırışKeşi>,
     /// Üzv keşləri: (sinif, sahə indeksi, metod)
-    pub üzv_keşləri: Vec<RefCell<Option<(Rc<Sinif>, u32, Option<Rc<Funksiya>>)>>>,
+    pub üzv_keşləri: Vec<ÜzvKeşi>,
     /// Parametr siyahısı (uyğunluq yoxlaması üçün)
     pub parametrlər: Option<Rc<Vec<aac::Parametr>>>,
     /// Gövdəni yaşadır

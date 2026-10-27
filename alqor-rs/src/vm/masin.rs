@@ -36,24 +36,24 @@ thread_local! {
     static ANBAR: UnsafeCell<Anbar> = UnsafeCell::new(Vec::with_capacity(4096));
 }
 
-/// Çərçivənin yuvaları (anbarda `baz..baz+n`)
+/// Çərçivənin yuvaları (anbarda `bünövrə..bünövrə+n`)
 struct Yuvalar {
     st: *mut Anbar,
-    baz: usize,
+    bünövrə: usize,
 }
 
 impl Index<usize> for Yuvalar {
     type Output = Option<D>;
     #[inline(always)]
     fn index(&self, i: usize) -> &Option<D> {
-        unsafe { (&*self.st).get_unchecked(self.baz + i) }
+        unsafe { (&*self.st).get_unchecked(self.bünövrə + i) }
     }
 }
 
 impl IndexMut<usize> for Yuvalar {
     #[inline(always)]
     fn index_mut(&mut self, i: usize) -> &mut Option<D> {
-        unsafe { (&mut *self.st).get_unchecked_mut(self.baz + i) }
+        unsafe { (&mut *self.st).get_unchecked_mut(self.bünövrə + i) }
     }
 }
 
@@ -152,7 +152,7 @@ struct Çərçivə<'f> {
     yuvalar: Yuvalar,
     yığın: Yığın,
     st: *mut Anbar,
-    baz: usize,
+    bünövrə: usize,
     _özəl: Option<Box<Anbar>>,
     baza: Mühit,
     mühitlər: Vec<Mühit>,
@@ -162,7 +162,7 @@ struct Çərçivə<'f> {
 
 impl Drop for Çərçivə<'_> {
     fn drop(&mut self) {
-        unsafe { (*self.st).truncate(self.baz) };
+        unsafe { (*self.st).truncate(self.bünövrə) };
     }
 }
 
@@ -187,15 +187,15 @@ impl<'f> Çərçivə<'f> {
             p
         };
         let v = unsafe { &mut *st };
-        let baz = v.len();
+        let bünövrə = v.len();
         for _ in 0..kod.yuva_sayı {
             v.push(None);
         }
         Çərçivə {
-            yuvalar: Yuvalar { st, baz },
-            yığın: Yığın { st, alt: baz + kod.yuva_sayı },
+            yuvalar: Yuvalar { st, bünövrə },
+            yığın: Yığın { st, alt: bünövrə + kod.yuva_sayı },
             st,
-            baz,
+            bünövrə,
             _özəl: özəl,
             baza,
             mühitlər: vec![],

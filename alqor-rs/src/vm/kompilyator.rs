@@ -1553,9 +1553,8 @@ impl<'r> Kompilyator<'r> {
         for &pi in &mövqeli {
             let p = &ps[pi];
             let j = self.e(Əmr::ParamAl(pi as u32, 0));
-            match &p.standart {
-                Some(s) => self.ifadə(s)?,
-                None => {}
+            if let Some(s) = &p.standart {
+                self.ifadə(s)?;
             }
             let h = self.pc();
             self.yamaq(j, h);
