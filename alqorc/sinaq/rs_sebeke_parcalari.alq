@@ -1,0 +1,135 @@
+gətir http
+dəyişən u = sistem.mühit("ALQOR_SINAQ_URL")
+dəyişən c = gözlə http.al(u + "/əks?a=ə b&c=1")
+yaz(c.kod(), c.uğurlu(), c.url().bitir("/%C9%99ks?a=%C9%99%20b&c=1"), c.başlıq("X-Server"), c.başlıq("yox", "s"))
+yaz(c.json())
+yaz(tip(c), c.başlıqlar()["content-type"])
+c = gözlə http.göndər(u + "/əks", json: {"ad": "Aysel", "n": [1, 2.5, doğru, boş]}, başlıqlar: {"X-Ad": "deger"})
+yaz(c.json())
+c = gözlə http.yenilə(u + "/əks", forma: {"ad": "Ə li", "x": doğru}, parametrlər: {"p": "1 2"})
+yaz(c.json())
+c = gözlə http.yamaq(u + "/əks", gövdə: "xam mətn")
+yaz(c.json()["gövdə"], c.json()["başlıqlar"]["content-type"])
+c = gözlə http.sil(u + "/əks", gövdə: b"ab")
+yaz(c.json()["metod"], c.json()["başlıqlar"]["content-type"])
+c = gözlə http.başlıq(u + "/əks")
+yaz(c.kod(), c.mətn(), c.bayt())
+c = gözlə http.al(u + "/kod/404")
+yaz(c.kod(), c.uğurlu(), c.mətn())
+cəhd et
+    c.yoxla()
+tut x
+    yaz(x.tip, x.mesaj.bitir("/kod/404: kod 404"), x.kod)
+son
+c = gözlə http.al(u + "/kod/500")
+yaz(c.kod(), c.uğurlu())
+c = gözlə http.al(u + "/yönləndir")
+yaz(c.kod(), c.url().bitir("/%C9%99ks?y=1"), c.json()["yol"])
+c = gözlə http.al(u + "/yönləndir", yönləndir: yanlış)
+yaz(c.kod(), c.başlıq("location"))
+c = gözlə http.al(u + "/latin")
+yaz(c.mətn())
+cəhd et
+    c = gözlə http.al(u + "/pis-json")
+    c.json()
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    gözlə http.al(u + "/yavaş", vaxtLimiti: 200)
+tut x
+    yaz(x.tip, x.mesaj.bitir(": 0.2 s ərzində cavab gəlmədi"))
+son
+cəhd et
+    gözlə http.al("http://127.0.0.1:1/")
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+hər pis üçün ["ftp://x/", "salam", 5, "http://"] içində
+    cəhd et
+        http.al(pis)
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son
+dəyişən s = yeni http.Sorğu("göndər", u + "/əks")
+s.başlıq("Authorization", "Bearer t").parametr("q", "ç").json([1, 2]).vaxtLimiti(5000)
+yaz(s.url().bitir("/%C9%99ks?q=%C3%A7"), s.metod())
+c = gözlə s.göndər()
+yaz(c.json())
+cəhd et
+    http.Sorğu("XYZ", u)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən q = yol.birləşdir(qovluq.müvəqqəti(), "alqor-http-sinaq.bin")
+dəyişən faizlər = []
+c = gözlə http.faylYüklə(u + "/fayl", q, irəliləyiş: (f) => faizlər.əlavə(f))
+yaz(c.kod(), fayl.ölçü(q), faizlər.uzunluq() > 1, faizlər[-1], c.bayt())
+fayl.yaz(q, "göndəriləcək")
+c = gözlə http.faylGöndər(u + "/əks", q, əlavə: {"a": "b"})
+yaz(c.json()["gövdə"].başlayır("multipart"), c.json()["başlıqlar"]["content-type"].başlayır("multipart/form-data; boundary=alqor-"))
+fayl.sil(q)
+cəhd et
+    gözlə http.faylYüklə(u + "/kod/403", q)
+tut x
+    yaz(x.tip, x.mesaj.bitir("/kod/403: kod 403"), fayl.vardır(q))
+son
+cəhd et
+    http.faylGöndər(u, "yoxdur.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən g = http.al(u + "/əks")
+yaz(tip(g))
+hər c üçün paralel.hamısı([http.al(u + "/kod/201"), http.al(u + "/kod/202")]) içində
+    yaz(c.kod())
+son
+=====
+gətir şəbəkə
+dəyişən server = şəbəkə.TCPServer(0, (k) => k.göndər("əks: " + k.sətirAl() + "\n"))
+server.başlat()
+dəyişən p = server.port()
+yaz(p > 0, tip(server))
+dəyişən s = şəbəkə.TCPBağlan("127.0.0.1", p)
+yaz(tip(s), s.ünvan() == "127.0.0.1:{p}")
+yaz(s.göndər("salam\n"))
+yaz(s.sətirAl())
+yaz(s.sətirAl())
+s.bağla()
+dəyişən s2 = şəbəkə.TCPBağlan("127.0.0.1", p, 3000)
+s2.göndər(b"bayt\r\n")
+yaz(s2.alMətn())
+s2.bağla()
+dəyişən xs = şəbəkə.TCPServer(0, (k) => xəta_at())
+xs.başlat()
+dəyişən s3 = şəbəkə.TCPBağlan("127.0.0.1", xs.port())
+yaz(s3.al())
+yaz(xs.xətalar().uzunluq())
+xs.dayandır()
+server.dayandır()
+cəhd et
+    şəbəkə.TCPBağlan("127.0.0.1", 1)
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+yaz(şəbəkə.portAçıqdır("127.0.0.1", 1), şəbəkə.portAçıqdır("127.0.0.1", p + 0, 200) tipidir məntiq)
+dəyişən u1 = şəbəkə.UDPSoket()
+dəyişən u2 = şəbəkə.UDPSoket(0, "127.0.0.1")
+yaz(u1.göndər("udp ə", "127.0.0.1", u2.port()))
+dəyişən m = u2.al()
+yaz(m["verilən"], m["ünvan"], m["port"] == u1.port())
+u2.vaxtLimiti(100)
+cəhd et
+    u2.al()
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+u1.bağla()
+u2.bağla()
+yaz("127.0.0.1" içindədir şəbəkə.ünvanTap("localhost"), tip(şəbəkə.yerliIP()), şəbəkə.hostAdı() == sistem.hostAdı())
+cəhd et
+    s.göndər(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son

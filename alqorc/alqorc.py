@@ -228,6 +228,16 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
     else:
         öz, proqram_arqumentləri = arqumentlər, []
 
+    # `--motor py|rs|avto` (və ya ALQOR_MOTOR) — icra motoru
+    from alqor import motor as _motor
+    motor = _motor.motor_tap(öz) or "py"
+    if motor not in _motor.MOTORLAR:
+        çap_xəta(f"naməlum motor `{motor}` — py, rs və ya avto")
+        return 3
+    öz = [a for k, a in enumerate(öz)
+          if a != "--motor" and not a.startswith("--motor=")
+          and not (k > 0 and öz[k - 1] == "--motor")]
+
     fayllar = [a for a in öz if not a.startswith("--") or a == "-"]
     if fayllar:
         yol = fayllar[0]
@@ -245,10 +255,23 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
             return 3
         yol = str(layihə.giriş)
     arqumentlər = öz
+    rs_olmaz = "--js" in arqumentlər or "--tip" in arqumentlər \
+        or "--tip-yoxla" in arqumentlər
+
+    # `--motor rs`: Rust icraçısı faylı özü ayırır (eyni diaqnostika)
+    if motor == "rs" and not rs_olmaz and yol != "-":
+        b = _motor.binar()
+        if b is None:
+            çap_xəta("alqor-rs binarı tapılmadı — `cargo build --release` "
+                     "(alqor-rs/) və ya ALQOR_RS=<yol>; ya da --motor py")
+            return 4
+        return _motor.rs_işlət(b, yol, proqram_arqumentləri)
 
     x = XətaToplayıcı()
+    stdin_mətni = None
     if yol == "-":
-        s = Mənbə.mətndən(sys.stdin.read(), "<stdin>", x)
+        stdin_mətni = sys.stdin.read()
+        s = Mənbə.mətndən(stdin_mətni, "<stdin>", x)
     else:
         s = Mənbə.fayldan(yol, x)
     if s is None:
@@ -261,6 +284,17 @@ def əmr_işlət(arqumentlər: list[str]) -> int:
     if not x.uğurludur():
         x.çap()
         return 2
+
+    if motor != "py" and not rs_olmaz:
+        seçim, b, səbəb = _motor.seç(
+            motor, ağac, Path(yol) if yol != "-" else None)
+        if seçim == "rs":
+            # Diaqnostikanı alqor-rs özü çap edir
+            return _motor.rs_işlət(b, yol, proqram_arqumentləri,
+                                   stdin_mətni)
+        if motor == "rs" or os.environ.get("ALQOR_MOTOR_IZ"):
+            print(f"ⓘ Python icraçısı: {səbəb}", file=sys.stderr)
+
     if x.xəbərdarlıqlar:
         x.çap()
 

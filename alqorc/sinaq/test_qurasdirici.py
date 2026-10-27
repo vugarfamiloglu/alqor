@@ -105,6 +105,15 @@ class QuraşdırıcıSınağı(unittest.TestCase):
         r = subprocess.run(["rpm", "--root", str(kök), "--nodeps",
                             "--noscripts", "-i", str(rpm)],
                            capture_output=True, text=True)
+        if r.returncode and "change root" in r.stderr:
+            # Yeni rpm `--root`-u chroot ilə edir — imtiyazsız CI-da olmur;
+            # yükü rpm2cpio + cpio ilə açıb eyni yoxlamanı aparırıq
+            if not (shutil.which("rpm2cpio") and shutil.which("cpio")):
+                self.skipTest("chroot icazəsi və rpm2cpio yoxdur")
+            kök.mkdir(parents=True, exist_ok=True)
+            r = subprocess.run(f'rpm2cpio "{rpm}" | cpio -idm --quiet',
+                               shell=True, cwd=kök, capture_output=True,
+                               text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         r = subprocess.run([sys.executable, str(
             kök / "usr/lib/kitab-refi/kitab-refi.pyz")], capture_output=True,

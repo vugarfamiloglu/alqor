@@ -1113,7 +1113,10 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         } else {
                             let f = t!(i.üzv_al(&o, a, Some(kod.yerlər[pc - 1])), 'x);
                             ç.yığın.push(f);
-                            ç.yığın.push(D::Boş);
+                            // Alıcı çağırış bitənə qədər yaşamalıdır: kitabxana
+                            // obyektlərinin zəncirlənən metodları özlərinə zəif
+                            // istinad saxlayır (`veb.mətn(..).kod(201)`)
+                            ç.yığın.push(o);
                             ç.yığın.push(D::T(0));
                         }
                     }

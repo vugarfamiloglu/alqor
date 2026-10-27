@@ -5,6 +5,8 @@
 //!     alqor-rs tokenlər fayl.alq       (maşın üçün: sətir:sütun NÖV dəyər)
 //!     alqor-rs aac fayl.alq [--diaq]   (AAC-nin kanonik çapı; `--diaq`:
 //!                                       diaqnostikalar da stdout-a, maşın formatında)
+//!     alqor-rs modullar                (dəstəklənən standart modullar, hər sətirdə bir)
+//!     alqor-rs qloballar               (qlobal adlar — `alqor işlət --motor avto` üçün)
 
 
 use alqor::{aac, aac_yaz, icraci, lekser, parser, xeta};
@@ -91,9 +93,25 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         "işlət" | "islet" | "run" if a.len() >= 2 => işlət(&a[1..]),
+        // `alqor işlət --motor avto` üçün: dəstəklənən modullar və qlobal adlar
+        "modullar" => {
+            for m in icraci::elave::bütün_adlar() {
+                println!("{m}");
+            }
+            ExitCode::SUCCESS
+        }
+        "qloballar" => {
+            let i = icraci::İcraçı::yeni();
+            let mut v: Vec<String> = i.qlobal.hamısı().into_iter().map(|(a, _)| a.to_string()).collect();
+            v.sort();
+            for a in v {
+                println!("{a}");
+            }
+            ExitCode::SUCCESS
+        }
         "versiya" | "--versiya" => { println!("alqor-rs {}", env!("CARGO_PKG_VERSION")); ExitCode::SUCCESS }
         _ => {
-            println!("istifadə: alqor-rs tokenlər <fayl> | alqor-rs aac <fayl> [--diaq]");
+            println!("istifadə: alqor-rs işlət <fayl> [-- arq…] | alqor-rs tokenlər <fayl> | alqor-rs aac <fayl> [--diaq] | alqor-rs modullar | alqor-rs qloballar | alqor-rs versiya");
             ExitCode::from(3)
         }
     }

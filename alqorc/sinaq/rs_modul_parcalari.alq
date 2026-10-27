@@ -1,0 +1,519 @@
+gətir kodlaşdırma
+yaz(kodlaşdırma.base64Kodla("Salam"), kodlaşdırma.base64AçMətn("U2FsYW0="), kodlaşdırma.base64Kodla([1, 2, 255]))
+yaz(kodlaşdırma.urlKodla("ə ş/?&"), kodlaşdırma.yolKodla("a b/c"), kodlaşdırma.urlAç("%C9%99%20x%zz"))
+yaz(kodlaşdırma.sorğuKodla({"q": "çay", "s": 2, "b": doğru, "l": [1, 2], "n": boş, "f": 2.5}))
+yaz(kodlaşdırma.sorğuAç("?q=%C3%A7ay&s=2&s=3&boş=&x"))
+yaz(kodlaşdırma.slug("Şəki xanlığı!"), kodlaşdırma.slug("  İlk -- Söz  ", "_"))
+yaz(kodlaşdırma.htmlQaç("<a href='x'>&\"</a>"), kodlaşdırma.htmlAç("&lt;b&gt; &amp; &#65; &#x42; &copy; &foo;"))
+yaz(kodlaşdırma.hexKodla("az"), kodlaşdırma.hexAç("61 7a"), kodlaşdırma.crc32("salam"), kodlaşdırma.baytlar("ə"))
+yaz(kodlaşdırma.base64URLKodla("??>>"), kodlaşdırma.base64URLAç("Pz8-Pg"), kodlaşdırma.utf8Kodla("ə"), kodlaşdırma.utf8Aç([200, 153]))
+cəhd et
+    kodlaşdırma.base64Aç("@@@")
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+cəhd et
+    kodlaşdırma.hexAç("abc")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    kodlaşdırma.utf8Aç([255])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+gətir şifrə
+yaz(şifrə.heş("salam"), şifrə.heş("salam", "md5"), şifrə.heş("salam", alqoritm: "SHA-1"))
+hər a üçün şifrə.alqoritmlər içində
+    yaz(a, şifrə.heş("abc", a))
+son
+yaz(şifrə.HMAC("mesaj", "açar"), şifrə.HMAC("mesaj", "açar", "sha512"))
+cəhd et
+    şifrə.heş("x", "sha9")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən h = şifrə.parolHeş("gizli123")
+yaz(h.başlayır("$scrypt$ln=15,r=8,p=1$"), şifrə.parolYoxla("gizli123", h), şifrə.parolYoxla("yanlış", h), şifrə.parolYoxla("x", "pis"))
+yaz(şifrə.parolYoxla("gizli123", "$scrypt$ln=4,r=8,p=1$c2FsdA$NO3e7nqf8NeA2Zp76Dzs7hR6uMPkjqrGqeLLsePbuEY"))
+yaz(şifrə.parolAçarı("p", "duz").uzunluq())
+dəyişən açar = şifrə.açarYarat()
+dəyişən ş = şifrə.şifrələ("məxfi mətn", açar)
+yaz(uzunluq(ş), şifrə.şifrəAçMətn(ş, açar))
+cəhd et
+    şifrə.şifrəAç(ş, şifrə.açarYarat())
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    şifrə.şifrəAç(ş, "açar")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən t = şifrə.tokenYarat({"id": 5, "ad": "Əli"}, "gizli")
+yaz(t)
+yaz(şifrə.tokenOxu(t, "gizli"))
+yaz(şifrə.tokenYarat({"id": 5}, "gizli", alqoritm: "HS512"))
+cəhd et
+    şifrə.tokenOxu(t, "başqa")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    şifrə.tokenOxu(şifrə.tokenYarat({"a": 1}, "k", müddət: -10), "k")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(şifrə.tokenOxu(şifrə.tokenYarat({"a": 1}, "k", müddət: 100), "k")["a"])
+yaz(uzunluq(şifrə.UUID()), uzunluq(şifrə.təsadüfiMətn(10)), uzunluq(şifrə.təsadüfiBayt()), şifrə.bərabərdir("a", "a"))
+=====
+gətir sıxma
+dəyişən g = sıxma.gzipSıx("salam " * 100)
+yaz(sıxma.gzipAçMətn(g), uzunluq(g) < 100)
+yaz(sıxma.zlibAç(sıxma.zlibSıx("xyz")))
+cəhd et
+    sıxma.gzipAç("salam")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    sıxma.zlibAç("salam")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+gətir sıxma
+dəyişən q = yol.birləşdir(qovluq.müvəqqəti(), "alqor-sixma-sinaq")
+qovluq.silDərin(q)
+qovluq.yaratDərin(q)
+qovluq.dəyiş(q)
+qovluq.yaratDərin("layihə/alt")
+fayl.yaz("layihə/a.txt", "salam")
+fayl.yaz("layihə/alt/b.txt", "dünya " * 50)
+fayl.yaz("tək.txt", "tək fayl")
+yaz(sıxma.zipYarat("arxiv.zip", ["layihə", "tək.txt"]))
+hər f üçün sıxma.zipSiyahı("arxiv.zip") içində
+    yaz(f["ad"], f["ölçü"], f["qovluq"])
+son
+yaz(sıxma.zipAç("arxiv.zip", "çıxış/"))
+yaz(fayl.oxu("çıxış/layihə/alt/b.txt").uzunluq(), sıxma.zipOxu("arxiv.zip", "tək.txt"))
+cəhd et
+    sıxma.zipOxu("arxiv.zip", "yox.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    sıxma.zipSiyahı("tək.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    sıxma.zipSiyahı("yoxdur.zip")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(sıxma.tarYarat("e.tar.gz", ["layihə"]), sıxma.tarYarat("e.tar", "tək.txt"))
+yaz(sıxma.tarSiyahı("e.tar.gz"))
+yaz(sıxma.tarSiyahı("e.tar"))
+yaz(sıxma.tarAç("e.tar.gz", "bərpa"))
+yaz(fayl.oxu("bərpa/layihə/a.txt"))
+cəhd et
+    sıxma.tarSiyahı("tək.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(sıxma.faylSıx("./tək.txt"))
+fayl.sil("tək.txt")
+yaz(sıxma.faylAç("tək.txt.gz"), fayl.oxu("tək.txt"))
+cəhd et
+    sıxma.faylAç("tək.txt")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+qovluq.dəyiş("/")
+qovluq.silDərin(q)
+=====
+gətir csv
+yaz(csv.oxu("ad,bal\nAysel,95\nKamran,88\n"))
+yaz(csv.oxu("ad;bal\r\nAysel;95\r\n\r\nKamran;88", ayırıcı: "avto", çevir: doğru))
+yaz(csv.oxu("ad\tbal\tqeyd\nA\t1\t\nB\t2.5\tdoğru", ayırıcı: "avto", çevir: doğru))
+yaz(csv.oxu("a|b\n1|2\n3|4", ayırıcı: "avto"))
+yaz(csv.oxu("\"x, y\",z\n\"a \"\"q\"\"\",\"çox\nsətir\"\n", başlıq: yanlış))
+yaz(csv.oxu("a,b,c\n1,2\n", çevir: doğru), csv.oxu("a,b\n1,2", çevir: yanlış))
+yaz(csv.oxu("'a';'b'\n'1';'2'", ayırıcı: "avto", başlıq: yanlış))
+yaz(csv.oxu("\"a\";\"b\"\n\"1\";\"2\"", ayırıcı: "avto"))
+yaz(csv.oxu("x,-5,1e3,.5,1.,abc,true,false,yanlış", başlıq: yanlış, çevir: doğru))
+yaz(csv.oxu(""), csv.oxu("\n\n")))
+cəhd et
+    csv.oxu("a,a\n1,2")
+tut x
+    yaz(x.tip, x.mesaj, x.kod)
+son
+cəhd et
+    csv.oxu("a\n1,2,3")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu("\"a\"b,c")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu("\"abc")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu("a", ayırıcı: ";;")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.oxu(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(csv.yaz([{"ad": "Aysel", "bal": 95}, {"ad": "Ka,mran", "bal": 88.0, "qeyd": doğru}]))
+yaz(csv.yaz([[1, "a\"b", boş], ["x\ny", 2.5, yanlış]], ayırıcı: ";"))
+yaz(csv.yaz([{"a": 1, "b": 2}], sütunlar: ["b", "a", "c"], başlıq: yanlış))
+yaz(csv.yaz([[""], [], ["a", ""]]))
+yaz(csv.yaz([], bom: doğru).uzunluq(), csv.yaz([{"a": [1, 2]}], bom: doğru))
+cəhd et
+    csv.yaz([1, 2])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    csv.yaz("x")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+dəyişən q = yol.birləşdir(qovluq.müvəqqəti(), "alqor-csv-sinaq.csv")
+csv.faylYaz(q, [{"ş": "ə", "n": 1}], bom: doğru)
+yaz(csv.faylOxu(q, çevir: doğru))
+fayl.yazBayt(q, [97, 44, 98, 10, 253, 44, 222, 10])
+yaz(csv.faylOxu(q))
+fayl.sil(q)
+cəhd et
+    csv.faylOxu(q)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+gətir toml
+dəyişən m = """
+# şərh
+baslik = "TOML nümunə"
+ad = 'literal \\n'
+eded = 1_000
+hex = 0xDEAD_beef
+okt = 0o755
+bin = 0b1101
+onluq = -3.14e-2
+sonsuz = -inf
+dogru = true
+tarix = 1979-05-27T07:32:00-08:00
+tarix2 = 1979-05-27 00:32:00.999999Z
+gunu = 1979-05-27
+vaxt = 07:32:00.5
+massiv = [ 1, 2, 3, ]
+qarisiq = [[1, 2], ["a", "b"], \{x = 1\}]
+"dırnaq açar" = 1
+a.b.c = 5
+
+[server]
+host = "127.0.0.1"
+port = 8080
+inline = \{ x = 1, y = \{ z = 2 \} \}
+
+[server.alt]
+k = "v"
+
+[[mehsul]]
+ad = "Çəkic"
+
+[[mehsul]]
+ad = "Mismar"
+reng = "boz"
+
+[[mehsul.olcu]]
+en = 1
+"""
+yaz(toml.oxu(m))
+dəyişən səhvlər = ["a = \"\"\"\n  bir\n  iki \\\n   üç\"\"\"\nb = '''\nx''''", "a = ", "a = 1\na = 2", "[a]\n[a]", "a = 1 b", "a = \"x", "[a\nb=1", "x = 2023-02-30", "x = 01",
+    "x = [1, 2", "x = \{a = 1, a = 2\}", "a.b = 1\n[a]\nc=2", "x = \{a=1\}\n[x]", "= 1", "x = \"\\q\"", "x = \"\\uZZZZ\"",
+    "x = 1\n[[x]]", "a = [1]\n[[a]]", "x = 'a\tb'", "x = '''a''''", "x = \"\"\"a\"\"\"\"\"", "[[a]]\n[a]\nb=1", "x = tru", "a = 1 # \u{1}"]
+hər s üçün səhvlər içində
+    yaz(s)
+    cəhd et
+        yaz(toml.oxu(s))
+    tut x
+        yaz(x.tip, x.mesaj, x.kod)
+    son
+son
+yaz(toml.yaz({"ad": "Alqor", "versiya": 2.0, "server": {"port": 8080, "host": "x\"y", "boş": boş}, "s": [1, 2.5, "a"], "b": {"c": {"d": 1}},
+    "boşcədvəl": {}, "məhsul": [{"ad": "a", "x": {"y": 1}}, {"ad": "b"}], "ğ ad": doğru, "inf": -1/0.0, "qt": {"a": 1}}))
+cəhd et
+    toml.yaz([1])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    toml.yaz({"a": [boş]})
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    toml.oxu(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+=====
+dəyişən s = yeni veb.Server()
+s.al("/", (s) => veb.mətn("Salam, dünya!"))
+s.al("/istifadəçi/:id", (s) => {"id": s.parametr("id"), "ad": s.sorğuParametr("ad", "yox")})
+s.al("/ixtiyari/:a?", (s) => "a={s.parametr("a", "boş")}")
+s.al("/fayllar/*yol", (s) => s.parametrlər())
+s.göndər("/json", (s) => s.json())
+s.göndər("/form", (s) => s.form())
+s.al("/html", (s) => veb.html("<html><body>x</body></html>"))
+s.al("/jsx", (s) => <div class="a">Salam {s.metod()}</div>)
+s.al("/boş", (s) => boş)
+s.al("/kod", (s) => veb.mətn("yaradıldı").kod(201).başlıq("X-Ad", "dəyər"))
+s.al("/yönləndir", (s) => veb.yönləndir("/"))
+s.al("/xəta", (s) => veb.xəta(418))
+s.al("/atır", (s) => 1 / 0)
+s.al("/siyahı", (s) => [1, 2.5, doğru, boş, "ə"])
+s.al("/kuki", (s) => veb.mətn("k").kuki("ad", "Əli Və", müddət: 60).kukiSil("köhnə"))
+s.al("/mənim-kukim", (s) => s.kuki("ad", "yox"))
+s.al("/sessiya/qoy", funksiya(s)
+    s.sessiya().qoy("say", 5)
+    qaytar "qoyuldu"
+son)
+s.al("/sessiya/al", (s) => s.sessiya().al("say", 0))
+s.al("/başlıqlar", (s) => [s.başlıq("X-Test"), s.başlıq("yox", "s"), s.tamURL(), s.IP(), s.metod(), s.yol(), s.gövdə()])
+s.qrup("/api", funksiya(q)
+    q.al("/v", (s) => "api v")
+    q.qrup("/alt", (q2) => q2.al("/x", (s) => "alt x"))
+son)
+s.hamısı("/hər", (s) => s.metod())
+gətir veb.sınaq
+dəyişən m = sınaq.server(s)
+funksiya göstər(c)
+    yaz(c.vəziyyət(), c.başlıq("Content-Type"), c.mətnƏt())
+son
+hər y üçün ["/", "/istifadəçi/5?ad=Aysel", "/istifadəçi/%C9%99", "/ixtiyari", "/ixtiyari/7", "/fayllar/a/b.txt", "/html", "/jsx", "/boş", "/yönləndir", "/xəta", "/siyahı", "/yoxdur", "/api/v", "/api/alt/x", "/hər", "/../x", "/a//b"] içində
+    göstər(m.al(y))
+son
+dəyişən c = m.al("/kod")
+yaz(c.vəziyyət(), c.başlıq("x-ad"), c.uğurludur(), c.uzunluq(), c)
+c = m.göndər("/json", {"a": [1, 2], "b": "ə"})
+yaz(c.json(), c.başlıq("content-type"))
+c = m.göndər("/json", "\{pis")
+yaz(c.vəziyyət())
+c = m.göndər("/form", "a=1&b=%C9%99+x&a=2")
+yaz(c.json())
+c = m.göndər("/")
+yaz(c.vəziyyət(), c.mətnƏt())
+c = m.al("/kuki")
+yaz(c.başlıq("Set-Cookie"))
+yaz(m.al("/mənim-kukim").mətnƏt())
+yaz(m.al("/sessiya/al").mətnƏt(), m.al("/sessiya/qoy").mətnƏt(), m.al("/sessiya/al").mətnƏt())
+yaz(m.al("/başlıqlar", {"X-Test": "t"}).json())
+yaz(m.sil("/hər").mətnƏt(), m.yamaq("/hər", "x").mətnƏt(), m.yenilə("/hər").mətnƏt())
+c = m.al("/atır")
+yaz(c.vəziyyət(), c.mətnƏt().ehtiva("BölməXətası"))
+yaz(s.marşrutlar())
+yaz(s, m, tip(s))
+=====
+gətir veb.sınaq
+gətir sıxma
+dəyişən q = yol.birləşdir(qovluq.müvəqqəti(), "alqor-veb-sinaq")
+qovluq.silDərin(q)
+qovluq.yaratDərin(yol.birləşdir(q, "statik/alt"))
+qovluq.yaratDərin(yol.birləşdir(q, "şablon"))
+fayl.yaz(yol.birləşdir(q, "statik/index.html"), "<h1>ana</h1>")
+fayl.yaz(yol.birləşdir(q, "statik/alt/a.css"), "body\{\}")
+fayl.yaz(yol.birləşdir(q, "statik/x.json"), "[1]")
+fayl.yaz(yol.birləşdir(q, "gizli.txt"), "gizli")
+fayl.yaz(yol.birləşdir(q, "şablon/əsas.alqorhtml"), "<title>\{% blok başlıq %\}Əsas\{% son %\}</title><main>\{% blok məzmun %\}\{% son %\}</main>\{% daxilEt \"alt.alqorhtml\" %\}")
+fayl.yaz(yol.birləşdir(q, "şablon/alt.alqorhtml"), "<footer>\{\{ il \}\}</footer>")
+fayl.yaz(yol.birləşdir(q, "şablon/səhifə.alqorhtml"), "\{% genişlət \"əsas.alqorhtml\" %\}\{% blok başlıq %\}\{\{ başlıq | böyüyə \}\}\{% son %\}\{% blok məzmun %\}\{# şərh #\}<ul>\{% hər i, x üçün siyahı içində %\}<li class=\"\{\{ _indeks \}\}\">\{\{ x | kəs(3) \}\}\{% əgər _sondur %\}!\{% son %\}</li>\{% yoxsa %\}boş\{% son %\}</ul>\{\{ html \}\} \{\{ html | xam \}\} \{\{ qiymət | pul \}\} \{\{ boş_ | standart(\"—\") \}\} \{\{ 2.567 | yuvarlaqlaşdır(1) \}\} \{\{ \"a b\" | URLKodla \}\} \{\{ [1,2] | uzunluq \}\}\{% əgər siyahı.uzunluq() > 5 %\}çox\{% yoxsa %\}az\{% son %\}\{% hər a, d üçün lüğət içində %\}\{\{a\}\}=\{\{d\}\};\{% son %\}\{% son %\}")
+fayl.yaz(yol.birləşdir(q, "şablon/pis.alqorhtml"), "\{% əgər x %\}açıq")
+fayl.yaz(yol.birləşdir(q, "şablon/pis2.alqorhtml"), "\{\{ 1 + \}\}")
+fayl.yaz(yol.birləşdir(q, "şablon/pis3.alqorhtml"), "\{\{ x | yoxfiltr \}\}")
+fayl.yaz(yol.birləşdir(q, "şablon/pis4.alqorhtml"), "a\n\{\{ yoxdəyişən \}\}")
+qovluq.dəyiş(q)
+dəyişən s = yeni veb.Server()
+s.statik("/st/", "statik", "index.html")
+s.statik("", "statik")
+s.ara(veb.CORS())
+s.ara(veb.təhlükəsizlikBaşlıqları())
+s.ara(funksiya(sorğu, növbəti)
+    dəyişən c = növbəti(sorğu)
+    c.başlıq("X-Ara", "bəli")
+    qaytar c
+son)
+s.al("/şablon", (r) => veb.şablon("səhifə.alqorhtml", {"başlıq": "salam", "siyahı": ["alma", "armud", "gilas"], "html": "<b>", "qiymət": 1234.5, "boş_": boş, "lüğət": {"a": 1, "b": 2}, "il": 2026}))
+s.al("/boşşablon", (r) => veb.şablon("səhifə.alqorhtml", {"başlıq": "x", "siyahı": [], "html": "", "qiymət": 0, "boş_": "", "lüğət": {}, "il": 1}))
+hər p üçün ["pis", "pis2", "pis3", "pis4", "yoxdur"] içində
+    s.al("/" + p, (r) => veb.şablon(r.yol().kəs("/") + ".alqorhtml", {"x": 1}))
+son
+s.al("/fayl", (r) => veb.fayl("statik/x.json"))
+s.al("/yüklə", (r) => veb.yüklə("gizli.txt"))
+s.al("/yoxfayl", (r) => veb.fayl("yox.txt"))
+s.al("/uzun", [veb.sıxma()], (r) => "x" * 1000)
+s.al("/limit", [veb.sürətLimiti(2, "1dəq")], (r) => "ok")
+s.xətaİdarəedicisi((r, x) => veb.mətn("tutuldu: " + x.tip + " " + x.mesaj).kod(503))
+s.tapılmadı((r) => veb.xəta(404, "yoxdur: " + r.yol()))
+dəyişən m = sınaq.server(s)
+hər y üçün ["/st/", "/st/alt/a.css", "/x.json", "/st/../gizli.txt", "/fayl", "/yüklə", "/şablon", "/boşşablon", "/pis", "/pis2", "/pis3", "/pis4", "/yoxdur", "/yoxfayl", "/nəsə"] içində
+    dəyişən c = m.al(y)
+    yaz(y, c.vəziyyət(), c.başlıq("Content-Type"), c.başlıq("Cache-Control"), c.başlıq("Content-Disposition"), c.başlıq("X-Ara"), c.başlıq("Access-Control-Allow-Origin"), c.başlıq("X-Frame-Options"))
+    yaz(c.mətnƏt())
+son
+dəyişən c = m.al("/uzun", {"Accept-Encoding": "gzip"})
+yaz(c.başlıq("Content-Encoding"), c.başlıq("Vary"), c.uzunluq() < 100)
+yaz(m.al("/uzun").başlıq("Content-Encoding"))
+yaz(m.al("/limit").vəziyyət(), m.al("/limit").vəziyyət(), m.al("/limit").vəziyyət(), m.al("/limit").başlıq("Retry-After"))
+c = m.sil("/st/x")
+yaz(c.vəziyyət(), c.mətnƏt())
+qovluq.dəyiş("/")
+qovluq.silDərin(q)
+=====
+gətir verilənlər
+dəyişən b = verilənlər.bağlan("sqlite::yaddaş:")
+yaz(b, tip(b))
+yaz(b.icra("CREATE TABLE tələbə (id INTEGER PRIMARY KEY, ad TEXT NOT NULL UNIQUE, bal INTEGER, qeyd BLOB, ort REAL)"))
+yaz(b.icra("INSERT INTO tələbə (ad, bal) VALUES ($1, $2)", "Aysel", 95), b.sonId())
+yaz(b.icra("INSERT INTO tələbə (ad, bal, qeyd, ort) VALUES (?, ?, ?, ?)", "Kamran", 88, b"\x00\x01", 4.5), b.sonId())
+yaz(b.icra("INSERT INTO tələbə (ad, bal) VALUES ('$1 dollar', 1)"))
+yaz(b.sorğu("SELECT * FROM tələbə WHERE bal > $1 ORDER BY id", 80))
+yaz(b.birSətir("SELECT ad FROM tələbə WHERE id = ?", 2), b.birSətir("SELECT ad FROM tələbə WHERE id = 99"))
+yaz(b.birDəyər("SELECT COUNT(*) FROM tələbə"), b.birDəyər("SELECT ad FROM tələbə WHERE id = 99"))
+yaz(b.icra("UPDATE tələbə SET bal = bal + 1"), b.icra("DELETE FROM tələbə WHERE id = 99"))
+hər s üçün ["SELECT * FROM yox", "SELEC 1", "INSERT INTO tələbə (ad) VALUES ('Aysel')", "INSERT INTO tələbə (bal) VALUES (1)", "SELECT 1; SELECT 2"] içində
+    cəhd et
+        b.icra(s)
+    tut x
+        yaz(x.tip, x.mesaj, x.kod)
+    son
+son
+cəhd et
+    b.icra("SELECT ?", [1])
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    b.icra("SELECT ?, ?", 1)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    b.icra(5)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+yaz(b.cədvəllər(), b.sütunlar("tələbə"))
+yaz(b.cədvəl("tələbə").seç("ad", "bal").harada("bal", ">=", 90).sırala("bal", "azalan").limit(10).al())
+dəyişən q = b.cədvəl("tələbə").harada("ad", "bənzər", "A%").yaHarada("id", "içində", [2, 3])
+yaz(q.sql(), q.say(), q.ilk())
+yaz(b.cədvəl("tələbə").harada("qeyd", "=", boş).say(), b.cədvəl("tələbə").harada("qeyd", "!=", boş).al())
+yaz(b.cədvəl("tələbə").harada("id", "IN", []).say(), b.cədvəl("tələbə").atla(1).limit(1).sql())
+yaz(b.cədvəl("tələbə").əlavəEt({"ad": "Nigar", "bal": 70}))
+yaz(b.cədvəl("tələbə").əlavəEt([{"ad": "Ə1"}, {"ad": "Ə2"}]))
+yaz(b.cədvəl("tələbə").harada("ad", "=", "Nigar").yenilə({"bal": 71}), b.cədvəl("tələbə").harada("bal", "<", 72).sil())
+hər f üçün [() => b.cədvəl("tələbə").yenilə({"bal": 1}), () => b.cədvəl("tələbə").sil(), () => b.cədvəl("tələbə; DROP"), () => b.cədvəl("tələbə").harada("a", "~", 1), () => b.cədvəl("tələbə").sırala("ad", "yuxarı"), () => b.cədvəl("tələbə").əlavəEt({}), () => b.icra("SELECT ?", [1, 2])] içində
+    cəhd et
+        f()
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son
+b.icra("CREATE TABLE hesab (ad TEXT, balans INTEGER)")
+b.icra("INSERT INTO hesab VALUES ('a', 100), ('b', 0)")
+b.tranzaksiya(funksiya(t)
+    t.icra("UPDATE hesab SET balans = balans - 50 WHERE ad = 'a'")
+    t.icra("UPDATE hesab SET balans = balans + 50 WHERE ad = 'b'")
+son)
+cəhd et
+    b.tranzaksiya(funksiya(t)
+        t.icra("UPDATE hesab SET balans = 0")
+        t.tranzaksiya((t2) => t2.icra("UPDATE hesab SET balans = 7"))
+        xəta_at()
+    son)
+tut x
+    yaz(x.tip)
+son
+yaz(b.sorğu("SELECT * FROM hesab"))
+yaz(b.tranzaksiya((t) => t == b))
+b.skript("CREATE TABLE x (a); INSERT INTO x VALUES (1); INSERT INTO x VALUES (2);")
+yaz(b.birDəyər("SELECT SUM(a) FROM x"))
+dəyişən mq = yol.birləşdir(qovluq.müvəqqəti(), "alqor-miq-sinaq")
+qovluq.silDərin(mq)
+qovluq.yaratDərin(mq)
+fayl.yaz(yol.birləşdir(mq, "001_bir.sql"), "CREATE TABLE m1 (a INTEGER);")
+fayl.yaz(yol.birləşdir(mq, "002_iki.sql"), "INSERT INTO m1 VALUES (5)")
+yaz(b.miqrasiyaEt(mq), b.miqrasiyaEt(mq), b.birDəyər("SELECT a FROM m1"))
+fayl.yaz(yol.birləşdir(mq, "003_pis.sql"), "INSERT INTO yox VALUES (1)")
+cəhd et
+    b.miqrasiyaEt(mq)
+tut x
+    yaz(x.tip, x.mesaj)
+son
+qovluq.silDərin(mq)
+b.bağla()
+cəhd et
+    b.icra("SELECT 1")
+tut x
+    yaz(x.tip, x.mesaj)
+son
+hər u üçün ["xyz://a", "sqlite://", 5] içində
+    cəhd et
+        verilənlər.bağlan(u)
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son
+dəyişən fy = yol.birləşdir(qovluq.müvəqqəti(), "alqor-vb-sinaq/a.db")
+fayl.sil(fy)
+dəyişən b2 = verilənlər.bağlan("sqlite://" + fy)
+b2.icra("CREATE TABLE IF NOT EXISTS t (x)")
+yaz(b2.cədvəllər())
+b2.bağla()
+qovluq.silDərin(yol.qovluq(fy))
+=====
+gətir xml
+dəyişən kök = xml.oxu("<?xml version=\"1.0\"?>\n<kitablar xmlns:q=\"u\"><!-- ş --><kitab il=\"1937\" q:dil=\"az\">Ölülər</kitab><kitab il=\"1907\" class=\"a b\">Dəli <b>Kür</b> son</kitab><boş/></kitablar>")
+yaz(kök, tip(kök), kök.ad(), kök.atributlar(), kök.mətn())
+hər k üçün kök.tapHamısı("kitab") içində
+    yaz(k.mətn(), k.atribut("il"), k.atribut("yox", "s"), k.atributlar(), k.valideyn().ad())
+son
+yaz(kök.tap("kitab.a > b"), kök.tap("[il=1937]").mətn(), kök.tap("[il^=19]").atribut("il"), kök.tap("yox"), kök.tapHamısı("*").uzunluq(), kök.tapHamısı("b, boş"))
+yaz(kök.uşaqlar(), kök.xml())
+yaz(kök.lüğət())
+yaz(xml.lüğətə("<a x=\"1\"><b>2</b><b>3</b><c>  t  </c></a>"))
+dəyişən e = xml.element("qeyd", {"id": 1, "ok": doğru}, ["Salam <&>", xml.element("alt")])
+yaz(e.xml(), e.xml(doğru), e.html())
+e.əlavəEt(xml.element("x")).atributQoy("y", "z\"")
+yaz(xml.yaz(e), xml.yaz(e, yanlış))
+yaz(xml.yaz({"@versiya": 2, "ad": "Alqor", "x": [1, 2], "#mətn": "t", "boş": boş}))
+yaz(xml.lüğətdən({"a": {"b": 1}}, "kök").xml())
+yaz(xml.oxu("<a>&lt;&#65;&#x42;&amp;&quot;&apos;&gt;<![CDATA[<x>]]> y</a>").mətn())
+yaz(xml.oxu("<a b=\"x\ny\tz\"/>").atribut("b"))
+hər s üçün ["<a>", "<a></b>", "<a>x</a>y", "<a>&foo;</a>", "<a b=1/>", "", "<a><b></a>", "<a x=\"1\" x=\"2\"/>", "<a>\n<b>&#xZ;</b></a>", "<1a/>", "<a:b/>", "<a b=\"<\"/>", "<a/><b/>", "<a b=\"x\" c/>", "<ə></b>", "<a>ə&x;</a>", "<a>]]></a>", "<a", "<a b=\"1\"", "<a></a", "<a><!-- x</a>", "<!DOCTYPE a [<!ENTITY x \"y\">]><a/>", "salam"] içində
+    cəhd et
+        xml.oxu(s)
+    tut x
+        yaz(x.tip, x.mesaj, x.kod)
+    son
+son
+hər f üçün [() => xml.oxu(5), () => xml.element("1a"), () => kök.tap(""), () => kök.tap("!!")] içində
+    cəhd et
+        f()
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son

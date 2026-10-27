@@ -724,6 +724,8 @@ pub struct Obyekt {
     pub tip: &'static str,
     pub üzvlər: IndexMap<&'static str, D, Fx>,
     pub mətn: Option<Box<dyn Fn() -> String>>,
+    /// Kitabxana obyektinin daxili vəziyyəti (`elave::veri`)
+    pub veri: Option<Rc<dyn std::any::Any>>,
 }
 
 // ── Element (JSX) ──────────────────────────────────────────────────────

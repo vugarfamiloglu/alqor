@@ -362,6 +362,9 @@ pub fn modul_yüklə(i: &İcraçı, a: &str, yer: Option<Yer>) -> Nəticə<Rc<Mo
             }
         }
     }
+    if let Some(m) = super::elave::modul(i, a) {
+        return yer_qoy(m, yer);
+    }
     if a.ends_with(".alq") || a.ends_with(".alqor") || a.starts_with('.') || a.starts_with('/') {
         return fayldan_modul(i, a, yer);
     }

@@ -235,6 +235,9 @@ def paylama_qovluğu(alqorc_kökü: Path, q: Path, platforma: str, arx: str,
     f.write_text(_STUDIO_ƏMR.format(versiya=v), encoding="utf-8")
     f.chmod(0o755)
     (b / "studio.py").write_text(_STUDIO, encoding="utf-8")
+    # Rust icraçısı (`alqor işlət --motor avto|rs`)
+    from .motor import paylamaya_əlavə_et
+    paylamaya_əlavə_et(b, platforma, arx)
 
     for ad in ("numuneler", "beledci"):
         if (repo / ad).is_dir():
