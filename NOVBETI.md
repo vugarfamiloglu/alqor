@@ -147,8 +147,17 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
 17. `alqor-rs/`: lekser ✅ və parser ✅ — Python etalonu ilə eyni tokenlər
     və eyni AAC (`python -m alqor.rs.muqayise tokenlər|aac [--korpus]`);
     icraçı ✅ (müqayisə korpuslarında Python ilə eyni çıxış, ~23–39x sürətli),
-    WASM qurulması ✅ (`alqor-rs/wasm/`). Qalır: veb, pəncərə, vidjet və
-    əlavə standart modullar.
+    WASM qurulması ✅ (`alqor-rs/wasm/`).
+18. Rust standart kitabxanası ✅: `kodlaşdırma`, `şifrə`, `sıxma`, `csv`,
+    `toml`, `xml`, `http`, `şəbəkə`, `veb` (şablonlar, sessiya, sınaq
+    müştərisi), `verilənlər` (SQLite) — Python ilə diferensial sınaqlı
+    (`sinaq/test_rs_modullar.py`, yerli HTTP server, müvəqqəti SQLite).
+19. Motor seçimi ✅: `alqor işlət --motor py|rs|avto` (`ALQOR_MOTOR`);
+    quraşdırıcılar `bin/alqor-rs`-i daxil edir, CI `--motor rs` ilə sınayır.
+    Qalır: `pul` (operator yükləməsi icraçı nüvəsinə qarmaq tələb edir),
+    `validasiya`, `lokalizasiya`, `keş`, `növbə`, `konfiq`, ORM
+    `verilənlər.Model`, PostgreSQL/MySQL, `veb` komponent/WebSocket,
+    `vidjet` HTML, `pəncərə`; sonra `avto`-nu standart motor etmək.
 
 ### Ekosistem (Vüqar Familoğlu özü hazırlayır — ayrıca sessiyada) 🟡
 - Sayt: [vuqar.pro/alqor](https://vuqar.pro/alqor) — xəta mesajlarındakı

@@ -34,6 +34,7 @@ MOTORLAR = ("py", "rs", "avto")
 RS_ƏSKİK_ÜZVLƏR: dict[str, frozenset[str]] = {
     "veb": frozenset({"komponent", "soket"}),
     "http": frozenset({"vebSoket"}),
+    "verilənlər": frozenset({"Model"}),
 }
 
 _ALQORC = Path(__file__).resolve().parents[1]          # alqorc/
@@ -215,6 +216,8 @@ def rs_uyğunluğu(ağac, yol: Path | None, b: Path) -> str | None:
                 səbəb.extend(_idxal(d, baza))
                 if d.yol:
                     işlənən.add(d.yol[0])
+                    üzvlər.update(d.yol[1:])
+                    üzvlər.update(e.ad for e in d.elementlər)
             elif isinstance(d, A.Ad):
                 if d.ad in yalnız_py:
                     səbəb.append(f"`{d.ad}` Rust icraçısında yoxdur")
@@ -225,6 +228,7 @@ def rs_uyğunluğu(ağac, yol: Path | None, b: Path) -> str | None:
                 if d.yol[0] in yalnız_py:
                     səbəb.append(f"`{d.yol[0]}` Rust icraçısında yoxdur")
                 işlənən.add(d.yol[0])
+                üzvlər.update(d.yol[1:])
 
         def _idxal(d, baza):
             if getattr(d, "python", False):

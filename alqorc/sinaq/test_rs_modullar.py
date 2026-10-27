@@ -217,7 +217,8 @@ class MotorSeçimi(unittest.TestCase):
         for kod in ('gətir yaml\n', 'gətir python:math\n',
                     'pəncərə.başlıq("x")\n', 'vidjet.düymə(mətn: "a")\n',
                     'dəyişən s = yeni veb.Server()\ns.komponent("/", 1)\n',
-                    'gətir naməlumPaket\n', 'gətir "./yoxdur.alq"\n'):
+                    'gətir naməlumPaket\n', 'gətir "./yoxdur.alq"\n',
+                    'gətir verilənlər\nsinif A miras verilənlər.Model\nson\n'):
             self.assertEqual(self.seçim(kod), "py", kod)
 
     def test_yerli_modul_rekursiv(self):

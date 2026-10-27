@@ -232,7 +232,7 @@ cd mənim-saytım
 | **1. Windows quraşdırıcısı** | `AlqorQurasdirici.exe` — Studio + `alqor` əmrləri PATH-da, daxili Python | ⏳ |
 | 2. Kompilyasiya | `alqor qur --exe` — tək faylda paylanan tətbiq | ⏳ |
 | 3. Vebə yerləşdirmə | `alqor yerləşdir` — statik hostinq və Docker | ⏳ |
-| 4. Rust kompilyatoru | Native binar və WebAssembly | 🟡 başlanıb |
+| 4. Rust icraçısı | `alqor-rs` — 20–40x sürət, veb/http/verilənlər daxil; `alqor işlət --motor avto` | 🟡 əsas hissə hazırdır |
 | Sonra | Ekosistem — sayt [vuqar.pro/alqor](https://vuqar.pro/alqor), paket deposu [vuqar.pro/hub](https://vuqar.pro/hub) | ⬜ |
 
 Ətraflı: [NOVBETI.md](NOVBETI.md)
@@ -269,7 +269,7 @@ hamısı sıfırdan yazılıb.
  (UTF-8, NFC,                    (az-AZ     (Pratt +     │
   homoqliflər)                   əlifba)    naxışlar)    ├─► icraçı (Python) ─► konsol / veb / desktop
                                                          ├─► JS kompilyatoru ─► Node.js / brauzer
-                                                         └─► Rust kompilyatoru (hazırlanır) ─► native / WASM
+                                                         └─► Rust icraçısı (alqor-rs) ─► native / WASM
 ```
 
 | Qat | Necə qurulub |
@@ -292,7 +292,7 @@ hamısı sıfırdan yazılıb.
 |---|---|
 | Etalon implementasiya (Python) | [`alqorc/`](alqorc/) |
 | JavaScript hədəfi | [`alqorc/alqor/js/`](alqorc/alqor/js/) |
-| Rust kompilyatoru | [`alqor-rs/`](alqor-rs/) |
+| Rust icraçısı (`alqor işlət --motor rs\|avto`) | [`alqor-rs/`](alqor-rs/) |
 | Alqor Studio | [`alqorc/studio/`](alqorc/studio/) |
 | VS Code genişlənməsi | [`redaktor/vscode/`](redaktor/vscode/) |
 | Nümunə proqramlar | [`numuneler/`](numuneler/) |

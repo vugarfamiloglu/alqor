@@ -153,6 +153,7 @@ alqor işlət --izlə               # dəyişiklikdə yenidən işlət
 alqor işlət --profil             # performans profili
 alqor işlət --iddia-saxla
 alqor işlət -- arq1 arq2         # proqrama arqument ötür
+alqor işlət --motor py|rs|avto   # icra motoru (§ 13.17)
 ```
 
 ---
@@ -709,9 +710,13 @@ jobs:
 | `PORT`, `ALQOR_PORT` | `veb.Server.dinlə` kodda yazılan port əvəzinə bunu işlədir (bulud platformaları) |
 | `ALQOR_HOST` | `veb.Server.dinlə` hostu — konteynerdə `0.0.0.0` |
 | `ALQOR_KES` | `.pyz` paketlərinin açıldığı keş qovluğu |
+| `ALQOR_MOTOR` | `alqor işlət`-in standart motoru: `py` / `rs` / `avto` (§ 13.17) |
+| `ALQOR_RS` | `alqor-rs` binarının yolu (standart: `<quraşdırma>/bin/`, repo-da `alqor-rs/target/`) |
+| `ALQOR_MOTOR_IZ` | `1` — `avto` Python-u seçəndə səbəbi stderr-ə yazır |
+| `ALQOR_RS_BINAR` | Quraşdırıcı qurularkən daxil ediləcək `alqor-rs` binarı |
 
 Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ`, `NO_COLOR`,
-`PORT`/`ALQOR_PORT`, `ALQOR_HOST` və `ALQOR_KES` oxunur; qalanları kompilyator və paket meneceri ilə gələcək.
+`PORT`/`ALQOR_PORT`, `ALQOR_HOST`, `ALQOR_KES` və motor dəyişənləri oxunur; qalanları kompilyator və paket meneceri ilə gələcək.
 
 > **Niyə adlar ASCII-dir?**
 > `ALQOR_RƏNG` kimi ad shell-də təyin oluna bilmir — POSIX mühit dəyişəni
@@ -836,3 +841,48 @@ ilə dayanır.
 | `5` | Paket xətası |
 | `101` | Panika |
 | `130` | İstifadəçi tərəfindən dayandırıldı (Ctrl+C) |
+
+---
+
+## 13.17 Rust icraçısı (`alqor-rs`) və motor seçimi
+
+`alqor-rs` dilin Rust implementasiyasıdır: lekser, parser və icraçı
+Python etalonu ilə **eyni tokenləri, eyni AAC-ni, eyni çıxışı və eyni
+xəta mesajlarını** verir (diferensial sınaqlar: `sinaq/test_rs.py`,
+`sinaq/test_rs_modullar.py`), amma 20–40 dəfə sürətlidir. Quraşdırıcılar
+binarı `bin/alqor-rs[.exe]` kimi daxil edir.
+
+```bash
+alqor işlət proqram.alq                  # standart: py (və ya ALQOR_MOTOR)
+alqor işlət --motor rs proqram.alq       # həmişə alqor-rs
+alqor işlət --motor avto proqram.alq     # mümkünsə alqor-rs, yoxsa Python
+alqor-rs işlət proqram.alq [-- arq…]     # birbaşa
+alqor-rs modullar                        # dəstəklənən modullar
+```
+
+**`avto`** proqramı icra etmədən yoxlayır: bütün `gətir` cümlələri
+(yerli `.alq` modulları rekursiv) `alqor-rs modullar` siyahısındadırsa,
+proqram yalnız Python-da olan qlobal adları (`pəncərə`, `vidjet`) və
+Rust-da hələ olmayan üzvləri (`veb.Server.komponent`/`soket`,
+`http.vebSoket`, `verilənlər.Model`) işlətmirsə və `gətir python:…`
+yoxdursa — `alqor-rs` seçilir; əks halda (və ya binar tapılmasa) Python
+icraçısı işləyir. `ALQOR_MOTOR_IZ=1` seçimin səbəbini göstərir.
+Standart motor hələ `py`-dır: `avto` bütün sınaqlardan keçir, amma
+əvvəlcə real layihələrdə sınanacaq (`ALQOR_MOTOR=avto` ilə yandırın).
+
+### Modul dəstəyi
+
+| Modul | Rust | Qeyd |
+|---|---|---|
+| `riyaziyyat`, `mətn`, `təsadüfi`, `vaxt`, `fayl`, `qovluq`, `yol`, `json`, `naxış`, `sistem`, `konsol`, `jurnal`, `test`, `paralel`, `sap` | ✅ | Python ilə eyni nəticə |
+| `kodlaşdırma`, `şifrə`, `csv`, `toml`, `xml` | ✅ | eyni nəticə və xəta mesajları (`toml` — `tomllib`, `xml` — expat davranışı) |
+| `sıxma` | ✅ | açılan məlumat eynidir; sıxılmış baytlar zlib-dən fərqli ola bilər |
+| `http` | ✅ | rustls (TLS); `vebSoket` — yalnız Python |
+| `şəbəkə` | ✅ | `TCPServer.başlat()`: idarəedici proqram şəbəkədə gözləyəndə işləyir (tək saplı icraçı) |
+| `veb` | ✅ | marşrutlar, qruplar, ara proqramlar, statik, şablonlar (`.alqorhtml`), sessiya, `veb.sınaq`; server sorğuları ardıcıl idarə edir; `komponent`/`soket` — yalnız Python |
+| `verilənlər` | ✅ | SQLite (paketlə qurulur); PostgreSQL/MySQL və ORM `Model` — yalnız Python |
+| `pul`, `validasiya`, `lokalizasiya`, `keş`, `növbə`, `konfiq`, `yaml`, `html`, `planlayıcı`, `poçt`, `şəkil`, `qrafik`, `pdf`, `ffi` | ⬜ | yalnız Python (`avto` Python-u seçir) |
+| `pəncərə`, `vidjet`, `gətir python:…` | ⬜ | yalnız Python |
+
+WebAssembly paketində (`alqor-rs/wasm/`) şəbəkə, veb və verilənlər
+modulları yoxdur (`… bu platformada yoxdur` xətası); qalanları işləyir.
