@@ -77,6 +77,8 @@ struct Kompilyator<'r> {
     sabit_var: bool,
     çağırış_keş_sayı: u32,
     üzv_keş_sayı: u32,
+    /// İrəli keçidlərin hədəfləri (birləşdirmə bu nöqtələrdən keçə bilməz)
+    keçid_hədəfləri: HashSet<u32>,
     param_yuvaları: Option<Vec<u32>>,
     gövdə_pc: u32,
 }
@@ -234,6 +236,7 @@ impl<'r> Kompilyator<'r> {
             sabit_var: false,
             çağırış_keş_sayı: 0,
             üzv_keş_sayı: 0,
+            keçid_hədəfləri: HashSet::new(),
             param_yuvaları: None,
             gövdə_pc: 0,
         }
@@ -256,6 +259,7 @@ impl<'r> Kompilyator<'r> {
     }
 
     fn yamaq(&mut self, i: usize, h: u32) {
+        self.keçid_hədəfləri.insert(h);
         match &mut self.əmrlər[i] {
             Əmr::Atla(x)
             | Əmr::YanlışsaAtla(x)
@@ -271,9 +275,13 @@ impl<'r> Kompilyator<'r> {
             | Əmr::Sayğac(_, _, x)
             | Əmr::TutmaYoxla(_, _, x)
             | Əmr::Qaç(x, _, _)
-            | Əmr::MüqAtla(_, x)
-            | Əmr::ŞərtYT(_, _, _, x)
-            | Əmr::ŞərtYY(_, _, _, x) => *x = h,
+            | Əmr::MüqAtla(_, x, _)
+            | Əmr::ŞərtT(_, _, x, _)
+            | Əmr::DoğrusaAtla(x)
+            | Əmr::İterGeri(x)
+            | Əmr::SayğacGeri(_, _, x)
+            | Əmr::ŞərtYT(_, _, _, x, _)
+            | Əmr::ŞərtYY(_, _, _, x, _) => *x = h,
             _ => unreachable!("yamaq: keçid əmri deyil"),
         }
     }
@@ -380,6 +388,20 @@ impl<'r> Kompilyator<'r> {
     fn ad_yaz(&mut self, a: &str, yer: Yer) {
         match self.həll(a) {
             Some(y) => {
+                // Hesab nəticəsini birbaşa yuvaya yaz (araya keçid düşmürsə)
+                if !self.keçid_hədəfləri.contains(&self.pc()) {
+                    let birləşmiş = match self.əmrlər.last() {
+                        Some(Əmr::İkili(o)) => Some(Əmr::İkiliQ(*o, y)),
+                        Some(Əmr::İkiliT(o, n)) => Some(Əmr::İkiliTQ(*o, *n, y)),
+                        Some(Əmr::İkiliYT(o, x, n)) => Some(Əmr::İkiliYTQ(*o, *x, *n, y)),
+                        Some(Əmr::İkiliYY(o, x, z)) => Some(Əmr::İkiliYYQ(*o, *x, *z, y)),
+                        _ => None,
+                    };
+                    if let Some(ə) = birləşmiş {
+                        *self.əmrlər.last_mut().unwrap() = ə;
+                        return;
+                    }
+                }
                 self.əmr(Əmr::YuvaQoy(y), yer);
             }
             None => {
@@ -422,8 +444,36 @@ impl<'r> Kompilyator<'r> {
                 y
             }
         };
-        if !sabit && matches!(self.əmrlər.last(), Some(Əmr::Kopya)) {
-            *self.əmrlər.last_mut().unwrap() = Əmr::YuvaElanK(y);
+        let birləşə_bilər = !self.keçid_hədəfləri.contains(&self.pc());
+        let q = y | ELAN_BİTİ;
+        // [hesab, Kopya] + elan → bir əmr (Q-əmrləri özləri kopyalayır)
+        let n = self.əmrlər.len();
+        if !sabit && birləşə_bilər && n >= 2 && matches!(self.əmrlər[n - 1], Əmr::Kopya) && !self.keçid_hədəfləri.contains(&(n as u32 - 1)) {
+            let birləşmiş = match &self.əmrlər[n - 2] {
+                Əmr::İkili(o) => Some(Əmr::İkiliQ(*o, q)),
+                Əmr::İkiliT(o, k) => Some(Əmr::İkiliTQ(*o, *k, q)),
+                Əmr::İkiliYT(o, x, k) => Some(Əmr::İkiliYTQ(*o, *x, *k, q)),
+                Əmr::İkiliYY(o, x, z) => Some(Əmr::İkiliYYQ(*o, *x, *z, q)),
+                _ => None,
+            };
+            if let Some(ə) = birləşmiş {
+                self.əmrlər.pop();
+                self.yerlər.pop();
+                self.əmrlər[n - 2] = ə;
+                return Ok(Some(y));
+            }
+        }
+        let birləşmiş = match self.əmrlər.last() {
+            _ if sabit || !birləşə_bilər => None,
+            Some(Əmr::Kopya) => Some(Əmr::YuvaElanK(y)),
+            Some(Əmr::İkili(o)) => Some(Əmr::İkiliQ(*o, q)),
+            Some(Əmr::İkiliT(o, n)) => Some(Əmr::İkiliTQ(*o, *n, q)),
+            Some(Əmr::İkiliYT(o, x, n)) => Some(Əmr::İkiliYTQ(*o, *x, *n, q)),
+            Some(Əmr::İkiliYY(o, x, z)) => Some(Əmr::İkiliYYQ(*o, *x, *z, q)),
+            _ => None,
+        };
+        if let Some(ə) = birləşmiş {
+            *self.əmrlər.last_mut().unwrap() = ə;
         } else {
             self.əmr(if sabit { Əmr::YuvaElanSabit(y) } else { Əmr::YuvaElan(y) }, yer);
         }
@@ -620,16 +670,17 @@ impl<'r> Kompilyator<'r> {
                 }
             }
             Cümlə::NəQədərKi { şərt, gövdə, etiket, .. } => {
-                let baş = self.pc();
-                let j = self.şərt_atla(şərt)?;
+                // Fırladılmış dövr: şərt sonda (hər iterasiyada bir keçid az)
+                let giriş = self.e(Əmr::Atla(0));
                 self.dövr_başla(etiket);
                 let b = self.pc();
                 self.blok(gövdə)?;
                 let s = self.pc();
-                self.e(Əmr::Atla(baş));
+                self.yamaq(giriş, s);
+                let j = self.şərt_keçid(şərt, true)?;
+                self.yamaq(j, b);
                 let son = self.pc();
-                self.yamaq(j, son);
-                self.dövr_bitir((b, s), son, baş);
+                self.dövr_bitir((b, s), son, s);
             }
             Cümlə::Həmişə { gövdə, etiket, .. } => {
                 let baş = self.pc();
@@ -648,8 +699,7 @@ impl<'r> Kompilyator<'r> {
                 self.e(Əmr::YuvaElan(hədd));
                 self.e(Əmr::Tam(0));
                 self.e(Əmr::YuvaElan(i));
-                let baş = self.pc();
-                let j = self.e(Əmr::Sayğac(i, hədd, 0));
+                let giriş = self.e(Əmr::Atla(0));
                 self.dövr_başla(etiket);
                 let b = self.pc();
                 match sayğac {
@@ -667,20 +717,20 @@ impl<'r> Kompilyator<'r> {
                     None => self.blok(gövdə)?,
                 }
                 let s = self.pc();
-                self.e(Əmr::Atla(baş));
+                self.yamaq(giriş, s);
+                let j = self.e(Əmr::SayğacGeri(i, hədd, 0));
+                self.yamaq(j, b);
                 let son = self.pc();
-                self.yamaq(j, son);
-                self.dövr_bitir((b, s), son, baş);
+                self.dövr_bitir((b, s), son, s);
             }
             Cümlə::TəkrarlaNəQədər { gövdə, şərt, etiket, .. } => {
                 let baş = self.pc();
                 self.dövr_başla(etiket);
                 self.blok(gövdə)?;
                 let s = self.pc();
-                let j = self.şərt_atla(şərt)?;
-                self.e(Əmr::Atla(baş));
+                let j = self.şərt_keçid(şərt, true)?;
+                self.yamaq(j, baş);
                 let son = self.pc();
-                self.yamaq(j, son);
                 self.dövr_bitir((baş, s), son, s);
             }
             Cümlə::Hər { yer, bağlamalar, mənbə, gövdə, addım, şərt, yoxsa, asinxron, etiket } => {
@@ -864,8 +914,9 @@ impl<'r> Kompilyator<'r> {
         }
         self.əmr(Əmr::İterAç, yer);
         self.iter += 1;
-        let baş = self.pc();
-        let növbəti = self.əmr(Əmr::İterNövbəti(0), yer);
+        // Fırladılmış dövr: növbəti element sonda alınır (`İterGeri`)
+        let giriş = self.e(Əmr::Atla(0));
+        let gövdə_başı = self.pc();
         if asinxron {
             self.əmr(Əmr::Gözlə, yer);
         }
@@ -915,9 +966,11 @@ impl<'r> Kompilyator<'r> {
             self.yamaq(j, s);
         }
         self.əhatə_bağla();
-        self.e(Əmr::Atla(baş));
+        let baş = self.pc();
+        self.yamaq(giriş, baş);
+        let geri = self.əmr(Əmr::İterGeri(0), yer);
+        self.yamaq(geri, gövdə_başı);
         let son = self.pc();
-        self.yamaq(növbəti, son);
         self.e(Əmr::İterBağla);
         let mut atla = None;
         if let Some(y) = yoxsa {
@@ -1127,6 +1180,10 @@ impl<'r> Kompilyator<'r> {
             }
         }
         self.ifadə(sol)?;
+        if let (Some(o), Some(n)) = (Op::yeni(op), kiçik_tam(sağ)) {
+            self.əmr(Əmr::İkiliT(o, n), yer);
+            return Ok(());
+        }
         self.ifadə(sağ)?;
         self.ikili_əmr(op, yer);
         Ok(())
@@ -1142,23 +1199,31 @@ impl<'r> Kompilyator<'r> {
 
     /// Şərti hesablayıb yanlışdırsa keçir; keçid əmrinin indeksi
     fn şərt_atla(&mut self, ş: &aac::E) -> K<usize> {
+        self.şərt_keçid(ş, false)
+    }
+
+    /// Şərti hesablayıb `doğrusa`-ya bərabərdirsə keçir; keçid əmrinin indeksi
+    fn şərt_keçid(&mut self, ş: &aac::E, doğrusa: bool) -> K<usize> {
         if let İfadə::İkili(yer, sol, op, sağ) = &**ş {
             if let Some(o) = Op::yeni(op).filter(|o| o.müqayisədir()) {
                 if let Some(y) = self.yuva_ifadəsi(sol) {
                     if let Some(n) = kiçik_tam(sağ) {
-                        return Ok(self.əmr(Əmr::ŞərtYT(o, y, n, 0), *yer));
+                        return Ok(self.əmr(Əmr::ŞərtYT(o, y, n, 0, doğrusa), *yer));
                     }
                     if let Some(y2) = self.yuva_ifadəsi(sağ) {
-                        return Ok(self.əmr(Əmr::ŞərtYY(o, y, y2, 0), *yer));
+                        return Ok(self.əmr(Əmr::ŞərtYY(o, y, y2, 0, doğrusa), *yer));
                     }
                 }
                 self.ifadə(sol)?;
+                if let Some(n) = kiçik_tam(sağ) {
+                    return Ok(self.əmr(Əmr::ŞərtT(o, n, 0, doğrusa), *yer));
+                }
                 self.ifadə(sağ)?;
-                return Ok(self.əmr(Əmr::MüqAtla(o, 0), *yer));
+                return Ok(self.əmr(Əmr::MüqAtla(o, 0, doğrusa), *yer));
             }
         }
         self.ifadə(ş)?;
-        Ok(self.əmr(Əmr::ŞərtAtla(0), ş.yer()))
+        Ok(self.əmr(if doğrusa { Əmr::DoğrusaAtla(0) } else { Əmr::ŞərtAtla(0) }, ş.yer()))
     }
 
     fn ifadə(&mut self, e: &aac::E) -> K {

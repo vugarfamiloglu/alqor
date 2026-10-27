@@ -543,6 +543,23 @@ fn ikili_ümumi(i: &İcraçı, kod: &Kod, op: Op, a: &D, b: &D, pc: usize) -> N�
     i.ikili_hesabla(op.mətn(), a, b, Some(kod.yerlər[pc]))
 }
 
+/// `YuvaQoy` semantikası (kopya + sabit/təyin olunmamış yoxlaması)
+#[inline(always)]
+fn yuvaya(kod: &Kod, ç: &mut Çərçivə, y: u32, d: D) -> Nəticə<()> {
+    let d = dəyər_kopyası(d);
+    if y & ELAN_BİTİ != 0 {
+        ç.yuvalar[(y & !ELAN_BİTİ) as usize] = Some(d);
+        return Ok(());
+    }
+    let yi = y as usize;
+    if ç.yuvalar[yi].is_some() && (!kod.sabit_var || !ç.sabitdir(yi)) {
+        ç.yuvalar[yi] = Some(d);
+        Ok(())
+    } else {
+        yuva_yaz(kod, ç, y, d)
+    }
+}
+
 /// Yuvanın dəyəri (təyin olunmayıbsa xarici ad)
 #[inline]
 fn yuva_oxu(kod: &Kod, ç: &Çərçivə, y: u32) -> Nəticə {
@@ -804,14 +821,14 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         let d = dəyər_kopyası(ç.pop());
                         ç.yuvalar[*y as usize] = Some(d);
                     }
-                    Əmr::MüqAtla(op, h) => {
+                    Əmr::MüqAtla(op, h, doğrusa) => {
                         let n = ç.yığın.len();
                         if let (D::T(x), D::T(y)) = (&ç.yığın[n - 2], &ç.yığın[n - 1]) {
                             let b = müq(*op, *x, *y);
                             unsafe {
                                 ç.yığın.set_len(n - 2);
                             }
-                            if !b {
+                            if b == *doğrusa {
                                 pc = *h as usize;
                             }
                             continue;
@@ -819,10 +836,105 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         let b = ç.pop();
                         let a = ç.pop();
                         match t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x) {
-                            D::M(true) => {}
-                            D::M(false) => pc = *h as usize,
+                            D::M(b) => {
+                                if b == *doğrusa {
+                                    pc = *h as usize;
+                                }
+                            }
                             d => break 'x məntiq_xətası(&d, kod.yerlər[pc - 1]),
                         }
+                    }
+                    Əmr::ŞərtT(op, n, h, doğrusa) => {
+                        if let Some(D::T(x)) = ç.yığın.last() {
+                            let b = müq(*op, *x, *n as i64);
+                            ç.yığın.pop();
+                            if b == *doğrusa {
+                                pc = *h as usize;
+                            }
+                            continue;
+                        }
+                        let a = ç.pop();
+                        match t!(ikili_ümumi(i, kod, *op, &a, &D::T(*n as i64), pc - 1), 'x) {
+                            D::M(b) => {
+                                if b == *doğrusa {
+                                    pc = *h as usize;
+                                }
+                            }
+                            d => break 'x məntiq_xətası(&d, kod.yerlər[pc - 1]),
+                        }
+                    }
+                    Əmr::DoğrusaAtla(h) => match ç.pop() {
+                        D::M(true) => pc = *h as usize,
+                        D::M(false) => {}
+                        d => break 'x məntiq_xətası(&d, kod.yerlər[pc - 1]),
+                    },
+                    Əmr::İkiliT(op, n) => {
+                        if let Some(D::T(x)) = ç.yığın.last() {
+                            if let Some(r) = tam_op(*op, *x, *n as i64) {
+                                *ç.yığın.last_mut().unwrap() = r;
+                                continue;
+                            }
+                        }
+                        let a = ç.pop();
+                        let r = t!(ikili_ümumi(i, kod, *op, &a, &D::T(*n as i64), pc - 1), 'x);
+                        ç.yığın.push(r);
+                    }
+                    Əmr::İkiliQ(op, h) => {
+                        let n = ç.yığın.len();
+                        if let (D::T(x), D::T(y)) = (&ç.yığın[n - 2], &ç.yığın[n - 1]) {
+                            if let Some(r) = tam_op(*op, *x, *y) {
+                                unsafe {
+                                    ç.yığın.set_len(n - 2);
+                                }
+                                t!(yuvaya(kod, ç, *h, r), 'x);
+                                continue;
+                            }
+                        }
+                        let b = ç.pop();
+                        let a = ç.pop();
+                        let r = t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x);
+                        t!(yuvaya(kod, ç, *h, r), 'x);
+                    }
+                    Əmr::İkiliTQ(op, n, h) => {
+                        if let Some(D::T(x)) = ç.yığın.last() {
+                            if let Some(r) = tam_op(*op, *x, *n as i64) {
+                                ç.yığın.pop();
+                                t!(yuvaya(kod, ç, *h, r), 'x);
+                                continue;
+                            }
+                        }
+                        let a = ç.pop();
+                        let r = t!(ikili_ümumi(i, kod, *op, &a, &D::T(*n as i64), pc - 1), 'x);
+                        t!(yuvaya(kod, ç, *h, r), 'x);
+                    }
+                    Əmr::İkiliYTQ(op, y, n, h) => {
+                        let r = match &ç.yuvalar[*y as usize] {
+                            Some(D::T(x)) => tam_op(*op, *x, *n as i64),
+                            _ => None,
+                        };
+                        let r = match r {
+                            Some(r) => r,
+                            None => {
+                                let a = t!(yuva_oxu(kod, ç, *y), 'x);
+                                t!(ikili_ümumi(i, kod, *op, &a, &D::T(*n as i64), pc - 1), 'x)
+                            }
+                        };
+                        t!(yuvaya(kod, ç, *h, r), 'x);
+                    }
+                    Əmr::İkiliYYQ(op, y, y2, h) => {
+                        let r = match (&ç.yuvalar[*y as usize], &ç.yuvalar[*y2 as usize]) {
+                            (Some(D::T(x)), Some(D::T(z))) => tam_op(*op, *x, *z),
+                            _ => None,
+                        };
+                        let r = match r {
+                            Some(r) => r,
+                            None => {
+                                let a = t!(yuva_oxu(kod, ç, *y), 'x);
+                                let b = t!(yuva_oxu(kod, ç, *y2), 'x);
+                                t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x)
+                            }
+                        };
+                        t!(yuvaya(kod, ç, *h, r), 'x);
                     }
                     Əmr::YuvaQoy(y) => {
                         let d = dəyər_kopyası(ç.pop());
@@ -893,34 +1005,38 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                         let r = t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x);
                         ç.yığın.push(r);
                     }
-                    Əmr::ŞərtYT(op, y, n, h) => {
+                    Əmr::ŞərtYT(op, y, n, h, doğrusa) => {
                         if let Some(D::T(x)) = &ç.yuvalar[*y as usize] {
-                            if !müq(*op, *x, *n as i64) {
+                            if müq(*op, *x, *n as i64) == *doğrusa {
                                 pc = *h as usize;
                             }
                             continue;
                         }
                         let a = t!(yuva_oxu(kod, ç, *y), 'x);
-                        let r = t!(ikili_ümumi(i, kod, *op, &a, &D::T(*n as i64), pc - 1), 'x);
-                        match r {
-                            D::M(true) => {}
-                            D::M(false) => pc = *h as usize,
+                        match t!(ikili_ümumi(i, kod, *op, &a, &D::T(*n as i64), pc - 1), 'x) {
+                            D::M(b) => {
+                                if b == *doğrusa {
+                                    pc = *h as usize;
+                                }
+                            }
                             d => break 'x məntiq_xətası(&d, kod.yerlər[pc - 1]),
                         }
                     }
-                    Əmr::ŞərtYY(op, y, y2, h) => {
+                    Əmr::ŞərtYY(op, y, y2, h, doğrusa) => {
                         if let (Some(D::T(x)), Some(D::T(z))) = (&ç.yuvalar[*y as usize], &ç.yuvalar[*y2 as usize]) {
-                            if !müq(*op, *x, *z) {
+                            if müq(*op, *x, *z) == *doğrusa {
                                 pc = *h as usize;
                             }
                             continue;
                         }
                         let a = t!(yuva_oxu(kod, ç, *y), 'x);
                         let b = t!(yuva_oxu(kod, ç, *y2), 'x);
-                        let r = t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x);
-                        match r {
-                            D::M(true) => {}
-                            D::M(false) => pc = *h as usize,
+                        match t!(ikili_ümumi(i, kod, *op, &a, &b, pc - 1), 'x) {
+                            D::M(b) => {
+                                if b == *doğrusa {
+                                    pc = *h as usize;
+                                }
+                            }
                             d => break 'x məntiq_xətası(&d, kod.yerlər[pc - 1]),
                         }
                     }
@@ -1098,6 +1214,49 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
                                 ç.yığın.push(x);
                             }
                             None => pc = *h as usize,
+                        }
+                    }
+                    Əmr::İterGeri(h) => {
+                        let yer = Some(kod.yerlər[pc - 1]);
+                        let it = ç.iterlər.last_mut().unwrap();
+                        let x = match &mut it.it {
+                            İter::Diapazon(c, son, a) => {
+                                if (*a > 0 && *c < *son) || (*a < 0 && *c > *son) {
+                                    let x = *c;
+                                    *c = c.saturating_add(*a);
+                                    if *c == x {
+                                        *son = x;
+                                    }
+                                    Some(D::T(x))
+                                } else {
+                                    None
+                                }
+                            }
+                            İter::Siyahı(l, k) => {
+                                let l = l.borrow();
+                                if *k < l.len() {
+                                    *k += 1;
+                                    Some(l[*k - 1].clone())
+                                } else {
+                                    None
+                                }
+                            }
+                            it => t!(it.növbəti(i, yer), 'x),
+                        };
+                        if let Some(x) = x {
+                            ç.iterlər.last_mut().unwrap().indeks += 1;
+                            ç.yığın.push(x);
+                            pc = *h as usize;
+                        }
+                    }
+                    Əmr::SayğacGeri(y, hədd, h) => {
+                        let (Some(D::T(c)), Some(D::T(n))) = (&ç.yuvalar[*y as usize], &ç.yuvalar[*hədd as usize]) else {
+                            unreachable!()
+                        };
+                        let (c, n) = (*c + 1, *n);
+                        ç.yuvalar[*y as usize] = Some(D::T(c));
+                        if c <= n {
+                            pc = *h as usize;
                         }
                     }
                     Əmr::Sayğac(y, hədd, h) => {

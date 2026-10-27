@@ -10,6 +10,9 @@ use crate::xeta::Yer;
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+/// Q-əmrlərinin hədəf yuvasında: elan (təyin yox)
+pub const ELAN_BİTİ: u32 = 1 << 31;
+
 /// İkili operator (sürətli yolu olanlar; digərləri `İkiliDigər`)
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Op {
@@ -103,12 +106,22 @@ pub enum Əmr {
     İkiliYT(Op, u32, i32),
     /// Birləşdirilmiş: yuva ⊕ yuva
     İkiliYY(Op, u32, u32),
-    /// Müqayisə + keçid (yanlışdırsa): yığındakı iki dəyər
-    MüqAtla(Op, u32),
+    /// Yığının başı ⊕ tam sabit
+    İkiliT(Op, i32),
+    /// Nəticəni yuvaya yazan variantlar (son sahə — hədəf yuva)
+    İkiliQ(Op, u32),
+    İkiliTQ(Op, i32, u32),
+    // (hədəf yuvada yuxarı bit `ELAN_BİTİ` — elan: həmişə yazılır)
+    İkiliYTQ(Op, u32, i32, u32),
+    İkiliYYQ(Op, u32, u32, u32),
+    /// Müqayisə + keçid: yığındakı iki dəyər (son sahə: `doğru`-da keçir?)
+    MüqAtla(Op, u32, bool),
+    /// Müqayisə + keçid: yığının başı ⊕ tam sabit
+    ŞərtT(Op, i32, u32, bool),
     /// Birləşdirilmiş müqayisə + keçid (yanlışdırsa): yuva ⊕ tam sabit
-    ŞərtYT(Op, u32, i32, u32),
+    ŞərtYT(Op, u32, i32, u32, bool),
     /// Birləşdirilmiş müqayisə + keçid: yuva ⊕ yuva
-    ŞərtYY(Op, u32, u32, u32),
+    ŞərtYY(Op, u32, u32, u32, bool),
     /// "-", "+", "~"
     Tək(u8),
     /// Yığının başı `məntiq` olmalıdır (əks halda TipXətası)
@@ -120,6 +133,8 @@ pub enum Əmr {
     YanlışsaAtla(u32),
     /// Yoxlayıb götürür: `məntiq` deyilsə xəta, yanlışdırsa keçir
     ŞərtAtla(u32),
+    /// Yoxlayıb götürür: `məntiq` deyilsə xəta, doğrudursa keçir
+    DoğrusaAtla(u32),
     /// `??`: baş boş deyilsə saxla və keç, əks halda götür
     BoşDeyilsəAtla(u32),
     /// `?.`: baş boşdursa saxla və keç, əks halda götür
@@ -205,6 +220,8 @@ pub enum Əmr {
     İterAç,
     /// (son keçid)
     İterNövbəti(u32),
+    /// Dövrün sonunda: element varsa yığına qoyub gövdəyə (geri) keçir
+    İterGeri(u32),
     İterBağla,
     İterİndeks,
     /// Lüğət üzərində dövr deyilsə keç
@@ -216,6 +233,8 @@ pub enum Əmr {
     TəkrarSay,
     /// (yuva, son keçid): yuva += 1, yuva > limit yuvası → keç
     Sayğac(u32, u32, u32),
+    /// (yuva, limit yuvası, gövdə): yuva += 1, yuva <= limit → gövdəyə keç
+    SayğacGeri(u32, u32, u32),
     // ── Dağıtma ────────────────────────────────────────────────────────
     /// (elementlərin sayı, `...qalan` mövqeyi və ya u32::MAX)
     Dağıt(u32, u32),
