@@ -23,7 +23,7 @@ use std::rc::{Rc, Weak};
 /// Rust icraçısının dəstəklədiyi əlavə modullar (bu platformada).
 pub fn adlar() -> Vec<&'static str> {
     #[allow(unused_mut)]
-    let mut v = vec!["kodlaşdırma", "şifrə", "sıxma", "csv", "toml"];
+    let mut v = vec!["kodlaşdırma", "şifrə", "sıxma", "csv", "toml", "xml"];
     #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
     v.push("http");
     #[cfg(not(target_arch = "wasm32"))]
@@ -36,7 +36,7 @@ pub fn adlar() -> Vec<&'static str> {
 /// Python-da olub bu platformada olmayan modullar — aydın xəta üçün.
 /// Yalnız Python icraçısında olan modullar.
 pub const PYTHON_YALNIZ: &[&str] = &[
-    "xml", "pul", "validasiya", "lokalizasiya", "keş", "növbə", "konfiq", "yaml", "html",
+    "pul", "validasiya", "lokalizasiya", "keş", "növbə", "konfiq", "yaml", "html",
     "planlayıcı", "poçt", "şəkil", "qrafik", "pdf", "ffi", "pəncərə", "vidjet", "verilənlər", "http", "şəbəkə",
 ];
 
@@ -50,6 +50,7 @@ fn qur(i: &İcraçı, ad_: &str) -> Option<Nəticə<Rc<Modul>>> {
         "sıxma" => super::mod_sixma::qur(),
         "csv" => super::mod_csv::qur(),
         "toml" => super::mod_toml::qur(),
+        "xml" => super::mod_xml::qur(),
         #[cfg(all(feature = "http", not(target_arch = "wasm32")))]
         "http" => super::mod_http::qur(),
         #[cfg(not(target_arch = "wasm32"))]

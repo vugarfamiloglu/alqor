@@ -484,3 +484,36 @@ b2.icra("CREATE TABLE IF NOT EXISTS t (x)")
 yaz(b2.cədvəllər())
 b2.bağla()
 qovluq.silDərin(yol.qovluq(fy))
+=====
+gətir xml
+dəyişən kök = xml.oxu("<?xml version=\"1.0\"?>\n<kitablar xmlns:q=\"u\"><!-- ş --><kitab il=\"1937\" q:dil=\"az\">Ölülər</kitab><kitab il=\"1907\" class=\"a b\">Dəli <b>Kür</b> son</kitab><boş/></kitablar>")
+yaz(kök, tip(kök), kök.ad(), kök.atributlar(), kök.mətn())
+hər k üçün kök.tapHamısı("kitab") içində
+    yaz(k.mətn(), k.atribut("il"), k.atribut("yox", "s"), k.atributlar(), k.valideyn().ad())
+son
+yaz(kök.tap("kitab.a > b"), kök.tap("[il=1937]").mətn(), kök.tap("[il^=19]").atribut("il"), kök.tap("yox"), kök.tapHamısı("*").uzunluq(), kök.tapHamısı("b, boş"))
+yaz(kök.uşaqlar(), kök.xml())
+yaz(kök.lüğət())
+yaz(xml.lüğətə("<a x=\"1\"><b>2</b><b>3</b><c>  t  </c></a>"))
+dəyişən e = xml.element("qeyd", {"id": 1, "ok": doğru}, ["Salam <&>", xml.element("alt")])
+yaz(e.xml(), e.xml(doğru), e.html())
+e.əlavəEt(xml.element("x")).atributQoy("y", "z\"")
+yaz(xml.yaz(e), xml.yaz(e, yanlış))
+yaz(xml.yaz({"@versiya": 2, "ad": "Alqor", "x": [1, 2], "#mətn": "t", "boş": boş}))
+yaz(xml.lüğətdən({"a": {"b": 1}}, "kök").xml())
+yaz(xml.oxu("<a>&lt;&#65;&#x42;&amp;&quot;&apos;&gt;<![CDATA[<x>]]> y</a>").mətn())
+yaz(xml.oxu("<a b=\"x\ny\tz\"/>").atribut("b"))
+hər s üçün ["<a>", "<a></b>", "<a>x</a>y", "<a>&foo;</a>", "<a b=1/>", "", "<a><b></a>", "<a x=\"1\" x=\"2\"/>", "<a>\n<b>&#xZ;</b></a>", "<1a/>", "<a:b/>", "<a b=\"<\"/>", "<a/><b/>", "<a b=\"x\" c/>", "<ə></b>", "<a>ə&x;</a>", "<a>]]></a>", "<a", "<a b=\"1\"", "<a></a", "<a><!-- x</a>", "<!DOCTYPE a [<!ENTITY x \"y\">]><a/>", "salam"] içində
+    cəhd et
+        xml.oxu(s)
+    tut x
+        yaz(x.tip, x.mesaj, x.kod)
+    son
+son
+hər f üçün [() => xml.oxu(5), () => xml.element("1a"), () => kök.tap(""), () => kök.tap("!!")] içində
+    cəhd et
+        f()
+    tut x
+        yaz(x.tip, x.mesaj)
+    son
+son

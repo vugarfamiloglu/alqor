@@ -24,6 +24,7 @@ pub mod mod_toml;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod mod_veb;
 pub mod mod_veb_ortaq;
+pub mod mod_xml;
 #[cfg(all(feature = "sqlite", not(target_arch = "wasm32")))]
 pub mod mod_verilenler;
 pub mod muhit;
