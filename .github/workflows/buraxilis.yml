@@ -119,6 +119,10 @@ jobs:
         run: |
           sudo apt-get install -y ./qurma/alqor_*_amd64.deb
           cd "$RUNNER_TEMP"
+          cat > /tmp/r.alq <<'SON'
+          gətir şifrə
+          yaz(şifrə.heş("a", "md5"))
+          SON
           env -i HOME="$HOME" PATH=/usr/bin:/bin sh -c '
             set -e
             alqor versiya
@@ -129,9 +133,8 @@ jobs:
             alqor lint .
             alqor yerləşdir
             test -x /opt/alqor/bin/alqor-rs
-            printf "gətir şifrə\\nyaz(şifrə.heş(\\"a\\", \\"md5\\"))\\n" > r.alq
-            test "$(alqor işlət --motor rs r.alq)" = 0cc175b9c0f1b6a831c399e269772661
-            test "$(alqor işlət --motor avto r.alq)" = 0cc175b9c0f1b6a831c399e269772661
+            test "$(alqor işlət --motor rs /tmp/r.alq)" = 0cc175b9c0f1b6a831c399e269772661
+            test "$(alqor işlət --motor avto /tmp/r.alq)" = 0cc175b9c0f1b6a831c399e269772661
             cd ..
             alqor yeni forma-layihe --şablon desktop >/dev/null
             cd forma-layihe
