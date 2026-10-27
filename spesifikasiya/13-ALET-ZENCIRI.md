@@ -666,6 +666,23 @@ alqor profil --alov-qrafiki     # flame graph
     yaz()                         100   0.051s    0.051s
 ```
 
+### Rust icraçısı: bayt-kod maşını
+
+`alqor-rs işlət` funksiya gövdələrini və proqramın yuxarı səviyyəsini ilk
+çağırışda bayt-koda çevirib virtual maşında icra edir (`alqor-rs/src/vm/`).
+Nəticə — stdout, xəta mesajları (ALQ kodu və mənbə yeri ilə), çıxış kodu —
+ağac icraçısı ilə bayt-bayt eynidir; hesab və çağırış ağırlıqlı kodda
+~2–3.5x daha sürətlidir. VM-in kompilyasiya edə bilmədiyi funksiya
+(`global` və s.) şəffaf şəkildə ağac icraçısında qalır.
+
+```bash
+alqor-rs işlət proqram.alq             # VM (standart)
+alqor-rs işlət proqram.alq --vm yox    # ağac icraçısı (etalon)
+ALQOR_VM_HESABAT=1 alqor-rs işlət proqram.alq   # neçə funksiya VM-də işlədi
+```
+
+Ətraflı: `alqor-rs/README.md`.
+
 ---
 
 ## 13.12 CI/CD
@@ -709,6 +726,9 @@ jobs:
 | `PORT`, `ALQOR_PORT` | `veb.Server.dinlə` kodda yazılan port əvəzinə bunu işlədir (bulud platformaları) |
 | `ALQOR_HOST` | `veb.Server.dinlə` hostu — konteynerdə `0.0.0.0` |
 | `ALQOR_KES` | `.pyz` paketlərinin açıldığı keş qovluğu |
+| `ALQOR_VM` | `alqor-rs`: `0`/`yox` — bayt-kod maşını əvəzinə ağac icraçısı (§ 13.11) |
+| `ALQOR_VM_HESABAT` | `alqor-rs`: `1` — icradan sonra VM əhatəsi (stderr) |
+| `ALQOR_VM_KOD` | `alqor-rs`: `1` — kompilyasiya olunmuş bayt-kodu çap edir |
 
 Etalon implementasiyada hazırda `ALQOR_RENG`, `ALQOR_BASSIZ`, `NO_COLOR`,
 `PORT`/`ALQOR_PORT`, `ALQOR_HOST` və `ALQOR_KES` oxunur; qalanları kompilyator və paket meneceri ilə gələcək.

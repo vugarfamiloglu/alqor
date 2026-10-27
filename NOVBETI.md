@@ -147,8 +147,14 @@ quraşdırıcı, Ctrl+Shift+B). CI-da Python-suz PATH ilə `.exe` yoxlanır.
 17. `alqor-rs/`: lekser ✅ və parser ✅ — Python etalonu ilə eyni tokenlər
     və eyni AAC (`python -m alqor.rs.muqayise tokenlər|aac [--korpus]`);
     icraçı ✅ (müqayisə korpuslarında Python ilə eyni çıxış, ~23–39x sürətli),
-    WASM qurulması ✅ (`alqor-rs/wasm/`). Qalır: veb, pəncərə, vidjet və
-    əlavə standart modullar.
+    WASM qurulması ✅ (`alqor-rs/wasm/`). Bayt-kod kompilyatoru və
+    virtual maşın ✅ (`alqor-rs/src/vm/`): yerli yuvalar, sabitlər hovuzu,
+    birləşdirilmiş əmrlər, çağırış/üzv keşləri; ağac icraçısı ilə
+    bayt-bayt eyni nəticə, hesab/çağırış ağırlıqlı kodda ~2–3.5x sürətli
+    (`alqor-rs/meyar/`); dəstəklənməyən hissələr şəffaf şəkildə ağac
+    icraçısına ötürülür (`--vm yox` — tam ağac icraçısı). Qalır: veb,
+    pəncərə, vidjet və əlavə standart modullar; VM-də `seç`/`varsa`
+    cümlələrinin yerli kompilyasiyası, qeydiyyat (register) maşını.
 
 ### Ekosistem (Vüqar Familoğlu özü hazırlayır — ayrıca sessiyada) 🟡
 - Sayt: [vuqar.pro/alqor](https://vuqar.pro/alqor) — xəta mesajlarındakı
