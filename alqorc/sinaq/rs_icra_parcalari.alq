@@ -658,3 +658,483 @@ yaz(Xəta("m"), ArqumentXətası("x", kod: 5).kod, tip(TipXətası("a")), Xəta(
 =====
 dəyişən l = [1, 2, 3, 4, 5, 6]
 yaz(l[1..3], l[-2..], l[..-2], l[3..1], l[0..<0], "salam"[-3..])
+=====
+// VM: dövr dəyişənini tutan bağlamalar (hər iterasiya təzə əhatə)
+funksiya qur()
+    dəyişən fs = []
+    hər i üçün 0..<3 içində
+        dəyişən k = i * 10
+        fs.əlavə(() => i + k)
+    son
+    qaytar fs
+son
+yaz(qur().çevir((f) => f()))
+dəyişən gs = []
+hər j üçün [1, 2, 3] içində
+    gs.əlavə(() => j)
+son
+yaz(gs.çevir((g) => g()))
+=====
+// VM: iç funksiyalar, rekursiya, sayğac bağlaması
+funksiya sayğac()
+    dəyişən n = 0
+    funksiya artır()
+        n += 1
+        qaytar n
+    son
+    qaytar artır
+son
+dəyişən s = sayğac()
+s()
+s()
+yaz(s(), sayğac()())
+funksiya fakt(n)
+    funksiya iç(k, a)
+        əgər k <= 1 onda qaytar a son
+        qaytar iç(k - 1, a * k)
+    son
+    qaytar iç(n, 1)
+son
+yaz(fakt(20), fakt(25))
+=====
+// VM: dərin rekursiya xətası
+funksiya dərin(n)
+    qaytar dərin(n + 1) + 1
+son
+cəhd et
+    dərin(0)
+tut e
+    yaz(e.tip, e.mesaj)
+son
+dərin(1)
+=====
+// VM: etiketli dayan/davam, `yoxsa` dövrdə
+funksiya f()
+    dəyişən n = []
+    xarici: hər i üçün 1..4 içində
+        hər j üçün 1..4 içində
+            əgər j == 2 onda davam xarici son
+            əgər i == 3 onda dayan xarici son
+            n.əlavə("{i}{j}")
+        son
+    son
+    hər x üçün [1, 2] içində
+        əgər x == 5 onda dayan son
+    yoxsa
+        n.əlavə("yoxsa1")
+    son
+    hər x üçün [1, 5] içində
+        əgər x == 5 onda dayan son
+    yoxsa
+        n.əlavə("yoxsa2")
+    son
+    dəyişən k = 0
+    nə qədər ki doğru
+        k += 1
+        əgər k % 2 == 0 onda davam son
+        əgər k > 7 onda dayan son
+        n.əlavə(k)
+    son
+    qaytar n
+son
+yaz(f())
+=====
+// VM: standart, adlı, variadik arqumentlər
+funksiya f(a, b = a * 2, *, c = 7)
+    qaytar "{a} {b} {c}"
+son
+funksiya k(x, **v) qaytar "{x} {v}" son
+yaz(k(1), k(2, p: 3, q: 4))
+funksiya v(a, ...qalan) qaytar "{a} {qalan}" son
+yaz(f(1), v(1), v(1, 2, 3))
+yaz(f(1, 2, c: 5))
+yaz(f(b: 3, a: 1))
+funksiya g(x, y)
+    qaytar x - y
+son
+yaz(g(y: 1, x: 10), g(...[5, 2]))
+cəhd et
+    g(1)
+tut e
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    g(1, 2, 3)
+tut e
+    yaz(e.tip, e.mesaj)
+son
+cəhd et
+    g(1, z: 2)
+tut e
+    yaz(e.tip, e.mesaj)
+son
+=====
+// VM: xətalar VM və ağac icraçısı sərhədini keçir
+funksiya at_(x)
+    əgər x > 2 onda at Xəta("böyük {x}") son
+    qaytar x
+son
+funksiya topla(l)
+    dəyişən c = 0
+    hər x üçün l içində
+        cəhd et
+            c += at_(x)
+        tut e əgər e.mesaj.uzunluq() > 3
+            yaz("tutuldu:", e.mesaj)
+        nəhayət
+            c += 100
+        son
+    son
+    qaytar c
+son
+yaz(topla([1, 2, 3, 4]))
+yaz([1, 2, 3].çevir((x) => at_(x - 1)))
+cəhd et
+    [1, 5].çevir(at_)
+tut e
+    yaz("xəritə:", e.mesaj)
+son
+=====
+// VM: nəhayət + qaytar/dayan
+funksiya f(x)
+    cəhd et
+        əgər x == 1 onda qaytar "bir" son
+        əgər x == 2 onda at Xəta("iki") son
+        qaytar "digər"
+    tut e
+        qaytar "tut {e.mesaj}"
+    nəhayət
+        yaz("nəhayət {x}")
+    son
+son
+yaz(f(1), f(2), f(3))
+funksiya g()
+    dəyişən n = 0
+    hər i üçün 0..10 içində
+        cəhd et
+            əgər i == 3 onda dayan son
+            n += i
+        nəhayət
+            n += 1000
+        son
+    son
+    qaytar n
+son
+yaz(g())
+=====
+// VM: sabit, kölgələmə, dağıtma
+struktur İnsan
+    xassə ad: mətn = ""
+    xassə yaş: tam = 0
+    qurucu(ad: mətn, yaş: tam)
+        özü.ad = ad
+        özü.yaş = yaş
+    son
+son
+funksiya f()
+    sabit a = 1
+    dəyişən x, y, ...z = [1, 2, 3, 4, 5]
+    dəyişən (p, q) = (7, 8)
+    dəyişən {ad, yaş} = İnsan("Aysel", 20)
+    yaz(x, y, z, p, q, ad, yaş)
+    əgər doğru onda
+        dəyişən a = 5
+        yaz(a)
+    son
+    yaz(a)
+    p, q = q, p
+    yaz(p, q)
+    a = 2
+son
+f()
+=====
+// VM: siniflər, metodlar, xassələr, üst
+sinif Heyvan
+    xassə ad: mətn = ""
+    qurucu(ad: mətn) özü.ad = ad son
+    metod səs() qaytar "..." son
+    metod təqdim() qaytar "{özü.ad}: {özü.səs()}" son
+son
+sinif Pişik miras Heyvan
+    metod səs() qaytar "miyav" son
+    metod təqdim()
+        dəyişən f = () => üst.təqdim() + "!"
+        qaytar f()
+    son
+son
+dəyişən l = [Heyvan("x"), Pişik("Mır")]
+hər h üçün l içində
+    yaz(h.təqdim())
+son
+dəyişən p = Pişik("a")
+p.ad += "b"
+yaz(p.ad, p?.ad, boş?.ad, l[1]?.səs())
+=====
+// VM: seç, varsa, comprehension, şablon
+funksiya təsnif(x)
+    seç x
+        hal 0 → qaytar "sıfır"
+        hal 1..9 → qaytar "rəqəm"
+        hal [a, b] → qaytar "cüt {a}{b}"
+        digər hallarda → qaytar "çox"
+    son
+son
+yaz([0, 5, [1, 2], 100].çevir(təsnif))
+yaz([x * x üçün x içində 0..6 əgər x % 2 == 0], {x: x + 1 üçün x içində 1..3}, {x % 3 üçün x içində 0..10})
+yaz([(a, i) üçün (i, a) içində ["p", "q"].nömrələ()])
+funksiya h(d)
+    varsa v = d.al("a") onda
+        qaytar v
+    son
+    qaytar -1
+son
+yaz(h({"a": 3}), h({}))
+=====
+// VM: sonuncu ifadə dəyəri və gecikdir
+funksiya f(x)
+    gecikdir yaz("gecikdi {x}")
+    x * 2
+son
+yaz(f(4))
+funksiya g()
+    dəyişən t = 0
+    t
+son
+yaz(g())
+dəyişən lam = (x) => x + 1
+yaz(lam(2))
+=====
+// VM: generator və asinxron funksiyalar
+generator funksiya say(n)
+    hər i üçün 0..<n içində
+        ver i * i
+    son
+son
+yaz(say(4).siyahıyaÇevir())
+funksiya cəm(g)
+    dəyişən c = 0
+    hər x üçün g içində
+        c += x
+    son
+    qaytar c
+son
+yaz(cəm(say(5)))
+=====
+// VM: dayan funksiya çağırışından keçir (ağacla eyni davranış)
+funksiya f(i)
+    əgər i == 2 onda yaz("iki") son
+    qaytar i
+son
+hər i üçün 0..4 içində
+    yaz(f(i))
+son
+təkrarla i, 3 dəfə
+    əgər i == 2 onda davam son
+    yaz("t", i)
+son
+=====
+// VM: qlobal dəyişənlər, elandan əvvəl oxuma, mənimsətmə xətası
+dəyişən x = 10
+funksiya f()
+    yaz(x)
+    dəyişən x = 3
+    yaz(x)
+    x = 4
+    qaytar x
+son
+funksiya g()
+    x = x + 1
+son
+yaz(f(), x)
+g()
+yaz(x)
+funksiya h()
+    y = 1
+son
+h()
+=====
+// VM: seç içində dayan/qaytar/davam (ağac icraçısına ötürülən cümlə)
+funksiya f(l)
+    dəyişən n = []
+    hər x üçün l içində
+        seç x
+            hal 0 → davam
+            hal 9 → dayan
+            hal 7 → qaytar "yeddi"
+            digər hallarda → n.əlavə(x)
+        son
+    son
+    qaytar n
+son
+yaz(f([1, 0, 2, 9, 3]), f([1, 7, 2]))
+=====
+// VM: yuxarı səviyyə dövrləri və bağlamalar
+dəyişən fs = []
+dəyişən cəm = 0
+hər i üçün 1..5 içində
+    dəyişən kv = i * i
+    cəm += kv
+    fs.əlavə(() => kv + cəm)
+son
+yaz(cəm, fs.çevir((f) => f()))
+dəyişən i = 0
+nə qədər ki i < 3
+    i += 1
+son
+yaz(i)
+=====
+// VM: xəta yerləri
+funksiya f(a)
+    əgər a onda yaz("?") son
+son
+cəhd et
+    f(1)
+tut e
+    yaz(e.tip, e.mesaj)
+son
+funksiya g(l)
+    qaytar l[5]
+son
+g([1, 2])
+=====
+// VM: nəhayət içində davam, iç-içə cəhd
+funksiya f()
+    dəyişən n = []
+    hər i üçün 0..5 içində
+        cəhd et
+            cəhd et
+                əgər i % 2 == 0 onda at Xəta("cüt {i}") son
+                n.əlavə(i)
+            tut e əgər i == 4
+                n.əlavə("dörd")
+            nəhayət
+                n.əlavə("n{i}")
+            son
+        tut e
+            n.əlavə(e.mesaj)
+            davam
+        son
+        n.əlavə("son{i}")
+    son
+    qaytar n
+son
+yaz(f())
+=====
+// VM: struktur kopyası, artırma, mürəkkəb mənimsətmə
+struktur N
+    xassə x: tam = 0
+son
+funksiya f()
+    dəyişən a = N(x: 1)
+    dəyişən b = a
+    b.x += 5
+    dəyişən l = [a, b]
+    l[0].x++
+    dəyişən s = 0
+    s++
+    s -= 3
+    dəyişən d = {"k": 1}
+    d["k"] *= 7
+    dəyişən t = "a"
+    t += "b"
+    qaytar [a.x, b.x, l[0].x, s, d, t]
+son
+yaz(f())
+=====
+// VM: onluq genişlənməsi, tip yoxlama, çevirmə
+funksiya f(x: onluq, y)
+    dəyişən z: onluq = 3
+    qaytar [x, z, y tipidir tam, y tipidir mətn, y kimi mətn, "12" kimi tam, "x" kimi? tam]
+son
+yaz(f(2, 5))
+sinif A son
+funksiya g(o) qaytar o tipidir A son
+yaz(g(A()), g(1))
+=====
+// VM: dilim, diapazon, üzvlük, boş yoxlama
+funksiya f(l, s)
+    qaytar [l[1..3], l[..<2], s[2..], 3 içindədir l, l?.uzunluq(), boş ?? 5, 0..10 addım 3]
+son
+yaz(f([1, 2, 3, 4, 5], "salam"))
+funksiya g()
+    hər i üçün 10..0 addım -3 içində
+        yaz(i)
+    son
+son
+g()
+=====
+// VM: dəyişən elanı təkrarı, kortej qaytarma, çoxlu dəyər
+funksiya f()
+    dəyişən a = 1
+    dəyişən a = a + 1
+    dəyişən b, c = 3, 4
+    dəyişən d = [1, 2]
+    qaytar a, b, c, d
+son
+yaz(f())
+dəyişən (p, q, r, s) = f()
+yaz(p + q + r)
+=====
+// VM: generatorlar — standart arqument, qaytar, gecikdir, bağlama
+generator funksiya g(n, ad2 = 2)
+    gecikdir yaz("gecikdi")
+    dəyişən fs = []
+    hər i üçün 0..<n içində
+        əgər i == 3 onda qaytar son
+        fs.əlavə(() => i * ad2)
+        ver fs.çevir((f) => f())
+    son
+son
+hər x üçün g(5) içində
+    yaz(x)
+son
+yaz(g(2, ad2: 10).siyahıyaÇevir())
+=====
+// VM: generator metodu və xəta
+sinif Say
+    xassə n: tam = 0
+    qurucu(n: tam) özü.n = n son
+    generator metod hamısı()
+        hər i üçün 1..özü.n içində
+            əgər i == 3 onda at Xəta("üç") son
+            ver i
+        son
+    son
+son
+dəyişən s = Say(5)
+cəhd et
+    hər x üçün s.hamısı() içində
+        yaz(x)
+    son
+tut e
+    yaz("tutuldu", e.mesaj)
+son
+dəyişən it = Say(2).hamısı()
+yaz(it.növbəti(), it.növbəti(), it.bitdi())
+=====
+// VM: generator içində iç generator və dayan
+generator funksiya cüt()
+    dəyişən i = 0
+    həmişə
+        i += 2
+        ver i
+    son
+son
+generator funksiya ilk(n)
+    dəyişən k = 0
+    hər x üçün cüt() içində
+        əgər k >= n onda dayan son
+        k += 1
+        ver x
+    son
+son
+yaz(ilk(4).siyahıyaÇevir(), [x * x üçün x içində ilk(3)])
+=====
+// VM: ver ifadə kimi və boş ver
+generator funksiya f()
+    ver boş
+    ver 1
+    qaytar 5
+    ver 2
+son
+yaz(f().siyahıyaÇevir())
