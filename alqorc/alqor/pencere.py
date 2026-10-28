@@ -1010,13 +1010,28 @@ def _İdarəedici_yarat(t: Tətbiq):
                 return
             self._göndər(b"tapilmadi", "text/plain", 404)
 
+        def _gövdəni_at(self) -> None:
+            try:
+                n = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                n = 0
+            if 0 < n <= 1 << 20:
+                self.rfile.read(n)
+
         def do_POST(self) -> None:
             yol = self._yol()
             if kənar_sorğudur(self.headers, t._port):
+                # Gövdə oxunmadan bağlantı bağlansa Windows onu kəsir
+                # (RST) və müştəri 403 cavabını ala bilmir
+                self._gövdəni_at()
                 self._göndər(b"forbidden", "text/plain", 403)
                 return
+            if yol != "/_alqor/hadise":
+                self._gövdəni_at()
             p = self._pəncərə()
             if p is None:
+                if yol == "/_alqor/hadise":
+                    self._gövdəni_at()
                 self._JSON({"bağlı": True})
                 return
 
