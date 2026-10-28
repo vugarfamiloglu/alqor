@@ -503,7 +503,7 @@ son
 """
 
 
-class Debaq(ServerSınağı):
+class Sazlama(ServerSınağı):
     """Studio → `alqorc.py dap`: dayanma, addım, dəyişənlər."""
 
     KOD = ("funksiya kvadrat(n: tam) -> tam\n"
@@ -526,37 +526,37 @@ class Debaq(ServerSınağı):
                     return h, n
         self.fail(f"{növ} hadisəsi gəlmədi")
 
-    def test_debaq_sessiyası(self):
-        (self.layihə / "debaq.alq").write_text(self.KOD, encoding="utf-8")
-        kod, d = self.api("/api/debaq", {
-            "yol": "debaq.alq", "nöqtələr": {"debaq.alq": [3]}})
+    def test_sazlama_sessiyası(self):
+        (self.layihə / "sazlama.alq").write_text(self.KOD, encoding="utf-8")
+        kod, d = self.api("/api/sazlama", {
+            "yol": "sazlama.alq", "nöqtələr": {"sazlama.alq": [3]}})
         self.assertEqual(kod, 200, d)
         iş = self.studio.icra.al(d["id"])
         h, n = self.hadisə(iş, 0, "dayandı")
         self.assertEqual(h["səbəb"], "breakpoint")
         self.assertEqual([k["ad"] for k in h["yığın"]], ["kvadrat", "<əsas>"])
-        self.assertEqual(h["yığın"][0]["yol"], "debaq.alq")
+        self.assertEqual(h["yığın"][0]["yol"], "sazlama.alq")
         self.assertEqual(h["yığın"][0]["sətir"], 3)
         yerli = {v["ad"]: v["dəyər"] for v in h["sahələr"][0]["dəyişənlər"]}
         self.assertEqual(yerli, {"n": "1", "k": "1"})
         # ifadə
-        kod, r = self.api("/api/debaq/hesabla", {"id": d["id"],
+        kod, r = self.api("/api/sazlama/hesabla", {"id": d["id"],
                                                  "ifadə": "k * 10"})
         self.assertEqual((kod, r["dəyər"]), (200, "10"))
         # çağıranın kadrı
-        kod, r = self.api("/api/debaq/kadr", {
+        kod, r = self.api("/api/sazlama/kadr", {
             "id": d["id"], "kadr": h["yığın"][1]["id"]})
         qlobal = {v["ad"]: v["dəyər"] for v in r["sahələr"][0]["dəyişənlər"]}
         self.assertEqual(qlobal["cəm"], "0")
         # növbəti addım → 4-cü sətrə yox, çağırana qayıdana qədər
-        kod, r = self.api("/api/debaq/emr", {"id": d["id"], "əmr": "çıx"})
+        kod, r = self.api("/api/sazlama/emr", {"id": d["id"], "əmr": "çıx"})
         self.assertEqual(kod, 200, r)
         h, n = self.hadisə(iş, n, "dayandı")
         self.assertEqual(h["yığın"][0]["ad"], "<əsas>")
         # nöqtələri sil, davam et → bitir
-        self.api("/api/debaq/noqteler", {"id": d["id"],
-                                         "nöqtələr": {"debaq.alq": []}})
-        self.api("/api/debaq/emr", {"id": d["id"], "əmr": "davam"})
+        self.api("/api/sazlama/noqteler", {"id": d["id"],
+                                         "nöqtələr": {"sazlama.alq": []}})
+        self.api("/api/sazlama/emr", {"id": d["id"], "əmr": "davam"})
         h, n = self.hadisə(iş, n, "bitdi")
         self.assertEqual(h["kod"], 0)
         çıxış = "".join(x["mətn"] for x in iş.hadisələr
@@ -566,20 +566,20 @@ class Debaq(ServerSınağı):
     def test_dayanmamışda_əmr_rədd_edilir(self):
         (self.layihə / "sonsuz.alq").write_text(
             "dəyişən i = 0\nhəmişə\n    i += 1\nson\n", encoding="utf-8")
-        kod, d = self.api("/api/debaq", {"yol": "sonsuz.alq"})
+        kod, d = self.api("/api/sazlama", {"yol": "sonsuz.alq"})
         iş = self.studio.icra.al(d["id"])
         time.sleep(0.5)
-        kod, r = self.api("/api/debaq/emr", {"id": d["id"],
+        kod, r = self.api("/api/sazlama/emr", {"id": d["id"],
                                              "əmr": "növbəti"})
         self.assertEqual(kod, 409)
-        self.api("/api/debaq/emr", {"id": d["id"], "əmr": "fasilə"})
+        self.api("/api/sazlama/emr", {"id": d["id"], "əmr": "fasilə"})
         h, _ = self.hadisə(iş, 0, "dayandı")
         self.assertEqual(h["səbəb"], "pause")
         self.api("/api/islet/dayandir", {"id": d["id"]})
         self.hadisə(iş, 0, "bitdi")
 
     def test_kənar_yol_rədd_edilir(self):
-        kod, _ = self.api("/api/debaq", {
+        kod, _ = self.api("/api/sazlama", {
             "yol": "salam.alq", "nöqtələr": {"../kənar.alq": [1]}})
         self.assertEqual(kod, 403)
 
@@ -1314,7 +1314,7 @@ class Brauzer(unittest.TestCase):
             "komponent Forma\n    göstər()\n        qaytar <div>\n"
             '            {vidjet.sahə(etiket: "Ad", ad: "ad")}\n'
             "        </div>\n    son\nson\n", encoding="utf-8")
-        (cls.qovluq / "dbq.alq").write_text(Debaq.KOD, encoding="utf-8")
+        (cls.qovluq / "dbq.alq").write_text(Sazlama.KOD, encoding="utf-8")
         (cls.qovluq / "iki.alq").write_text(
             "gətir vidjet\n\nkomponent Birinci\n    göstər()\n"
             '        qaytar vidjet.başlıq("Bir")\n    son\nson\n\n'
@@ -1412,14 +1412,14 @@ class Brauzer(unittest.TestCase):
         self.gözlə(ta, "riyaziyyat.kök")
         self.assertTrue(siyahı.is_hidden())
 
-    def test_debaq_interfeysi(self):
+    def test_sazlama_interfeysi(self):
         p = self.səhifə
         self.aç("dbq.alq")
         # sətir nömrəsinə klik — dayanma nöqtəsi
         p.click('.r-nömrələr [data-s="3"]')
         self.assertIn("n-nöqtə",
                       p.get_attribute('.r-nömrələr [data-s="3"]', "class"))
-        p.click("#dym-debaq")
+        p.click("#dym-sazlama")
         vəz = p.locator("#dbq-veziyyet")
         son = time.monotonic() + 20
         while "Dayandı" not in vəz.inner_text() and time.monotonic() < son:
@@ -1451,9 +1451,9 @@ class Brauzer(unittest.TestCase):
         son = time.monotonic() + 20
         while "bitdi" not in vəz.inner_text() and time.monotonic() < son:
             p.wait_for_timeout(100)
-        self.assertEqual(vəz.inner_text(), "Debaq bitdi.")
+        self.assertEqual(vəz.inner_text(), "Sazlama bitdi.")
         self.assertIn("cəm: 14", p.inner_text("#cixis"))
-        self.assertFalse(p.locator("#dym-debaq").is_disabled())
+        self.assertFalse(p.locator("#dym-sazlama").is_disabled())
 
     def test_vizual_dizayner(self):
         (self.qovluq / "dizayn.alq").write_text(Dizayner.KOD,
@@ -1650,7 +1650,7 @@ class Brauzer(unittest.TestCase):
         d = p.locator("#dialoq")
         d.wait_for(state="visible")
         başlıqlar = d.locator(".qısayol-cədvəli h4").all_text_contents()
-        for ad in ("Fayl", "Redaktə", "Debaq", "Kömək"):
+        for ad in ("Fayl", "Redaktə", "Sazlama", "Kömək"):
             self.assertIn(ad, başlıqlar)
         saxla = d.locator('.qısayol:has-text("Saxla")').first
         self.assertEqual(saxla.locator("kbd").all_inner_texts(), ["Ctrl", "S"])
@@ -1719,7 +1719,7 @@ class Brauzer(unittest.TestCase):
         p = self.səhifə
         başlıqlar = p.locator("#menyu-setri .m-başlıq").all_inner_texts()
         for ad in ("Fayl", "Redaktə", "Seçim", "Görünüş", "Keç", "İşlət",
-                   "Debaq", "Alətlər", "Kömək"):
+                   "Sazlama", "Alətlər", "Kömək"):
             self.assertIn(ad, başlıqlar)
         p.click('#menyu-setri .m-başlıq:has-text("Fayl")')
         menyu = p.locator(".menyu-qutu").first

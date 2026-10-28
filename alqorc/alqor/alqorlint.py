@@ -1,5 +1,5 @@
 """
-Alqor — `alqorlint`: statik təhlil (linter). Spesifikasiya § 13.4.
+Alqor — `alqorlint`: statik təhlil (kod yoxlayıcısı). Spesifikasiya § 13.4.
 
     alqor lint .                     # və ya ./alqorlint .
     alqor lint --düzəlt .            # avtomatik düzəldilənləri düzəlt
@@ -957,7 +957,7 @@ def düzəlt(mətn: str, tapıntılar: list[Tapıntı]) -> tuple[str, int]:
 #  Əmr sətri
 # ═══════════════════════════════════════════════════════════════════════
 
-KÖMƏK = """alqorlint — Alqor statik təhlil (linter)
+KÖMƏK = """alqorlint — Alqor statik təhlil (kod yoxlayıcısı)
 
 İSTİFADƏ:
     alqor lint [seçimlər] <fayl|qovluq>...

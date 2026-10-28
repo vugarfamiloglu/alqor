@@ -321,7 +321,7 @@ def deb(q: Path, çıxış: Path, arx: str) -> Path:
         "Homepage: https://vuqar.pro/alqor\n"
         f"Installed-Size: {ölçü}\nSection: devel\nPriority: optional\n"
         "Description: Alqor — Azərbaycan dilində proqramlaşdırma dili\n"
-        " Dil, Alqor Studio IDE, paket meneceri, linter, formatter, LSP\n"
+        " Dil, Alqor Studio IDE, paket meneceri, kod yoxlayıcısı, formatlayıcı, LSP\n"
         " serveri və oflayn sənədlər. Python daxildir.\n")
     skript = ("#!/bin/sh\n"
               "command -v update-desktop-database >/dev/null 2>&1 && "

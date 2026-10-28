@@ -310,9 +310,9 @@ son
 ```alqor
 gətir jurnal
 
-jurnal.səviyyə("debaq")          // debaq | info | xəbərdarlıq | xəta | kritik
+jurnal.səviyyə("sazlama")          // sazlama | info | xəbərdarlıq | xəta | kritik
 
-jurnal.debaq("Dəyişən x = {x}")
+jurnal.sazlama("Dəyişən x = {x}")
 jurnal.info("Server başladı")
 jurnal.xəbərdarlıq("Yaddaş 80% dolub")
 jurnal.xəta("Sorğu alınmadı", xəta: x)

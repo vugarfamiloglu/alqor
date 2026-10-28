@@ -50,7 +50,7 @@ zip(a, b) -> siyahı[kortej]
 eynidir(a, b) -> məntiq         // istinad identikliyi
 heş(x) -> tam
 klonla(x) -> T                  // dərin kopya
-çap(x)                          // debaq üçün strukturlu çap
+çap(x)                          // sazlama üçün strukturlu çap
 ölç(funksiya)                   // icra müddətini ölç
 dayan(kod: tam = 0)             // proqramı bitir
 panika(mesaj: mətn)

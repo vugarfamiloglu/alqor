@@ -1,7 +1,7 @@
 ## Alqor 2.4.0
 
 Azərbaycan dilində proqramlaşdırma dili: dil, **Alqor Studio** IDE, paket meneceri,
-linter, formatlayıcı, debaqçı və oflayn sənədlər. Hər quraşdırıcıda Python və sürətli
+kod yoxlayıcısı, formatlayıcı, sazlayıcı və oflayn sənədlər. Hər quraşdırıcıda Python və sürətli
 Rust icraçısı daxildir, əlavə heç nə lazım deyil.
 
 ### 2.4-ün yenilikləri
@@ -14,8 +14,8 @@ Rust icraçısı daxildir, əlavə heç nə lazım deyil.
 - `alqor python qur requests` — paket layihənin `python_paketlər/` qovluğuna; `alqor python
   siyahı | sil`; `layihe.alq`-da `[python]` asılılıqları; `alqor qur` paketləri daxil edir
 
-**Sürətli Rust icraçısı (bytecode virtual maşın)**
-- Kod bytecode-a çevrilir və virtual maşında işləyir: Python icraçısından təxminən 100 dəfə,
+**Sürətli Rust icraçısı (bayt kodu ilə işləyən virtual maşın)**
+- Kod bayt koduna çevrilir və virtual maşında işləyir: Python icraçısından təxminən 100 dəfə,
   əvvəlki Rust icraçısından 1.5–3 dəfə sürətli (məsələn, `fib` 7.5 s → 0.08 s)
 - Rust icraçısında yeni modullar: `veb` server (marşrutlar, şablonlar, sessiyalar), `http`,
   `şəbəkə`, `verilənlər` (SQLite), `şifrə`, `kodlaşdırma`, `sıxma`, `csv`, `toml`, `xml`

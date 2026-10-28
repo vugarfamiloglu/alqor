@@ -253,7 +253,7 @@ son
 | `IEnumerable<T>` | `siyahı[T]`, generator |
 | `async Task<T>` | `asinxron funksiya ... -> T` |
 | NuGet | `alqorpm` |
-| `.NET runtime` lazımdır | tək statik binar |
+| `.NET icra mühiti` lazımdır | tək statik binar |
 
 ---
 

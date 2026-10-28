@@ -13,7 +13,7 @@ Dok.qeyd("layihe", { başlıq: "Layihə", ikon: "qovluq", el: $("#panel-layihe")
   .qeyd("struktur", { başlıq: "Struktur", ikon: "struktur", el: $("#panel-struktur"), yer: "sol", zolaq: 5 })
   .qeyd("cixis", { başlıq: "Çıxış", ikon: "terminal", el: $("#alt-cixis"), yer: "alt", zolaq: 10 })
   .qeyd("problemler", { başlıq: "Problemlər", ikon: "problem", el: $("#alt-problemler"), yer: "alt", zolaq: 11, qısayol: "Ctrl+Shift+M" })
-  .qeyd("debaq", { başlıq: "Debaq", ikon: "debaq", el: $("#alt-debaq"), yer: "alt", zolaq: 12 })
+  .qeyd("sazlama", { başlıq: "Sazlama", ikon: "sazlama", el: $("#alt-sazlama"), yer: "alt", zolaq: 12 })
   .qeyd("onbaxis", { başlıq: "Önbaxış", ikon: "önbaxış", el: $("#onbaxis-panel"), yer: "sağ", zolaq: 13,
     görünür: false, bağlanır: true, qısayol: "F6" });
 
@@ -263,7 +263,7 @@ $("#dym-palitra").addEventListener("click", () => Palitra.aç(">"));
 // ══ Əmrlər ═══════════════════════════════════════════════════════════
 const varCari = () => !!cari();
 const işləyir = () => !!S.iş;
-const debaqDayanıb = () => !!S.dbq;
+const sazlamaDayanıb = () => !!S.dbq;
 const ƏQ = (id, ad, ikon, qısayol, işlə, aktiv, əlavə = {}) => Əmrlər.qeyd(id, { ad, ikon, qısayol, işlə, aktiv, ...əlavə });
 
 // Fayl
@@ -358,7 +358,7 @@ function nişanaKeç(d) {
 }
 
 // İşlət
-ƏQ("işlət.işlət", "İşlət", "işlət", "F5", () => (S.dbq ? debaqƏmri("davam") : işlət()), () => varCari() && (!S.iş || !!S.dbq));
+ƏQ("işlət.işlət", "İşlət", "işlət", "F5", () => (S.dbq ? sazlamaƏmri("davam") : işlət()), () => varCari() && (!S.iş || !!S.dbq));
 ƏQ("işlət.dayandır", "Dayandır", "dayandır", "Shift+F5", dayandır, işləyir);
 ƏQ("işlət.önbaxış", "Komponent önbaxışı", "önbaxış", null, () => önbaxışıAçBağla(true), varCari, { gizli: true });
 ƏQ("qur.exe", "Qur: tək .exe (Windows)", "paket", "Ctrl+Shift+B", () => qur("exe"), varCari);
@@ -369,16 +369,16 @@ function nişanaKeç(d) {
 ƏQ("qur.yerləşdir", "Qur: vebə yerləşdir (sayt / server)", "paket", null, () => qur("yerləşdir"), varCari);
 ƏQ("işlət.çıxışıTəmizlə", "Çıxışı təmizlə", "sil", null, () => { $("#cixis").textContent = ""; });
 
-// Debaq
-ƏQ("debaq.başla", "Debaqa başla", "debaq", "Ctrl+F5", debaqBaşlat, () => varCari() && !S.iş);
-ƏQ("debaq.davam", "Davam et", "işlət", null, () => debaqƏmri("davam"), debaqDayanıb);
-ƏQ("debaq.növbəti", "Növbəti addım", "addım-üstündən", "F10", () => debaqƏmri("növbəti"), debaqDayanıb);
-ƏQ("debaq.daxil", "Funksiyaya gir", "addım-daxil", "F11", () => debaqƏmri("daxil"), debaqDayanıb);
-ƏQ("debaq.çıx", "Funksiyadan çıx", "addım-çıx", "Shift+F11", () => debaqƏmri("çıx"), debaqDayanıb);
-ƏQ("debaq.fasilə", "Fasilə", "fasilə", null, () => debaqƏmri("fasilə"), () => !!S.iş?.debaq && !S.dbq);
-ƏQ("debaq.dayandır", "Debaqı dayandır", "dayandır", null, dayandır, () => !!S.iş?.debaq);
-ƏQ("debaq.nöqtə", "Dayanma nöqtəsi qoy / götür", "nöqtə", "F9", () => R.nöqtəDəyiş(), varCari);
-ƏQ("debaq.nöqtələriSil", "Bütün dayanma nöqtələrini sil", "sil", null, () => {
+// Sazlama
+ƏQ("sazlama.başla", "Sazlamaya başla", "sazlama", "Ctrl+F5", sazlamaBaşlat, () => varCari() && !S.iş);
+ƏQ("sazlama.davam", "Davam et", "işlət", null, () => sazlamaƏmri("davam"), sazlamaDayanıb);
+ƏQ("sazlama.növbəti", "Növbəti addım", "addım-üstündən", "F10", () => sazlamaƏmri("növbəti"), sazlamaDayanıb);
+ƏQ("sazlama.daxil", "Funksiyaya gir", "addım-daxil", "F11", () => sazlamaƏmri("daxil"), sazlamaDayanıb);
+ƏQ("sazlama.çıx", "Funksiyadan çıx", "addım-çıx", "Shift+F11", () => sazlamaƏmri("çıx"), sazlamaDayanıb);
+ƏQ("sazlama.fasilə", "Fasilə", "fasilə", null, () => sazlamaƏmri("fasilə"), () => !!S.iş?.sazlama && !S.dbq);
+ƏQ("sazlama.dayandır", "Sazlamanı dayandır", "dayandır", null, dayandır, () => !!S.iş?.sazlama);
+ƏQ("sazlama.nöqtə", "Dayanma nöqtəsi qoy / götür", "nöqtə", "F9", () => R.nöqtəDəyiş(), varCari);
+ƏQ("sazlama.nöqtələriSil", "Bütün dayanma nöqtələrini sil", "sil", null, () => {
   S.nöqtələr = {}; yaddaş("nöqtələr", {}); R.nöqtələriQoy([]); bildir("Dayanma nöqtələri silindi");
 }, () => Object.keys(S.nöqtələr).length > 0);
 
@@ -430,7 +430,7 @@ function haqqındaDüyünü() {
 
 const QISAYOL_QRUPLARI = [
   ["fayl", "Fayl"], ["redaktə", "Redaktə"], ["seçim", "Seçim"], ["görünüş", "Görünüş"],
-  ["keç", "Keç"], ["işlət", "İşlət və qur"], ["qur", "İşlət və qur"], ["debaq", "Debaq"],
+  ["keç", "Keç"], ["işlət", "İşlət və qur"], ["qur", "İşlət və qur"], ["sazlama", "Sazlama"],
   ["alətlər", "Alətlər"], ["kömək", "Kömək"],
 ];
 
@@ -493,8 +493,8 @@ MenyuSətri.qur($("#menyu-setri"), [
   { ad: "İşlət", hərf: "I", elementlər: ["işlət.işlət", "işlət.dayandır", "-", "görünüş.önbaxış", "görünüş.dizayn", "-",
     "qur.exe", "qur.veb", "qur.js", "qur.pyz", "qur.quraşdırıcı", "qur.yerləşdir", "-",
     "işlət.çıxışıTəmizlə"] },
-  { ad: "Debaq", hərf: "D", elementlər: ["debaq.başla", "debaq.davam", "debaq.fasilə", "debaq.dayandır", "-",
-    "debaq.növbəti", "debaq.daxil", "debaq.çıx", "-", "debaq.nöqtə", "debaq.nöqtələriSil"] },
+  { ad: "Sazlama", hərf: "Z", elementlər: ["sazlama.başla", "sazlama.davam", "sazlama.fasilə", "sazlama.dayandır", "-",
+    "sazlama.növbəti", "sazlama.daxil", "sazlama.çıx", "-", "sazlama.nöqtə", "sazlama.nöqtələriSil"] },
   { ad: "Alətlər", hərf: "A", elementlər: ["redaktə.formatla", "redaktə.ascii", "-",
     "forma.cədvəllər", "forma.crud", "forma.model", "-", "alətlər.asciiAvto", "alətlər.tərkib", "-",
     "görünüş.palitra"] },
@@ -531,7 +531,7 @@ R.ta.addEventListener("contextmenu", (h) => {
     "redaktə.kəs", "redaktə.kopyala", "redaktə.yapışdır", "-",
     "seçim.hamısı", "redaktə.şərh", "redaktə.formatla", "-",
     { ad: "Sətir", ikon: "struktur", alt: ["seçim.yuxarıDaşı", "seçim.aşağıDaşı", "seçim.aşağıTəkrarla", "seçim.sətriSil"] },
-    "debaq.nöqtə", "-", "işlət.işlət", "görünüş.önbaxış", "-", "görünüş.palitra",
+    "sazlama.nöqtə", "-", "işlət.işlət", "görünüş.önbaxış", "-", "görünüş.palitra",
   ]);
 });
 

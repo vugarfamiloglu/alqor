@@ -19,7 +19,7 @@ Quraşdırılan əmrlər:
 ```
 alqor           # əsas CLI (işlət, yeni, qur, sına, yerləşdir, …)
 alqorpm         # paket meneceri (§ 8.9)
-alqorlint       # linter (§ 13.4)
+alqorlint       # kod yoxlayıcısı (§ 13.4)
 alqorfmt        # formatter (§ 13.3)
 alqorls         # LSP serveri (§ 13.8)
 alqor-studio    # Alqor Studio IDE (Linux/macOS; Windows-da Başlat menyusu)
@@ -70,7 +70,7 @@ Azərbaycan hərfləri yazmaq çətin olanda.
 | `format` (`alqorfmt`) | ✅ § 13.3 |
 | `studio` | ✅ Alqor Studio (§ 13.9) |
 | `ls [--stdio]` | ✅ LSP serveri (§ 13.8) |
-| `dap` | ✅ Debaqçı — Debug Adapter Protocol (§ 13.8) |
+| `dap` | ✅ Sazlayıcı — Debug Adapter Protocol (§ 13.8) |
 | `yeni <ad> [--şablon konsol\|veb\|desktop\|kitabxana]` | ✅ hər şablonun işləyən sınaqları var |
 | `işlət` (fayl olmadan — layihənin giriş nöqtəsi) | ✅ |
 | `sına [yol] [--filtr] [--sənəd] [--ətraflı]` | ✅ § 13.5 |
@@ -139,7 +139,7 @@ qoyur. `--çıxış docs` GitHub Pages-in `/docs` rejimi üçündür.
 alqor qur --hədəf linux-x64      # linux-x64 | linux-arm64 | veb | wasm
                                  # windows-x64 | macos-arm64
 alqor qur --buraxılış            # optimallaşdırılmış
-alqor qur --debaq                # debaq simvolları ilə
+alqor qur --sazlama                # sazlama simvolları ilə
 alqor qur --optimallaşdırma 3    # 0..3
 alqor qur --statik               # asılılıqsız binar
 alqor qur --kiçik                # minimum ölçü
@@ -233,7 +233,7 @@ ascii_düzəlt = doğru
 
 ---
 
-## 13.4 `alqorlint` — linter ✅
+## 13.4 `alqorlint` — kod yoxlayıcısı ✅
 
 ```bash
 alqor lint .                     # və ya ./alqorlint .
@@ -368,7 +368,7 @@ qovluğu; qovluqda `sınaq/`, `sinaq/`, `test/` altındakı və adı
 
 ---
 
-## 13.6 `alqordoc` — sənəd generatoru
+## 13.6 `alqordoc` — sənəd yaradıcısı
 
 ```bash
 alqordoc                         # HTML sənəd yarat
@@ -527,7 +527,7 @@ elana bağlandığını və hər `a.b` ifadəsinin tipini yadda saxlayır.
 | İş sahəsi simvolları (Ctrl+T) — `tpl` → `topla` | ✅ |
 | Kod linzaları: üst səviyyə funksiya/sinif üstündə "N istinad"; `@sınaq` üstündə "▶ Sına" | ✅ |
 | Semantik rənglər: sinif, funksiya, metod, xassə, parametr, modul, sadalama; `sabit` → readonly, daxili → defaultLibrary | ✅ |
-| DAP (debaq) — `alqor dap`: dayanma nöqtələri (şərtli), `stopOnEntry`, next / stepIn / stepOut / pause, çağırış yığını, yerli və qlobal dəyişənlər (siyahı, lüğət, nümunə açılır), ifadə hesablama; çıxış `output` hadisəsidir | ✅ |
+| DAP (sazlama) — `alqor dap`: dayanma nöqtələri (şərtli), `stopOnEntry`, next / stepIn / stepOut / pause, çağırış yığını, yerli və qlobal dəyişənlər (siyahı, lüğət, nümunə açılır), ifadə hesablama; çıxış `output` hadisəsidir | ✅ |
 
 Fayl idxalı tip yoxlayıcısında da görünür: `gətir "./x.alq" kimi m`
 faylı ayrıca ayrılıb yoxlanır (keşlənir, dövri idxal qorunur), onun qlobal
@@ -559,7 +559,7 @@ onların köhnəlmədiyini yoxlayır.
 | Kod linzaları | ✓ (istinad sayı, test işlət) |
 | Sənəd sxemi | ✓ |
 | Semantik rənglər | ✓ |
-| Debaq (DAP) | ✓ |
+| Sazlama (DAP) | ✓ |
 | Azərbaycan klaviatura köməyi | ✓ (xüsusi genişləndirmə) |
 
 ---
@@ -568,7 +568,7 @@ onların köhnəlmədiyini yoxlayır.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Fayl Redaktə Seçim Görünüş Keç İşlət Debaq Alətlər Kömək  [⌕]   │
+│ Fayl Redaktə Seçim Görünüş Keç İşlət Sazlama Alətlər Kömək  [⌕]   │
 ├──────────────┬─────────────────────────┬────────────────────────┤
 │ 📁 LAYİHƏ    │  əsas.alq        ×    │  CANLI ÖNİZLƏMƏ        │
 │              │                         │  ┌──────────────────┐  │
@@ -592,7 +592,7 @@ onların köhnəlmədiyini yoxlayır.
 ### Əsas xüsusiyyətlər
 | Xüsusiyyət | Təsvir |
 |---|---|
-| **Menyu sətri** | İkon + yazı ilə 9 menyu: Fayl, Redaktə, Seçim, Görünüş (Panellər alt menyusu), Keç, İşlət, Debaq, Alətlər, Kömək; Alt+hərf, ox düymələri, qısayollar menyuda göstərilir ✅ |
+| **Menyu sətri** | İkon + yazı ilə 9 menyu: Fayl, Redaktə, Seçim, Görünüş (Panellər alt menyusu), Keç, İşlət, Sazlama, Alətlər, Kömək; Alt+hərf, ox düymələri, qısayollar menyuda göstərilir ✅ |
 | **Kontekst menyular** | Redaktor (təyinat, istinadlar, ad dəyiş, kəs/kopyala, sətir əməliyyatları…), layihə ağacı, nişanlar, dizayner, palet, çıxış, panel başlıqları ✅ |
 | **Əmr palitrası** | Ctrl+Shift+P: `>` əmrlər, fayl adı (Ctrl+P), `:` sətrə keç (Ctrl+G), `@` simvola keç (Ctrl+Shift+O) ✅ |
 | **Naviqasiya paneli** | Fəaliyyət zolağı (sol kənarda ikonlar): Layihə, Axtarış (layihə üzrə, regex / hərf / tam söz / filtr, hamısını əvəzlə), Elementlər, Xüsusiyyətlər, Struktur (sənəd simvolları, süzgəc) ✅ |
@@ -600,7 +600,7 @@ onların köhnəlmədiyini yoxlayır.
 | **Canlı önizləmə** | Veb / desktop / konsol çıxışı yan paneldə, hər dəyişiklikdə yenilənir |
 | **Azərbaycan klaviaturası** | Avtomatik çevirmə, `;` kompozisiya, hərf paneli |
 | **Tam Azərbaycan interfeysi** | Menyular, mesajlar, sənədlər |
-| **Sıfır konfiqurasiya debaq** | Sətir nömrəsinə klik (F9) — dayanma nöqtəsi; 🐞 Debaq (Ctrl+F5); F5 davam, F10 növbəti, F11 daxil ol, Shift+F11 çıx; çağırış yığını, dəyişənlər ağacı, ifadə hesablama (`alqor dap` üzərindən) ✅ |
+| **Sıfır konfiqurasiya sazlama** | Sətir nömrəsinə klik (F9) — dayanma nöqtəsi; 🐞 Sazlama (Ctrl+F5); F5 davam, F10 növbəti, F11 daxil ol, Shift+F11 çıx; çağırış yığını, dəyişənlər ağacı, ifadə hesablama (`alqor dap` üzərindən) ✅ |
 | **Avtomatik tamamlama** | `alqorls` ilə: üzvlər (`x.`), açar sözlər, şablonlar, Ctrl+Boşluq; imza ipucu ✅ |
 | **Önbaxış teması** | Studio-nun açıq/qaranlıq temasını izləyir ✅ |
 | **Vidjet paleti** | 118 element (beynəlxalq adlarla: Button, Breadcrumb …), hər biri əsl görünüşündə miniatürlə; iki klik işləyən kodu yazır ✅ |
@@ -615,37 +615,37 @@ Texnologiya: Tauri + CodeMirror 6. Ölçü: ~15 MB (Electron ekvivalenti ~150 MB
 
 ---
 
-## 13.10 Debaq
+## 13.10 Sazlama
 
-Hazırda debaq `alqor dap` (§ 13.8) üzərindədir: VS Code-da F5, Alqor
-Studio-da 🐞 Debaq. Aşağıdakı terminal konsolu (`alqor debaq`) və kodda
+Hazırda sazlama `alqor dap` (§ 13.8) üzərindədir: VS Code-da F5, Alqor
+Studio-da 🐞 Sazlama. Aşağıdakı terminal konsolu (`alqor sazlama`) və kodda
 `dayanNöqtəsi` hələ planlaşdırılır ⏳.
 
 ```bash
-alqor debaq əsas.alq
+alqor sazlama əsas.alq
 ```
 
 ```alqor
 // Kodda breakpoint
 dayanNöqtəsi
 
-// Debaq çapı
+// Sazlama çapı
 çap(dəyişən)                 // strukturlu, tiplərlə
 çap!(ifadə)                  // ifadəni və nəticəsini çap edir
                              // → "x + y = 15"
 ```
 
 ```
-alqor-debaq> davam
-alqor-debaq> addım            # bir sətir irəli
-alqor-debaq> içəri            # funksiyaya gir
-alqor-debaq> çıx              # funksiyadan çıx
-alqor-debaq> dəyişənlər       # cari əhatədəki dəyişənlər
-alqor-debaq> yığın            # çağırış yığını
-alqor-debaq> çap x
-alqor-debaq> qoy x = 5
-alqor-debaq> dayanNöqtəsi əsas.alq:42
-alqor-debaq> sil 1
+alqor-sazlama> davam
+alqor-sazlama> addım            # bir sətir irəli
+alqor-sazlama> içəri            # funksiyaya gir
+alqor-sazlama> çıx              # funksiyadan çıx
+alqor-sazlama> dəyişənlər       # cari əhatədəki dəyişənlər
+alqor-sazlama> yığın            # çağırış yığını
+alqor-sazlama> çap x
+alqor-sazlama> qoy x = 5
+alqor-sazlama> dayanNöqtəsi əsas.alq:42
+alqor-sazlama> sil 1
 ```
 
 ---

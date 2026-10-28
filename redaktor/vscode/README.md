@@ -12,7 +12,7 @@ Alqor dili üçün tam redaktor dəstəyi:
 - **İş sahəsi simvolları** (Ctrl+T)
 - **Kod linzaları** — "N istinad", `@sınaq` funksiyaları üstündə "▶ Sına"
 - **Semantik rənglər** — sinif, funksiya, metod, xassə, parametr, sabit
-- **Debaq** (F5) — dayanma nöqtələri (şərtli də), addım-addım icra,
+- **Sazlama** (F5) — dayanma nöqtələri (şərtli də), addım-addım icra,
   çağırış yığını, dəyişənlər, izləmə ifadələri (`alqor dap`)
 - **Sənəd sxemi** (Ctrl+Shift+O)
 - **Formatlama** (Shift+Alt+F) — `alqorfmt`

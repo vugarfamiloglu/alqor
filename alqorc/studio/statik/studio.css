@@ -334,7 +334,7 @@ body.sürüklənir iframe { pointer-events: none; }
 }
 .r-imza b { color: var(--vurğu); font-weight: 700; }
 
-/* ── Debaq ── */
+/* ── Sazlama ── */
 .r-xətlər [data-s] { cursor: pointer; position: relative; }
 .r-nömrələr .n-nöqtə::before {
   content: ""; position: absolute; left: 4px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px;
@@ -344,13 +344,13 @@ body.sürüklənir iframe { pointer-events: none; }
 .r-nömrələr .n-icra::after { content: "▶"; position: absolute; left: 2px; font-size: 9px; color: var(--xəbərdarlıq); }
 .r-icra { position: absolute; left: 0; width: 100000px; height: 21px;
   background: rgba(232, 184, 74, .22); border-left: 3px solid var(--xəbərdarlıq); }
-.debaq-alətləri { display: flex; gap: 4px; align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--kənar); }
-.debaq-alətləri button { padding: 2px 8px; }
-.debaq-vəziyyəti { color: var(--sönük); margin-left: 8px; font-size: 12px; }
-.debaq-gövdə { display: grid; grid-template-columns: minmax(160px, 1fr) 2fr; min-height: 0; flex: 1; overflow: hidden; }
-.debaq-gövdə > div { overflow: auto; padding: 4px 0; }
-.debaq-gövdə h4 { margin: 2px 10px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--sönük); }
-.debaq-yığın { border-right: 1px solid var(--kənar); }
+.sazlama-alətləri { display: flex; gap: 4px; align-items: center; padding: 4px 8px; border-bottom: 1px solid var(--kənar); }
+.sazlama-alətləri button { padding: 2px 8px; }
+.sazlama-vəziyyəti { color: var(--sönük); margin-left: 8px; font-size: 12px; }
+.sazlama-gövdə { display: grid; grid-template-columns: minmax(160px, 1fr) 2fr; min-height: 0; flex: 1; overflow: hidden; }
+.sazlama-gövdə > div { overflow: auto; padding: 4px 0; }
+.sazlama-gövdə h4 { margin: 2px 10px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--sönük); }
+.sazlama-yığın { border-right: 1px solid var(--kənar); }
 .kadr { padding: 2px 10px; cursor: pointer; display: flex; gap: 8px; font-family: var(--kod-şrift); font-size: 12px; }
 .kadr:hover { background: var(--fon-3); }
 .kadr.seçili { background: var(--seçim); }
@@ -362,10 +362,10 @@ body.sürüklənir iframe { pointer-events: none; }
 .dəyişən .d-ad { color: var(--t-özü); }
 .dəyişən .d-dəyər { color: var(--mətn); }
 .dəyişən .d-tip { color: var(--sönük); margin-left: 6px; font-size: 11px; }
-.debaq-ifadə { display: flex; gap: 6px; padding: 4px 10px; border-top: 1px solid var(--kənar); }
-.debaq-ifadə input { flex: 1; font-family: var(--kod-şrift); }
-.debaq-nəticə { padding: 0 10px 4px; font: 12px/1.5 var(--kod-şrift); color: var(--mətn); white-space: pre-wrap; }
-#alt-debaq { display: flex; flex-direction: column; }
+.sazlama-ifadə { display: flex; gap: 6px; padding: 4px 10px; border-top: 1px solid var(--kənar); }
+.sazlama-ifadə input { flex: 1; font-family: var(--kod-şrift); }
+.sazlama-nəticə { padding: 0 10px 4px; font: 12px/1.5 var(--kod-şrift); color: var(--mətn); white-space: pre-wrap; }
+#alt-sazlama { display: flex; flex-direction: column; }
 
 /* ── Vizual dizayner ── */
 .önbaxış-panel .dizayn { flex: 0 1 auto; max-height: 60%; min-height: 120px; overflow: auto; background: var(--fon-2);

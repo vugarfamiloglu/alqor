@@ -263,7 +263,7 @@ giriş = "mənbə/əsas.alq"
 hədəf = ["linux-x64", "veb"]      # linux-x64 | linux-arm64 | veb | wasm | windows-x64 | macos-arm64
 çıxış = "qurma/"
 optimallaşdırma = 2                # 0=yox 1=sürətli 2=balanslı 3=maksimum
-simvollar = yanlış                 # debaq simvolları
+simvollar = yanlış                 # sazlama simvolları
 statik = doğru                     # statik bağlama (asılılıqsız binar)
 sıxılma = doğru
 

@@ -45,7 +45,7 @@ class İcraçı:
         # yığını və cari korutin hər sapda müstəqil olmalıdır.
         self._yerli = _SapYerli()
         self.yığın: list[str] = []
-        # Debaqçı (`alqor dap`): hər cümlədən əvvəl `cümlə(c, m)`,
+        # Sazlayıcı (`alqor dap`): hər cümlədən əvvəl `cümlə(c, m)`,
         # funksiyaya girib-çıxanda `daxil(f, m)` / `çıx()` çağırılır
         self.izləyici = None
         if sys.getrecursionlimit() < _PYTHON_LİMİTİ:
@@ -564,7 +564,7 @@ class İcraçı:
         pass
 
     def _c_dayan_nöqtəsi(self, c: A.DayanNöqtəsi, m: Mühit) -> None:
-        self.çıxış("⏸ dayanNöqtəsi — debaq hələ qoşulmayıb")
+        self.çıxış("⏸ dayanNöqtəsi — sazlayıcı hələ qoşulmayıb")
 
     def _c_global(self, c: A.Global, m: Mühit) -> None:
         for ad in c.adlar:

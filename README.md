@@ -69,8 +69,8 @@ Bu bir oyuncaq dil deyil. Alqor müasir dillərin gücünü daşıyır:
 | ⌨️ **Hər klaviaturada** | `eger` yazsanız `əgər` kimi qəbul olunur — Azərbaycan klaviaturası olmayan kompüterdə də işləyir |
 | 🌐 **Bir dil — dörd hədəf** | Konsol, veb server, desktop pəncərə və **JavaScript** (Node.js / brauzer) |
 | 🐍 **Python ekosistemi** | `gətir python:numpy kimi np` — istənilən Python/PyPI kitabxanası birbaşa; `alqor python qur requests` layihəyə quraşdırır |
-| ⚡ **Sürətli icraçı** | Rust ilə yazılmış bytecode virtual maşın — Python icraçısından ~100 dəfə sürətli (`alqor işlət --motor rs`) |
-| 🛠 **Tam alət dəsti** | IDE, paket meneceri, formatlayıcı, linter, sınaq işlədicisi, sənəd generatoru, LSP, debaqçı |
+| ⚡ **Sürətli icraçı** | Rust ilə yazılmış bayt kodu ilə işləyən virtual maşın — Python icraçısından ~100 dəfə sürətli (`alqor işlət --motor rs`) |
+| 🛠 **Tam alət dəsti** | IDE, paket meneceri, formatlayıcı, kod yoxlayıcısı, sınaq işlədicisi, sənəd yaradıcısı, LSP, sazlayıcı |
 
 ## Xətalar sizinlə danışır
 
@@ -153,7 +153,7 @@ yaz(a * 2, a.max(), mean([1, 2, 3, 4]))     // [ 6  2  8  2 10] 5 2.5
 
 ## Alqor Studio
 
-Redaktor, element paleti, canlı önbaxış, vizual dizayner, debaq — kod
+Redaktor, element paleti, canlı önbaxış, vizual dizayner, sazlama — kod
 yazmadan interfeys qurmaq və kodu addım-addım izləmək üçün.
 
 **Forma dizayneri** (Delphi üslubu): pəncərəni `.forma` faylında
@@ -165,9 +165,9 @@ forma `ALQOR_VEB=1` ilə brauzerdə işləyir.
 
 ![Alqor Studio — qaranlıq tema](sened/ekranlar/studio-qaranliq.png)
 
-| Vizual dizayner | Debaq |
+| Vizual dizayner | Sazlama |
 |---|---|
-| ![Vizual dizayner](sened/ekranlar/studio-dizayner.png) | ![Debaq](sened/ekranlar/studio-debaq.png) |
+| ![Vizual dizayner](sened/ekranlar/studio-dizayner.png) | ![Sazlama](sened/ekranlar/studio-sazlama.png) |
 
 | Xüsusiyyətlər paneli | Desktop tətbiq |
 |---|---|
@@ -178,7 +178,7 @@ forma `ALQOR_VEB=1` ilə brauzerdə işləyir.
 | | |
 |---|---|
 | **~66 000** sətir | Python etalon implementasiyası (lekser, parser, tip yoxlayıcı, icraçı, kitabxana, alətlər) |
-| **~30 000** sətir | Rust icraçısı (bytecode virtual maşın, standart kitabxana, WebAssembly) |
+| **~30 000** sətir | Rust icraçısı (bayt kodu virtual maşını, standart kitabxana, WebAssembly) |
 | **1 350+** avtomatik sınaq | Windows və Linux-da hər dəyişiklikdə işləyir |
 | **118** vidjet | düymədən qrafikə, təqvimdən cədvələ |
 | **40+** standart modul | JSON, HTTP, verilənlər bazası (SQLite/PostgreSQL/MySQL + ORM), şifrələmə, PDF, şəkil, e-poçt, cron, pul hesabı, lokalizasiya... |
@@ -226,13 +226,13 @@ Rust icraçısını mənbədən qurmaq üçün: `cd alqor-rs && cargo build --re
 | Alət | Nə edir |
 |---|---|
 | `alqor` | İşlətmək, layihə yaratmaq, qurmaq, sınaq, sənəd, REPL |
-| **Alqor Studio** | IDE: redaktor, vizual dizayner, önbaxış, debaq |
+| **Alqor Studio** | IDE: redaktor, vizual dizayner, önbaxış, sazlama |
 | `alqorpm` / `alqorhub` | Paket meneceri və paket deposu serveri |
 | `alqor python` | Python/PyPI paketləri layihənin `python_paketlər/` qovluğuna (`gətir python:…`) |
 | `alqorfmt` | Kodu səliqəyə salır; ASCII açar sözləri düzəldir (`eger` → `əgər`) |
 | `alqorlint` | 35 qaydalı statik təhlil, avtomatik düzəlişlər |
 | `alqorls` | LSP serveri — VS Code, Neovim, Helix |
-| `alqor dap` | Debaqçı (DAP) |
+| `alqor dap` | Sazlayıcı (DAP) |
 | `alqor qur` | `.pyz`, `.deb`, `.rpm`, `.AppImage`, Windows, `.app`/`.dmg`, JavaScript |
 
 ## Yol xəritəsi
@@ -291,13 +291,13 @@ hamısı sıfırdan yazılıb.
 | **Lekser** | Əl ilə yazılmış; çox sözlü açar sözlər (`nə qədər ki`, `və ya`, `cəhd et`), ASCII yazılış (`eger` → `əgər`), şablon mətnlərdə `{ifadə:format}`, xam mətnlər `x"..."`, JSX-in xam skanı, mötərizə/blok kontekst yığını ilə sətir sonu qaydaları |
 | **Parser** | Rekursiv enmə + **Pratt** (prioritet dırmaşması), 16 prioritet səviyyəsi; xəta sonrası bərpa — bir faylda bütün xətalar bir dəfəyə göstərilir |
 | **Tip sistemi** | **Tədrici (gradual)**: tip yazmaq ixtiyaridir, yazılarsa yoxlanır; tip çıxarma, axın daralması (`əgər x boş deyil`), generiklər, birləşmə tipləri (`tam \| mətn`), ixtiyari tiplər (`mətn?`); 3 rejim: sərbəst / normal / sərt |
-| **İcraçı** | Python-da ağac gəzən interpretator, Rust-da **bytecode virtual maşın** (yerli yuvalar, birləşdirilmiş əmrlər, üzv keşləri); leksik əhatə, qapanmalar, **hədsiz dəqiqlikli tam ədədlər**, IEEE-754 onluqlar, struktur = dəyər tipi, sinif = istinad tipi |
+| **İcraçı** | Python-da ağac gəzən interpretator, Rust-da **bayt kodu virtual maşını** (yerli yuvalar, birləşdirilmiş əmrlər, üzv keşləri); leksik əhatə, qapanmalar, **hədsiz dəqiqlikli tam ədədlər**, IEEE-754 onluqlar, struktur = dəyər tipi, sinif = istinad tipi |
 | **Paralellik** | Tənbəl generatorlar (korutin), `asinxron`/`gözlə` (`Gələcək`), `paralel` və saplar, ləğv nişanları |
 | **Xətalar** | **121 xəta kodu** (`ALQ-L/P/T/R/M/Y…`), hər biri Azərbaycanca izah, mənbə parçası və düzəliş təklifi ilə; 40-dan çox tipli xəta iyerarxiyası (`cəhd et … tut (x: BölməXətası)`) |
 | **Veb** | Çoxsaplı HTTP server, marşrutlar, ara proqramlar, sessiya, CSRF/CORS/təhlükəsizlik başlıqları, şablon mühərriki, JSX → HTML (XSS qaçışı avtomatik), WebSocket |
 | **Desktop** | Eyni JSX/vidjet kodu yerli pəncərədə: Windows-da **WebView2/Edge**, Linux-da **WebKitGTK**, olmadıqda Chrome/Edge "tətbiq" pəncərəsi |
 | **JS hədəfi** | AAC → ES2020; `tam` → `BigInt`; Python icraçısı ilə **sətir-sətir eyni nəticə** avtomatik müqayisə ilə yoxlanır |
-| **Alət protokolları** | **LSP** (tamamlama, tərif, istinadlar, ad dəyişmə, kod linzaları, semantik rənglər), **DAP** (debaq) — VS Code, Neovim, Helix ilə işləyir |
+| **Alət protokolları** | **LSP** (tamamlama, tərif, istinadlar, ad dəyişmə, kod linzaları, semantik rənglər), **DAP** (sazlama) — VS Code, Neovim, Helix ilə işləyir |
 | **Alqor Studio** | Python serveri + çərçivəsiz (vanilla) JavaScript interfeys; öz redaktoru, vizual dizayner, canlı önbaxış |
 | **Keyfiyyət** | 1 350+ avtomatik sınaq: dil, kitabxana, alətlər, bələdçilərdəki hər nümunə, Studio-nun brauzer sınaqları (Playwright); Rust və JS icraçıları Python etalonu ilə avtomatik müqayisə olunur |
 

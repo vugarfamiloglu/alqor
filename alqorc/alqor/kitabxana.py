@@ -1402,7 +1402,9 @@ def _modulları_qur(icraçı) -> dict[str, Modul]:
 
     # ── jurnal ──────────────────────────────────────────────
     jurnal = Modul("jurnal", {
-        "debaq": D("debaq", lambda *a: _jurnal(icraçı, "DEBAQ", a), 1),
+        "sazlama": D("sazlama", lambda *a: _jurnal(icraçı, "SAZLAMA", a), 1),
+        # köhnə ad (2.4-dək) — `jurnal.debaq`
+        "debaq": D("debaq", lambda *a: _jurnal(icraçı, "SAZLAMA", a), 1),
         "info": D("info", lambda *a: _jurnal(icraçı, "İNFO", a), 1),
         "xəbərdarlıq": D("xəbərdarlıq",
                          lambda *a: _jurnal(icraçı, "XƏBƏRDARLIQ", a), 1),

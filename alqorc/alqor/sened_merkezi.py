@@ -392,7 +392,7 @@ Studio-da:
 | Sol panel | Layihə faylları, element paleti, axtarış |
 | Mərkəz | Kod redaktoru — rəngləmə, avtomatik tamamlama, xəta işarələri |
 | Sağ panel | Canlı önbaxış (interfeys proqramları üçün) |
-| Aşağı panel | Proqramın çıxışı, xətalar, debaq |
+| Aşağı panel | Proqramın çıxışı, xətalar, sazlama |
 
 Faydalı qısayollar: **F5** — işə sal, **F7** — vizual dizayner,
 **Ctrl+Shift+P** — əmr palitrası, **Ctrl+S** — saxla.
@@ -700,7 +700,7 @@ alqor pm ağac                     # asılılıq ağacı
 | `alqor studio [qovluq]` | Alqor Studio-nu açır |
 | `alqor sənədlər` | Bu sənədləri brauzerdə açır |
 | `alqor ls` | Dil serveri (LSP) — VS Code, Neovim |
-| `alqor dap` | Debaqçı (DAP) |
+| `alqor dap` | Sazlayıcı (DAP) |
 | `alqor hərf "ışıq"` | Azərbaycan böyük/kiçik hərf qaydalarını göstərir |
 | `alqor sırala zəfər ağac çay` | Əlifba sırası ilə sıralayır |
 | `alqor versiya` | Versiya |

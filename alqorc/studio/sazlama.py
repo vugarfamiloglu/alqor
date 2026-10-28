@@ -1,7 +1,7 @@
 """
-Alqor Studio — debaq sessiyası.
+Alqor Studio — sazlama sessiyası.
 
-Proqram `alqorc.py dap` (Debaq Adapter Protokolu) ilə ayrıca prosesdə
+Proqram `alqorc.py dap` (Sazlama Adapteri Protokolu) ilə ayrıca prosesdə
 işləyir; Studio serveri DAP MÜŞTƏRİSİDİR. Hadisələr adi icradakı kimi
 `İş.hadisələr` siyahısına yığılır və brauzer onları eyni SSE axını
 (`/api/islet/axin`) ilə oxuyur:
@@ -26,11 +26,11 @@ from .icra import İş
 AÇILMA_HƏDDİ = 200                   # bir sahədə göstərilən dəyişən sayı
 
 
-class DebaqXətası(Exception):
+class SazlamaXətası(Exception):
     pass
 
 
-class DebaqSessiyası(İş):
+class SazlamaSessiyası(İş):
     def __init__(self, fayl: Path, kök: Path,
                  nöqtələr: dict[str, list[int]], ad: str = ""):
         self.kök = kök
@@ -43,7 +43,7 @@ class DebaqSessiyası(İş):
         əmr = [sys.executable, "-u", str(ALQORC), "dap"]
         super().__init__(əmr, fayl.parent, ad or fayl.name)
         threading.Thread(target=self._başlat, args=(fayl, nöqtələr),
-                         daemon=True, name="studio-debaq").start()
+                         daemon=True, name="studio-sazlama").start()
 
     # ── DAP nəqliyyatı ────────────────────────────────────────────────
 
@@ -86,7 +86,7 @@ class DebaqSessiyası(İş):
                     b"Content-Length: %d\r\n\r\n" % len(b) + b)
                 self.proses.stdin.flush()
             except (OSError, ValueError, AttributeError):
-                raise DebaqXətası("debaq prosesi işləmir") from None
+                raise SazlamaXətası("sazlama prosesi işləmir") from None
         return n
 
     def sorğu(self, əmr: str, arq: dict | None = None,
@@ -95,12 +95,12 @@ class DebaqSessiyası(İş):
         with self._cavab_şərti:
             if not self._cavab_şərti.wait_for(
                     lambda: n in self._cavablar or self.bitdi, müddət):
-                raise DebaqXətası(f"`{əmr}` cavabı gəlmədi")
+                raise SazlamaXətası(f"`{əmr}` cavabı gəlmədi")
             c = self._cavablar.pop(n, None)
         if c is None:
-            raise DebaqXətası("debaq prosesi bitdi")
+            raise SazlamaXətası("sazlama prosesi bitdi")
         if not c.get("success"):
-            raise DebaqXətası(c.get("message") or f"`{əmr}` alınmadı")
+            raise SazlamaXətası(c.get("message") or f"`{əmr}` alınmadı")
         return c.get("body") or {}
 
     def _mesaj(self, m: dict) -> None:
@@ -136,8 +136,8 @@ class DebaqSessiyası(İş):
             for yol, sətirlər in nöqtələr.items():
                 self.nöqtələri_qoy(yol, sətirlər)
             self.sorğu("configurationDone")
-        except DebaqXətası as x:
-            self._əlavə("xəta", f"✖ debaq başlamadı: {x}\n")
+        except SazlamaXətası as x:
+            self._əlavə("xəta", f"✖ sazlama başlamadı: {x}\n")
             self.dayandır()
 
     # ── Vəziyyət ──────────────────────────────────────────────────────
@@ -166,8 +166,8 @@ class DebaqSessiyası(İş):
                       "yol": self._nisbi((k.get("source") or {}).get("path"))}
                      for k in kadrlar]
             sahələr = self.sahələr(yığın[0]["id"]) if yığın else []
-        except DebaqXətası as x:
-            self._əlavə("xəta", f"✖ debaq: {x}\n")
+        except SazlamaXətası as x:
+            self._əlavə("xəta", f"✖ sazlama: {x}\n")
             return
         self._əlavə("dayandı", "", səbəb=səbəb, yığın=yığın,
                     sahələr=sahələr)
@@ -188,10 +188,10 @@ class DebaqSessiyası(İş):
     def əmr_ver(self, ad: str) -> None:
         dap = self.ƏMRLƏR.get(ad)
         if dap is None:
-            raise DebaqXətası(f"naməlum əmr: {ad}")
+            raise SazlamaXətası(f"naməlum əmr: {ad}")
         if dap != "pause":
             if not self.dayanıb:
-                raise DebaqXətası("proqram dayanmayıb")
+                raise SazlamaXətası("proqram dayanmayıb")
             self.dayanıb = False
             self._əlavə("davam")
         self.sorğu(dap, {"threadId": 1})
@@ -204,7 +204,7 @@ class DebaqSessiyası(İş):
 
     def hesabla(self, ifadə: str, kadr: int | None = None) -> dict:
         if not self.dayanıb:
-            raise DebaqXətası("ifadə yalnız proqram dayananda hesablanır")
+            raise SazlamaXətası("ifadə yalnız proqram dayananda hesablanır")
         arq: dict = {"expression": ifadə, "context": "repl"}
         if kadr is not None:
             arq["frameId"] = kadr
@@ -216,6 +216,6 @@ class DebaqSessiyası(İş):
         if not self.bitdi:
             try:
                 self._göndər("terminate")
-            except DebaqXətası:
+            except SazlamaXətası:
                 pass
         super().dayandır()

@@ -1,4 +1,4 @@
-"""`alqor dap` — Debaq Adapter Protokolu."""
+"""`alqor dap` — Sazlama Adapteri Protokolu."""
 
 import json
 import os

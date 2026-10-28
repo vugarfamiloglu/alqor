@@ -742,7 +742,7 @@ class Kompilyator:
         return []
 
     def _c_DayanNöqtəsi(self, c) -> str:
-        return "$.P.yaz(\"⏸ dayanNöqtəsi — debaq hələ qoşulmayıb\");"
+        return "$.P.yaz(\"⏸ dayanNöqtəsi — sazlayıcı hələ qoşulmayıb\");"
 
     def _c_MetodElanı(self, c) -> str:
         return ("throw $.xəta(\"DaxiliXəta\", "

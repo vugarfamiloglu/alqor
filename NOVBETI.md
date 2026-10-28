@@ -44,7 +44,7 @@
   və Studio-da görünür)
 - `alqorfmt` (formatlayıcı), `alqorls` (LSP: layihə üzrə keçid/istinad/ad
   dəyişmə, iş sahəsi simvolları, kod linzaları, semantik rənglər),
-  `alqor dap` (debaqçı) + VS Code genişlənməsi (`redaktor/vscode/`, F5 debaq)
+  `alqor dap` (sazlayıcı) + VS Code genişlənməsi (`redaktor/vscode/`, F5 sazlama)
 - `qur` → tək fayllı `.pyz` paketi; `qur --quraşdırıcı` → `.deb`, `.rpm`,
   `.AppImage`, Windows (zip + Inno Setup `.iss`), macOS `.app` və `.dmg`; `qur --studio` → Alqor Studio-nun
   quraşdırıcıları (`.alq` əlaqəsi, menyu/masaüstü ikonu, `--python-daxil`)
@@ -56,7 +56,7 @@
 - Xüsusiyyətlər paneli: mətn, növ, rəng, fon, kənar, künc, şrift …
   → kod avtomatik yazılır, önbaxış canlı yenilənir (Studio temasını izləyir)
 - Avtomatik tamamlama və imza ipucu (`alqorls`)
-- Debaq: dayanma nöqtələri, addımlar, yığın, dəyişənlər, ifadə hesablama
+- Sazlama: dayanma nöqtələri, addımlar, yığın, dəyişənlər, ifadə hesablama
 - Vizual dizayner (⊞ Dizayn): sürüklə-burax, daşı, sil — kod yenilənir
 - Forma dizayneri (Delphi üslubu): `.forma` + `.alq` cütü, palitra
   (Verilənlər tabı ilə), inspektor (Xüsusiyyətlər / Hadisələr — iki klik

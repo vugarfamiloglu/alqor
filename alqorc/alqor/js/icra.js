@@ -1,5 +1,5 @@
 /*
- * Alqor — JavaScript icra mühiti (runtime).
+ * Alqor — JavaScript icra mühiti.
  *
  * `alqor qur --hədəf js|veb` kompilyatorunun çıxışı bu faylın üzərində
  * işləyir. Semantika Python interpretatoru (`alqor/icraci.py`) ilə
@@ -3098,7 +3098,8 @@ modullar["sistem"] = () => new Modul("sistem", {
 });
 
 modullar["jurnal"] = () => new Modul("jurnal", {
-  "debaq": D("debaq", 1, null, (...a) => jurnalYaz("DEBAQ", a)),
+  "sazlama": D("sazlama", 1, null, (...a) => jurnalYaz("SAZLAMA", a)),
+  "debaq": D("debaq", 1, null, (...a) => jurnalYaz("SAZLAMA", a)),
   "info": D("info", 1, null, (...a) => jurnalYaz("İNFO", a)),
   "xəbərdarlıq": D("xəbərdarlıq", 1, null, (...a) => jurnalYaz("XƏBƏRDARLIQ", a)),
   "xəta": D("xəta", 1, null, (...a) => jurnalYaz("XƏTA", a)),

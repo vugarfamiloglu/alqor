@@ -1513,7 +1513,8 @@ fn jurnal() -> Rc<Modul> {
         })
     };
     m("jurnal", vec![
-        ("debaq", D_("debaq", 1, None, s("DEBAQ"))),
+        ("sazlama", D_("sazlama", 1, None, s("SAZLAMA"))),
+        ("debaq", D_("debaq", 1, None, s("SAZLAMA"))),
         ("info", D_("info", 1, None, s("İNFO"))),
         ("xəbərdarlıq", D_("xəbərdarlıq", 1, None, s("XƏBƏRDARLIQ"))),
         ("xəta", D_("xəta", 1, None, s("XƏTA"))),

@@ -22,7 +22,7 @@ ALQ - T - 001
 | `T` | Tip | Semantik analiz zamanı |
 | `M` | Modul | İdxal/ixrac həll olunarkən |
 | `R` | İcra | Proqram işləyərkən |
-| `S` | Təhlükəsizlik | Linter yoxlaması |
+| `S` | Təhlükəsizlik | Kod yoxlayıcısı (`alqorlint`) |
 
 | Simvol | Mənası |
 |---|---|

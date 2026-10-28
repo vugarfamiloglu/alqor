@@ -765,7 +765,7 @@ impl İcraçı {
             }
             Cümlə::Keç(_) | Cümlə::İxracSiyahısı(_) | Cümlə::Bitiş(..) => Ok(()),
             Cümlə::DayanNöqtəsi(_) => {
-                self.yaz("⏸ dayanNöqtəsi — debaq hələ qoşulmayıb");
+                self.yaz("⏸ dayanNöqtəsi — sazlayıcı hələ qoşulmayıb");
                 Ok(())
             }
             Cümlə::Global(_, adlar) => {

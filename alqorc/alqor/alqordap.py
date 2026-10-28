@@ -1,5 +1,5 @@
 """
-Alqor — Debaq Adapter Protokolu (DAP) serveri.
+Alqor — Sazlama Adapteri Protokolu (DAP) serveri.
 
     alqor dap            # redaktor özü işə salır (stdin/stdout)
 
@@ -574,7 +574,7 @@ class DAPServer:
     def _giriş(self, sorğu: str = "") -> str:
         if sorğu:
             self.çap(sorğu)
-        self.çap("⚠ debaq rejimində klaviaturadan oxumaq mümkün deyil — "
+        self.çap("⚠ sazlama rejimində klaviaturadan oxumaq mümkün deyil — "
                  "boş mətn qaytarıldı\n", "console")
         return ""
 

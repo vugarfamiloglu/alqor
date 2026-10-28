@@ -295,12 +295,12 @@ class Studio:
             ("POST", "/api/forma/sxem/yaz"): self.api_forma_sxem_yaz,
             ("POST", "/api/forma/sxem/idxal"): self.api_forma_sxem_idxal,
             ("POST", "/api/forma/model"): self.api_forma_model,
-            ("POST", "/api/debaq"): self.api_debaq,
-            ("POST", "/api/debaq/emr"): self.api_debaq_əmr,
-            ("POST", "/api/debaq/noqteler"): self.api_debaq_nöqtələr,
-            ("POST", "/api/debaq/hesabla"): self.api_debaq_hesabla,
-            ("POST", "/api/debaq/deyisenler"): self.api_debaq_dəyişənlər,
-            ("POST", "/api/debaq/kadr"): self.api_debaq_kadr,
+            ("POST", "/api/sazlama"): self.api_sazlama,
+            ("POST", "/api/sazlama/emr"): self.api_sazlama_əmr,
+            ("POST", "/api/sazlama/noqteler"): self.api_sazlama_nöqtələr,
+            ("POST", "/api/sazlama/hesabla"): self.api_sazlama_hesabla,
+            ("POST", "/api/sazlama/deyisenler"): self.api_sazlama_dəyişənlər,
+            ("POST", "/api/sazlama/kadr"): self.api_sazlama_kadr,
             ("POST", "/api/ascii-duzelt"): self.api_ascii,
             ("POST", "/api/formatla"): self.api_formatla,
             ("POST", "/api/islet"): self.api_işlət,
@@ -881,7 +881,7 @@ class Studio:
         self.layihə.yaz(nisbi, S.model_kodu(sx))
         return {"yol": nisbi}
 
-    # ── Debaq ─────────────────────────────────────────────────────────
+    # ── Sazlama ─────────────────────────────────────────────────────────
 
     def _nöqtələr(self, s: dict) -> dict[str, list[int]]:
         n = s.get("nöqtələr") or {}
@@ -896,59 +896,59 @@ class Studio:
                            if isinstance(x, int) and x > 0]
         return nəticə
 
-    def api_debaq(self, s: dict) -> dict:
-        from .debaq import DebaqSessiyası
+    def api_sazlama(self, s: dict) -> dict:
+        from .sazlama import SazlamaSessiyası
         yol = self.layihə.yol(self._mətn(s, "yol"))
         if not yol.is_file():
             raise ApiXətası("fayl tapılmadı — əvvəlcə saxlayın", 404)
-        sessiya = DebaqSessiyası(yol, self.layihə.kök, self._nöqtələr(s),
+        sessiya = SazlamaSessiyası(yol, self.layihə.kök, self._nöqtələr(s),
                                  self.layihə.nisbi(yol))
         self.icra.əlavə_et(sessiya)
         return sessiya.lüğət()
 
-    def _debaq(self, s: dict):
-        from .debaq import DebaqSessiyası
+    def _sazlama(self, s: dict):
+        from .sazlama import SazlamaSessiyası
         iş = self._iş(s)
-        if not isinstance(iş, DebaqSessiyası):
-            raise ApiXətası("bu iş debaq sessiyası deyil")
+        if not isinstance(iş, SazlamaSessiyası):
+            raise ApiXətası("bu iş sazlama sessiyası deyil")
         return iş
 
-    def _debaq_çağır(self, f, *a):
-        from .debaq import DebaqXətası
+    def _sazlama_çağır(self, f, *a):
+        from .sazlama import SazlamaXətası
         try:
             return f(*a)
-        except DebaqXətası as x:
+        except SazlamaXətası as x:
             raise ApiXətası(str(x), 409) from None
 
-    def api_debaq_əmr(self, s: dict) -> dict:
-        d = self._debaq(s)
-        self._debaq_çağır(d.əmr_ver, self._mətn(s, "əmr"))
+    def api_sazlama_əmr(self, s: dict) -> dict:
+        d = self._sazlama(s)
+        self._sazlama_çağır(d.əmr_ver, self._mətn(s, "əmr"))
         return {"ok": True}
 
-    def api_debaq_nöqtələr(self, s: dict) -> dict:
-        d = self._debaq(s)
+    def api_sazlama_nöqtələr(self, s: dict) -> dict:
+        d = self._sazlama(s)
         for yol, sətirlər in self._nöqtələr(s).items():
-            self._debaq_çağır(d.nöqtələri_qoy, yol, sətirlər)
+            self._sazlama_çağır(d.nöqtələri_qoy, yol, sətirlər)
         return {"ok": True}
 
-    def api_debaq_hesabla(self, s: dict) -> dict:
-        d = self._debaq(s)
-        return self._debaq_çağır(d.hesabla, self._mətn(s, "ifadə"),
+    def api_sazlama_hesabla(self, s: dict) -> dict:
+        d = self._sazlama(s)
+        return self._sazlama_çağır(d.hesabla, self._mətn(s, "ifadə"),
                                  self._tam(s, "kadr"))
 
-    def api_debaq_dəyişənlər(self, s: dict) -> dict:
-        d = self._debaq(s)
+    def api_sazlama_dəyişənlər(self, s: dict) -> dict:
+        d = self._sazlama(s)
         ref = self._tam(s, "ref")
         if not ref:
             raise ApiXətası("`ref` lazımdır")
-        return {"dəyişənlər": self._debaq_çağır(d.dəyişənlər, ref)}
+        return {"dəyişənlər": self._sazlama_çağır(d.dəyişənlər, ref)}
 
-    def api_debaq_kadr(self, s: dict) -> dict:
-        d = self._debaq(s)
+    def api_sazlama_kadr(self, s: dict) -> dict:
+        d = self._sazlama(s)
         kadr = self._tam(s, "kadr")
         if kadr is None:
             raise ApiXətası("`kadr` lazımdır")
-        return {"sahələr": self._debaq_çağır(d.sahələr, kadr)}
+        return {"sahələr": self._sazlama_çağır(d.sahələr, kadr)}
 
     def _iş(self, s: dict):
         iş = self.icra.al(self._mətn(s, "id"))

@@ -892,7 +892,7 @@ def _modullar() -> dict[str, T.ModulTipi]:
 
     jurnal = T.ModulTipi("jurnal", {
         a: Fsərbəst(h) for a in
-        ("debaq", "info", "xəbərdarlıq", "xəta", "kritik")
+        ("sazlama", "debaq", "info", "xəbərdarlıq", "xəta", "kritik")
     })
 
     test = T.ModulTipi("test", {

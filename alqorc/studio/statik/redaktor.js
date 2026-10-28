@@ -55,7 +55,7 @@ class Redaktor {
     this.versiya = 0;
 
     this.nöqtələr = new Set();    // dayanma nöqtələri (sətir nömrələri)
-    this.icraSətri = 0;           // debaqda dayanılan sətir
+    this.icraSətri = 0;           // sazlamada dayanılan sətir
     this.tamamlayıcı = null;      // async (kursor) → {maddələr} (LSP CompletionItem)
     this.imzaVerən = null;        // async (kursor) → LSP SignatureHelp | null
     this._tamamlaQur();
@@ -628,7 +628,7 @@ class Redaktor {
     this._kursorDəyişdi();
   }
 
-  // ══ Debaq ══════════════════════════════════════════════════════════
+  // ══ Sazlama ══════════════════════════════════════════════════════════
 
   nöqtəDəyiş(sətir = this.sətirSütun().sətir) {
     if (this.nöqtələr.has(sətir)) this.nöqtələr.delete(sətir);
@@ -642,7 +642,7 @@ class Redaktor {
     this.çək();
   }
 
-  /** Debaqda dayanılan sətir (0 — yoxdur). */
+  /** Sazlamada dayanılan sətir (0 — yoxdur). */
   icraSətriniQoy(sətir) {
     this.icraSətri = sətir || 0;
     this.icra.hidden = !this.icraSətri;

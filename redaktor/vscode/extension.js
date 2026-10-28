@@ -2,7 +2,7 @@
 //
 // Rəngləmə TextMate qrammatikasından gəlir; qalan hər şey (xətalar,
 // tamamlama, hover, təyinata keçid, istinadlar, ad dəyişmə, formatlama,
-// sürətli düzəlişlər, debaq (`alqor dap`), kod linzaları, semantik rənglər, layihə üzrə
+// sürətli düzəlişlər, sazlama (`alqor dap`), kod linzaları, semantik rənglər, layihə üzrə
 // simvollar) `alqor ls --stdio` dil serverindəndir.
 
 const vscode = require("vscode");
@@ -71,8 +71,8 @@ function sına(uri, ad) {
   t.sendText(`${əsas.join(" ")} sına "${fayl}" --filtr "${ad.replace(/"/g, '\\"')}"`);
 }
 
-// Debaqçı: `alqor dap` (eyni əmr, `ls --stdio` əvəzinə `dap`)
-class DebaqFabriki {
+// Sazlayıcı: `alqor dap` (eyni əmr, `ls --stdio` əvəzinə `dap`)
+class SazlamaFabriki {
   createDebugAdapterDescriptor() {
     const { command, args } = serverƏmri();
     return new vscode.DebugAdapterExecutable(command, [...args.slice(0, -2), "dap"], {
@@ -83,7 +83,7 @@ class DebaqFabriki {
 
 async function activate(context) {
   context.subscriptions.push(
-    vscode.debug.registerDebugAdapterDescriptorFactory("alqor", new DebaqFabriki()),
+    vscode.debug.registerDebugAdapterDescriptorFactory("alqor", new SazlamaFabriki()),
     vscode.commands.registerCommand("alqor.istinadlarıGöstər", istinadlarıGöstər),
     vscode.commands.registerCommand("alqor.sına", sına),
     vscode.commands.registerCommand("alqor.serveriYenidənBaşlat", async () => {

@@ -1,7 +1,7 @@
 {
   "name": "alqor",
   "displayName": "Alqor",
-  "description": "Alqor proqramlaşdırma dili: sintaksis rəngləmə, xətalar, tamamlama, təyinata keçid, ad dəyişmə, formatlama, debaq",
+  "description": "Alqor proqramlaşdırma dili: sintaksis rəngləmə, xətalar, tamamlama, təyinata keçid, ad dəyişmə, formatlama, sazlama",
   "version": "2.4.0",
   "publisher": "alqor",
   "license": "MIT",
@@ -121,7 +121,7 @@
         ],
         "configurationSnippets": [
           {
-            "label": "Alqor: faylı debaq et",
+            "label": "Alqor: faylı sazla",
             "body": {
               "type": "alqor",
               "request": "launch",
