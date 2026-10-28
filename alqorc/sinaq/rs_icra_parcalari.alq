@@ -1138,3 +1138,63 @@ generator funksiya f()
     ver 2
 son
 yaz(f().siyahıyaÇevir())
+=====
+funksiya sayğac(f)
+    dəyişən n = 0
+    qaytar funksiya(...a)
+        n += 1
+        yaz("{f.ad} çağırışı #{n}")
+        qaytar f(...a)
+    son
+son
+funksiya önəlavə(mətn: mətn, ayırıcı = ": ")
+    qaytar (f) => funksiya(x) qaytar mətn + ayırıcı + f(x) son
+son
+@sayğac
+@önəlavə("Nəticə", ayırıcı: " = ")
+funksiya kvadrat(x) qaytar "{x * x}" son
+yaz(kvadrat(3))
+yaz(kvadrat(4))
+@naməlumAnnotasiya
+@saf
+funksiya cüt(x) qaytar x * 2 son
+yaz(cüt(21), cüt.ad, yaz.ad, ((x) => x).ad)
+=====
+funksiya ikiqat(f) qaytar (x) => f(x) * 2 son
+funksiya xarici(n)
+    @ikiqat
+    funksiya daxili(x) qaytar x + n son
+    qaytar daxili(10)
+son
+yaz(xarici(1), xarici(5))
+@ikiqat
+funksiya əvvəl_istifadə(x) qaytar x son
+yaz(əvvəl_istifadə(7))
+=====
+funksiya jurnal(m)
+    qaytar funksiya(o, ...a, **adlı)
+        yaz("{m.ad}: {a}")
+        qaytar m(o, ...a, **adlı)
+    son
+son
+sinif Bank
+    xassə balans = 100
+    @jurnal
+    metod çıxar(məbləğ, səbəb = "naməlum")
+        özü.balans -= məbləğ
+        qaytar "{səbəb}: {özü.balans}"
+    son
+son
+dəyişən b = Bank()
+yaz(b.çıxar(30))
+yaz(b.çıxar(20, səbəb: "kirayə"))
+dəyişən m = b.çıxar
+yaz(m(5))
+funksiya qur(a, b = 2, **qalan) qaytar "{a} {b} {qalan}" son
+dəyişən seçim = {"b": 7, "c": 9}
+yaz(qur(1, **seçim), qur(**{"a": 0}), qur(5, **{}, c: 1))
+cəhd et
+    qur(1, **[1, 2])
+tut (x: Xəta)
+    yaz(x.mesaj)
+son

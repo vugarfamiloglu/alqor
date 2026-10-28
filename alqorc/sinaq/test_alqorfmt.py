@@ -256,5 +256,15 @@ class CLISınağı(unittest.TestCase):
             self.assertEqual(f.read_text(encoding="utf-8"), "əgər onda\n")
 
 
+class AdlıYayma(unittest.TestCase):
+    def test_iki_ulduz_təklidir(self):
+        kod = "funksiya f(a, ...b, **c) qaytar g(...b, **c) son\n" \
+              "yaz(f(1, ** {\"x\": 2}), 2 ** 3)\n"
+        self.assertEqual(
+            fmt(kod),
+            "funksiya f(a, ...b, **c) qaytar g(...b, **c) son\n"
+            "yaz(f(1, **{\"x\": 2}), 2 ** 3)\n")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

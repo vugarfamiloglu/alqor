@@ -142,6 +142,7 @@ class Kompilyator:
         self.fk: FunksiyaK | None = None
         self.lazımi: set[str] = set()      # ƏLAVƏ_MODULLAR-dan işlənənlər
         self.interfeys = False             # proqram `pəncərə` idxal edir
+        self._qaldırılır = False           # bəzəyicilər qaldırılmada yox
 
     # ── Adlar ─────────────────────────────────────────────────────────
 
@@ -263,11 +264,20 @@ class Kompilyator:
                 if isinstance(c, növlər):
                     qaldırılan.append(c)
         # Funksiyalar bir-birinə istinad edə bilsin: əvvəl hamısı elan
-        for c in qaldırılan:
-            n.extend(self._cümlə(c))
+        self._qaldırılır = True
+        try:
+            for c in qaldırılan:
+                n.extend(self._cümlə(c))
+        finally:
+            self._qaldırılır = False
+        # Bəzəyicilər elanın öz yerində tətbiq olunur
         for c in gövdə:
             if not any(c is q for q in qaldırılan):
                 n.extend(self._cümlə(c))
+            else:
+                b = self._bəzə(c)
+                if b:
+                    n.append(b)
         return n
 
     @staticmethod
@@ -877,6 +887,7 @@ class Kompilyator:
                        sinif_js=sinif_js or (self.fk.sinif_js if self.fk else None),
                        özü=özü or (self.fk.özü if self.fk else False))
         köhnə_fk, köhnə_əh = self.fk, self.əh
+        köhnə_q, self._qaldırılır = self._qaldırılır, False
         self.fk = fk
         self.əh = Əhatə(köhnə_əh, fk)
         try:
@@ -959,6 +970,7 @@ class Kompilyator:
             return nəticə
         finally:
             self.fk, self.əh = köhnə_fk, köhnə_əh
+            self._qaldırılır = köhnə_q
 
     @staticmethod
     def _yaymadır(gövdə) -> bool:
@@ -995,7 +1007,39 @@ class Kompilyator:
         f = self._funksiya(c.ad, c.parametrlər, c.gövdə,
                            generator=c.generator, asinxron=c.asinxron,
                            yaddaşla="yaddaşla" in annot)
-        return self._ada_yaz(c.ad, f, True)
+        js = self._ada_yaz(c.ad, f, True)
+        if not self._qaldırılır:
+            js += self._bəzə(c)
+        return js
+
+    # ── Bəzəyicilər (spes. § 5.11) ───────────────────────────────────
+
+    def _bəzəyicilər(self, annotasiyalar: list[A.Annotasiya]) -> list[str]:
+        """İstifadəçi bəzəyiciləri (JS ifadələri); tapılmayan ad `null`."""
+        from ..icraci import DAXİLİ_ANNOTASİYALAR
+        n: list[str] = []
+        for a in annotasiyalar:
+            if a.ad in DAXİLİ_ANNOTASİYALAR:
+                continue
+            m = self._tap(a.ad)
+            d = m.js if m is not None else f"$.qadVarsa({_js_mətn(a.ad)})"
+            if a.arqumentlər:
+                arq = ", ".join(self._arqumentlər(a.arqumentlər))
+                d = f"$.bəzəyici({d}, () => [{arq}])"
+            n.append(d)
+        return n
+
+    def _bəzə(self, c: A.Cümlə) -> str:
+        """Elanın öz yerində: `ad = bəzə(ad, [...])`."""
+        annot = getattr(c, "annotasiyalar", None)
+        if not annot or not isinstance(c, (A.FunksiyaElanı, A.SinifElanı)) \
+                or getattr(c, "quruluş", "") == "obyekt":
+            return ""
+        b = self._bəzəyicilər(annot)
+        if not b:
+            return ""
+        return "\n" + self._ada_yaz(
+            c.ad, f"$.bəzə({self._ad_js(c.ad)}, [{', '.join(b)}])", False)
 
     # ── Siniflər ──────────────────────────────────────────────────────
 
@@ -1036,8 +1080,11 @@ class Kompilyator:
              f"son: {'true' if c.son else 'false'}, "
              f"interfeyslər: {interfeyslər}, qarışıqlar: {qarışıqlar}}}")
         gövdə = self._sinif_üzvləri(S, c.üzvlər)
-        return self._ada_yaz(c.ad, f"$.sinif({o}, ({S}) => {{\n{gövdə}\n}})",
-                             True)
+        js = self._ada_yaz(c.ad, f"$.sinif({o}, ({S}) => {{\n{gövdə}\n}})",
+                           True)
+        if not self._qaldırılır:
+            js += self._bəzə(c)
+        return js
 
     def _sinif_üzvləri(self, S: str, üzvlər: list[A.Cümlə]) -> str:
         fk = FunksiyaK("sinif", sinif_js=S)
@@ -1085,6 +1132,14 @@ class Kompilyator:
                                        asinxron=ü.asinxron,
                                        yaddaşla="yaddaşla" in annot)
                     hədəf = "statiklər" if ü.statik else "metodlar"
+                    b = self._bəzəyicilər(ü.annotasiyalar) \
+                        if ü.annotasiyalar else []
+                    if b and ü.statik:
+                        f = f"$.bəzə({f}, [{', '.join(b)}])"
+                    elif b:
+                        f = (f"$.bəzənmişMetod($.bəzə($.sərbəstMetod({f}, "
+                             f"{_js_mətn(ü.ad)}), [{', '.join(b)}]), "
+                             f"{_js_mətn(ü.ad)})")
                     n.append(f"{S}.{hədəf}.set({_js_mətn(ü.ad)}, {f});")
                 elif isinstance(ü, A.QurucuElanı):
                     f = self._funksiya(ü.ad or "<qurucu>", ü.parametrlər,
@@ -1530,15 +1585,25 @@ class Kompilyator:
     def _arqumentlər(self, arqumentlər: list[A.Arqument]) -> list[str]:
         n: list[str] = []
         adlı: list[str] = []
+        yayılan: list[str] = []          # `**lüğət` — sıra ilə
         for a in arqumentlər:
             d = self._ifadə(a.dəyər)
             if a.yayma:
                 n.append(f"...$.siyahıya({d})")
+            elif a.adlı_yayma:
+                if adlı:
+                    yayılan.append("{" + ", ".join(adlı) + "}")
+                    adlı = []
+                yayılan.append(d)
             elif a.ad:
                 adlı.append(f"{_js_mətn(a.ad)}: {d}")
             else:
                 n.append(d)
-        if adlı:
+        if yayılan:
+            if adlı:
+                yayılan.append("{" + ", ".join(adlı) + "}")
+            n.append("$.adlıYay(" + ", ".join(yayılan) + ")")
+        elif adlı:
             n.append("new $.Adlı({" + ", ".join(adlı) + "})")
         return n
 
@@ -1679,7 +1744,7 @@ class Kompilyator:
         return self._iç_funksiya("blok", qur)
 
     def _e_Lambda(self, e: A.Lambda) -> str:
-        f = self._funksiya("<lambda>", e.parametrlər, e.gövdə,
+        f = self._funksiya("<anonim>", e.parametrlər, e.gövdə,
                            generator=e.generator, asinxron=e.asinxron)
         if e.tutmalar:
             # `[x] (...) => ...` — tutulan adlar yaradılma anında kopyalanır

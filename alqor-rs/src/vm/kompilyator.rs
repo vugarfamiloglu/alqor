@@ -826,6 +826,7 @@ impl<'r> Kompilyator<'r> {
                 self.əmr(Əmr::Artır(op == "++"), *yer);
                 self.təyin(hədəf)?;
             }
+            Cümlə::Funksiya(_) if crate::icraci::cagiris::bəzəyici_ola_bilər(c) => return Err(Dəstəkləmir),
             Cümlə::Funksiya(f) => {
                 let yaddaşla = f.annotasiyalar.iter().any(|a| a == "yaddaşla");
                 let i = self.alt_funksiya(
@@ -1133,6 +1134,9 @@ impl<'r> Kompilyator<'r> {
     // ═══════════════════════════════════════════════════════════════════
 
     fn arqumentlər(&mut self, arq: &[aac::Arqument], yer: Yer) -> K<Option<u32>> {
+        if arq.iter().any(|x| x.adlı_yayma) {
+            return Err(Dəstəkləmir);
+        }
         let sadə = arq.iter().all(|x| !x.yayma && x.ad.is_none());
         if sadə {
             for x in arq {
@@ -1448,6 +1452,7 @@ impl<'r> Kompilyator<'r> {
                 self.ifadə(x)?;
                 self.əmr(Əmr::Yayma, *yer);
             }
+            İfadə::Yeni(_, _, _, arq) if arq.iter().any(|x| x.adlı_yayma) => return Err(Dəstəkləmir),
             İfadə::Yeni(yer, t, qurucu, arq) => {
                 let ti = self.tip(t);
                 self.əmr(Əmr::TipDəyəri(ti), *yer);
@@ -1597,7 +1602,7 @@ impl<'r> Kompilyator<'r> {
                     aac::LambdaGövdə::Blok(g) => FGövdə::Blok(g.clone()),
                     aac::LambdaGövdə::İfadə(x) => FGövdə::İfadə(x.clone()),
                 };
-                let i = self.alt_funksiya("<lambda>", parametrlər.clone(), g, *asinxron, *generator, false, &**e);
+                let i = self.alt_funksiya("<anonim>", parametrlər.clone(), g, *asinxron, *generator, false, &**e);
                 self.əmr(Əmr::Lambda(i), *yer);
             }
             İfadə::Blok(..) | İfadə::JSXElement(..) | İfadə::JSXParça(..) => self.ötür_ifadə(e),

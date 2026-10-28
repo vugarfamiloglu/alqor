@@ -26,6 +26,7 @@ fn funksiya(ad_: &str, p: Rc<Vec<aac::Parametr>>, g: aac::Gövdə, m: &Mühit, a
         sinif,
         annot: a,
         yaddaş: if a.yaddaşla { Some(Default::default()) } else { None },
+        bəzənmiş: None,
     })
 }
 
@@ -92,6 +93,9 @@ impl İcraçı {
             m.elan(ad(&c.ad), n, false);
         } else {
             m.elan(ad(&c.ad), D::Sinif(s), false);
+            if !self.qaldırılır.get() && !c.bəzəyicilər.is_empty() {
+                self.bəzə_ad(&c.ad, &c.bəzəyicilər, m)?;
+            }
         }
         Ok(())
     }
@@ -142,8 +146,29 @@ impl İcraçı {
                     }
                     let a = annot(&f.annotasiyalar, if f.statik { &["statik"] } else { &[] });
                     let ff = funksiya(&f.ad, f.parametrlər.clone(), f.gövdə.clone().unwrap_or_default(), m, f.asinxron, f.generator, Some(s.clone()), a);
+                    let bəzəyicilər = self.bəzəyicilər(&f.bəzəyicilər, m)?;
                     if f.statik {
-                        s.statiklər.borrow_mut().insert(ad(&f.ad), D::Funksiya(ff));
+                        let d = self.bəzəyiciləri_tətbiq_et(D::Funksiya(ff), &bəzəyicilər)?;
+                        s.statiklər.borrow_mut().insert(ad(&f.ad), d);
+                    } else if !bəzəyicilər.is_empty() {
+                        let metod = ff.clone();
+                        let ad_ = f.ad.clone();
+                        let sərbəst = super::deyerler::daxili(&f.ad, 0, None, move |i, args, adlı| {
+                            let mut args = args.into_iter();
+                            let Some(özü) = args.next() else {
+                                return Err(xəta_yer(
+                                    "ArqumentXətası",
+                                    format!("`{}` metodu `özü` arqumenti olmadan çağırıldı", ad_),
+                                    None,
+                                    "ALQ-R022",
+                                ));
+                            };
+                            i.funksiya_çağır(&metod.bağla(özü), args.collect(), adlı, None)
+                        });
+                        let hədəf = self.bəzəyiciləri_tətbiq_et(sərbəst, &bəzəyicilər)?;
+                        let mut b = funksiya(&f.ad, f.parametrlər.clone(), Default::default(), m, false, false, Some(s.clone()), a);
+                        Rc::get_mut(&mut b).unwrap().bəzənmiş = Some(hədəf);
+                        s.metodlar.borrow_mut().insert(ad(&f.ad), b);
                     } else {
                         s.metodlar.borrow_mut().insert(ad(&f.ad), ff);
                     }
@@ -421,6 +446,10 @@ impl İcraçı {
                 "atributlar" => e.atributlar.clone(),
                 _ => e.uşaqlar.clone(),
             }),
+            // Funksiyanın adı — bəzəyicilər üçün (`f.ad`)
+            D::Funksiya(f) if a == "ad" => Ok(D::s(&f.ad)),
+            D::Daxili(f) if a == "ad" => Ok(D::s(&f.ad)),
+            D::Metod(f) if a == "ad" => Ok(D::s(&f.ad)),
             D::Kortej(k) if !a.is_empty() && a.bytes().all(|b| b.is_ascii_digit()) => {
                 let i: usize = a.parse().unwrap_or(usize::MAX);
                 if i >= k.len() {

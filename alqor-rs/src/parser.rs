@@ -523,19 +523,30 @@ impl<'a> Parser<'a> {
         gövdə
     }
 
-    fn annotasiyaları_qoy(c: Cümlə, adlar: Vec<String>) -> Cümlə {
+    fn annotasiyaları_qoy(c: Cümlə, annot: Vec<A::Annotasiya>) -> Cümlə {
+        let adlar: Vec<String> = annot.iter().map(|a| a.ad.clone()).collect();
         match c {
             Cümlə::Funksiya(mut f) => {
-                Rc::make_mut(&mut f).annotasiyalar = adlar;
+                let f_ = Rc::make_mut(&mut f);
+                f_.annotasiyalar = adlar;
+                f_.bəzəyicilər = annot;
                 Cümlə::Funksiya(f)
             }
             Cümlə::Metod(mut f) => {
-                Rc::make_mut(&mut f).annotasiyalar = adlar;
+                let f_ = Rc::make_mut(&mut f);
+                f_.annotasiyalar = adlar;
+                f_.bəzəyicilər = annot;
                 Cümlə::Metod(f)
             }
             Cümlə::Xassə(mut x) => {
                 Rc::make_mut(&mut x).annotasiyalar = adlar;
                 Cümlə::Xassə(x)
+            }
+            Cümlə::Sinif(mut s) => {
+                let s_ = Rc::make_mut(&mut s);
+                s_.annotasiyalar = adlar;
+                s_.bəzəyicilər = annot;
+                Cümlə::Sinif(s)
             }
             c => c,
         }
@@ -647,15 +658,13 @@ impl<'a> Parser<'a> {
         }
     }
 
-    /// Annotasiyanın adını qaytarır (arqumentlər AAC-də saxlanmır).
-    fn annotasiya(&mut self) -> N<String> {
+    /// `@ad` və ya `@ad(arqumentlər)`
+    fn annotasiya(&mut self) -> N<A::Annotasiya> {
         self.al();
         let ad = dəyər_mətni(self.bax(0));
         self.al();
-        if self.op(&["("]) {
-            self.arqumentlər()?;
-        }
-        Ok(ad)
+        let arqumentlər = if self.op(&["("]) { self.arqumentlər()? } else { vec![] };
+        Ok(A::Annotasiya { ad, arqumentlər })
     }
 
     fn ifadə_cümləsi(&mut self) -> N<Cümlə> {
@@ -1455,8 +1464,9 @@ impl<'a> Parser<'a> {
             }
         }
         if nəticə.len() > 1 {
-            for p in &nəticə[..nəticə.len() - 1] {
-                if p.variadic {
+            for (i, p) in nəticə[..nəticə.len() - 1].iter().enumerate() {
+                // `...a, **b` icazəlidir: adlı variadic sonda qala bilər
+                if p.variadic && !nəticə[i + 1..].iter().all(|q| q.adlı_variadic) {
                     self.x.xəta(
                         "ALQ-P021",
                         "Variadic parametr sonuncu olmalıdır",
@@ -1488,6 +1498,7 @@ impl<'a> Parser<'a> {
             asinxron: m.asinxron,
             generator: m.generator,
             annotasiyalar: vec![],
+            bəzəyicilər: vec![],
             statik: false,
             mücərrəd: false,
         })))
@@ -1502,6 +1513,7 @@ impl<'a> Parser<'a> {
             asinxron: m.asinxron,
             generator: m.generator,
             annotasiyalar: vec![],
+            bəzəyicilər: vec![],
             statik: m.statik,
             mücərrəd,
         }))
@@ -1786,6 +1798,8 @@ impl<'a> Parser<'a> {
             mücərrəd: m.mücərrəd,
             son: m.son,
             quruluş: quruluş.to_string(),
+            annotasiyalar: vec![],
+            bəzəyicilər: vec![],
         })))
     }
 
@@ -2162,13 +2176,15 @@ impl<'a> Parser<'a> {
         while !self.op(&[")"]) {
             self.ayırıcı_atla();
             if self.qəbul_op(&["..."]).is_some() {
-                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: None, yayma: true });
+                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: None, yayma: true, adlı_yayma: false });
+            } else if self.qəbul_op(&["**"]).is_some() {
+                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: None, yayma: false, adlı_yayma: true });
             } else if etiket_ola_bilər(self.bax(0)) && self.op_i(1, &[":"]) {
                 let ad = self.al().s;
                 self.al();
-                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: Some(ad), yayma: false });
+                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: Some(ad), yayma: false, adlı_yayma: false });
             } else {
-                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: None, yayma: false });
+                nəticə.push(Arqument { dəyər: self.ifadə(0)?, ad: None, yayma: false, adlı_yayma: false });
             }
             self.ayırıcı_atla();
             if self.qəbul_op(&[","]).is_none() {
@@ -2180,7 +2196,7 @@ impl<'a> Parser<'a> {
 
         let mut adlı_görüldü = false;
         for a in &nəticə {
-            if a.ad.as_deref().is_some_and(|s| !s.is_empty()) {
+            if a.ad.as_deref().is_some_and(|s| !s.is_empty()) || a.adlı_yayma {
                 adlı_görüldü = true;
             } else if adlı_görüldü && !a.yayma {
                 self.x.xəta(

@@ -170,9 +170,17 @@ impl Yazıcı {
         self.siyahı(l, v, |w, p| w.parametr("", p));
     }
 
+    fn bəzəyicilər(&mut self, v: &[crate::aac::Annotasiya]) {
+        for a in v {
+            if !a.arqumentlər.is_empty() {
+                self.arqumentlər(&format!("@{}", a.ad), &a.arqumentlər);
+            }
+        }
+    }
+
     fn arqumentlər(&mut self, l: &str, v: &[Arqument]) {
         self.siyahı(l, v, |w, a| {
-            w.s("", &format!("Arqument ad={} yayma={}", oq(&a.ad), a.yayma));
+            w.s("", &format!("Arqument ad={} yayma={} adlı_yayma={}", oq(&a.ad), a.yayma, a.adlı_yayma));
             w.iç(|w| w.ifadə("dəyər", &a.dəyər));
         });
     }
@@ -240,6 +248,7 @@ impl Yazıcı {
             ),
         );
         self.iç(|w| {
+            w.bəzəyicilər(&f.bəzəyicilər);
             w.parametrlər("parametrlər", &f.parametrlər);
             w.ogövdə("gövdə", &f.gövdə);
         });
@@ -296,15 +305,17 @@ impl Yazıcı {
                 self.s(
                     l,
                     &format!(
-                        "Sinif {} ad={} quruluş={} mücərrəd={} son={}",
+                        "Sinif {} ad={} quruluş={} mücərrəd={} son={} annotasiyalar={}",
                         y(&s.yer),
                         q(&s.ad),
                         q(&s.quruluş),
                         s.mücərrəd,
-                        s.son
+                        s.son,
+                        qs(&s.annotasiyalar)
                     ),
                 );
                 self.iç(|w| {
+                    w.bəzəyicilər(&s.bəzəyicilər);
                     w.otip("baza", &s.baza);
                     w.siyahı("interfeyslər", &s.interfeyslər, |w, t| w.tip("", t));
                     w.siyahı("qarışıqlar", &s.qarışıqlar, |w, t| w.tip("", t));

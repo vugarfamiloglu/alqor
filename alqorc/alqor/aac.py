@@ -211,6 +211,7 @@ class Arqument:
     dəyər: İfadə
     ad: str | None = None      # adlı arqument
     yayma: bool = False        # `...siyahı`
+    adlı_yayma: bool = False   # `**lüğət`
 
 
 @dataclass

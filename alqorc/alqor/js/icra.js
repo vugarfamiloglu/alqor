@@ -754,7 +754,7 @@ function mətnə(x) {
     case "bigint": return x.toString();
     case "number": return onluqMətn(x);
     case "function":
-      return "<" + (x.$n || "funksiya") + " " + (x.$ad || x.name || "<lambda>") + ">";
+      return "<" + (x.$n || "funksiya") + " " + (x.$ad || x.name || "<anonim>") + ">";
   }
   if (Array.isArray(x)) return "[" + x.map(dm).join(", ") + "]";
   if (x instanceof Kortej)
@@ -1529,6 +1529,8 @@ function üzv(o, a, təhlükəsiz) {
   }
   if (o instanceof Element && (a === "ad" || a === "atributlar" || a === "uşaqlar"))
     return o[a];
+  // Funksiyanın adı — bəzəyicilər üçün (`f.ad`)
+  if (a === "ad" && typeof o === "function") return o.$ad || o.name || "<anonim>";
   if (o instanceof Kortej && /^\d+$/.test(a)) {
     const i = Number(a);
     if (i >= o.e.length)
@@ -3400,6 +3402,60 @@ function modulQeyd(a, f) {
     Object.defineProperty(g, a, { get: () => modul(a), enumerable: true, configurable: true });
 }
 
+/** `f(**lüğət)` — adlı arqumentlər və lüğətlər birləşir. */
+function adlıYay(...hissələr) {
+  const o = {};
+  for (const h of hissələr) {
+    if (h instanceof Lüğət) {
+      for (const [k, v] of h.cütlər()) {
+        if (typeof k !== "string")
+          throw xəta("TipXətası", "`**` yalnız mətn açarlı lüğətə tətbiq olunur, `lüğət` verilib", "ALQ-T081");
+        o[k] = v;
+      }
+    } else if (h !== null && typeof h === "object" && Object.getPrototypeOf(h) === Object.prototype) {
+      Object.assign(o, h);
+    } else {
+      throw xəta("TipXətası", "`**` yalnız mətn açarlı lüğətə tətbiq olunur, `" + tip(h) + "` verilib", "ALQ-T081");
+    }
+  }
+  return new Adlı(o);
+}
+
+/** Qlobal ad və ya `null` — bəzəyici axtarışı üçün. */
+function qadVarsa(a) {
+  const d = g[a];
+  return d === undefined ? null : d;
+}
+
+// ── Bəzəyicilər (§ 5.11) ────────────────────────────────────────────────
+
+/** `@a @b f` → `a(b(f))`; `null` bəzəyicilər (tapılmayan adlar) ötürülür. */
+function bəzə(d, bəzəyicilər) {
+  for (let i = bəzəyicilər.length - 1; i >= 0; i--)
+    if (bəzəyicilər[i] !== null) d = ç(bəzəyicilər[i], d);
+  return d;
+}
+
+/** `@ad(arq)` — əvvəl `ad(arq)` çağırılır. */
+function bəzəyici(d, arq) {
+  return d === null ? null : ç(d, ...arq());
+}
+
+/** Bəzəyiciyə ötürülən metod: birinci arqument `özü`-dür. */
+function sərbəstMetod(f, a) {
+  return ad(function (...args) {
+    if (!args.length || args[0] instanceof Adlı)
+      throw xəta("ArqumentXətası",
+        "`" + a + "` metodu `özü` arqumenti olmadan çağırıldı", "ALQ-R022");
+    return f.apply(args[0], args.slice(1));
+  }, a, "funksiya");
+}
+
+/** Bəzənmiş metod: obyekt üzərindən çağırılanda `özü` ilk arqumentdir. */
+function bəzənmişMetod(h, a) {
+  return ad(function (...args) { return ç(h, this, ...args); }, a, "funksiya");
+}
+
 /** Qlobal ad (kompilyator yerli elan tapmayanda). */
 function qad(a) {
   const d = g[a];
@@ -3550,7 +3606,7 @@ return {
   // xətalar
   xəta, xətaya, xətaUyğun, xətaObyekti, at, stek, V, STEK_HƏDDİ,
   // funksiyalar
-  ad, D, bağla, ç, çm, yarat, yeni, kp, genişlət, standartDəyər, sinif, sadalama,
+  ad, D, bağla, ç, çm, yarat, yeni, adlıYay, qadVarsa, bəzə, bəzəyici, sərbəstMetod, bəzənmişMetod, kp, genişlət, standartDəyər, sinif, sadalama,
   metodAd, üstMetod, bağlı, qurucuTap,
   // operatorlar
   add, sub, mul, div, idiv, mod, pow, bit, neg, bnot, ş, eq, ne, lt, gt, le, ge, cmp3,

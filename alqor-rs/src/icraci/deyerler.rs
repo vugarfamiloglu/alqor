@@ -481,6 +481,9 @@ pub struct Funksiya {
     pub sinif: Option<Rc<Sinif>>,
     pub annot: Annot,
     pub yaddaş: Option<YaddaşKeşi>,
+    /// Bəzəyici ilə dəyişdirilmiş metod (§ 5.11): çağırılanda bu dəyər
+    /// `özü` birinci arqument olmaqla çağırılır
+    pub bəzənmiş: Option<D>,
 }
 
 impl Funksiya {
@@ -496,6 +499,7 @@ impl Funksiya {
             sinif: self.sinif.clone(),
             annot: self.annot,
             yaddaş: self.yaddaş.clone(),
+            bəzənmiş: self.bəzənmiş.clone(),
         })
     }
 }

@@ -634,6 +634,29 @@ class TipƏməliyyatları(unittest.TestCase):
         self.assertTrue(T.uyğundur(s, i))
 
 
+class Bəzəyicilər(unittest.TestCase):
+    """Spes. § 5.11 — bəzəyicilər və `**` yayması."""
+
+    KOD = (
+        "funksiya ikiqat(f) qaytar (x) => f(x) * 2 son\n"
+        "@ikiqat\nfunksiya bir(x: tam) -> tam qaytar x son\n"
+        "yaz(bir(1), bir.ad)\n"
+        "sinif A\n    @ikiqat\n    metod m(x) qaytar x son\nson\n"
+        "funksiya qur(a, ...b, **c) qaytar a son\n"
+        "yaz(qur(1, 2, **{\"x\": 1}))\n")
+
+    def test_bəzənmiş_kod_təmizdir(self):
+        self.assertTrue(təmizdir(self.KOD))
+
+    def test_naməlum_annotasiya_xəbərdarlıqdır(self):
+        k = kodlar("@belədəYoxdur\nfunksiya f() qaytar 1 son\n")
+        self.assertEqual(k, ["ALQ-T082"])
+
+    def test_daxili_annotasiya_xəbərdarlıq_vermir(self):
+        self.assertTrue(təmizdir(
+            "@yaddaşla\nfunksiya f(n: tam) -> tam qaytar n son\n"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

@@ -13,7 +13,7 @@ from typing import Any
 
 from . import aac as A
 from .deyerler import (AlqorDiapazon, AlqorGenerator, AlqorXəta, BağlıMetod,
-                       Element,
+                       BəzənmişMetod, Element, SərbəstMetod,
                        Çağırılan, Daxili, DavamSiqnalı, DayanmaSiqnalı,
                        DayanSiqnalı, Funksiya, Modul, Mühit, Nümunə,
                        QaytarSiqnalı, Sadalama, SadalamaDəyəri, Sinif,
@@ -26,6 +26,16 @@ from .token import Yer
 # də qaldırırıq. Yoxsa RecursionError bizim `StekDaşmaXətası`-dan əvvəl
 # baş verir və Azərbaycan dilində mesaj verilmir.
 STEK_HƏDDİ = 1000
+
+# Dilin və kitabxanaların öz annotasiyaları — bəzəyici kimi axtarılmır
+DAXİLİ_ANNOTASİYALAR = frozenset({
+    "sınaq", "sınaqQrupu", "sınaqVerilənlər", "sınaqdan_keçməyib",
+    "əvvəl", "sonra", "atla", "yaddaşla", "saf", "daxili", "xaric",
+    "quyruqRekursiya", "köhnəlmiş", "xarici", "tənbəl", "statik",
+    "yalnızHədəf", "əgərHədəf", "əgərKompilyasiya",
+    "cədvəl", "sütun", "açar", "əlaqə", "keçici", "API",
+    "json", "jsonAtla", "jsonStandart",
+})
 _PYTHON_LİMİTİ = 30000
 
 
@@ -48,6 +58,8 @@ class İcraçı:
         # Sazlayıcı (`alqor dap`): hər cümlədən əvvəl `cümlə(c, m)`,
         # funksiyaya girib-çıxanda `daxil(f, m)` / `çıx()` çağırılır
         self.izləyici = None
+        # `_elanları_qaldır` işləyərkən bəzəyicilər tətbiq olunmur
+        self._qaldırılır = False
         if sys.getrecursionlimit() < _PYTHON_LİMİTİ:
             sys.setrecursionlimit(_PYTHON_LİMİTİ)
 
@@ -67,6 +79,8 @@ class İcraçı:
             for c in ağac.gövdə:
                 if not self._elandır(c):
                     self._cümlə(c, m)
+                else:
+                    self.bəzə(c, m)
             # 3. `əsas()` varsa çağır
             if m.var("əsas"):
                 əsas = m.al("əsas")
@@ -96,7 +110,19 @@ class İcraçı:
                               A.QarışıqElanı, A.TipAliası, A.İdxal))
 
     def _elanları_qaldır(self, gövdə: list[A.Cümlə], m: Mühit) -> None:
-        """Funksiya və siniflər qarşılıqlı istinad edə bilsin."""
+        """Funksiya və siniflər qarşılıqlı istinad edə bilsin.
+
+        Bəzəyicilər burada tətbiq olunmur: onlar elanın öz yerində,
+        `bəzə()` ilə, mənbə sırası ilə işə düşür (spes. § 5.11).
+        """
+        əvvəlki = self._qaldırılır
+        self._qaldırılır = True
+        try:
+            self._elanları_qaldır_(gövdə, m)
+        finally:
+            self._qaldırılır = əvvəlki
+
+    def _elanları_qaldır_(self, gövdə: list[A.Cümlə], m: Mühit) -> None:
         # `gətir` əvvəl — `sinif X miras modul.Y` modulun sinfini görsün
         for c in gövdə:
             if isinstance(c, A.İdxal):
@@ -687,6 +713,57 @@ class İcraçı:
         if "yaddaşla" in f.annotasiyalar:
             f.yaddaş = {}
         m.elan(c.ad, f)
+        if not self._qaldırılır:
+            self.bəzə(c, m)
+
+    # ── Bəzəyicilər (spes. § 5.11) ───────────────────────────────────
+
+    def bəzəyicilər(self, annotasiyalar: list[A.Annotasiya],
+                    m: Mühit) -> list[tuple[Any, Yer]]:
+        """Elanın istifadəçi bəzəyiciləri (mənbədəki sıra ilə).
+
+        `@ad` mühitdə tapılan çağırılan dəyərdirsə bəzəyicidir; daxili
+        annotasiyalar (`@sınaq`, `@yaddaşla` …) və tapılmayan adlar yalnız
+        məlumat olaraq qalır. `@ad(arq)` — əvvəl `ad(arq)` çağırılır,
+        nəticəsi bəzəyici olur.
+        """
+        nəticə: list[tuple[Any, Yer]] = []
+        for a in annotasiyalar:
+            if a.ad in DAXİLİ_ANNOTASİYALAR or not m.var(a.ad):
+                continue
+            d = m.al(a.ad)
+            if a.arqumentlər:
+                arq: list[Any] = []
+                adlı: dict[str, Any] = {}
+                for x in a.arqumentlər:
+                    dəyər = self._ifadə(x.dəyər, m)
+                    if x.yayma:
+                        arq.extend(self._iterasiya(dəyər, a.yer))
+                    elif x.adlı_yayma:
+                        self._adlı_yay(dəyər, adlı, a.yer)
+                    elif x.ad:
+                        adlı[x.ad] = dəyər
+                    else:
+                        arq.append(dəyər)
+                d = self._çağır(d, arq, adlı, a.yer)
+            nəticə.append((d, a.yer))
+        return nəticə
+
+    def _bəzəyiciləri_tətbiq_et(self, dəyər: Any,
+                                bəzəyicilər: list[tuple[Any, Yer]]) -> Any:
+        # Ən yaxın bəzəyici birinci: `@a @b f` → `a(b(f))`
+        for d, yer in reversed(bəzəyicilər):
+            dəyər = self._çağır(d, [dəyər], {}, yer)
+        return dəyər
+
+    def bəzə(self, c: A.Cümlə, m: Mühit) -> None:
+        """Funksiya və sinif elanına bəzəyiciləri tətbiq edir."""
+        annot = getattr(c, "annotasiyalar", None)
+        if not annot or not isinstance(c, (A.FunksiyaElanı, A.SinifElanı)):
+            return
+        b = self.bəzəyicilər(annot, m)
+        if b:
+            m.təyin(c.ad, self._bəzəyiciləri_tətbiq_et(m.al(c.ad), b))
 
     def _c_sinif(self, c: A.SinifElanı, m: Mühit) -> None:
         baza = None
@@ -739,6 +816,8 @@ class İcraçı:
             m.elan(c.ad, self.nümunə_yarat(s, None, [], {}, c.yer))
         else:
             m.elan(c.ad, s)
+            if not self._qaldırılır:
+                self.bəzə(c, m)
 
     def _sinif_üzvlərini_qur(self, s: Sinif, üzvlər: list[A.Cümlə],
                              m: Mühit) -> None:
@@ -771,8 +850,17 @@ class İcraçı:
                 f = Funksiya(ü.ad, ü.parametrlər, ü.gövdə or [], m,
                              ü.asinxron, ü.generator, sinif=s,
                              annotasiyalar=annot)
+                bəzəyicilər = self.bəzəyicilər(ü.annotasiyalar, m) \
+                    if ü.annotasiyalar else []
                 if ü.statik:
-                    s.statiklər[ü.ad] = f
+                    s.statiklər[ü.ad] = self._bəzəyiciləri_tətbiq_et(
+                        f, bəzəyicilər) if bəzəyicilər else f
+                elif bəzəyicilər:
+                    hədəf = self._bəzəyiciləri_tətbiq_et(
+                        SərbəstMetod(ü.ad, f), bəzəyicilər)
+                    s.metodlar[ü.ad] = BəzənmişMetod(
+                        ü.ad, ü.parametrlər, [], m, sinif=s,
+                        annotasiyalar=annot, hədəf=hədəf)
                 else:
                     s.metodlar[ü.ad] = f
             elif isinstance(ü, A.QurucuElanı):
@@ -868,6 +956,8 @@ class İcraçı:
         for cümlə in c.gövdə:
             if not self._elandır(cümlə):
                 self._cümlə(cümlə, alt)
+            else:
+                self.bəzə(cümlə, alt)
         m.elan(c.ad, Modul(c.ad, dict(alt.adlar)))
 
     def _c_idxal(self, c: A.İdxal, m: Mühit) -> None:
@@ -1330,6 +1420,10 @@ class İcraçı:
                                                    "uşaqlar"):
             return getattr(obyekt, ad)
 
+        # Funksiyanın adı — bəzəyicilər üçün (`f.ad`)
+        if ad == "ad" and isinstance(obyekt, Çağırılan):
+            return obyekt.çağırıla_bilən_adı
+
         if isinstance(obyekt, tuple) and ad.isdigit():
             i = int(ad)
             if i >= len(obyekt):
@@ -1550,11 +1644,23 @@ class İcraçı:
             dəyər = self._ifadə(a.dəyər, m)
             if a.yayma:
                 arqumentlər.extend(self._iterasiya(dəyər, e.yer))
+            elif a.adlı_yayma:
+                self._adlı_yay(dəyər, adlı, e.yer)
             elif a.ad:
                 adlı[a.ad] = dəyər
             else:
                 arqumentlər.append(dəyər)
         return self._çağır(funksiya, arqumentlər, adlı, e.yer)
+
+    @staticmethod
+    def _adlı_yay(dəyər: Any, adlı: dict, yer: Yer | None) -> None:
+        """`f(**lüğət)` — lüğətin cütləri adlı arqument olur."""
+        if not isinstance(dəyər, dict) or not all(
+                isinstance(k, str) for k in dəyər):
+            raise AlqorXəta("TipXətası",
+                            "`**` yalnız mətn açarlı lüğətə tətbiq olunur, "
+                            f"`{tip_adı(dəyər)}` verilib", yer, "ALQ-T081")
+        adlı.update(dəyər)
 
     def _çağır(self, funksiya: Any, arqumentlər: list, adlı: dict,
                yer: Yer | None) -> Any:
@@ -1591,6 +1697,10 @@ class İcraçı:
 
     def funksiya_çağır(self, f: Funksiya, arqumentlər: list, adlı: dict,
                        yer: Yer | None = None) -> Any:
+        if f.__class__ is BəzənmişMetod:
+            return self._çağır(f.hədəf, [f.özü, *arqumentlər]
+                               if f.özü is not None else arqumentlər,
+                               adlı, yer)
         # `asinxron funksiya` dərhal `Gələcək` qaytarır — gövdə yalnız
         # `gözlə` (və ya `paralel`) ilə işə düşür.
         if f.asinxron and not f.generator:
@@ -1831,6 +1941,8 @@ class İcraçı:
             dəyər = self._ifadə(a.dəyər, m)
             if a.yayma:
                 arqumentlər.extend(self._iterasiya(dəyər, e.yer))
+            elif a.adlı_yayma:
+                self._adlı_yay(dəyər, adlı, e.yer)
             elif a.ad:
                 adlı[a.ad] = dəyər
             else:
@@ -2248,7 +2360,7 @@ class İcraçı:
             mühit = m.alt()
             for ad in e.tutmalar:
                 mühit.elan(ad, m.al(ad))
-        return Funksiya("<lambda>", e.parametrlər, e.gövdə, mühit,
+        return Funksiya("<anonim>", e.parametrlər, e.gövdə, mühit,
                         e.asinxron, e.generator)
 
     # ═══════════════════════════════════════════════════════════════════

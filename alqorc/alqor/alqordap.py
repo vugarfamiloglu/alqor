@@ -78,7 +78,7 @@ class İzləyici:
     def daxil(self, f: Funksiya, m: Mühit) -> None:
         if threading.get_ident() != self.sap:
             return
-        self.kadrlar.append(Kadr(f.ad or "<lambda>", f, m,
+        self.kadrlar.append(Kadr(f.ad or "<anonim>", f, m,
                                  id=self._növbəti_id))
         self._növbəti_id += 1
 

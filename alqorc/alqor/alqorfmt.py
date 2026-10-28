@@ -208,6 +208,11 @@ def _arasında(əvvəlki: Token, cari: Token, əvvəlkindən_əvvəl: Token | No
     # Təkli `-x`, `+x`, `!x`: operatordan sonra boşluq yox
     if a in ("-", "+") and not _operand_sonudur(əvvəlkindən_əvvəl):
         return ""
+    # Adlı yayma `f(**lüğət)` və parametr `**adlı`: təkli
+    if a == "**" and not _operand_sonudur(əvvəlkindən_əvvəl):
+        return ""
+    if b == "**" and not _operand_sonudur(əvvəlki):
+        return "" if a in SONRASIZ else " "
     if b in İKİLİ:
         if b in ("-", "+") and not _operand_sonudur(əvvəlki):
             # Təkli: `f(-1)`, `[-2]`, `a + -4`, `qaytar -x`

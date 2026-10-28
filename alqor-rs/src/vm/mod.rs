@@ -79,7 +79,7 @@ fn parametrlər_eynidir(a: &[crate::aac::Parametr], b: &[crate::aac::Parametr]) 
 
 /// Funksiyanın bayt-kodu (VM-də işləyə bilmirsə `None`).
 pub fn kod_tap(f: &Funksiya) -> Option<Rc<Kod>> {
-    if !aktiv() {
+    if !aktiv() || f.bəzənmiş.is_some() {
         return None;
     }
     if f.generator {
@@ -188,7 +188,8 @@ pub fn vm_çağırışı_say() {
 
 /// Proqramın yuxarı səviyyəsi üçün bayt-kod
 pub fn kök_kodu(gövdə: &[crate::aac::Cümlə]) -> Option<Kod> {
-    if !aktiv() {
+    // Bəzəyicilər elanın yerində ağac icraçısında tətbiq olunur
+    if !aktiv() || gövdə.iter().any(crate::icraci::cagiris::bəzəyici_ola_bilər) {
         return None;
     }
     let k = kompilyator::kompilyasiya(&kompilyator::Mənbə::Kök(gövdə)).ok();

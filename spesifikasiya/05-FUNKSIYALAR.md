@@ -450,7 +450,105 @@ son
 
 ---
 
-## 5.11 Funksiya yükləmə (overloading)
+## 5.11 Bəzəyicilər
+
+Bəzəyici funksiyanı, metodu və ya sinfi qəbul edib onun yerinə yeni dəyər
+qaytaran adi funksiyadır. `@ad` annotasiyasının adı mühitdə çağırıla bilən
+dəyərdirsə, o, bəzəyicidir:
+
+```alqor
+funksiya jurnalla(f)
+    qaytar funksiya(...arq, **adlı)
+        yaz("→ {f.ad}({arq})")
+        qaytar f(...arq, **adlı)
+    son
+son
+
+@jurnalla
+funksiya topla(a, b) qaytar a + b son
+
+topla(2, 3)          // → topla([2, 3])   və nəticə 5
+```
+
+`@jurnalla funksiya topla` yazılışı `topla = jurnalla(topla)` deməkdir.
+
+### Arqumentli bəzəyici
+
+`@ad(arqumentlər)` əvvəlcə `ad(arqumentlər)`-i çağırır, qayıdan dəyər
+bəzəyici olur:
+
+```alqor
+funksiya neçəDəfə(n: tam)
+    qaytar (f) => funksiya(...a)
+        qaytar [f(...a) üçün _ içində 1..n]
+    son
+son
+
+@neçəDəfə(3)
+funksiya salam(ad) qaytar "Salam, {ad}" son
+
+yaz(salam("Aysel"))  // ["Salam, Aysel", "Salam, Aysel", "Salam, Aysel"]
+```
+
+### Bir neçə bəzəyici
+
+Ən yaxın bəzəyici birinci tətbiq olunur: `@a @b funksiya f` → `a(b(f))`.
+
+### Metodlar və siniflər
+
+Metod bəzəyicisi metodu `özü` **birinci arqument** olan funksiya kimi alır;
+qaytardığı funksiya obyekt üzərindən çağırılanda `özü` yenə birinci
+arqument kimi ötürülür:
+
+```alqor
+funksiya yoxla(m)
+    qaytar funksiya(hesab, məbləğ)
+        təmin məbləğ > 0 yoxsa at ArqumentXətası("məbləğ müsbət olmalıdır") son
+        qaytar m(hesab, məbləğ)
+    son
+son
+
+sinif Hesab
+    xassə balans = 0
+    @yoxla
+    metod artır(məbləğ) özü.balans += məbləğ son
+son
+```
+
+`statik metod` bəzəyicisi adi funksiya kimi işləyir. Sinif bəzəyicisi
+sinfin özünü alır: `@qeydə_al sinif X` → `X = qeydə_al(X)`.
+
+### Qaydalar
+
+- Bəzəyici elanın **öz yerində**, mənbə sırası ilə tətbiq olunur. Funksiya
+  adı əvvəlcədən elan olunduğu üçün (irəli istinad) elandan yuxarıda
+  çağırılan funksiya hələ bəzənməmiş olur.
+- Daxili annotasiyalar (`@sınaq`, `@yaddaşla`, `@saf`, `@köhnəlmiş`,
+  `@cədvəl` … — § 5.10) bəzəyici kimi axtarılmır.
+- Adı tapılmayan annotasiya məlumat olaraq qalır; tip yoxlayıcısı
+  `ALQ-T082` xəbərdarlığı verir.
+- Bəzəyici imzanı dəyişə bildiyi üçün bəzənmiş funksiyanın çağırışlarını
+  tip yoxlayıcısı arqument sayına görə yoxlamır.
+- Funksiyanın adı `f.ad` ilə oxunur (anonim funksiyada `<anonim>`).
+
+### Arqumentləri ötürmək: `...` və `**`
+
+Bəzəyicinin bütün arqumentləri olduğu kimi ötürməsi üçün:
+
+```alqor
+funksiya qur(a, b = 2, **qalan) qaytar "{a} {b} {qalan}" son
+
+dəyişən seçim = {"b": 7, "c": 9}
+yaz(qur(1, **seçim))          // 1 7 {"c": 9}
+```
+
+- Parametrlərdə `...mövqeli, **adlı` birlikdə yazıla bilər.
+- Çağırışda `**lüğət` lüğətin cütlərini adlı arqument kimi ötürür; açarlar
+  mətn olmalıdır, əks halda `ALQ-T081`.
+
+---
+
+## 5.14 Funksiya yükləmə (overloading)
 
 Alqor **ad yükləməsini dəstəkləmir**. Əvəzinə:
 - Standart dəyərlər
@@ -478,7 +576,7 @@ son
 
 ---
 
-## 5.12 Giriş nöqtəsi
+## 5.15 Giriş nöqtəsi
 
 ```alqor
 // əsas.alq
@@ -519,7 +617,7 @@ son
 
 ---
 
-## 5.13 Funksiya xəta kodları
+## 5.16 Funksiya xəta kodları
 
 | Kod | Mesaj |
 |---|---|
@@ -533,3 +631,6 @@ son
 | `ALQ-T041` | `ver` yalnız generatorda |
 | `ALQ-T042` | `@quyruqRekursiya` tələbi ödənmir |
 | `ALQ-R010` | Stek daşması |
+| `ALQ-R022` | Bəzənmiş metod `özü` arqumenti olmadan çağırıldı |
+| `ALQ-T081` | `**` yalnız mətn açarlı lüğətə tətbiq olunur |
+| `ALQ-T082` | Naməlum annotasiya (bəzəyici tapılmadı) — xəbərdarlıq |

@@ -1972,6 +1972,8 @@ def _fayldan_modul(icraçı, yol: str, yer=None) -> Modul:
     for c in ağac.gövdə:
         if not icraçı._elandır(c):
             icraçı._cümlə(c, alt)
+        else:
+            icraçı.bəzə(c, alt)
 
     modul = Modul(p.stem, dict(alt.adlar))
     keş[açar] = modul

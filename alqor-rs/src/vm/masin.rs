@@ -773,6 +773,7 @@ fn funksiya_yarat(kod: &Kod, ç: &Çərçivə, idx: u32) -> D {
         sinif: None,
         annot,
         yaddaş: if a.yaddaşla { Some(Default::default()) } else { None },
+        bəzənmiş: None,
     }))
 }
 

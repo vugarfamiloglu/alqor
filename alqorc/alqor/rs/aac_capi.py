@@ -162,9 +162,15 @@ class _Yazıcı:
     def parametrlər(self, l, v) -> None:
         self.siyahı(l, v, lambda p: self.parametr("", p))
 
+    def bəzəyicilər(self, annotasiyalar) -> None:
+        for a in annotasiyalar:
+            if a.arqumentlər:
+                self.arqumentlər(f"@{a.ad}", a.arqumentlər)
+
     def arqumentlər(self, l, v) -> None:
         def arq(a):
-            self.s("", f"Arqument ad={_oq(a.ad)} yayma={_b(a.yayma)}")
+            self.s("", f"Arqument ad={_oq(a.ad)} yayma={_b(a.yayma)}"
+                       f" adlı_yayma={_b(a.adlı_yayma)}")
             with self.iç():
                 self.ifadə("dəyər", a.dəyər)
         self.siyahı(l, v, arq)
@@ -217,6 +223,7 @@ class _Yazıcı:
                   f" mücərrəd={_b(mücərrəd)}"
                   f" annotasiyalar={_qs(a.ad for a in f.annotasiyalar)}")
         with self.iç():
+            self.bəzəyicilər(f.annotasiyalar)
             self.parametrlər("parametrlər", f.parametrlər)
             self.ogövdə("gövdə", f.gövdə)
 
@@ -258,8 +265,10 @@ class _Yazıcı:
                 self.gövdə("gövdə", c.gövdə)
         elif t is A.SinifElanı:
             self.s(l, f"Sinif {Y} ad={_q(c.ad)} quruluş={_q(c.quruluş)}"
-                      f" mücərrəd={_b(c.mücərrəd)} son={_b(c.son)}")
+                      f" mücərrəd={_b(c.mücərrəd)} son={_b(c.son)}"
+                      f" annotasiyalar={_qs(a.ad for a in c.annotasiyalar)}")
             with self.iç():
+                self.bəzəyicilər(c.annotasiyalar)
                 self.otip("baza", c.baza)
                 self.tiplər("interfeyslər", c.interfeyslər)
                 self.tiplər("qarışıqlar", c.qarışıqlar)

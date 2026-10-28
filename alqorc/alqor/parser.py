@@ -1332,8 +1332,10 @@ class Parser:
                     "gələ bilməz", p.yer,
                     f"`{p.ad}` parametrinin standart dəyəri yoxdur",
                     "standart dəyərli parametrləri sona keçirin")
-        for p in nəticə[:-1]:
-            if p.variadic:
+        for i, p in enumerate(nəticə[:-1]):
+            # `...a, **b` icazəlidir: adlı variadic sonda qala bilər
+            if p.variadic and not all(q.adlı_variadic
+                                      for q in nəticə[i + 1:]):
                 self.x.xəta("ALQ-P021",
                             "Variadic parametr sonuncu olmalıdır",
                             p.yer, f"`...{p.ad}` ortadadır")
@@ -1971,6 +1973,8 @@ class Parser:
             self._ayırıcı_atla()
             if self._qəbul_op("..."):
                 nəticə.append(A.Arqument(self._ifadə(), None, True))
+            elif self._qəbul_op("**"):
+                nəticə.append(A.Arqument(self._ifadə(), None, False, True))
             elif (self._etiket_ola_bilər(self._bax())
                   and self._op(":", irəli=1)):
                 ad = self._al().dəyər
@@ -1987,7 +1991,7 @@ class Parser:
 
         adlı_görüldü = False
         for a in nəticə:
-            if a.ad:
+            if a.ad or a.adlı_yayma:
                 adlı_görüldü = True
             elif adlı_görüldü and not a.yayma:
                 self.x.xəta("ALQ-P022",

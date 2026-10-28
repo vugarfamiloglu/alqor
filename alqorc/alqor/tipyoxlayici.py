@@ -54,6 +54,14 @@ FAYL_MƏTNİ: Any = None
 #  Əhatə dairəsi
 # ═══════════════════════════════════════════════════════════════════════
 
+
+def _bəzənib(c) -> bool:
+    """Elanın istifadəçi bəzəyicisi ola biləcək annotasiyası varmı."""
+    from .icraci import DAXİLİ_ANNOTASİYALAR
+    return any(a.ad not in DAXİLİ_ANNOTASİYALAR
+               for a in getattr(c, "annotasiyalar", ()))
+
+
 @dataclass
 class Bağlama:
     ad: str
@@ -1031,10 +1039,12 @@ class TipYoxlayıcı:
             elif isinstance(c, A.InterfeysElanı):
                 self._interfeys_imzası(c, ə)
 
-        # 3. Funksiya imzaları
+        # 3. Funksiya imzaları (bəzənmiş funksiyanın tipi naməlumdur:
+        #    bəzəyici imzanı dəyişə bilər)
         for c in gövdə:
             if isinstance(c, A.FunksiyaElanı):
-                ə.elan(Bağlama(c.ad, self._funksiya_imzası(c, ə), True,
+                ə.elan(Bağlama(c.ad, T.NAMƏLUM if _bəzənib(c)
+                               else self._funksiya_imzası(c, ə), True,
                                c.yer, False, "funksiya"))
 
     def _generiklərlə(self, c: Any):
@@ -1097,7 +1107,9 @@ class TipYoxlayıcı:
                 else:
                     s.sahələr[ü.ad] = tip
             elif isinstance(ü, A.MetodElanı):
-                imza = self._funksiya_imzası(ü, ə)
+                # Bəzəyici imzanı dəyişə bilər — çağırışlar yoxlanılmır
+                imza = (T.NAMƏLUM if _bəzənib(ü)
+                        else self._funksiya_imzası(ü, ə))
                 if ü.statik:
                     s.statiklər[ü.ad] = imza
                 else:
@@ -1353,12 +1365,26 @@ class TipYoxlayıcı:
                 f"`{ad}` xarici əhatədə də var")
         ə.elan(Bağlama(ad, tip, sabit, yer, False, növ))
 
+    def _annotasiyaları_yoxla(self, annotasiyalar, ə: Əhatə) -> None:
+        """Bəzəyici adları təyin edilməlidir (spes. § 5.11)."""
+        from .icraci import DAXİLİ_ANNOTASİYALAR
+        for a in annotasiyalar:
+            if a.ad not in DAXİLİ_ANNOTASİYALAR and ə.tap(a.ad) is None \
+                    and not self.sərbəstdir:
+                self.x.xəbərdarlıq(
+                    "ALQ-T082", "Naməlum annotasiya", a.yer,
+                    f"`@{a.ad}` nə daxili annotasiyadır, nə də təyin "
+                    "edilmiş bəzəyici", "bəzəyici funksiyanı elan edin "
+                    "və ya adı düzəldin")
+
     def _c_funksiya(self, c: A.FunksiyaElanı, ə: Əhatə) -> bool:
+        self._annotasiyaları_yoxla(c.annotasiyalar, ə)
         b = ə.tap(c.ad)
         imza = (b.tip if b and isinstance(b.tip, T.FunksiyaTipi)
                 else self._funksiya_imzası(c, ə))
         if b is None:
-            ə.elan(Bağlama(c.ad, imza, True, c.yer, False, "funksiya"))
+            ə.elan(Bağlama(c.ad, T.NAMƏLUM if _bəzənib(c) else imza, True,
+                           c.yer, False, "funksiya"))
         self._funksiya_gövdəsi(c, imza, ə)
         return False
 
@@ -1437,7 +1463,9 @@ class TipYoxlayıcı:
         try:
             for ü in c.üzvlər:
                 if isinstance(ü, A.MetodElanı) and ü.gövdə is not None:
-                    imza = (s.statiklər.get(ü.ad) if ü.statik
+                    self._annotasiyaları_yoxla(ü.annotasiyalar, ə)
+                    imza = (self._funksiya_imzası(ü, ə) if _bəzənib(ü)
+                            else s.statiklər.get(ü.ad) if ü.statik
                             else s.metodlar.get(ü.ad))
                     if isinstance(imza, T.FunksiyaTipi):
                         self._funksiya_gövdəsi(
@@ -2454,6 +2482,10 @@ class TipYoxlayıcı:
                 return F(qaytarır=T.MƏTN)
             return T.NAMƏLUM
 
+        # Funksiyanın adı — bəzəyicilər üçün (`f.ad`)
+        if ad == "ad" and isinstance(obyekt, T.FunksiyaTipi):
+            return T.MƏTN
+
         cədvəl = self._metod_cədvəli(obyekt)
         if cədvəl is None:
             if bildir and not self.sərbəstdir:
@@ -2614,10 +2646,11 @@ class TipYoxlayıcı:
         # Lambdalar sonra: onların parametr tipləri digər arqumentlərdən
         sıra.sort(key=lambda c: isinstance(c[1].dəyər, A.Lambda))
         mövqe_sayı = {id(a): i for i, a in enumerate(
-            [a for a in e.arqumentlər if not a.ad and not a.yayma])}
+            [a for a in e.arqumentlər
+             if not a.ad and not a.yayma and not a.adlı_yayma])}
         for _, a in sıra:
             p = parametr(mövqe_sayı.get(id(a), -1), a) \
-                if not a.yayma else None
+                if not a.yayma and not a.adlı_yayma else None
             if isinstance(a.dəyər, A.Lambda) and p is not None and \
                     isinstance(T.açılmış(p.tip), T.FunksiyaTipi):
                 gözlənilən = T.yerləşdir(T.açılmış(p.tip), x)
@@ -2679,8 +2712,8 @@ class TipYoxlayıcı:
     def _arqumentləri_yoxla(self, imza: T.FunksiyaTipi, arqumentlər: list,
                             e: Any, ad: str) -> None:
         mövqeli = [(a, t) for a, t in arqumentlər
-                   if a.ad is None and not a.yayma]
-        yayma_var = any(a.yayma for a, _ in arqumentlər)
+                   if a.ad is None and not a.yayma and not a.adlı_yayma]
+        yayma_var = any(a.yayma or a.adlı_yayma for a, _ in arqumentlər)
         adlı = {a.ad: t for a, t in arqumentlər if a.ad}
 
         minimum = imza.minimum_arqument

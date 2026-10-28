@@ -268,6 +268,7 @@ class Söhbət:
 
         for c in gövdə:
             if self.icraçı._elandır(c):
+                self.icraçı.bəzə(c, self.mühit)
                 self._elan_xəbəri(c)
                 continue
             if c is çap_edilən:

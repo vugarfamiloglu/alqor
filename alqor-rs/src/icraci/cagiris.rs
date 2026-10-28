@@ -13,6 +13,56 @@ use std::rc::Rc;
 //  Sərbəst köməkçilər
 // ═══════════════════════════════════════════════════════════════════════
 
+/// Dilin və kitabxanaların öz annotasiyaları — bəzəyici kimi axtarılmır
+pub const DAXİLİ_ANNOTASİYALAR: &[&str] = &[
+    "sınaq", "sınaqQrupu", "sınaqVerilənlər", "sınaqdan_keçməyib",
+    "əvvəl", "sonra", "atla", "yaddaşla", "saf", "daxili", "xaric",
+    "quyruqRekursiya", "köhnəlmiş", "xarici", "tənbəl", "statik",
+    "yalnızHədəf", "əgərHədəf", "əgərKompilyasiya",
+    "cədvəl", "sütun", "açar", "əlaqə", "keçici", "API",
+    "json", "jsonAtla", "jsonStandart",
+];
+
+fn istifadəçi_annotasiyası(a: &[aac::Annotasiya]) -> bool {
+    a.iter().any(|a| !DAXİLİ_ANNOTASİYALAR.contains(&a.ad.as_str()))
+}
+
+/// Elanın bəzəyici ola biləcək annotasiyası varmı (VM bunları ağac
+/// icraçısına ötürür)
+pub fn bəzəyici_ola_bilər(c: &Cümlə) -> bool {
+    match c {
+        Cümlə::Funksiya(f) | Cümlə::Metod(f) => istifadəçi_annotasiyası(&f.bəzəyicilər),
+        Cümlə::Sinif(s) => {
+            istifadəçi_annotasiyası(&s.bəzəyicilər)
+                || s.üzvlər.iter().any(bəzəyici_ola_bilər)
+        }
+        _ => false,
+    }
+}
+
+/// `f(**lüğət)` — lüğətin cütləri adlı arqument olur
+pub fn adlı_yay(d: &D, adlı: &mut Adlı, yer: Yer) -> Nəticə<()> {
+    let xəta = || {
+        Err(xəta_yer(
+            "TipXətası",
+            format!("`**` yalnız mətn açarlı lüğətə tətbiq olunur, `{}` verilib", tip_adı(d)),
+            Some(yer),
+            "ALQ-T081",
+        ))
+    };
+    let D::Lüğət(l) = d else { return xəta() };
+    let l = l.borrow();
+    if !l.iter().all(|(k, _)| matches!(k.0, D::S(_))) {
+        return xəta();
+    }
+    for (k, v) in l.iter() {
+        if let D::S(s) = &k.0 {
+            adlı_qoy(adlı, ad(s), v.clone());
+        }
+    }
+    Ok(())
+}
+
 pub fn elandır(c: &Cümlə) -> bool {
     matches!(
         c,
@@ -227,6 +277,57 @@ pub fn adlı_götür(adlı: &mut Adlı, a: &str) -> Option<D> {
 // ═══════════════════════════════════════════════════════════════════════
 
 impl İcraçı {
+    // ── Bəzəyicilər (§ 5.11) ─────────────────────────────────────────
+
+    /// Elanın istifadəçi bəzəyiciləri (mənbədəki sıra ilə). Mühitdə
+    /// tapılmayan adlar və daxili annotasiyalar məlumat olaraq qalır.
+    pub fn bəzəyicilər(&self, annot: &[aac::Annotasiya], m: &Mühit) -> Nəticə<Vec<D>> {
+        let mut v = vec![];
+        for a in annot {
+            if DAXİLİ_ANNOTASİYALAR.contains(&a.ad.as_str()) {
+                continue;
+            }
+            let Ok(d) = m.al(&a.ad) else { continue };
+            if a.arqumentlər.is_empty() {
+                v.push(d);
+            } else {
+                let yer = a.arqumentlər[0].dəyər.yer();
+                let (arq, adlı) = self.arqumentlər(&a.arqumentlər, m, yer)?;
+                v.push(self.çağır(&d, arq, adlı, Some(yer))?);
+            }
+        }
+        Ok(v)
+    }
+
+    /// `@a @b f` → `a(b(f))`
+    pub fn bəzəyiciləri_tətbiq_et(&self, mut d: D, bəzəyicilər: &[D]) -> Nəticə {
+        for b in bəzəyicilər.iter().rev() {
+            d = self.çağır(b, vec![d], vec![], None)?;
+        }
+        Ok(d)
+    }
+
+    pub fn bəzə_ad(&self, ad_: &str, annot: &[aac::Annotasiya], m: &Mühit) -> Nəticə<()> {
+        let b = self.bəzəyicilər(annot, m)?;
+        if b.is_empty() {
+            return Ok(());
+        }
+        let d = m.al(ad_)?;
+        let d = self.bəzəyiciləri_tətbiq_et(d, &b)?;
+        m.təyin(ad_, d)
+    }
+
+    /// Funksiya və sinif elanına bəzəyiciləri tətbiq edir.
+    pub fn bəzə(&self, c: &Cümlə, m: &Mühit) -> Nəticə<()> {
+        match c {
+            Cümlə::Funksiya(f) if !f.bəzəyicilər.is_empty() => self.bəzə_ad(&f.ad, &f.bəzəyicilər, m),
+            Cümlə::Sinif(s) if !s.bəzəyicilər.is_empty() && s.quruluş != "obyekt" => {
+                self.bəzə_ad(&s.ad, &s.bəzəyicilər, m)
+            }
+            _ => Ok(()),
+        }
+    }
+
     pub fn arqumentlər(&self, arq: &[aac::Arqument], m: &Mühit, yer: Yer) -> Nəticə<(Vec<D>, Adlı)> {
         let mut a = Vec::with_capacity(arq.len());
         let mut adlı: Adlı = vec![];
@@ -237,6 +338,8 @@ impl İcraçı {
                 while let Some(e) = it.növbəti(self, Some(yer))? {
                     a.push(e);
                 }
+            } else if x.adlı_yayma {
+                adlı_yay(&d, &mut adlı, yer)?;
             } else if let Some(n) = &x.ad {
                 adlı_qoy(&mut adlı, ad(n), d);
             } else {
@@ -379,6 +482,14 @@ impl İcraçı {
     }
 
     pub fn funksiya_çağır(&self, f: &Rc<Funksiya>, args: Vec<D>, adlı: Adlı, yer: Option<Yer>) -> Nəticə {
+        if let Some(h) = &f.bəzənmiş {
+            let mut a = Vec::with_capacity(args.len() + 1);
+            if let Some(o) = &f.özü {
+                a.push(o.clone());
+            }
+            a.extend(args);
+            return self.çağır(h, a, adlı, yer);
+        }
         if f.asinxron && !f.generator {
             let sinxron = Rc::new(Funksiya {
                 ad: f.ad.clone(),
@@ -391,6 +502,7 @@ impl İcraçı {
                 sinif: f.sinif.clone(),
                 annot: f.annot,
                 yaddaş: None,
+                bəzənmiş: None,
             });
             return Ok(D::Gələcək(Gələcək::yeni(&f.ad, move |i| i.funksiya_çağır(&sinxron, args, adlı, yer))));
         }

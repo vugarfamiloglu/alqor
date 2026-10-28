@@ -259,6 +259,40 @@ class Funksiya(Çağırılan):
         return f"<funksiya {self.ad}>"
 
 
+@dataclass(repr=False)
+class BəzənmişMetod(Funksiya):
+    """Bəzəyici ilə dəyişdirilmiş metod (spes. § 5.11).
+
+    `hədəf` — bəzəyicinin qaytardığı çağırılan dəyər; obyekt üzərindən
+    çağırılanda `özü` birinci arqument kimi ötürülür.
+    """
+    hədəf: Any = None
+
+    def bağla(self, nümunə: Any) -> "BəzənmişMetod":
+        return BəzənmişMetod(self.ad, self.parametrlər, self.gövdə,
+                             self.mühit, self.asinxron, self.generator,
+                             nümunə, self.sinif, self.annotasiyalar,
+                             self.yaddaş, self.hədəf)
+
+
+@dataclass
+class SərbəstMetod(Çağırılan):
+    """Bəzəyiciyə ötürülən metod: birinci arqument `özü`-dür."""
+    ad: str
+    metod: Funksiya
+
+    def çağır(self, icraçı, arqumentlər, adlı, yer=None):
+        if not arqumentlər:
+            raise AlqorXəta("ArqumentXətası",
+                            f"`{self.ad}` metodu `özü` arqumenti olmadan "
+                            "çağırıldı", yer, "ALQ-R022")
+        return icraçı.funksiya_çağır(self.metod.bağla(arqumentlər[0]),
+                                     list(arqumentlər[1:]), adlı, yer)
+
+    def __repr__(self) -> str:
+        return f"<metod {self.ad}>"
+
+
 @dataclass
 class Daxili(Çağırılan):
     """Standart kitabxananın funksiyası."""

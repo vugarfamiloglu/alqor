@@ -48,6 +48,8 @@ pub struct İcraçı {
     pub fayl_modulları: RefCell<HashMap<PathBuf, Rc<Modul>>>,
     pub təsadüfi: RefCell<super::modullar::MT>,
     pub ölçü_başlanğıc: f64,
+    /// `elanları_qaldır` işləyərkən bəzəyicilər tətbiq olunmur
+    pub qaldırılır: Cell<bool>,
 }
 
 /// İterator
@@ -309,6 +311,7 @@ impl İcraçı {
             fayl_modulları: Default::default(),
             təsadüfi: RefCell::new(super::modullar::MT::təsadüfi()),
             ölçü_başlanğıc: super::platforma::monoton_san(),
+            qaldırılır: Cell::new(false),
         }));
         super::kitabxana::qlobal_qur(i);
         i
@@ -428,6 +431,8 @@ impl İcraçı {
                     for c in gövdə {
                         if !elandır(c) {
                             self.cümlə(c, &m)?;
+                        } else {
+                            self.bəzə(c, &m)?;
                         }
                     }
                 }
@@ -484,7 +489,16 @@ impl İcraçı {
         }
     }
 
+    /// Funksiya və siniflər qarşılıqlı istinad edə bilsin. Bəzəyicilər
+    /// burada yox, elanın öz yerində `bəzə` ilə tətbiq olunur (§ 5.11).
     pub fn elanları_qaldır(&self, gövdə: &[Cümlə], m: &Mühit) -> Nəticə<()> {
+        let əvvəlki = self.qaldırılır.replace(true);
+        let r = self.elanları_qaldır_(gövdə, m);
+        self.qaldırılır.set(əvvəlki);
+        r
+    }
+
+    fn elanları_qaldır_(&self, gövdə: &[Cümlə], m: &Mühit) -> Nəticə<()> {
         for c in gövdə {
             if let Cümlə::İdxal { .. } = c {
                 self.cümlə(c, m)?;
@@ -791,8 +805,12 @@ impl İcraçı {
                     sinif: None,
                     annot,
                     yaddaş: if annot.yaddaşla { Some(Default::default()) } else { None },
+                    bəzənmiş: None,
                 };
                 m.elan(ad(&f.ad), D::Funksiya(Rc::new(ff)), false);
+                if !self.qaldırılır.get() {
+                    self.bəzə(c, m)?;
+                }
                 Ok(())
             }
             Cümlə::Sinif(s) => self.c_sinif(s, m),
@@ -812,6 +830,8 @@ impl İcraçı {
                 for c in gövdə.iter() {
                     if !elandır(c) {
                         self.cümlə(c, &alt)?;
+                    } else {
+                        self.bəzə(c, &alt)?;
                     }
                 }
                 let üzvlər = alt.hamısı().into_iter().collect();
@@ -1661,7 +1681,7 @@ impl İcraçı {
                 Err(x) => Err(x),
             },
             İfadə::Lambda { parametrlər, gövdə, asinxron, generator, .. } => Ok(D::Funksiya(Rc::new(Funksiya {
-                ad: ad("<lambda>"),
+                ad: ad("<anonim>"),
                 parametrlər: parametrlər.clone(),
                 gövdə: match gövdə {
                     aac::LambdaGövdə::Blok(g) => FGövdə::Blok(g.clone()),
@@ -1674,6 +1694,7 @@ impl İcraçı {
                 sinif: None,
                 annot: Annot::default(),
                 yaddaş: None,
+                bəzənmiş: None,
             }))),
             İfadə::JSXElement(yer, a, atributlar, uşaqlar) => self.e_jsx(*yer, a, atributlar, uşaqlar, m),
             İfadə::JSXParça(_, uşaqlar) => {

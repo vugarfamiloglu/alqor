@@ -423,6 +423,8 @@ fn fayldan_modul(i: &İcraçı, yol: &str, yer: Option<Yer>) -> Nəticə<Rc<Modu
     for c in &ağac.gövdə {
         if !elandır(c) {
             i.cümlə(c, &alt)?;
+        } else {
+            i.bəzə(c, &alt)?;
         }
     }
     let stem = p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();

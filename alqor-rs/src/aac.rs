@@ -57,6 +57,8 @@ pub struct Arqument {
     pub dəyər: E,
     pub ad: Option<String>,
     pub yayma: bool,
+    /// `**lüğət`
+    pub adlı_yayma: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -172,6 +174,8 @@ pub struct Funksiya {
     pub asinxron: bool,
     pub generator: bool,
     pub annotasiyalar: Vec<String>,
+    /// Arqumentləri ilə bütün annotasiyalar — bəzəyicilər üçün (§ 5.11)
+    pub bəzəyicilər: Vec<Annotasiya>,
     // metodlar üçün
     pub statik: bool,
     pub mücərrəd: bool,
@@ -210,6 +214,8 @@ pub struct SinifE {
     pub mücərrəd: bool,
     pub son: bool,
     pub quruluş: String,
+    pub annotasiyalar: Vec<String>,
+    pub bəzəyicilər: Vec<Annotasiya>,
 }
 
 #[derive(Debug, Clone)]
