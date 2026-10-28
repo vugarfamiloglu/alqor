@@ -1,6 +1,6 @@
 [package]
 name = "alqor"
-version = "2.3.1"
+version = "2.4.0"
 edition = "2021"
 description = "Alqor proqramlaşdırma dilinin Rust implementasiyası (lekser, parser, icraçı)"
 license = "MIT"

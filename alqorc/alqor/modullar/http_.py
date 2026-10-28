@@ -50,7 +50,7 @@ from typing import Any
 from ..deyerler import AlqorXəta, Daxili, Nümunə, tip_adı
 from ..korutin import Gələcək
 
-VERSİYA = "2.3.1"
+VERSİYA = "2.4.0"
 İSTİFADƏÇİ_AGENTİ = f"Alqor-http/{VERSİYA}"
 
 METODLAR = {

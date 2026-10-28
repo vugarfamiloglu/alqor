@@ -52,7 +52,7 @@ from .parser import Parser
 from .token import Növ, Token, Yer
 from .xeta import Diaqnostika, Səviyyə, XətaToplayıcı
 
-VERSİYA = "2.3.1"
+VERSİYA = "2.4.0"
 
 
 # ═══════════════════════════════════════════════════════════════════════

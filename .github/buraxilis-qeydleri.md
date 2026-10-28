@@ -1,10 +1,35 @@
-## Alqor 2.3.1
+## Alqor 2.4.0
 
 Azərbaycan dilində proqramlaşdırma dili: dil, **Alqor Studio** IDE, paket meneceri,
-linter, formatlayıcı, debaqçı və oflayn sənədlər. Hər quraşdırıcıda Python daxildir,
-əlavə heç nə lazım deyil.
+linter, formatlayıcı, debaqçı və oflayn sənədlər. Hər quraşdırıcıda Python və sürətli
+Rust icraçısı daxildir, əlavə heç nə lazım deyil.
 
-### 2.3.1-də düzəlişlər
+### 2.4-ün yenilikləri
+
+**Python kitabxanaları birbaşa Alqor-da**
+- `gətir python:statistics kimi st`, `gətir python:collections.{Counter}` — istənilən Python
+  paketi (PyPI) Alqor kodunda işləyir
+- Ədəd, mətn, siyahı, lüğət, dəst, kortej iki tərəfə avtomatik çevrilir; Alqor funksiyaları
+  Python-a ötürülə bilir; Python xətaları `cəhd et / tut` ilə tutulur (`PythonXətası`)
+- `alqor python qur requests` — paket layihənin `python_paketlər/` qovluğuna; `alqor python
+  siyahı | sil`; `layihe.alq`-da `[python]` asılılıqları; `alqor qur` paketləri daxil edir
+
+**Sürətli Rust icraçısı (bytecode virtual maşın)**
+- Kod bytecode-a çevrilir və virtual maşında işləyir: Python icraçısından təxminən 100 dəfə,
+  əvvəlki Rust icraçısından 1.5–3 dəfə sürətli (məsələn, `fib` 7.5 s → 0.08 s)
+- Rust icraçısında yeni modullar: `veb` server (marşrutlar, şablonlar, sessiyalar), `http`,
+  `şəbəkə`, `verilənlər` (SQLite), `şifrə`, `kodlaşdırma`, `sıxma`, `csv`, `toml`, `xml`
+- `alqor işlət --motor rs` — Rust icraçısı ilə; `--motor avto` — proqramın modulları Rust-da
+  varsa Rust, yoxdursa Python (standart hələ `py`; `ALQOR_MOTOR=avto` ilə dəyişmək olar)
+- Rust icraçısı bütün quraşdırıcılara daxildir (`bin/alqor-rs`)
+
+### Düzəlişlər
+- Windows: `veb` serverində statik fayl yolları, bağlantı xətalarının mətni, pəncərə serverinin
+  rədd edilən sorğulara cavabı
+- `.rpm` paketlərinə yeni rpm versiyalarının tələb etdiyi yük həzmləri əlavə olundu
+- `alqorpm`: depo ünvanı veb səhifə qaytaranda xam HTML yox, aydın xəta mesajı
+
+## 2.3.1-də düzəlişlər
 
 - **Studio: öz kontekst menyusu hər yerdə.** Sağ klik artıq heç yerdə brauzerin menyusunu açmır:
   xoş gəldin ekranında yeni fayl, forma və layihə, şablondan layihə, faylı açmaq və işlətmək;
@@ -47,7 +72,7 @@ linter, formatlayıcı, debaqçı və oflayn sənədlər. Hər quraşdırıcıda
 - Xəta mesajlarında sənəd linki: `vuqar.pro/alqor/xeta/<KOD>`
 - Studio: «Haqqında» pəncərəsi, qruplara bölünmüş klaviatura qısayolları
 
-### Quraşdırma
+## Quraşdırma
 
 **Windows** — `AlqorQurasdirici-*.exe`: endirin və işə salın (idarəçi hüququ lazım deyil).
 Başlat menyusunda **Alqor Studio**, **Alqor terminalı**, **Alqor sənədləri** yaranır.
@@ -61,8 +86,8 @@ Quraşdırmasız variant: `…-windows-portativ.zip`.
 «Alqor Studio»-nu Applications qovluğuna sürükləyin, ilk dəfə sağ klik → Open.
 Terminal əmrləri üçün `.tar.gz` arxivindəki `qurasdir.sh` skriptini işlədin.
 
-**alqor-rs** (sürətli icraçı; konsol proqramları üçün) — `alqor-rs-*-<platforma>` arxivləri:
-`alqor-rs işlət proqram.alq`. Veb, pəncərə və vidjet modulları üçün əsas quraşdırıcını istifadə edin.
+**alqor-rs** (yalnız sürətli icraçı, quraşdırıcısız) — `alqor-rs-*-<platforma>` arxivləri:
+`alqor-rs işlət proqram.alq`. Pəncərə, vidjet və Python kitabxanaları üçün əsas quraşdırıcını istifadə edin.
 
 **WebAssembly** — `alqor-wasm-*.zip`: brauzerdə Alqor icraçısı (`index.html` nümunədir).
 

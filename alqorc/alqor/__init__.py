@@ -1,3 +1,3 @@
 """Alqor kompilyatoru — etalon implementasiya (Python)."""
 
-VERSIYA = "2.3.1"
+VERSIYA = "2.4.0"
