@@ -38,7 +38,7 @@ pub const BLOK_ACANLAR: &[&str] = &["funksiya", "metod", "silinsin", "blok", "si
     "genişlət", "əgər", "varsa", "yoxdursa", "seç", "nə qədər ki", "həmişə", "təkrarla", "hər",
     "cəhd et", "təmin", "istifadə"];
 
-pub const EHTIYAT: &[&str] = &["aktyor", "ömür", "makro", "təsir"];
+pub const EHTIYAT: &[&str] = &["aktyor", "ömür", "təsir"];
 
 pub struct Cədvəl {
     pub acarlar: HashSet<&'static str>,

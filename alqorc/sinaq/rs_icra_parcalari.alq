@@ -1198,3 +1198,49 @@ cəhd et
 tut (x: Xəta)
     yaz(x.mesaj)
 son
+=====
+// Makrolar: ifadə, cümlə, blok, gigiyena, iç-içə açılış
+makro kvadrat(x) = x * x
+makro cəm3(a, b, c) = a + b + c
+makro dəyişdir(a, b)
+    dəyişən müvəqqəti = a
+    a = b
+    b = müvəqqəti
+son
+makro təkrar(n, iş: blok)
+    hər i üçün 1..n içində
+        iş
+    son
+son
+makro boş_makro()
+son
+makro ikiqat_təkrar(iş: blok)
+    təkrar!(2)
+        iş
+    son
+son
+dəyişən x = 3
+dəyişən müvəqqəti = 10
+yaz(kvadrat!(x + 1), kvadrat!(2) + 1, "{kvadrat!(5)}", cəm3!(1, kvadrat!(2), [1, 2][1]))
+dəyişdir!(x, müvəqqəti)
+yaz(x, müvəqqəti)
+dəyişən i = 100
+təkrar!(2)
+    yaz("salam", i)
+son
+boş_makro!()
+ikiqat_təkrar!()
+    yaz("iç-içə")
+son
+funksiya tap(s)
+    makro yoxla(d)
+        əgər d > 1 onda
+            qaytar d
+        son
+    son
+    hər a üçün s içində
+        yoxla!(a)
+    son
+    qaytar -1
+son
+yaz(tap([1, 5, 7]), tap([0]))

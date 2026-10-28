@@ -8,6 +8,7 @@ use crate::aac::{
     Tutma, İdxalElementi, İfadə, E,
 };
 use crate::lekser::{Növ, Parça, Token};
+use crate::makro as M;
 use crate::xeta::{mənbə_id, Mənbə, XətaToplayıcı, Yer};
 use std::rc::Rc;
 
@@ -153,6 +154,8 @@ pub struct Parser<'a> {
     pub x: &'a mut XətaToplayıcı,
     pub i: usize,
     pub mid: u32,
+    /// Makrolar (§ 5.12) — interpolyasiya alt-parserləri ilə paylaşılır
+    pub makro: M::MakroVəziyyəti,
 }
 
 impl<'a> Parser<'a> {
@@ -160,7 +163,7 @@ impl<'a> Parser<'a> {
         let t: Vec<Token> =
             tokenlər.into_iter().filter(|t| !matches!(t.növ, Növ::Direktiv | Növ::Sənəd)).collect();
         let mid = mənbə_id(&s);
-        Parser { t, s, x, i: 0, mid }
+        Parser { t, s, x, i: 0, mid, makro: M::MakroVəziyyəti::default() }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -472,7 +475,255 @@ impl<'a> Parser<'a> {
             ləqəb = Some(self.tələb_ad("ləqəb")?);
         }
         self.cümlə_sonu()?;
+        if let Some(m) = &mətn_yolu {
+            self.makroları_gətir(m);
+        }
         Ok(Cümlə::İdxal { yer, yol, mətn_yolu, ləqəb, elementlər, hamısı, python })
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  Makrolar (§ 5.12)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// `makro ad(…)` — `makro` kontekstli sözdür
+    fn makro_elanıdır(&self) -> bool {
+        let t = self.bax(0);
+        t.növ == Növ::Ad && t.s == "makro" && self.növ(1) == Növ::Ad && self.op_i(2, &["("])
+    }
+
+    fn makro_çağırışı(&self) -> Option<M::Makro> {
+        let t = self.bax(0);
+        if t.növ == Növ::Ad && self.op_i(1, &["!"]) && self.op_i(2, &["("]) {
+            return self.makro.makrolar.get(&t.s).cloned();
+        }
+        None
+    }
+
+    fn makro_elanı(&mut self) -> N<Cümlə> {
+        let yer = self.al().yer;
+        let ad_yer = self.bax(0).yer;
+        let ad = self.tələb_ad("makro adı")?;
+        self.tələb_op("(", "makro parametrləri")?;
+        let mut parametrlər: Vec<String> = vec![];
+        let mut blok: Option<String> = None;
+        self.ayırıcı_atla();
+        while !self.op(&[")"]) {
+            let p_yer = self.bax(0).yer;
+            let p = self.tələb_ad("parametr adı")?;
+            if let Some(b) = &blok {
+                self.x.xəta(
+                    "ALQ-P035",
+                    "Blok parametri sonuncu olmalıdır",
+                    Some(p_yer),
+                    &format!("`{}`-dan sonra `{}` gəlib", b, p),
+                    &[],
+                );
+            }
+            if self.qəbul_op(&[":"]).is_some() && !self.acar(&["blok"]) {
+                // Səhv tip — bildirilir, parametr adi parametr sayılır
+                let g = göstər(&self.bax(0).clone());
+                self.xəta(
+                    "ALQ-P035",
+                    "Makro parametrinin tipi yalnız `blok` ola bilər",
+                    &format!("`{}` yazılıb", g),
+                    &["blok arqumenti: `iş: blok`"],
+                );
+                self.tip()?;
+                parametrlər.push(p);
+            } else if self.qəbul_acar(&["blok"]).is_some() {
+                blok = Some(p);
+            } else if parametrlər.contains(&p) {
+                self.x.xəta("ALQ-P035", "Parametr adı təkrarlanır", Some(p_yer), &format!("`{}` artıq var", p), &[]);
+            } else {
+                parametrlər.push(p);
+            }
+            self.ayırıcı_atla();
+            if self.qəbul_op(&[","]).is_none() {
+                break;
+            }
+            self.ayırıcı_atla();
+        }
+        self.tələb_op(")", "makro parametrləri")?;
+        let (tokenlər, ifadədir);
+        if self.qəbul_op(&["="]).is_some() {
+            if let Some(b) = &blok {
+                self.x.xəta(
+                    "ALQ-P034",
+                    "İfadə makrosunun blok parametri ola bilməz",
+                    Some(ad_yer),
+                    &format!("`{}: blok` yalnız cümlə makrosunda", b),
+                    &["gövdəni `son` ilə bitən blok kimi yazın"],
+                );
+            }
+            let b = self.i;
+            self.ifadə(0)?;
+            tokenlər = self.t[b..self.i].to_vec();
+            ifadədir = true;
+            self.cümlə_sonu()?;
+        } else {
+            let b = self.i;
+            self.blok(&[]);
+            tokenlər = self.t[b..self.i].to_vec();
+            ifadədir = false;
+            self.son_tələb(Some("makro"))?;
+        }
+        let yerlilər = M::yerli_adlar(&tokenlər);
+        self.makro.makrolar.insert(
+            ad.clone(),
+            M::Makro { ad, parametrlər, blok, ifadədir, tokenlər, yerlilər, yer: ad_yer },
+        );
+        Ok(Cümlə::Keç(yer))
+    }
+
+    /// `(a, f(b, c), [d])` — token səviyyəsində bölünür
+    fn makro_arqumentləri(&mut self) -> N<Vec<Vec<Token>>> {
+        self.tələb_op("(", "makro arqumentləri")?;
+        let mut arqumentlər: Vec<Vec<Token>> = vec![];
+        let mut cari: Vec<Token> = vec![];
+        let mut dərinlik = 0i32;
+        loop {
+            let t = self.bax(0).clone();
+            if t.növ == Növ::FaylSonu {
+                self.tələb_op(")", "makro arqumentləri")?;
+            }
+            if t.opdur(&["(", "[", "{"]) {
+                dərinlik += 1;
+            } else if t.opdur(&[")", "]", "}"]) {
+                if dərinlik == 0 && t.s == ")" {
+                    self.al();
+                    break;
+                }
+                dərinlik -= 1;
+            } else if t.opdur(&[","]) && dərinlik == 0 {
+                self.al();
+                arqumentlər.push(std::mem::take(&mut cari));
+                continue;
+            }
+            if t.növ != Növ::SətirSonu {
+                cari.push(t);
+            }
+            self.al();
+        }
+        if !cari.is_empty() || !arqumentlər.is_empty() {
+            arqumentlər.push(cari);
+        }
+        if arqumentlər.iter().any(|a| a.is_empty()) {
+            self.xəta("ALQ-P005", "İfadə gözlənilirdi", "makro arqumenti boşdur", &[]);
+            return Err(PX);
+        }
+        Ok(arqumentlər)
+    }
+
+    /// Çağırışı (`ad!(…)` və blokunu) açılmış tokenlərlə əvəz edir
+    fn makro_aç(&mut self, m: &M::Makro, ifadədə: bool) -> N<()> {
+        let başla = self.i;
+        let yer = self.al().yer;
+        self.al();
+        let arqumentlər = self.makro_arqumentləri()?;
+        let mut blok: Option<Vec<Token>> = None;
+        if m.blok.is_some() {
+            if ifadədə {
+                self.x.xəta(
+                    "ALQ-P034",
+                    "Cümlə makrosu ifadə kimi işlənə bilməz",
+                    Some(yer),
+                    &format!("`{}!` blok qəbul edir", m.ad),
+                    &["makronu ayrıca sətirdə çağırın"],
+                );
+                return Err(PX);
+            }
+            // Blokun sərhədini tapmaq üçün onu təhlil edirik — xətalar
+            // açılmış kodda bir dəfə bildirilsin deyə geri qaytarılır
+            let b = self.i;
+            let anlıq = self.x.anlıq();
+            self.blok(&[]);
+            self.x.geri_qaytar(anlıq);
+            blok = Some(self.t[b..self.i].to_vec());
+            self.son_tələb(None)?;
+        }
+        if !m.ifadədir && ifadədə {
+            self.x.xəta(
+                "ALQ-P034",
+                "Cümlə makrosu ifadə kimi işlənə bilməz",
+                Some(yer),
+                &format!("`{}!` cümlə makrosudur", m.ad),
+                &["makronu ayrıca sətirdə çağırın"],
+            );
+            return Err(PX);
+        }
+        self.makro.açılış += 1;
+        if self.makro.açılış > M::AÇILIŞ_HƏDDİ {
+            self.x.xəta(
+                "ALQ-P036",
+                "Makro açılışlarının sayı həddi aşdı",
+                Some(yer),
+                &format!("{} açılış", M::AÇILIŞ_HƏDDİ),
+                &["makro özünü sonsuz çağırırmı?"],
+            );
+            return Err(PX);
+        }
+        let mut yeni = match M::aç(m, &arqumentlər, blok.as_ref(), yer, self.makro.açılış) {
+            Ok(v) => v,
+            Err(x) => {
+                let k: Vec<&str> = x.köməklər.iter().map(|s| s.as_str()).collect();
+                self.x.xəta(x.kod, &x.mesaj, Some(x.yer), &x.qeyd, &k);
+                return Err(PX);
+            }
+        };
+        if !ifadədə {
+            yeni.push(Token::yeni(Növ::SətirSonu, "", yer));
+        }
+        self.t.splice(başla..self.i, yeni);
+        self.i = başla;
+        Ok(())
+    }
+
+    /// `gətir "fayl.alq"` — faylın makroları bu faylda da işlənir
+    fn makroları_gətir(&mut self, mətn_yolu: &str) {
+        use std::path::{Path, PathBuf};
+        let baza: PathBuf = match &self.s.yol {
+            Some(y) => std::fs::canonicalize(y)
+                .ok()
+                .and_then(|p| p.parent().map(|q| q.to_path_buf()))
+                .unwrap_or_else(|| y.parent().map(|q| q.to_path_buf()).unwrap_or_default()),
+            None => std::env::current_dir().unwrap_or_default(),
+        };
+        let mut p = PathBuf::from(mətn_yolu);
+        if !p.is_absolute() {
+            p = baza.join(p);
+        }
+        if !p.exists() {
+            for uzantı in [".alq", ".alqor"] {
+                let q = PathBuf::from(format!("{}{}", p.display(), uzantı));
+                if q.exists() {
+                    p = q;
+                    break;
+                }
+            }
+        }
+        if !Path::new(&p).is_file() {
+            return;
+        }
+        let açar = std::fs::canonicalize(&p).unwrap_or(p.clone()).display().to_string();
+        if self.makro.oxunmuş.contains(&açar) {
+            return;
+        }
+        self.makro.oxunmuş.insert(açar);
+        let Ok(mətn) = std::fs::read_to_string(&p) else { return };
+        if !mətn.contains("makro") {
+            return;
+        }
+        let ad = p.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default();
+        let s = Mənbə::yeni(&ad, &mətn, Some(p.clone()));
+        let mut x = XətaToplayıcı::yeni();
+        let t = crate::lekser::Lekser::yeni(s.clone(), &mut x).leksə();
+        let mut alt = Parser::yeni(t, s, &mut x);
+        alt.makro.oxunmuş = std::mem::take(&mut self.makro.oxunmuş);
+        alt.ayır();
+        self.makro.oxunmuş = std::mem::take(&mut alt.makro.oxunmuş);
+        for (ad, mk) in std::mem::take(&mut alt.makro.makrolar) {
+            self.makro.makrolar.entry(ad).or_insert(mk);
+        }
     }
 
     fn ixrac(&mut self) -> N<Cümlə> {
@@ -553,6 +804,17 @@ impl<'a> Parser<'a> {
     }
 
     fn cümlə(&mut self) -> N<Cümlə> {
+        // Makro: elan və cümlə çağırışı (§ 5.12)
+        while let Some(m) = self.makro_çağırışı() {
+            if m.ifadədir {
+                break;
+            }
+            self.makro_aç(&m, false)?;
+        }
+        if self.makro_elanıdır() {
+            return self.makro_elanı();
+        }
+
         let tok = self.bax(0).clone();
 
         // Etiketli dövr: `xarici: hər ...`
@@ -2216,6 +2478,9 @@ impl<'a> Parser<'a> {
     // ═══════════════════════════════════════════════════════════════
 
     fn əsas_ifadə(&mut self) -> N<E> {
+        while let Some(m) = self.makro_çağırışı() {
+            self.makro_aç(&m, true)?;
+        }
         let tok = self.bax(0).clone();
         let yer = tok.yer;
         match tok.növ {
@@ -2344,7 +2609,8 @@ impl<'a> Parser<'a> {
                     let əvvəl = self.x.siyahı.len();
                     let ifadə = {
                         let mut alt = Parser::yeni(t, self.s.clone(), &mut *self.x);
-                        match alt.ifadə(0) {
+                        alt.makro = std::mem::take(&mut self.makro);
+                        let r = match alt.ifadə(0) {
                             Ok(e) => {
                                 let qalan = alt.bax(0).clone();
                                 if qalan.növ != Növ::FaylSonu {
@@ -2358,7 +2624,9 @@ impl<'a> Parser<'a> {
                                 e
                             }
                             Err(PX) => lit(yer, LiteralD::Mətn("".into())),
-                        }
+                        };
+                        self.makro = std::mem::take(&mut alt.makro);
+                        r
                     };
                     // CSS, JSON, regex kimi mətnlərdə `{` interpolyasiya sayılır
                     for d in self.x.siyahı[əvvəl..].iter_mut() {

@@ -548,6 +548,73 @@ yaz(qur(1, **seçim))          // 1 7 {"c": 9}
 
 ---
 
+## 5.12 Makrolar
+
+Makro **təhlil zamanı** açılan kod şablonudur: çağırış yeri makronun
+gövdəsi ilə əvəz olunur, parametrlər arqumentlərin **mətni** ilə
+dəyişdirilir. Funksiyadan fərqli olaraq makro yeni sintaksis qurmağa imkan
+verir: blok qəbul edə, çağıranın dəyişənlərinə yaza, çağıran funksiyadan
+`qaytar` edə bilər.
+
+### İfadə makrosu
+
+```alqor
+makro kvadrat(x) = x * x
+
+yaz(kvadrat!(4))          // 16
+yaz(kvadrat!(1 + 2))      // 9 — arqument mötərizəyə alınır: (1 + 2) * (1 + 2)
+```
+
+### Cümlə makrosu
+
+```alqor
+makro dəyişdir(a, b)
+    dəyişən müvəqqəti = a
+    a = b
+    b = müvəqqəti
+son
+
+dəyişən x = 1
+dəyişən y = 2
+dəyişdir!(x, y)           // x = 2, y = 1
+```
+
+### Blok qəbul edən makro
+
+Sonuncu parametr `ad: blok` ola bilər. Çağırışdan sonra gələn blok `son`
+ilə bitir; gövdədə `ad` ayrıca sətirdə yazılan yerə həmin blok qoyulur:
+
+```alqor
+makro vaxtÖlç(ad, iş: blok)
+    dəyişən başla = vaxt.ölç()
+    iş
+    yaz("{ad}: {vaxt.ölç() - başla:.3} san")
+son
+
+vaxtÖlç!("hesablama")
+    ağırHesab()
+son
+```
+
+### Qaydalar
+
+- Çağırış `ad!(arqumentlər)` formasındadır; `!` makronu funksiyadan
+  ayırır. Makro **istifadədən əvvəl** elan olunmalıdır (fayl sırası ilə).
+- Makro elanı kodda iz qoymur; açılmış kod adi kod kimi icra olunur. Ona
+  görə makrolar bütün icraçılarda (`--motor py|rs`, `--js`) eyni işləyir.
+- **Gigiyena:** makro gövdəsində elan olunan adlar (`dəyişən`, `hər`,
+  `tut`, iç `funksiya`) hər açılışda təzə ad alır və çağıranın eyni adlı
+  dəyişənləri ilə toqquşmur. Gövdədəki digər adlar (məsələn, `yaz`,
+  `vaxt`) çağırış yerində axtarılır.
+- Arqument hər istifadə yerində **yenidən hesablanır**:
+  `kvadrat!(növbəti())` `növbəti()`-ni iki dəfə çağırır.
+- Blokdakı `qaytar`, `dayan`, `davam et` çağıran funksiyaya və dövrə
+  aiddir.
+- `gətir "./makrolar.alq"` — həmin faylın makroları da bu faylda işlənir.
+- `makro` kontekstli sözdür: `dəyişən makro = 1` adi koddur.
+
+---
+
 ## 5.14 Funksiya yükləmə (overloading)
 
 Alqor **ad yükləməsini dəstəkləmir**. Əvəzinə:
@@ -632,5 +699,9 @@ son
 | `ALQ-T042` | `@quyruqRekursiya` tələbi ödənmir |
 | `ALQ-R010` | Stek daşması |
 | `ALQ-R022` | Bəzənmiş metod `özü` arqumenti olmadan çağırıldı |
+| `ALQ-P033` | Makro arqumentlərinin sayı uyğun deyil |
+| `ALQ-P034` | Cümlə makrosu ifadə kimi işlənə bilməz / ifadə makrosunun blok parametri |
+| `ALQ-P035` | Makro parametri səhvdir (`blok` sonda, yalnız ayrıca sətirdə) |
+| `ALQ-P036` | Makro açılışlarının sayı həddi aşdı |
 | `ALQ-T081` | `**` yalnız mətn açarlı lüğətə tətbiq olunur |
 | `ALQ-T082` | Naməlum annotasiya (bəzəyici tapılmadı) — xəbərdarlıq |

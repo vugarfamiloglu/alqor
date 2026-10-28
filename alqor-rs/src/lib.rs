@@ -10,6 +10,7 @@ pub mod elifba;
 pub mod homoqlif;
 pub mod icraci;
 pub mod lekser;
+pub mod makro;
 pub mod parser;
 pub mod parser_jsx;
 pub mod vm;

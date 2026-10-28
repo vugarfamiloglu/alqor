@@ -292,6 +292,16 @@ impl XətaToplayıcı {
             köməklər: köməklər.iter().map(|s| s.to_string()).collect(),
         });
     }
+    /// Diaqnostikaların anlıq vəziyyəti — makro blokunun sərhədini
+    /// tapmaq üçün edilən sınaq təhlilindən sonra geri qaytarılır
+    pub fn anlıq(&self) -> (usize, HashSet<String>, usize) {
+        (self.siyahı.len(), self.görülənlər.clone(), self.təkrar)
+    }
+    pub fn geri_qaytar(&mut self, a: (usize, HashSet<String>, usize)) {
+        self.siyahı.truncate(a.0);
+        self.görülənlər = a.1;
+        self.təkrar = a.2;
+    }
     pub fn xəta_sayı(&self) -> usize {
         self.siyahı.iter().filter(|d| d.səviyyə == Səviyyə::Xəta).count()
     }

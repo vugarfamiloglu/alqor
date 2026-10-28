@@ -244,17 +244,17 @@ class AçarSözSınaqları(unittest.TestCase):
         self.assertEqual(ts[2].dəyər, "yaş")
 
     def test_kontekstli_sözlər_qorunmur(self):
-        for söz in ("oxu", "yaz", "vəziyyət", "göstər", "sınaq"):
+        for söz in ("oxu", "yaz", "vəziyyət", "göstər", "sınaq", "makro"):
             with self.subTest(söz=söz):
                 ts, _ = tokenlər(söz)
                 self.assertEqual(ts[0].növ, Növ.AD)
 
     def test_ehtiyat_söz_xəbərdarlığı(self):
-        _, x = tokenlər("dəyişən makro = 5")
+        _, x = tokenlər("dəyişən ömür = 5")
         self.assertIn("ALQ-L016", [d.kod for d in x.xəbərdarlıqlar])
 
     def test_üzv_adında_ehtiyat_xəbərdarlığı_yoxdur(self):
-        _, x = tokenlər("veb.makro(5)")
+        _, x = tokenlər("veb.ömür(5)")
         self.assertEqual(x.xəbərdarlıqlar, [])
 
     def test_hərfə_həssasdır(self):

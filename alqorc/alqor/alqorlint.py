@@ -51,6 +51,9 @@ from .xeta import Diaqnostika, Səviyyə, XətaToplayıcı
 #  Qaydalar
 # ═══════════════════════════════════════════════════════════════════════
 
+_MAKRO_ADI = re.compile(r"\$m\d+")
+
+
 @dataclass(frozen=True)
 class Qayda:
     kod: str
@@ -273,6 +276,10 @@ class Yoxlayıcı:
     # ── Köməkçilər ────────────────────────────────────────────────────
     def bildir(self, ad: str, yer: Yer | None, qeyd: str,
                *köməklər: str, düzəliş=None) -> None:
+        # Makro açılışının yaratdığı adlar (`x$m3`, § 5.12) istifadəçinin
+        # yazdığı kod deyil — onlar haqqında bildirilmir
+        if _MAKRO_ADI.search(qeyd):
+            return
         self.tapıntılar.append(Tapıntı(QAYDA_ADI[ad], yer, qeyd,
                                        list(köməklər), düzəliş))
 

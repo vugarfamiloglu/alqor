@@ -16,6 +16,7 @@ from . import acar_sozler as AS
 from . import aac as A
 from .token import Növ, Token, Yer
 from .xeta import XətaToplayıcı
+from . import makro as M
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Operator prioritetləri (Spesifikasiya § 3.4)
@@ -118,6 +119,8 @@ class Parser:
         # olunduğu (mənbə ofseti → dərinlik). Adi ayırmada söndürülüb.
         self.dərinlik = 0
         self.dərinlik_qeydi: dict[int, int] | None = None
+        # Makrolar (§ 5.12) — interpolyasiya alt-parserləri ilə paylaşılır
+        self.makro = M.MakroVəziyyəti()
 
     def _sənədləri_topla(self, tokenlər: list[Token]) -> None:
         """
@@ -404,8 +407,199 @@ class Parser:
             ləqəb = self._tələb_ad("ləqəb")
 
         self._cümlə_sonu()
+        if mətn_yolu is not None:
+            self._makroları_gətir(mətn_yolu)
         return A.İdxal(yer, yol, mətn_yolu, ləqəb, elementlər, hamısı,
                        python)
+
+    # ═══════════════════════════════════════════════════════════════════
+    #  Makrolar (§ 5.12)
+    # ═══════════════════════════════════════════════════════════════════
+
+    def _makro_elanıdır(self) -> bool:
+        """`makro ad(…)` — `makro` kontekstli sözdür."""
+        t = self._bax()
+        return (t.növ is Növ.AD and t.dəyər == "makro"
+                and self._bax(1).növ is Növ.AD and self._op("(", irəli=2))
+
+    def _makro_çağırışı(self) -> M.Makro | None:
+        t = self._bax()
+        if t.növ is Növ.AD and self._op("!", irəli=1) \
+                and self._op("(", irəli=2):
+            return self.makro.makrolar.get(t.dəyər)
+        return None
+
+    def _makro_elanı(self) -> A.Cümlə:
+        yer = self._al().yer                          # `makro`
+        ad_tok = self._bax()
+        ad = self._tələb_ad("makro adı")
+        self._tələb_op("(", "makro parametrləri")
+        parametrlər: list[str] = []
+        blok: str | None = None
+        self._ayırıcı_atla()
+        while not self._op(")"):
+            p_tok = self._bax()
+            p = self._tələb_ad("parametr adı")
+            if blok is not None:
+                self.x.xəta("ALQ-P035", "Blok parametri sonuncu olmalıdır",
+                            p_tok.yer, f"`{blok}`-dan sonra `{p}` gəlib")
+            if self._qəbul_op(":") and not self._acar("blok"):
+                # Səhv tip — bildirilir, parametr adi parametr sayılır
+                self._xəta("ALQ-P035", "Makro parametrinin tipi yalnız "
+                           "`blok` ola bilər",
+                           f"`{self._göstər(self._bax())}` yazılıb",
+                           "blok arqumenti: `iş: blok`")
+                self._tip()
+                parametrlər.append(p)
+            elif self._qəbul_acar("blok"):
+                blok = p
+            elif p in parametrlər:
+                self.x.xəta("ALQ-P035", "Parametr adı təkrarlanır",
+                            p_tok.yer, f"`{p}` artıq var")
+            else:
+                parametrlər.append(p)
+            self._ayırıcı_atla()
+            if not self._qəbul_op(","):
+                break
+            self._ayırıcı_atla()
+        self._tələb_op(")", "makro parametrləri")
+
+        if self._qəbul_op("="):
+            if blok is not None:
+                self.x.xəta("ALQ-P034", "İfadə makrosunun blok parametri "
+                            "ola bilməz", ad_tok.yer,
+                            f"`{blok}: blok` yalnız cümlə makrosunda",
+                            "gövdəni `son` ilə bitən blok kimi yazın")
+            b = self.i
+            self._ifadə()
+            tokenlər = self.t[b:self.i]
+            ifadədir = True
+            self._cümlə_sonu()
+        else:
+            b = self.i
+            self._blok()
+            tokenlər = self.t[b:self.i]
+            ifadədir = False
+            self._son_tələb("makro")
+        self.makro.makrolar[ad] = M.Makro(
+            ad, parametrlər, blok, ifadədir, tokenlər,
+            M.yerli_adlar(tokenlər), ad_tok.yer)
+        return A.Keç(yer)
+
+    def _makro_arqumentləri(self) -> list[list[Token]]:
+        """`(a, f(b, c), [d])` — token səviyyəsində bölünür."""
+        self._tələb_op("(", "makro arqumentləri")
+        arqumentlər: list[list[Token]] = []
+        cari: list[Token] = []
+        dərinlik = 0
+        while True:
+            t = self._bax()
+            if t.növ is Növ.FAYL_SONU:
+                self._tələb_op(")", "makro arqumentləri")
+            if t.növ is Növ.OP and t.dəyər in ("(", "[", "{"):
+                dərinlik += 1
+            elif t.növ is Növ.OP and t.dəyər in (")", "]", "}"):
+                if dərinlik == 0 and t.dəyər == ")":
+                    self._al()
+                    break
+                dərinlik -= 1
+            elif t.növ is Növ.OP and t.dəyər == "," and dərinlik == 0:
+                self._al()
+                arqumentlər.append(cari)
+                cari = []
+                continue
+            if t.növ is not Növ.SETIR_SONU:
+                cari.append(t)
+            self._al()
+        if cari or arqumentlər:
+            arqumentlər.append(cari)
+        for a in arqumentlər:
+            if not a:
+                self._xəta("ALQ-P005", "İfadə gözlənilirdi",
+                           "makro arqumenti boşdur")
+                raise ParserXətası()
+        return arqumentlər
+
+    def _makro_aç(self, m: M.Makro, ifadədə: bool) -> None:
+        """Çağırışı (`ad!(…)` və blokunu) açılmış tokenlərlə əvəz edir."""
+        başla = self.i
+        yer = self._al().yer                          # ad
+        self._al()                                     # `!`
+        arqumentlər = self._makro_arqumentləri()
+        blok: list[Token] | None = None
+        if m.blok is not None:
+            if ifadədə:
+                self.x.xəta("ALQ-P034", "Cümlə makrosu ifadə kimi işlənə "
+                            "bilməz", yer, f"`{m.ad}!` blok qəbul edir",
+                            "makronu ayrıca sətirdə çağırın")
+                raise ParserXətası()
+            # Blokun sərhədini tapmaq üçün onu təhlil edirik — xətalar
+            # açılmış kodda bir dəfə bildirilsin deyə burada susdurulur
+            b = self.i
+            köhnə_x, self.x = self.x, XətaToplayıcı()
+            try:
+                self._blok()
+            finally:
+                self.x = köhnə_x
+            blok = self.t[b:self.i]
+            self._son_tələb()
+        elif not ifadədə and not m.ifadədir:
+            pass
+        if not m.ifadədir and ifadədə:
+            self.x.xəta("ALQ-P034", "Cümlə makrosu ifadə kimi işlənə "
+                        "bilməz", yer, f"`{m.ad}!` cümlə makrosudur",
+                        "makronu ayrıca sətirdə çağırın")
+            raise ParserXətası()
+        self.makro.açılış += 1
+        if self.makro.açılış > M.AÇILIŞ_HƏDDİ:
+            self.x.xəta("ALQ-P036", "Makro açılışlarının sayı həddi aşdı",
+                        yer, f"{M.AÇILIŞ_HƏDDİ} açılış",
+                        "makro özünü sonsuz çağırırmı?")
+            raise ParserXətası()
+        try:
+            yeni = M.aç(m, arqumentlər, blok, yer, self.makro.açılış)
+        except M.MakroXətası as x:
+            self.x.xəta(x.kod, x.mesaj, x.yer, x.qeyd, *x.köməklər)
+            raise ParserXətası() from None
+        if not ifadədə:
+            yeni = yeni + [Token(Növ.SETIR_SONU, None, yer)]
+        self.t[başla:self.i] = yeni
+        self.i = başla
+
+    def _makroları_gətir(self, mətn_yolu: str) -> None:
+        """`gətir "fayl.alq"` — faylın makroları bu faylda da işlənir."""
+        from pathlib import Path
+        yol = getattr(self.s, "yol", None)
+        baza = Path(yol).resolve().parent if yol is not None else Path.cwd()
+        p = Path(mətn_yolu)
+        if not p.is_absolute():
+            p = baza / p
+        if not p.exists():
+            for uzantı in (".alq", ".alqor"):
+                if Path(str(p) + uzantı).exists():
+                    p = Path(str(p) + uzantı)
+                    break
+        if not p.is_file():
+            return
+        açar = str(p.resolve())
+        if açar in self.makro.oxunmuş:
+            return
+        self.makro.oxunmuş.add(açar)
+        try:
+            mətn = p.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            return
+        if "makro" not in mətn:
+            return
+        from .lekser import Lekser
+        from .menbe import Mənbə
+        x = XətaToplayıcı()
+        s = Mənbə(p.name, mətn, p)
+        alt = Parser(Lekser(s, x).leksə(), s, x)
+        alt.makro.oxunmuş = self.makro.oxunmuş
+        alt.ayır()
+        for ad, mk in alt.makro.makrolar.items():
+            self.makro.makrolar.setdefault(ad, mk)
 
     def _ixrac(self) -> A.Cümlə:
         yer = self._al().yer                     # `ixrac et`
@@ -464,6 +658,13 @@ class Parser:
         return gövdə
 
     def _cümlə(self) -> A.Cümlə | None:
+        # ── Makro: elan və cümlə çağırışı (§ 5.12) ──────────────
+        while (m := self._makro_çağırışı()) is not None \
+                and not m.ifadədir:
+            self._makro_aç(m, ifadədə=False)
+        if self._makro_elanıdır():
+            return self._makro_elanı()
+
         tok = self._bax()
 
         # ── Etiketli dövr: `xarici: hər ...` ────────────────────
@@ -2005,6 +2206,8 @@ class Parser:
     # ═══════════════════════════════════════════════════════════════════
 
     def _əsas_ifadə(self) -> A.İfadə:
+        while (m := self._makro_çağırışı()) is not None:
+            self._makro_aç(m, ifadədə=True)
         tok = self._bax()
         yer = tok.yer
 
@@ -2129,6 +2332,7 @@ class Parser:
             else:
                 alt = Parser(list(p.tokenlər) + [
                     Token(Növ.FAYL_SONU, None, yer)], self.s, self.x)
+                alt.makro = self.makro
                 əvvəl = len(self.x.siyahı)
                 try:
                     ifadə = alt._ifadə()

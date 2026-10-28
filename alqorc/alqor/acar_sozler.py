@@ -124,6 +124,7 @@ KONTEKSTLI: frozenset[str] = frozenset([
     "vəziyyət", "hesablanan", "əməl", "hadisə", "göstər",   # komponent
     "sınaq", "ölç", "sil", "panika", "eynidir",    # standart kitabxana
     "başlanğıc", "bitiş",                          # modul blokları
+    "makro",                                       # makro elanı (§ 5.12)
 ])
 
 
@@ -382,7 +383,6 @@ DAVAM_ACAR_SOZLERI: frozenset[str] = frozenset([
 EHTIYAT: frozenset[str] = frozenset([
     "aktyor",      # aktyor modeli (gələcək paralellik modeli)
     "ömür",        # ömür parametrləri (lifetime)
-    "makro",       # kompilyasiya vaxtı makrolar
     "təsir",       # effekt sistemi
 ])
 

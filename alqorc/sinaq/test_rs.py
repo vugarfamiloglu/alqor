@@ -57,6 +57,12 @@ class RustMüqayisəsi(unittest.TestCase):
             "eger doğru\n    yaz(1)\nson\n", "funksiya f(\n",
             "sinif A\n    xassə\nson\n", "<div>\n", "seç x\nson\n",
             "hər x üçün\nson\n", "1 +\n", "qaytar qaytar\n",
+            # Makrolar (§ 5.12)
+            "makro k(x) = x * x\nyaz(k!(1, 2))\n",
+            "makro t(n, iş: blok)\n    yaz(iş)\nson\nt!(1)\n    yaz(2)\nson\n",
+            "makro p(a: tam)\n    yaz(a)\nson\np!(1)\n",
+            "makro b(iş: blok)\n    iş\nson\ndəyişən y = b!()\n",
+            "makro q(x) = x\nyaz(q!())\n", "makro r(x)\n    yaz(x)\n",
         ]
         fayllar = []
         for i, k in enumerate(nümunələr):
