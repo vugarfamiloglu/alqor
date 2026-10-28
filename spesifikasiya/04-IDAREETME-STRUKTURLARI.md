@@ -533,3 +533,79 @@ Bir neçə `gecikdir` tərs sırada (LIFO) işləyir.
 | Boş ifadə | `keç` | — |
 | Təsdiq | `iddia` `təmin` | — |
 | Təmizləmə | `gecikdir` | — |
+| Sorğu | `sorğu hər` `harada` `dəyişən` `sırala` `qrupla` `seç` `ilk` `atla` | `son` |
+
+---
+
+## 4.13 Sorğu — `sorğu hər … son`
+
+Kolleksiyalar üzərində Azərbaycan dilində oxunan sorğu: süzmək, sıralamaq,
+qruplamaq və nəticəni seçmək bir ifadədə. Nəticə həmişə `siyahı`-dır.
+
+```alqor
+struktur Adam
+    qurucu(açıq xassə ad: mətn, açıq xassə yaş: tam, açıq xassə şəhər: mətn)
+son
+
+dəyişən adamlar = [Adam("Aysel", 28, "Bakı"), Adam("Murad", 17, "Gəncə"),
+                   Adam("Leyla", 34, "Bakı"), Adam("Elçin", 22, "Şəki")]
+
+dəyişən böyüklər = sorğu hər a üçün adamlar içində
+    harada a.yaş >= 18
+    sırala a.şəhər, a.yaş azalan
+    seç "{a.ad} ({a.şəhər})"
+son
+// ["Leyla (Bakı)", "Aysel (Bakı)", "Elçin (Şəki)"]
+```
+
+### Bəndlər
+
+Bəndlər **yazıldığı sıra ilə** işləyir; hər biri ayrıca sətirdədir.
+
+| Bənd | Mənası |
+|---|---|
+| `hər x üçün S içində` | `S`-in hər elementi üçün sətir; ikinci `hər` — hər cütlük (iç-içə dövr). Dağıtma: `hər (a, b) üçün cütlər içində` |
+| `harada şərt` | Şərti ödəməyən sətirlər atılır (`məntiq` olmalıdır) |
+| `dəyişən ad = ifadə` | Hər sətrə yeni ad əlavə edir |
+| `sırala a, b azalan` | Sabit sıralama; hər açar `artan` (standart) və ya `azalan`; qayda `sıralanmış()` ilə eynidir (Azərbaycan əlifbası) |
+| `qrupla açar olaraq (k, q)` | Sətirlər açara görə qruplanır (ilk görünmə sırası ilə); `k` — açar, `q` — qrupun elementləri (son `hər`-in elementləri) |
+| `seç ifadə` | Nəticənin elementi; `seç fərqli ifadə` — təkrarlar atılır |
+| `ilk n` / `atla n` | İlk `n` sətir / ilk `n`-dən sonrakılar; `seç`-dən sonra da gələ bilər |
+
+- `seç` yoxdursa nəticə son `hər`-in elementləridir (`qrupla`-dan sonra
+  `(açar, qrup)` kortejləri).
+- `seç`-dən sonra yalnız `ilk` və `atla` gələ bilər (`ALQ-P037`).
+- `ilk`/`atla` mənfi olmayan tam ədəd gözləyir (`ALQ-T083`).
+- Bəndlərdə elan olunan adlar sorğudan kənara çıxmır.
+- `sorğu`, `harada`, `sırala`, `qrupla`, `olaraq`, `azalan`, `artan`,
+  `fərqli`, `ilk`, `atla` kontekstli sözlərdir — sorğudan kənarda adi ad
+  kimi işlənə bilər (`dəyişən sorğu = veb.sorğu()` adi koddur).
+
+### Qruplama
+
+```alqor
+dəyişən sayları = sorğu hər a üçün adamlar içində
+    qrupla a.şəhər olaraq (şəhər, qrup)
+    sırala uzunluq(qrup) azalan, şəhər
+    seç "{şəhər}: {uzunluq(qrup)}"
+son
+// ["Bakı: 2", "Gəncə: 1", "Şəki: 1"]
+```
+
+### Bir neçə mənbə
+
+```alqor
+dəyişən cütlər = sorğu hər x üçün 1..6 içində
+    hər y üçün x..6 içində
+    dəyişən cəm = x + y
+    harada cəm == 6
+    seç (x, y)
+son
+// [(1, 5), (2, 4), (3, 3)]
+```
+
+### Tək sətirdə
+
+```alqor
+dəyişən ilk_üç = sorğu hər x üçün siyahı içində sırala x ilk 3 son
+```

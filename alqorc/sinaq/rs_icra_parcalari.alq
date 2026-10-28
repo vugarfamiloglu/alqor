@@ -1244,3 +1244,47 @@ funksiya tap(s)
     qaytar -1
 son
 yaz(tap([1, 5, 7]), tap([0]))
+=====
+// Sorğu: struktur, qruplama, iç-içə hər, dağıtma, xətalar
+struktur Adam
+    qurucu(açıq xassə ad: mətn, açıq xassə yaş: tam, açıq xassə şəhər: mətn)
+son
+dəyişən adamlar = [Adam("Aysel", 28, "Bakı"), Adam("Murad", 17, "Gəncə"), Adam("Leyla", 34, "Bakı"),
+    Adam("Elçin", 22, "Şəki"), Adam("Çinarə", 19, "Gəncə")]
+dəyişən hədd = 18
+yaz(sorğu hər a üçün adamlar içində
+    harada a.yaş >= hədd
+    sırala a.şəhər, a.yaş azalan
+    seç "{a.ad} ({a.şəhər})"
+son)
+yaz(sorğu hər a üçün adamlar içində
+    qrupla a.şəhər olaraq (şəhər, qrup)
+    sırala uzunluq(qrup) azalan, şəhər
+    seç (şəhər, [x.ad üçün x içində qrup])
+son)
+yaz(sorğu hər (ad, bal) üçün {"Ali": 5, "Vəli": 3, "Nərmin": 5}.cütlər() içində
+    sırala bal azalan, ad artan
+    seç "{ad}={bal}"
+son)
+funksiya cütlər(n)
+    qaytar sorğu hər x üçün 1..n içində
+        hər y üçün x..n içində
+        dəyişən c = x + y
+        harada c == n
+        seç (x, y)
+    son
+son
+yaz(cütlər(6), sorğu hər x üçün [] içində son, sorğu hər x üçün "abc" içində seç x + x son)
+yaz(sorğu hər x üçün [3, 1, 3, 2, 1] içində seç fərqli x son, sorğu hər x üçün [5, 4, 3] içində atla 1 son)
+dəyişən x = "xarici"
+yaz(sorğu hər x üçün [1, 2] içində seç x * 10 son, x)
+cəhd et
+    yaz(sorğu hər x üçün [1] içində ilk -1 son)
+tut (h: Xəta)
+    yaz(h.mesaj)
+son
+cəhd et
+    yaz(sorğu hər x üçün [1] içində harada x son)
+tut (h: Xəta)
+    yaz(h.mesaj)
+son

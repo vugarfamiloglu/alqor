@@ -63,6 +63,11 @@ class RustMüqayisəsi(unittest.TestCase):
             "makro p(a: tam)\n    yaz(a)\nson\np!(1)\n",
             "makro b(iş: blok)\n    iş\nson\ndəyişən y = b!()\n",
             "makro q(x) = x\nyaz(q!())\n", "makro r(x)\n    yaz(x)\n",
+            # Sorğu (§ 4.13)
+            "yaz(sorğu hər x üçün [1] içində seç x harada x son)\n",
+            "yaz(sorğu hər x üçün [1] içində qrupla x (a, b) son)\n",
+            "yaz(sorğu hər x üçün [1] içində tap x son)\n",
+            "yaz(sorğu hər x üçün [1]\n",
         ]
         fayllar = []
         for i, k in enumerate(nümunələr):

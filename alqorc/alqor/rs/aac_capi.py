@@ -582,6 +582,22 @@ class _Yazıcı:
             self.s(l, f"{'Dəst' if t is A.DəstLiteralı else 'Kortej'} {Y}")
             with self.iç():
                 self.ifadələr("elementlər", e.elementlər)
+        elif t is A.Sorğu:
+            self.s(l, f"Sorğu {Y}")
+            with self.iç():
+                def bənd(b):
+                    self.s("", f"SorğuBəndi {_y(b.yer)} növ={_q(b.növ)}"
+                               f" fərqli={_b(b.fərqli)}")
+                    with self.iç():
+                        if b.bağlama is not None:
+                            self.bağlama("bağlama", b.bağlama)
+                        self.oifadə("ifadə", b.ifadə)
+                        def açar(a):
+                            self.s("", f"Açar azalan={_b(a[1])}")
+                            with self.iç():
+                                self.ifadə("ifadə", a[0])
+                        self.siyahı("açarlar", b.açarlar, açar)
+                self.siyahı("bəndlər", e.bəndlər, bənd)
         elif t is A.Qurma:
             self.s(l, f"Qurma {Y} növ={_q(e.növ)}")
             with self.iç():

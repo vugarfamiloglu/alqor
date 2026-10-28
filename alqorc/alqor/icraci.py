@@ -2207,6 +2207,91 @@ class İcraçı:
             return AlqorDiapazon(ord(b), ord(s), a, e.xaric)
         return AlqorDiapazon(b, s, a, e.xaric)
 
+    # ── Sorğu (spes. § 4.13) ──────────────────────────────────────────
+
+    def _e_sorğu(self, e: A.Sorğu, m: Mühit) -> list:
+        """Bəndlər yazıldığı sıra ilə işləyir. Hər sətir — öz mühiti və
+        «cari element» (son `hər`-in elementi, `qrupla`-dan sonra
+        `(açar, qrup)` korteji)."""
+        from .kitabxana import _sıralama_açarı
+        sətirlər: list[tuple[Mühit, Any]] = [(m, None)]
+        nəticə: list | None = None
+        for b in e.bəndlər:
+            n = b.növ
+            if n == "hər":
+                yeni = []
+                for mm, _ in sətirlər:
+                    for el in self._iterasiya(self._ifadə(b.ifadə, mm),
+                                              b.yer):
+                        alt = mm.alt()
+                        self._bağla(b.bağlama, el, alt, elan=True)
+                        yeni.append((alt, el))
+                sətirlər = yeni
+            elif n == "harada":
+                sətirlər = [(mm, el) for mm, el in sətirlər
+                            if self._məntiq(b.ifadə, mm)]
+            elif n == "dəyişən":
+                yeni = []
+                for mm, el in sətirlər:
+                    alt = mm.alt()
+                    self._bağla(b.bağlama, self._ifadə(b.ifadə, mm), alt,
+                                elan=True)
+                    yeni.append((alt, el))
+                sətirlər = yeni
+            elif n == "sırala":
+                import functools
+                açarlı = [([_sıralama_açarı(self._ifadə(a, mm))
+                            for a, _ in b.açarlar], (mm, el))
+                          for mm, el in sətirlər]
+                istiqamət = [az for _, az in b.açarlar]
+
+                def müq(x, y):
+                    for ka, kb, az in zip(x[0], y[0], istiqamət):
+                        if ka != kb:
+                            r = -1 if ka < kb else 1
+                            return -r if az else r
+                    return 0
+                açarlı.sort(key=functools.cmp_to_key(müq))
+                sətirlər = [s for _, s in açarlı]
+            elif n == "qrupla":
+                qruplar: dict[Any, list] = {}
+                for mm, el in sətirlər:
+                    açar = self._açar(self._ifadə(b.ifadə, mm), b.yer)
+                    qruplar.setdefault(açar, []).append(el)
+                sətirlər = []
+                for açar, qrup in qruplar.items():
+                    alt = m.alt()
+                    cüt = (açar, qrup)
+                    self._bağla(b.bağlama, cüt, alt, elan=True)
+                    sətirlər.append((alt, cüt))
+            elif n == "seç":
+                nəticə = [self._ifadə(b.ifadə, mm) for mm, _ in sətirlər]
+                if b.fərqli:
+                    görülən: set = set()
+                    təkrarsız = []
+                    for x in nəticə:
+                        a = self._açar(x, b.yer)
+                        if a not in görülən:
+                            görülən.add(a)
+                            təkrarsız.append(x)
+                    nəticə = təkrarsız
+            elif n in ("ilk", "atla"):
+                say = self._ifadə(b.ifadə, m)
+                if not isinstance(say, int) or isinstance(say, bool) \
+                        or say < 0:
+                    raise AlqorXəta("TipXətası",
+                                    f"`{n}` mənfi olmayan tam ədəd "
+                                    f"gözləyir, `{mətnə(say, self)}` gəlib",
+                                    b.yer, "ALQ-T083")
+                if nəticə is not None:
+                    nəticə = nəticə[:say] if n == "ilk" else nəticə[say:]
+                else:
+                    sətirlər = (sətirlər[:say] if n == "ilk"
+                                else sətirlər[say:])
+        if nəticə is None:
+            nəticə = [el for _, el in sətirlər]
+        return nəticə
+
     def _e_qurma(self, e: A.Qurma, m: Mühit) -> Any:
         mənbə = self._ifadə(e.mənbə, m)
         nəticə_siyahı: list[Any] = []
@@ -2588,6 +2673,7 @@ _İFADƏLƏR: dict[type, Any] = {
     A.KortejLiteralı: İcraçı._e_kortej,
     A.Diapazon: İcraçı._e_diapazon,
     A.Qurma: İcraçı._e_qurma,
+    A.Sorğu: İcraçı._e_sorğu,
     A.ŞərtIfadəsi: İcraçı._e_şərt_ifadəsi,
     A.BlokIfadəsi: İcraçı._e_blok_ifadəsi,
     A.Lambda: İcraçı._e_lambda,

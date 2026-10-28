@@ -482,6 +482,142 @@ impl<'a> Parser<'a> {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    //  Sorğu (§ 4.13)
+    // ═══════════════════════════════════════════════════════════════
+
+    fn sorğu(&mut self) -> N<E> {
+        let yer = self.al().yer;
+        let mut bəndlər = vec![self.sorğu_hər()?];
+        let mut seçildi = false;
+        loop {
+            self.ayırıcı_atla();
+            if self.acar(&["son"]) || self.sonudur() {
+                break;
+            }
+            let b = self.sorğu_bəndi()?;
+            if seçildi && b.növ != "ilk" && b.növ != "atla" {
+                self.x.xəta(
+                    "ALQ-P037",
+                    "`seç`-dən sonra yalnız `ilk` və `atla` gələ bilər",
+                    Some(b.yer),
+                    &format!("`{}` `seç`-dən sonradır", b.növ),
+                    &["`seç` bəndini sona keçirin"],
+                );
+            }
+            seçildi = seçildi || b.növ == "seç";
+            bəndlər.push(b);
+            // Tək sətirdə: növbəti bənd ayırıcısız gələ bilər
+            if !self.sorğu_bəndi_başlayır() && !self.acar(&["son"]) {
+                self.cümlə_sonu()?;
+            }
+        }
+        self.son_tələb(None)?;
+        Ok(Rc::new(İfadə::Sorğu(yer, bəndlər)))
+    }
+
+    fn sorğu_bənd(yer: Yer, növ: &str, bağlama: Option<Bağlama>, ifadə: Option<E>) -> A::SorğuBəndi {
+        A::SorğuBəndi { yer, növ: növ.into(), bağlama, ifadə, açarlar: vec![], fərqli: false }
+    }
+
+    fn sorğu_bəndi_başlayır(&self) -> bool {
+        let t = self.bax(0);
+        t.acardır(&["hər", "dəyişən", "seç"])
+            || (t.növ == Növ::Ad && matches!(t.s.as_str(), "harada" | "sırala" | "qrupla" | "ilk" | "atla"))
+    }
+
+    fn sorğu_hər(&mut self) -> N<A::SorğuBəndi> {
+        let yer = self.tələb_acar("hər")?.yer;
+        let bağlama = self.bağlama()?;
+        self.tələb_acar("üçün")?;
+        let mənbə = self.ifadə(0)?;
+        self.tələb_acar("içində")?;
+        Ok(Self::sorğu_bənd(yer, "hər", Some(bağlama), Some(mənbə)))
+    }
+
+    fn sorğu_bəndi(&mut self) -> N<A::SorğuBəndi> {
+        let tok = self.bax(0).clone();
+        let yer = tok.yer;
+        if tok.acardır(&["hər"]) {
+            return self.sorğu_hər();
+        }
+        if tok.acardır(&["dəyişən"]) {
+            self.al();
+            let bağlama = self.bağlama()?;
+            self.tələb_op("=", "sorğuda `dəyişən`")?;
+            let e = self.ifadə(0)?;
+            return Ok(Self::sorğu_bənd(yer, "dəyişən", Some(bağlama), Some(e)));
+        }
+        if tok.acardır(&["seç"]) {
+            self.al();
+            let mut fərqli = false;
+            if self.növ(0) == Növ::Ad
+                && self.bax(0).s == "fərqli"
+                && !self.op_i(1, &[".", "(", "[", "?."])
+                && !matches!(self.növ(1), Növ::SətirSonu | Növ::FaylSonu)
+            {
+                self.al();
+                fərqli = true;
+            }
+            let e = self.ifadə(0)?;
+            let mut b = Self::sorğu_bənd(yer, "seç", None, Some(e));
+            b.fərqli = fərqli;
+            return Ok(b);
+        }
+        let söz = if tok.növ == Növ::Ad { tok.s.as_str() } else { "" };
+        match söz {
+            "harada" | "ilk" | "atla" => {
+                self.al();
+                let e = self.ifadə(0)?;
+                Ok(Self::sorğu_bənd(yer, söz, None, Some(e)))
+            }
+            "sırala" => {
+                self.al();
+                let mut açarlar = vec![];
+                loop {
+                    let e = self.ifadə(0)?;
+                    let mut azalan = false;
+                    if self.növ(0) == Növ::Ad && (self.bax(0).s == "azalan" || self.bax(0).s == "artan") {
+                        azalan = self.al().s == "azalan";
+                    }
+                    açarlar.push((e, azalan));
+                    if self.qəbul_op(&[","]).is_none() {
+                        break;
+                    }
+                }
+                let mut b = Self::sorğu_bənd(yer, "sırala", None, None);
+                b.açarlar = açarlar;
+                Ok(b)
+            }
+            "qrupla" => {
+                self.al();
+                let açar = self.ifadə(0)?;
+                let t = self.bax(0).clone();
+                if !(t.növ == Növ::Ad && t.s == "olaraq") {
+                    self.xəta(
+                        "ALQ-P037",
+                        "`olaraq` gözlənilirdi",
+                        &format!("`{}` gözlənilmirdi", göstər(&t)),
+                        &["qruplama: `qrupla i.şəhər olaraq (şəhər, adamlar)`"],
+                    );
+                    return Err(PX);
+                }
+                self.al();
+                let bağlama = self.bağlama()?;
+                Ok(Self::sorğu_bənd(yer, "qrupla", Some(bağlama), Some(açar)))
+            }
+            _ => {
+                self.xəta(
+                    "ALQ-P037",
+                    "Sorğu bəndi gözlənilirdi",
+                    &format!("`{}` sorğu bəndi deyil", göstər(&tok)),
+                    &["bəndlər: hər, harada, dəyişən, sırala, qrupla, seç, ilk, atla"],
+                );
+                Err(PX)
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     //  Makrolar (§ 5.12)
     // ═══════════════════════════════════════════════════════════════
 
@@ -2483,6 +2619,10 @@ impl<'a> Parser<'a> {
         }
         let tok = self.bax(0).clone();
         let yer = tok.yer;
+        // `sorğu hər x üçün … içində` — `sorğu` kontekstli sözdür
+        if tok.növ == Növ::Ad && tok.s == "sorğu" && self.acar_i(1, &["hər"]) {
+            return self.sorğu();
+        }
         match tok.növ {
             Növ::Tam => {
                 self.al();

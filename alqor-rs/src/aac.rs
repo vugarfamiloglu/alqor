@@ -142,6 +142,20 @@ pub enum İfadə {
     Lambda { yer: Yer, parametrlər: Rc<Vec<Parametr>>, gövdə: LambdaGövdə, asinxron: bool, generator: bool },
     JSXElement(Yer, String, Vec<JSXAtribut>, Vec<JSXUşaq>),
     JSXParça(Yer, Vec<JSXUşaq>),
+    /// `sorğu hər x üçün s içində … son` (§ 4.13)
+    Sorğu(Yer, Vec<SorğuBəndi>),
+}
+
+/// Sorğu bəndi: "hər" | "harada" | "dəyişən" | "sırala" | "qrupla" |
+/// "seç" | "ilk" | "atla"
+#[derive(Debug, Clone)]
+pub struct SorğuBəndi {
+    pub yer: Yer,
+    pub növ: String,
+    pub bağlama: Option<Bağlama>,
+    pub ifadə: Option<E>,
+    pub açarlar: Vec<(E, bool)>,
+    pub fərqli: bool,
 }
 
 impl İfadə {
@@ -153,7 +167,7 @@ impl İfadə {
             | Boru(y, ..) | Diapazon(y, ..) | Çağırış(y, ..) | Üzv(y, ..) | İndeks(y, ..) | Dilim(y, ..)
             | MəcburiAçma(y, ..) | Yayma(y, ..) | Yeni(y, ..) | Gözlə(y, ..) | Siyahı(y, ..) | Lüğət(y, ..)
             | Dəst(y, ..) | Kortej(y, ..) | ŞərtIfadəsi(y, ..) | Blok(y, ..) | JSXElement(y, ..)
-            | JSXParça(y, ..) => *y,
+            | JSXParça(y, ..) | Sorğu(y, ..) => *y,
             Qurma { yer, .. } | Lambda { yer, .. } => *yer,
         }
     }

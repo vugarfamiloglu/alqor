@@ -277,6 +277,133 @@ pub fn adlı_götür(adlı: &mut Adlı, a: &str) -> Option<D> {
 // ═══════════════════════════════════════════════════════════════════════
 
 impl İcraçı {
+    // ── Sorğu (§ 4.13) ─────────────────────────────────────────────────
+
+    /// Bəndlər yazıldığı sıra ilə işləyir. Hər sətir — öz mühiti və «cari
+    /// element» (son `hər`-in elementi, `qrupla`-dan sonra `(açar, qrup)`).
+    pub fn e_sorğu(&self, bəndlər: &[aac::SorğuBəndi], m: &Mühit) -> Nəticə {
+        let mut sətirlər: Vec<(Mühit, D)> = vec![(m.clone(), D::Boş)];
+        let mut nəticə: Option<Vec<D>> = None;
+        for b in bəndlər {
+            let yer = Some(b.yer);
+            let ifadə = || b.ifadə.as_ref().expect("sorğu bəndinin ifadəsi");
+            match b.növ.as_str() {
+                "hər" => {
+                    let mut yeni = vec![];
+                    for (mm, _) in &sətirlər {
+                        let mənbə = self.ifadə(ifadə(), mm)?;
+                        let mut it = self.iterasiya(&mənbə, yer)?;
+                        while let Some(el) = it.növbəti(self, yer)? {
+                            let alt = mm.alt();
+                            self.bağla(b.bağlama.as_ref().unwrap(), el.clone(), &alt, true, false)?;
+                            yeni.push((alt, el));
+                        }
+                    }
+                    sətirlər = yeni;
+                }
+                "harada" => {
+                    let mut yeni = vec![];
+                    for (mm, el) in sətirlər {
+                        if self.məntiq(ifadə(), &mm)? {
+                            yeni.push((mm, el));
+                        }
+                    }
+                    sətirlər = yeni;
+                }
+                "dəyişən" => {
+                    let mut yeni = vec![];
+                    for (mm, el) in sətirlər {
+                        let alt = mm.alt();
+                        let d = self.ifadə(ifadə(), &mm)?;
+                        self.bağla(b.bağlama.as_ref().unwrap(), d, &alt, true, false)?;
+                        yeni.push((alt, el));
+                    }
+                    sətirlər = yeni;
+                }
+                "sırala" => {
+                    let mut açarlı = Vec::with_capacity(sətirlər.len());
+                    for s in sətirlər {
+                        let mut k = Vec::with_capacity(b.açarlar.len());
+                        for (e, _) in &b.açarlar {
+                            k.push(self.ifadə(e, &s.0)?);
+                        }
+                        açarlı.push((k, s));
+                    }
+                    açarlı.sort_by(|x, y| {
+                        for ((ka, kb), (_, az)) in x.0.iter().zip(y.0.iter()).zip(b.açarlar.iter()) {
+                            let r = super::eded::sıra_müq(ka, kb);
+                            if r != std::cmp::Ordering::Equal {
+                                return if *az { r.reverse() } else { r };
+                            }
+                        }
+                        std::cmp::Ordering::Equal
+                    });
+                    sətirlər = açarlı.into_iter().map(|x| x.1).collect();
+                }
+                "qrupla" => {
+                    let mut qruplar: indexmap::IndexMap<Açar, Vec<D>, Fx> = Default::default();
+                    for (mm, el) in &sətirlər {
+                        let k = yer_qoy(Açar::yeni(self.ifadə(ifadə(), mm)?), yer)?;
+                        qruplar.entry(k).or_default().push(el.clone());
+                    }
+                    sətirlər = vec![];
+                    for (k, q) in qruplar {
+                        let alt = m.alt();
+                        let cüt = D::kortej(vec![k.0, D::siyahı(q)]);
+                        self.bağla(b.bağlama.as_ref().unwrap(), cüt.clone(), &alt, true, false)?;
+                        sətirlər.push((alt, cüt));
+                    }
+                }
+                "seç" => {
+                    let mut v = Vec::with_capacity(sətirlər.len());
+                    for (mm, _) in &sətirlər {
+                        v.push(self.ifadə(ifadə(), mm)?);
+                    }
+                    if b.fərqli {
+                        let mut görülən = Dəst::default();
+                        let mut t = vec![];
+                        for x in v {
+                            if görülən.insert(yer_qoy(Açar::yeni(x.clone()), yer)?) {
+                                t.push(x);
+                            }
+                        }
+                        v = t;
+                    }
+                    nəticə = Some(v);
+                }
+                n => {
+                    // `ilk` / `atla`
+                    let say = self.ifadə(ifadə(), m)?;
+                    let say = match say {
+                        D::T(k) if k >= 0 => k as usize,
+                        _ => {
+                            return Err(xəta_yer(
+                                "TipXətası",
+                                format!("`{}` mənfi olmayan tam ədəd gözləyir, `{}` gəlib", n, mətnə(self, &say)?),
+                                yer,
+                                "ALQ-T083",
+                            ))
+                        }
+                    };
+                    let kəs = |uz: usize| -> (usize, usize) {
+                        if n == "ilk" { (0, say.min(uz)) } else { (say.min(uz), uz) }
+                    };
+                    if let Some(v) = &mut nəticə {
+                        let (a, z) = kəs(v.len());
+                        *v = v[a..z].to_vec();
+                    } else {
+                        let (a, z) = kəs(sətirlər.len());
+                        sətirlər = sətirlər.drain(a..z).collect();
+                    }
+                }
+            }
+        }
+        Ok(D::siyahı(match nəticə {
+            Some(v) => v,
+            None => sətirlər.into_iter().map(|x| x.1).collect(),
+        }))
+    }
+
     // ── Bəzəyicilər (§ 5.11) ─────────────────────────────────────────
 
     /// Elanın istifadəçi bəzəyiciləri (mənbədəki sıra ilə). Mühitdə

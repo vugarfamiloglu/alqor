@@ -1626,6 +1626,7 @@ impl İcraçı {
                 }
                 Ok(D::kortej(n))
             }
+            İfadə::Sorğu(_, bəndlər) => self.e_sorğu(bəndlər, m),
             İfadə::Qurma { yer, növ, ifadə, dəyər_ifadəsi, bağlama, mənbə, şərt } => {
                 let mənbə = self.ifadə(mənbə, m)?;
                 let mut siyahı = vec![];

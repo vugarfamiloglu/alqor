@@ -1605,7 +1605,7 @@ impl<'r> Kompilyator<'r> {
                 let i = self.alt_funksiya("<anonim>", parametrlər.clone(), g, *asinxron, *generator, false, &**e);
                 self.əmr(Əmr::Lambda(i), *yer);
             }
-            İfadə::Blok(..) | İfadə::JSXElement(..) | İfadə::JSXParça(..) => self.ötür_ifadə(e),
+            İfadə::Blok(..) | İfadə::JSXElement(..) | İfadə::JSXParça(..) | İfadə::Sorğu(..) => self.ötür_ifadə(e),
             #[allow(unreachable_patterns)]
             _ => self.ötür_ifadə(e),
         }

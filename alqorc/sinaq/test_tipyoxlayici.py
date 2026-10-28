@@ -657,6 +657,25 @@ class Bəzəyicilər(unittest.TestCase):
             "@yaddaşla\nfunksiya f(n: tam) -> tam qaytar n son\n"))
 
 
+class Sorğular(unittest.TestCase):
+    """Spes. § 4.13."""
+
+    def test_sorğu_tipi(self):
+        self.assertEqual(tipi("sorğu hər x üçün [1, 2] içində seç x * 2 son"),
+                         "siyahı[tam]")
+        self.assertEqual(tipi("sorğu hər x üçün [1, 2] içində"
+                              " qrupla x % 2 olaraq (k, q) son"),
+                         "siyahı[kortej[tam, siyahı[tam]]]")
+
+    def test_harada_məntiq_tələb_edir(self):
+        self.assertIn("ALQ-T007", kodlar(
+            "yaz(sorğu hər x üçün [1] içində harada x son)\n"))
+
+    def test_ilk_tam_tələb_edir(self):
+        self.assertIn("ALQ-T083", kodlar(
+            "yaz(sorğu hər x üçün [1] içində ilk \"iki\" son)\n"))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

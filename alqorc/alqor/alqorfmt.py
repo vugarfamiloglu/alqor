@@ -236,6 +236,9 @@ def _arasında(əvvəlki: Token, cari: Token, əvvəlkindən_əvvəl: Token | No
         return " "
     if a in SONRASIZ:
         return ""
+    if b == "(" and əvvəlki.növ is Növ.AD and əvvəlki.dəyər == "olaraq":
+        # Sorğuda `qrupla … olaraq (a, b)` — çağırış deyil
+        return " " if orijinal else ""
     if b in ("(", "["):
         # Çağırış və indeks: `f(x)`, `s[0]`. Açar sözdən sonra
         # (`əgər (a)`, `qaytar [1]`) orijinal saxlanılır; nöqtədən

@@ -3402,6 +3402,44 @@ function modulQeyd(a, f) {
     Object.defineProperty(g, a, { get: () => modul(a), enumerable: true, configurable: true });
 }
 
+// ── Sorğu (§ 4.13) ──────────────────────────────────────────────────────
+
+/** `sırala a, b azalan`: sabit sıralama, hər açar öz istiqaməti ilə. */
+function sorğuSırala(R, K, azalan) {
+  const c = R.map((r, i) => [K[i], r]);
+  c.sort((p, q) => {
+    for (let i = 0; i < azalan.length; i++) {
+      const n = sıraMüq(p[0][i], q[0][i]);
+      if (n) return azalan[i] ? -n : n;
+    }
+    return 0;
+  });
+  return c.map(p => p[1]);
+}
+
+function sorğuQrupla(G, k, el) {
+  let q = G.al(k);
+  if (q === YOX) { q = []; G.qoy(k, q); }
+  q.push(el);
+}
+
+function sorğuFərqli(N) {
+  const görülən = new Set(), t = [];
+  for (const x of N) {
+    const a = açar(x);
+    if (!görülən.has(a)) { görülən.add(a); t.push(x); }
+  }
+  return t;
+}
+
+/** `ilk n` / `atla n` */
+function sorğuKəs(a, n, növ) {
+  if (typeof n !== "bigint" || n < 0n)
+    throw xəta("TipXətası", "`" + növ + "` mənfi olmayan tam ədəd gözləyir, `" + mətnə(n) + "` gəlib", "ALQ-T083");
+  const k = Number(n);
+  return növ === "ilk" ? a.slice(0, k) : a.slice(k);
+}
+
 /** `f(**lüğət)` — adlı arqumentlər və lüğətlər birləşir. */
 function adlıYay(...hissələr) {
   const o = {};
@@ -3606,7 +3644,7 @@ return {
   // xətalar
   xəta, xətaya, xətaUyğun, xətaObyekti, at, stek, V, STEK_HƏDDİ,
   // funksiyalar
-  ad, D, bağla, ç, çm, yarat, yeni, adlıYay, qadVarsa, bəzə, bəzəyici, sərbəstMetod, bəzənmişMetod, kp, genişlət, standartDəyər, sinif, sadalama,
+  ad, D, bağla, ç, çm, yarat, yeni, adlıYay, sorğuSırala, sorğuQrupla, sorğuFərqli, sorğuKəs, qadVarsa, bəzə, bəzəyici, sərbəstMetod, bəzənmişMetod, kp, genişlət, standartDəyər, sinif, sadalama,
   metodAd, üstMetod, bağlı, qurucuTap,
   // operatorlar
   add, sub, mul, div, idiv, mod, pow, bit, neg, bnot, ş, eq, ne, lt, gt, le, ge, cmp3,

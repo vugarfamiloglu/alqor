@@ -413,6 +413,105 @@ class Parser:
                        python)
 
     # ═══════════════════════════════════════════════════════════════════
+    #  Sorğu (§ 4.13)
+    # ═══════════════════════════════════════════════════════════════════
+
+    def _sorğu(self) -> A.Sorğu:
+        yer = self._al().yer                          # `sorğu`
+        bəndlər = [self._sorğu_hər()]
+        seçildi = False
+        self.dərinlik += 1               # formatlayıcı üçün: bəndlər blokdur
+        try:
+            while True:
+                self._ayırıcı_atla()
+                if self._acar("son") or self._sonudur():
+                    break
+                b = self._sorğu_bəndi()
+                if seçildi and b.növ not in ("ilk", "atla"):
+                    self.x.xəta("ALQ-P037", "`seç`-dən sonra yalnız `ilk` "
+                                "və `atla` gələ bilər", b.yer,
+                                f"`{b.növ}` `seç`-dən sonradır",
+                                "`seç` bəndini sona keçirin")
+                seçildi = seçildi or b.növ == "seç"
+                bəndlər.append(b)
+                # Tək sətirdə: növbəti bənd ayırıcısız gələ bilər
+                if not self._sorğu_bəndi_başlayır() and not self._acar("son"):
+                    self._cümlə_sonu()
+        finally:
+            self.dərinlik -= 1
+        self._son_tələb()
+        return A.Sorğu(yer, bəndlər)
+
+    def _sorğu_bəndi_başlayır(self) -> bool:
+        t = self._bax()
+        return (t.acardır("hər", "dəyişən", "seç")
+                or (t.növ is Növ.AD and t.dəyər in (
+                    "harada", "sırala", "qrupla", "ilk", "atla")))
+
+    def _sorğu_hər(self) -> A.SorğuBəndi:
+        yer = self._tələb_acar("hər").yer
+        bağlama = self._bağlama()
+        self._tələb_acar("üçün")
+        mənbə = self._ifadə()
+        self._tələb_acar("içində")
+        return A.SorğuBəndi(yer, "hər", bağlama, mənbə)
+
+    def _sorğu_bəndi(self) -> A.SorğuBəndi:
+        tok = self._bax()
+        yer = tok.yer
+        if tok.acardır("hər"):
+            return self._sorğu_hər()
+        if tok.acardır("dəyişən"):
+            self._al()
+            bağlama = self._bağlama()
+            self._tələb_op("=", "sorğuda `dəyişən`")
+            return A.SorğuBəndi(yer, "dəyişən", bağlama, self._ifadə())
+        if tok.acardır("seç"):
+            self._al()
+            fərqli = False
+            if self._bax().növ is Növ.AD and self._bax().dəyər == "fərqli" \
+                    and not self._bax(1).opdur(".", "(", "[", "?.") \
+                    and self._bax(1).növ not in (Növ.SETIR_SONU,
+                                                 Növ.FAYL_SONU):
+                self._al()
+                fərqli = True
+            return A.SorğuBəndi(yer, "seç", None, self._ifadə(),
+                                fərqli=fərqli)
+        söz = tok.dəyər if tok.növ is Növ.AD else None
+        if söz in ("harada", "ilk", "atla"):
+            self._al()
+            return A.SorğuBəndi(yer, söz, None, self._ifadə())
+        if söz == "sırala":
+            self._al()
+            açarlar: list[tuple[A.İfadə, bool]] = []
+            while True:
+                e = self._ifadə()
+                azalan = False
+                t = self._bax()
+                if t.növ is Növ.AD and t.dəyər in ("azalan", "artan"):
+                    azalan = self._al().dəyər == "azalan"
+                açarlar.append((e, azalan))
+                if not self._qəbul_op(","):
+                    break
+            return A.SorğuBəndi(yer, "sırala", açarlar=açarlar)
+        if söz == "qrupla":
+            self._al()
+            açar = self._ifadə()
+            t = self._bax()
+            if not (t.növ is Növ.AD and t.dəyər == "olaraq"):
+                self._xəta("ALQ-P037", "`olaraq` gözlənilirdi",
+                           f"`{self._göstər(t)}` gözlənilmirdi",
+                           "qruplama: `qrupla i.şəhər olaraq (şəhər, adamlar)`")
+                raise ParserXətası()
+            self._al()
+            return A.SorğuBəndi(yer, "qrupla", self._bağlama(), açar)
+        self._xəta("ALQ-P037", "Sorğu bəndi gözlənilirdi",
+                   f"`{self._göstər(tok)}` sorğu bəndi deyil",
+                   "bəndlər: hər, harada, dəyişən, sırala, qrupla, seç, "
+                   "ilk, atla")
+        raise ParserXətası()
+
+    # ═══════════════════════════════════════════════════════════════════
     #  Makrolar (§ 5.12)
     # ═══════════════════════════════════════════════════════════════════
 
@@ -2210,6 +2309,11 @@ class Parser:
             self._makro_aç(m, ifadədə=True)
         tok = self._bax()
         yer = tok.yer
+
+        # `sorğu hər x üçün … içində` — `sorğu` kontekstli sözdür
+        if (tok.növ is Növ.AD and tok.dəyər == "sorğu"
+                and self._bax(1).acardır("hər")):
+            return self._sorğu()
 
         # ── Literallar ──────────────────────────────────────────
         if tok.növ is Növ.TAM:

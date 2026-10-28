@@ -296,6 +296,27 @@ class KortejLiteralı(İfadə):
 
 
 @dataclass
+class SorğuBəndi(Qovşaq):
+    """
+    Sorğu bəndi (spes. § 4.13).
+
+    növ: "hər" | "harada" | "dəyişən" | "sırala" | "qrupla" | "seç" |
+         "ilk" | "atla"
+    """
+    növ: str
+    bağlama: "Bağlama | None" = None
+    ifadə: İfadə | None = None
+    açarlar: list[tuple[İfadə, bool]] = field(default_factory=list)
+    fərqli: bool = False
+
+
+@dataclass
+class Sorğu(İfadə):
+    """`sorğu hər x üçün s içində  harada …  sırala …  seç …  son`"""
+    bəndlər: list[SorğuBəndi]
+
+
+@dataclass
 class Qurma(İfadə):
     """
     `[x * x üçün x içində 1..10 əgər x % 2 == 0]`

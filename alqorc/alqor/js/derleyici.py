@@ -1693,6 +1693,121 @@ class Kompilyator:
         finally:
             self.fk, self.əh = köhnə_fk, köhnə_əh
 
+    # ── Sorğu (spes. § 4.13) ──────────────────────────────────────────
+
+    def _e_Sorğu(self, e: A.Sorğu) -> str:
+        """Hər sətir JS massividir: `[cari element, ad₁, ad₂, …]`. Hər bənd
+        sətirlər üzərində dövrdür; bəndin ifadələri sətrin adları elan
+        olunmuş təzə əhatədə kompilyasiya olunur."""
+        def qur() -> str:
+            R = self._temp()
+            n = [f"{R} = [[null]];"]
+            adlar: list[str] = []
+            N: str | None = None
+            xarici = self.əh
+
+            def aç(r: str) -> list[str]:
+                """Sətrin adlarını təzə əhatədə elan edir."""
+                self.əh = self._əhatə()
+                sətir = []
+                for i, ad in enumerate(adlar):
+                    self._qeyd(ad)
+                    sətir.append(self._ada_yaz(ad, f"{r}[{i + 1}]", True))
+                return sətir
+
+            def yığ(el: str, ad_siyahısı: list[str]) -> str:
+                return "[" + ", ".join([el] + [self._ad_js(a)
+                                              for a in ad_siyahısı]) + "]"
+
+            def təzə_adlar(b: A.Bağlama) -> list[str]:
+                yeni = self._bağlama_adları(b)
+                return [a for a in adlar if a not in yeni] + yeni
+
+            try:
+                for b in e.bəndlər:
+                    k = b.növ
+                    if k in ("hər", "dəyişən"):
+                        Y, r, x = self._temp(), self._temp(), self._temp()
+                        n.append(f"{Y} = [];")
+                        n.append(f"for (const {r}_ of {R}) {{")
+                        n.extend(aç(f"{r}_"))
+                        d = self._ifadə(b.ifadə)
+                        if k == "hər":
+                            n.append(f"for (const {x}_ of $.iter({d})) {{")
+                            el = f"{x}_"
+                        else:
+                            n.append(f"{{ const {x}_ = {d};")
+                            el = f"{r}_[0]"
+                        self.əh = self._əhatə()
+                        for a in self._bağlama_adları(b.bağlama):
+                            self._qeyd(a)
+                        n.extend(self._bağla(b.bağlama, f"{x}_", True))
+                        yeni = təzə_adlar(b.bağlama)
+                        n.append(f"{Y}.push({yığ(el, yeni)});")
+                        n.append("}\n}")
+                        n.append(f"{R} = {Y};")
+                        adlar = yeni
+                    elif k == "harada":
+                        Y, r = self._temp(), self._temp()
+                        n.append(f"{Y} = [];")
+                        n.append(f"for (const {r}_ of {R}) {{")
+                        n.extend(aç(f"{r}_"))
+                        n.append(f"if ({self._şərt(b.ifadə)}) {Y}.push({r}_);")
+                        n.append("}")
+                        n.append(f"{R} = {Y};")
+                    elif k == "sırala":
+                        K, r = self._temp(), self._temp()
+                        n.append(f"{K} = {R}.map(({r}_) => {{")
+                        n.extend(aç(f"{r}_"))
+                        n.append("return [" + ", ".join(
+                            self._ifadə(a) for a, _ in b.açarlar) + "];")
+                        n.append("});")
+                        az = ", ".join("true" if a else "false"
+                                       for _, a in b.açarlar)
+                        n.append(f"{R} = $.sorğuSırala({R}, {K}, [{az}]);")
+                    elif k == "qrupla":
+                        G, Y, r = self._temp(), self._temp(), self._temp()
+                        n.append(f"{G} = new $.Lüğət();")
+                        n.append(f"for (const {r}_ of {R}) {{")
+                        n.extend(aç(f"{r}_"))
+                        n.append(f"$.sorğuQrupla({G}, {self._ifadə(b.ifadə)}, "
+                                 f"{r}_[0]);")
+                        n.append("}")
+                        n.append(f"{Y} = [];")
+                        n.append(f"for (const {r}c of {G}.cütlər()) {{")
+                        n.append(f"const {r}k = new $.Kortej([{r}c[0], {r}c[1]]);")
+                        self.əh = self._əhatə()
+                        yeni = self._bağlama_adları(b.bağlama)
+                        for a in yeni:
+                            self._qeyd(a)
+                        n.extend(self._bağla(b.bağlama, f"{r}k", True))
+                        n.append(f"{Y}.push({yığ(f'{r}k', yeni)});")
+                        n.append("}")
+                        n.append(f"{R} = {Y};")
+                        adlar = yeni
+                    elif k == "seç":
+                        N, r = self._temp(), self._temp()
+                        n.append(f"{N} = [];")
+                        n.append(f"for (const {r}_ of {R}) {{")
+                        n.extend(aç(f"{r}_"))
+                        n.append(f"{N}.push({self._ifadə(b.ifadə)});")
+                        n.append("}")
+                        if b.fərqli:
+                            n.append(f"{N} = $.sorğuFərqli({N});")
+                    else:                                # ilk / atla
+                        self.əh = xarici
+                        say = self._ifadə(b.ifadə)
+                        h = N if N is not None else R
+                        n.append(f"{h} = $.sorğuKəs({h}, {say}, "
+                                 f"{_js_mətn(k)});")
+                    self.əh = xarici
+            finally:
+                self.əh = xarici
+            n.append(f"return {N};" if N is not None
+                     else f"return {R}.map(($s) => $s[0]);")
+            return "\n".join(n)
+        return self._iç_funksiya("sorğu", qur)
+
     def _e_Qurma(self, e: A.Qurma) -> str:
         def qur() -> str:
             mənbə = self._ifadə(e.mənbə)

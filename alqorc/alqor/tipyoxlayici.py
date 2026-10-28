@@ -3000,6 +3000,48 @@ class TipYoxlayıcı:
     def _e_kortej(self, e: A.KortejLiteralı, ə: Əhatə) -> T.Tip:
         return T.Kortej(tuple(self._ifadə(x, ə) for x in e.elementlər))
 
+    def _e_sorğu(self, e: A.Sorğu, ə: Əhatə) -> T.Tip:
+        """Sorğu (spes. § 4.13): bəndlər sıra ilə, adlar bəndlərdə elan olunur."""
+        alt = ə.alt()
+        element: T.Tip = T.NAMƏLUM
+        nəticə: T.Tip | None = None
+        for b in e.bəndlər:
+            if b.növ == "hər":
+                mənbə = self._ifadə(b.ifadə, alt)
+                if not T.naməlumdur(mənbə) and \
+                        not T.iterasiya_oluna_bilir(mənbə):
+                    self.x.xəta(
+                        "ALQ-T009", "Sorğuda iterasiya mümkün deyil",
+                        getattr(b.ifadə, "yer", b.yer),
+                        f"`{mənbə.mətn()}` iterasiya olunmur")
+                alt = alt.alt()
+                element = T.iterasiya_elementi(mənbə)
+                self._bağla(b.bağlama, element, alt, False)
+            elif b.növ == "harada":
+                self._şərt_yoxla(b.ifadə, alt)
+            elif b.növ == "dəyişən":
+                t = self._ifadə(b.ifadə, alt)
+                alt = alt.alt()
+                self._bağla(b.bağlama, t, alt, False)
+            elif b.növ == "sırala":
+                for a, _ in b.açarlar:
+                    self._ifadə(a, alt)
+            elif b.növ == "qrupla":
+                açar = self._ifadə(b.ifadə, alt)
+                alt = ə.alt()
+                element = T.Kortej((açar, T.Siyahı(element)))
+                self._bağla(b.bağlama, element, alt, False)
+            elif b.növ == "seç":
+                nəticə = self._ifadə(b.ifadə, alt)
+            else:                                    # ilk / atla
+                t = self._ifadə(b.ifadə, ə)
+                if not T.naməlumdur(t) and not T.uyğundur(t, T.TAM):
+                    self.x.xəta(
+                        "ALQ-T083", f"`{b.növ}` tam ədəd gözləyir",
+                        getattr(b.ifadə, "yer", b.yer),
+                        f"`{t.mətn()}` verilib")
+        return T.Siyahı(nəticə if nəticə is not None else element)
+
     def _e_qurma(self, e: A.Qurma, ə: Əhatə) -> T.Tip:
         mənbə = self._ifadə(e.mənbə, ə)
         if not T.naməlumdur(mənbə) and not T.iterasiya_oluna_bilir(mənbə):
@@ -3223,6 +3265,7 @@ _İFADƏLƏR: dict[type, Any] = {
     A.DəstLiteralı: TipYoxlayıcı._e_dəst,
     A.KortejLiteralı: TipYoxlayıcı._e_kortej,
     A.Qurma: TipYoxlayıcı._e_qurma,
+    A.Sorğu: TipYoxlayıcı._e_sorğu,
     A.ŞərtIfadəsi: TipYoxlayıcı._e_şərt_ifadəsi,
     A.BlokIfadəsi: TipYoxlayıcı._e_blok_ifadəsi,
     A.Lambda: TipYoxlayıcı._e_lambda,

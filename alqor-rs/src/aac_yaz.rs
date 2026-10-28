@@ -708,6 +708,24 @@ impl Yazıcı {
                 self.s(l, &format!("Kortej {}", y(yer)));
                 self.iç(|w| w.ifadələr("elementlər", el));
             }
+            I::Sorğu(yer, bəndlər) => {
+                self.s(l, &format!("Sorğu {}", y(yer)));
+                self.iç(|w| {
+                    w.siyahı("bəndlər", bəndlər, |w, b| {
+                        w.s("", &format!("SorğuBəndi {} növ={} fərqli={}", y(&b.yer), q(&b.növ), b.fərqli));
+                        w.iç(|w| {
+                            if let Some(bg) = &b.bağlama {
+                                w.bağlama("bağlama", bg);
+                            }
+                            w.oifadə("ifadə", &b.ifadə);
+                            w.siyahı("açarlar", &b.açarlar, |w, (e, az)| {
+                                w.s("", &format!("Açar azalan={}", az));
+                                w.iç(|w| w.ifadə("ifadə", e));
+                            });
+                        });
+                    });
+                });
+            }
             I::Qurma { yer, növ, ifadə, dəyər_ifadəsi, bağlama, mənbə, şərt } => {
                 self.s(l, &format!("Qurma {} növ={}", y(yer), q(növ)));
                 self.iç(|w| {
