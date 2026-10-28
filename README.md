@@ -13,7 +13,12 @@
   Bir dildə konsol proqramı, veb sayt, desktop tətbiq və brauzer kodu yazın.
 </p>
 
-<p align="center"><b>Versiya 2.3</b></p>
+<p align="center">
+  <b>Versiya 2.4</b> ·
+  <a href="https://github.com/vugarfamiloglu/alqor/releases/latest">Endir</a> ·
+  <a href="https://vuqar.pro/alqor">Sayt</a> ·
+  <a href="https://vuqar.pro/hub">Paketlər</a>
+</p>
 
 <p align="center">
   <code>əgər</code> · <code>hər ... üçün</code> · <code>funksiya</code> · <code>sinif</code> · <code>cəhd et</code> · <code>gözlə</code>
@@ -64,6 +69,7 @@ Bu bir oyuncaq dil deyil. Alqor müasir dillərin gücünü daşıyır:
 | ⌨️ **Hər klaviaturada** | `eger` yazsanız `əgər` kimi qəbul olunur — Azərbaycan klaviaturası olmayan kompüterdə də işləyir |
 | 🌐 **Bir dil — dörd hədəf** | Konsol, veb server, desktop pəncərə və **JavaScript** (Node.js / brauzer) |
 | 🐍 **Python ekosistemi** | `gətir python:numpy kimi np` — istənilən Python/PyPI kitabxanası birbaşa; `alqor python qur requests` layihəyə quraşdırır |
+| ⚡ **Sürətli icraçı** | Rust ilə yazılmış bytecode virtual maşın — Python icraçısından ~100 dəfə sürətli (`alqor işlət --motor rs`) |
 | 🛠 **Tam alət dəsti** | IDE, paket meneceri, formatlayıcı, linter, sınaq işlədicisi, sənəd generatoru, LSP, debaqçı |
 
 ## Xətalar sizinlə danışır
@@ -171,8 +177,9 @@ forma `ALQOR_VEB=1` ilə brauzerdə işləyir.
 
 | | |
 |---|---|
-| **~57 000** sətir | dilin etalon implementasiyası (lekser, parser, tip yoxlayıcı, icraçı, kitabxana, alətlər) |
-| **1 200+** avtomatik sınaq | hər dəyişiklikdə işləyir |
+| **~66 000** sətir | Python etalon implementasiyası (lekser, parser, tip yoxlayıcı, icraçı, kitabxana, alətlər) |
+| **~30 000** sətir | Rust icraçısı (bytecode virtual maşın, standart kitabxana, WebAssembly) |
+| **1 350+** avtomatik sınaq | Windows və Linux-da hər dəyişiklikdə işləyir |
 | **118** vidjet | düymədən qrafikə, təqvimdən cədvələ |
 | **40+** standart modul | JSON, HTTP, verilənlər bazası (SQLite/PostgreSQL/MySQL + ORM), şifrələmə, PDF, şəkil, e-poçt, cron, pul hesabı, lokalizasiya... |
 | **14** bölməlik spesifikasiya | rəsmi EBNF qrammatika ilə |
@@ -180,34 +187,39 @@ forma `ALQOR_VEB=1` ilə brauzerdə işləyir.
 
 ## İndi sınayın
 
-> Windows üçün bir kliklə quraşdırıcı hazırlanır
-> ([yol xəritəsi](NOVBETI.md)). Hələlik mənbədən işlədin — yalnız
-> [Python 3.12+](https://www.python.org/downloads/) lazımdır.
+**Quraşdırıcı ilə** — [son buraxılışı endirin](https://github.com/vugarfamiloglu/alqor/releases/latest).
+Hər quraşdırıcıda Python və Rust icraçısı daxildir, əlavə heç nə lazım deyil:
+
+| Sistem | Fayl |
+|---|---|
+| Windows | `AlqorQurasdirici-*.exe` (idarəçi hüququ lazım deyil) və ya portativ `.zip` |
+| Debian / Ubuntu | `sudo apt install ./alqor_*_amd64.deb` (ARM: `arm64`) |
+| İstənilən Linux | `.tar.gz` → `./qurasdir.sh` (sudo-suz) |
+| macOS | `Alqor-*-macos-aarch64.dmg` (Apple Silicon) və ya `…-x86_64.dmg` (Intel) |
+
+Quraşdırdıqdan sonra:
+
+```bash
+alqor yeni mənim-saytım --şablon veb   # konsol | veb | desktop | kitabxana
+cd mənim-saytım
+alqor işlət           # işə sal (--motor rs — Rust icraçısı ilə)
+alqor sına            # sınaqlar
+alqor qur --exe       # tək .exe; --hədəf js|veb — JavaScript
+alqor söhbət          # interaktiv rejim
+```
+
+**Mənbədən** — yalnız [Python 3.12+](https://www.python.org/downloads/) lazımdır:
 
 ```bash
 git clone https://github.com/vugarfamiloglu/alqor.git
 cd alqor
+./alqor işlət numuneler/02-dovrler.alq     # Linux / macOS
+./alqor studio                            # Alqor Studio
 ```
 
-**Windows** (PowerShell):
+Windows-da (PowerShell): `.\alqor.cmd işlət numuneler\02-dovrler.alq`, Studio üçün `.\Studio-ac.cmd`.
 
-```powershell
-.\Studio-ac.cmd                              # Alqor Studio
-.\alqor.cmd yeni mənim-saytım --şablon veb   # yeni layihə
-cd mənim-saytım
-..\alqor.cmd işlət
-```
-
-**Linux / macOS:**
-
-```bash
-./alqor yeni mənim-saytım --şablon veb   # konsol | veb | desktop | kitabxana
-cd mənim-saytım
-../alqor işlət        # işə sal
-../alqor sına         # sınaqlar
-../alqor qur          # paket; --hədəf js|veb — JavaScript
-../alqor söhbət       # interaktiv rejim
-```
+Rust icraçısını mənbədən qurmaq üçün: `cd alqor-rs && cargo build --release`.
 
 ## Alət dəsti
 
@@ -229,11 +241,12 @@ cd mənim-saytım
 |---|---|---|
 | Dil, kitabxana, alətlər, Studio | Tam işlək etalon implementasiya | ✅ |
 | JavaScript hədəfi | Node.js və brauzer, Python-la eyni nəticə | ✅ |
-| **1. Windows quraşdırıcısı** | `AlqorQurasdirici.exe` — Studio + `alqor` əmrləri PATH-da, daxili Python | ⏳ |
-| 2. Kompilyasiya | `alqor qur --exe` — tək faylda paylanan tətbiq | ⏳ |
-| 3. Vebə yerləşdirmə | `alqor yerləşdir` — statik hostinq və Docker | ⏳ |
-| 4. Rust icraçısı | `alqor-rs` — 20–40x sürət, veb/http/verilənlər daxil; `alqor işlət --motor avto` | 🟡 əsas hissə hazırdır |
-| Sonra | Ekosistem — sayt [vuqar.pro/alqor](https://vuqar.pro/alqor), paket deposu [vuqar.pro/hub](https://vuqar.pro/hub) | ⬜ |
+| Quraşdırıcılar | Windows `.exe`, Linux `.deb`/`.tar.gz`, macOS `.dmg` — hər buraxılışda avtomatik | ✅ |
+| Kompilyasiya və yerləşdirmə | `alqor qur --exe` (tək fayl), `alqor yerləşdir` (statik hostinq, Docker) | ✅ |
+| Vizual forma dizayneri | Delphi üslubu: `.forma` + `.alq`, verilənlər bazası komponentləri | ✅ |
+| Python kitabxanaları | `gətir python:…`, `alqor python qur` | ✅ |
+| Rust icraçısı | Bytecode virtual maşın, veb/http/verilənlər; `--motor rs\|avto` | 🟡 əsas hissə hazırdır |
+| Ekosistem | Sayt [vuqar.pro/alqor](https://vuqar.pro/alqor), paket deposu [vuqar.pro/hub](https://vuqar.pro/hub) | 🟡 |
 
 Ətraflı: [NOVBETI.md](NOVBETI.md)
 
@@ -278,7 +291,7 @@ hamısı sıfırdan yazılıb.
 | **Lekser** | Əl ilə yazılmış; çox sözlü açar sözlər (`nə qədər ki`, `və ya`, `cəhd et`), ASCII yazılış (`eger` → `əgər`), şablon mətnlərdə `{ifadə:format}`, xam mətnlər `x"..."`, JSX-in xam skanı, mötərizə/blok kontekst yığını ilə sətir sonu qaydaları |
 | **Parser** | Rekursiv enmə + **Pratt** (prioritet dırmaşması), 16 prioritet səviyyəsi; xəta sonrası bərpa — bir faylda bütün xətalar bir dəfəyə göstərilir |
 | **Tip sistemi** | **Tədrici (gradual)**: tip yazmaq ixtiyaridir, yazılarsa yoxlanır; tip çıxarma, axın daralması (`əgər x boş deyil`), generiklər, birləşmə tipləri (`tam \| mətn`), ixtiyari tiplər (`mətn?`); 3 rejim: sərbəst / normal / sərt |
-| **İcraçı** | Ağac gəzən interpretator; leksik əhatə, qapanmalar, **hədsiz dəqiqlikli tam ədədlər**, IEEE-754 onluqlar, struktur = dəyər tipi, sinif = istinad tipi |
+| **İcraçı** | Python-da ağac gəzən interpretator, Rust-da **bytecode virtual maşın** (yerli yuvalar, birləşdirilmiş əmrlər, üzv keşləri); leksik əhatə, qapanmalar, **hədsiz dəqiqlikli tam ədədlər**, IEEE-754 onluqlar, struktur = dəyər tipi, sinif = istinad tipi |
 | **Paralellik** | Tənbəl generatorlar (korutin), `asinxron`/`gözlə` (`Gələcək`), `paralel` və saplar, ləğv nişanları |
 | **Xətalar** | **121 xəta kodu** (`ALQ-L/P/T/R/M/Y…`), hər biri Azərbaycanca izah, mənbə parçası və düzəliş təklifi ilə; 40-dan çox tipli xəta iyerarxiyası (`cəhd et … tut (x: BölməXətası)`) |
 | **Veb** | Çoxsaplı HTTP server, marşrutlar, ara proqramlar, sessiya, CSRF/CORS/təhlükəsizlik başlıqları, şablon mühərriki, JSX → HTML (XSS qaçışı avtomatik), WebSocket |
@@ -286,7 +299,7 @@ hamısı sıfırdan yazılıb.
 | **JS hədəfi** | AAC → ES2020; `tam` → `BigInt`; Python icraçısı ilə **sətir-sətir eyni nəticə** avtomatik müqayisə ilə yoxlanır |
 | **Alət protokolları** | **LSP** (tamamlama, tərif, istinadlar, ad dəyişmə, kod linzaları, semantik rənglər), **DAP** (debaq) — VS Code, Neovim, Helix ilə işləyir |
 | **Alqor Studio** | Python serveri + çərçivəsiz (vanilla) JavaScript interfeys; öz redaktoru, vizual dizayner, canlı önbaxış |
-| **Keyfiyyət** | 1 200+ avtomatik sınaq: dil, kitabxana, alətlər, bələdçilərdəki hər nümunə, Studio-nun brauzer sınaqları (Playwright) |
+| **Keyfiyyət** | 1 350+ avtomatik sınaq: dil, kitabxana, alətlər, bələdçilərdəki hər nümunə, Studio-nun brauzer sınaqları (Playwright); Rust və JS icraçıları Python etalonu ilə avtomatik müqayisə olunur |
 
 | Hissə | Yer |
 |---|---|
@@ -303,6 +316,14 @@ hamısı sıfırdan yazılıb.
 *Alqor* — "**alqoritm**" sözünün kökündən. `q` hərfi Azərbaycan latın
 əlifbasının imzasıdır və adı ingilis `algor`-dan ayırır. Fayl uzantısı:
 `.alq`.
+
+## Müəllif
+
+Alqor-u **Vüqar Familoğlu** yaradıb və inkişaf etdirir — [vuqar.pro/alqor](https://vuqar.pro/alqor).
+
+## Lisenziya
+
+[MIT](LICENSE) — istifadə, dəyişdirmə və paylama sərbəstdir.
 
 ---
 
