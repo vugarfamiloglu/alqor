@@ -642,7 +642,7 @@ class Bəzəyicilər(unittest.TestCase):
         "@ikiqat\nfunksiya bir(x: tam) -> tam qaytar x son\n"
         "yaz(bir(1), bir.ad)\n"
         "sinif A\n    @ikiqat\n    metod m(x) qaytar x son\nson\n"
-        "funksiya qur(a, ...b, **c) qaytar a son\n"
+        "funksiya qur(a, ...b, **c) qaytar [a, b, c] son\n"
         "yaz(qur(1, 2, **{\"x\": 1}))\n")
 
     def test_bəzənmiş_kod_təmizdir(self):
