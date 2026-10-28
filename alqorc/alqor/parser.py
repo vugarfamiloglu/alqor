@@ -763,6 +763,13 @@ class Parser:
             self._makro_aç(m, ifadədə=False)
         if self._makro_elanıdır():
             return self._makro_elanı()
+        # `aktyor Ad` (§ 9.12) — `aktyor` kontekstli sözdür
+        if (tok_ := self._bax()).növ is Növ.AD and tok_.dəyər == "aktyor" \
+                and self._bax(1).növ is Növ.AD \
+                and (self._bax(2).növ in (Növ.SETIR_SONU, Növ.FAYL_SONU)
+                     or self._bax(2).acardır("miras", "tətbiq", "ilə")
+                     or self._op("[", irəli=2)):
+            return self._sinif_elanı(self._modifikatorlar(), "aktyor")
 
         tok = self._bax()
 

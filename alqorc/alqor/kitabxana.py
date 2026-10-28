@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from . import elifba as E
-from .korutin import Gələcək, Korutin, LəğvNişanı
+from .korutin import Gələcək, Kanal, Korutin, LəğvNişanı
 from .pencere import Pəncərə, Sürücü
 from .veb import (Cavab, Qrup, Server, Sessiya, Sorğu,
                   SınaqMüştərisi)
@@ -305,6 +305,7 @@ def qlobal_mühit(icraçı) -> Mühit:
         lambda saniyə=None: LəğvNişanı(saniyə), 0, 1))
     m.elan("Gələcək", Daxili(
         "Gələcək", lambda f: Gələcək(lambda: _çağır(icraçı, f)), 1, 1))
+    m.elan("Kanal", Daxili("Kanal", lambda tutum=None: Kanal(tutum), 0, 1))
 
     # ── Xəta sinifləri — `at Xəta("...")` üçün ──────────────
     from .deyerler import XETA_AGACI

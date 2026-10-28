@@ -1067,6 +1067,7 @@ impl İcraçı {
                 return Err(xəta_yer("TipXətası", format!("`{}` üzərində dövr qurulmur", tip_adı(d)), yer, "ALQ-T009"));
             }
             D::Gen(g) => İter::Gen(g.clone()),
+            D::Obyekt(_) if super::aktyor::kanal(d).is_some() => İter::Kanal(super::aktyor::kanal(d).unwrap()),
             D::Lüğət(l) => İter::Vec(l.borrow().keys().map(|k| k.0.clone()).collect::<Vec<_>>().into_iter()),
             D::Siyahı(l) => İter::Siyahı(l.clone(), 0),
             D::Kortej(k) => İter::Vec(k.to_vec().into_iter()),

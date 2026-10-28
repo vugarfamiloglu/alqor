@@ -616,6 +616,9 @@ fn boş_üzv_xətası(a: &str, yer: Yer) -> Siqnal {
 #[inline]
 fn üzv_al_keşli(i: &İcraçı, kod: &Kod, k: u32, o: &D, a: &Ad, yer: Yer) -> Nəticə {
     if let D::Nümunə(n) = o {
+        if n.aktyor.is_some() {
+            return i.üzv_al(o, a, Some(yer));
+        }
         let keş = &kod.üzv_keşləri[k as usize];
         if let Some((s, idx, _)) = &*keş.borrow() {
             if Rc::ptr_eq(s, &n.sinif) {
@@ -638,6 +641,9 @@ fn üzv_al_keşli(i: &İcraçı, kod: &Kod, k: u32, o: &D, a: &Ad, yer: Yer) -> 
 /// `üzv_qoy` + keş (yazıcısı və hesablananı olmayan mövcud sahələr üçün)
 fn üzv_qoy_keşli(i: &İcraçı, kod: &Kod, k: u32, o: &D, a: &Ad, d: D, yer: Yer) -> Nəticə<()> {
     if let D::Nümunə(n) = o {
+        if n.aktyor.is_some() {
+            return i.üzv_qoy(o, a, d, Some(yer));
+        }
         let keş = &kod.üzv_keşləri[k as usize];
         if let Some((s, idx, _)) = &*keş.borrow() {
             if Rc::ptr_eq(s, &n.sinif) {
@@ -663,7 +669,8 @@ fn üzv_qoy_keşli(i: &İcraçı, kod: &Kod, k: u32, o: &D, a: &Ad, d: D, yer: Y
 /// Nümunənin metodu (`nümunə_üzvü` sırası: sahə → hesablanan → metod), keşli
 #[inline]
 fn metod_tap_keşli(kod: &Kod, k: u32, n: &Rc<Nümunə>, a: &Ad) -> Option<Rc<Funksiya>> {
-    if n.sahələr.borrow().contains_key(&**a) {
+    // Aktyorun metodu mesajdır — ümumi yol (`üzv_al`)
+    if n.aktyor.is_some() || n.sahələr.borrow().contains_key(&**a) {
         return None;
     }
     let keş = &kod.üzv_keşləri[k as usize];

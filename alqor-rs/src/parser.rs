@@ -950,6 +950,17 @@ impl<'a> Parser<'a> {
         if self.makro_elanıdır() {
             return self.makro_elanı();
         }
+        // `aktyor Ad` (§ 9.12) — `aktyor` kontekstli sözdür
+        if self.növ(0) == Növ::Ad
+            && self.bax(0).s == "aktyor"
+            && self.növ(1) == Növ::Ad
+            && (matches!(self.növ(2), Növ::SətirSonu | Növ::FaylSonu)
+                || self.acar_i(2, &["miras", "tətbiq", "ilə"])
+                || self.op_i(2, &["["]))
+        {
+            let m = self.modifikatorlar();
+            return self.sinif_elanı(&m, "aktyor");
+        }
 
         let tok = self.bax(0).clone();
 

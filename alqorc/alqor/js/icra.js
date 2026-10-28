@@ -39,7 +39,11 @@ const XETA_AGACI = {
   "KodlaşdırmaXətası": "FormatXətası", "KonfiqXətası": "Xəta",
   "ŞifrələməXətası": "Xəta", "JWTXətası": "ŞifrələməXətası",
   "VerilənlərXətası": "Xəta", "MəhdudiyyətXətası": "VerilənlərXətası",
-  "BoşDəyərXətası": "Xəta", "VaxtXətası": "Xəta", "KritikXəta": "Atılan",
+  "BoşDəyərXətası": "Xəta", "VaxtXətası": "Xəta",
+  "ParalellikXətası": "Xəta", "KanalXətası": "ParalellikXətası", "DalanXətası": "ParalellikXətası",
+  "VahidXətası": "TipXətası", "MüqaviləXətası": "Xəta", "ÖnŞərtXətası": "MüqaviləXətası",
+  "SonŞərtXətası": "MüqaviləXətası", "GözləntiXətası": "Xəta", "NəticəXətası": "Xəta",
+  "KritikXəta": "Atılan",
   "YaddaşBitdiXətası": "KritikXəta", "StekDaşmaXətası": "KritikXəta",
   "İddiaXətası": "KritikXəta", "DaxiliXəta": "KritikXəta",
 };
@@ -501,6 +505,7 @@ function çağırQeyri(f, args) {
 
 /** Metod çağırışı: `obyekt.ad(...)`. */
 function çm(o, a, ...args) {
+  if (o instanceof Nümunə && o.aktyor && o.aktyor.emal === 0) return ç(nümunəÜzvü(o, a), ...args);
   if (o instanceof Nümunə) {
     if (o.f.has(a)) return ç(o.f.get(a), ...args);
     const s = o.s;
@@ -535,10 +540,15 @@ function yarat(s, qurucuAdı, args) {
       "`" + s.ad + "` mücərrəd sinifdir — ondan obyekt yaradıla bilməz",
       "ALQ-T052");
   const n = new Nümunə(s);
+  if (s.quruluş === "aktyor") n.aktyor = { poçt: [], emal: 0 };
   for (const [a, st, t] of s.bütünXassələr())
     n.f.set(a, st ? genişlət(st(), t) : standartDəyər(t));
   const q = qurucuTap(s, qurucuAdı || "");
-  if (q) q.apply(n, args);
+  if (q && n.aktyor) {
+    // Aktyorun qurucusu onun daxilində işləyir: `özü.metod()` birbaşadır
+    n.aktyor.emal++;
+    try { q.apply(n, args); } finally { n.aktyor.emal--; }
+  } else if (q) q.apply(n, args);
   else if (args.length) {
     const [poz, adlı] = arqAyır(args);
     if (s.quruluş === "struktur" && adlı && !poz.length)
@@ -1481,6 +1491,12 @@ function hesablananOxu(o, a, h) {
 }
 
 function nümunəÜzvü(o, a) {
+  if (o.aktyor && o.aktyor.emal === 0) {
+    const m = o.s.metod(a);
+    if (m !== undefined) return ad((...args) => aktyoraGöndər(o, m, a, args), a, "funksiya");
+    // Xassəni oxumazdan əvvəl gözləyən mesajlar emal olunur
+    poçtuBoşalt(o, null);
+  }
   if (o.f.has(a)) return o.f.get(a);
   const s = o.s;
   const h = s.tap("hesablananlar", a);
@@ -1552,7 +1568,86 @@ function üzv(o, a, təhlükəsiz) {
     "ALQ-T006");
 }
 
+// ── Aktyorlar (§ 9.12) ──────────────────────────────────────────────────
+
+const AKTYORLAR = [], XƏTALI_MESAJLAR = [];
+
+/** Mesajı poçta qoyur; nəticə — tənbəl `Gələcək`. */
+function aktyoraGöndər(o, m, a, args) {
+  const mesaj = { m, args, bitdi: false, nəticə: null, xəta: null, gözlənildi: false };
+  if (!o.aktyor.poçt.length && !AKTYORLAR.includes(o)) AKTYORLAR.push(o);
+  o.aktyor.poçt.push(mesaj);
+  return new Gələcək(() => {
+    mesaj.gözlənildi = true;
+    poçtuBoşalt(o, mesaj);
+    if (mesaj.xəta) throw mesaj.xəta;
+    return mesaj.nəticə;
+  }, o.s.ad + "." + a);
+}
+
+/** Mesajları gəliş sırası ilə emal edir (`qədər` daxil). */
+function poçtuBoşalt(o, qədər) {
+  const p = o.aktyor;
+  while (p.poçt.length && !(qədər && qədər.bitdi)) {
+    const m = p.poçt.shift();
+    p.emal++;
+    try {
+      let d = m.m.apply(o, m.args);
+      if (d instanceof Gələcək) d = d.al();
+      m.nəticə = d;
+    } catch (e0) {
+      const e = xətaya(e0);
+      if (e instanceof Dayanma || e0 instanceof Yayılan) throw e0;
+      m.xəta = e;
+      XƏTALI_MESAJLAR.push(m);
+    } finally {
+      p.emal--;
+      m.bitdi = true;
+    }
+  }
+}
+
+/** Proqramın sonu: qalan mesajlar emal olunur; heç kimin gözləmədiyi
+ *  mesajdakı xəta tutulmamış xəta kimi atılır. */
+function aktyorlarıBoşalt() {
+  while (AKTYORLAR.length) poçtuBoşalt(AKTYORLAR.shift(), null);
+  for (const m of XƏTALI_MESAJLAR) if (!m.gözlənildi) throw m.xəta;
+}
+
+// ── Kanal (§ 9.13) ──────────────────────────────────────────────────────
+
+function kanalAl(k) {
+  const d = k.d;
+  if (d.n.length) return [true, d.n.shift()];
+  if (d.bağlı) return [false, null];
+  throw xəta("DalanXətası", "kanal boşdur və ona göndərən yoxdur — dalan", "ALQ-R018");
+}
+
+const KANAL = {
+  $mətn: k => "<kanal " + k.d.n.length + " element" + (k.d.bağlı ? ", bağlı" : "") + ">",
+  göndər: (k, x) => {
+    if (k.d.bağlı) throw xəta("KanalXətası", "bağlanmış kanala göndərmək olmaz", "ALQ-R019");
+    k.d.n.push(x);
+    return null;
+  },
+  al: k => kanalAl(k)[1],
+  cəhdAl: k => k.d.n.length ? k.d.n.shift() : null,
+  bağla: k => { k.d.bağlı = true; return null; },
+  bağlıdır: k => k.d.bağlı,
+  boşdur: k => !k.d.n.length,
+  uzunluq: k => BigInt(k.d.n.length),
+};
+
+function* kanalDövrü(k) {
+  for (;;) {
+    const [var_, x] = kanalAl(k);
+    if (!var_) return;
+    yield x;
+  }
+}
+
 function üzvQoy(o, a, v) {
+  if (o instanceof Nümunə && o.aktyor && o.aktyor.emal === 0) poçtuBoşalt(o, null);
   if (o instanceof Nümunə) {
     const y = o.s.tap("yazıcılar", a);
     if (y !== undefined) { y.call(o, v); return; }
@@ -1685,6 +1780,7 @@ function iter(x) {
   }
   if (x instanceof Sadalama) return x.sıra.map(a => x.variantlar.get(a));
   if (x instanceof Element) return x.uşaqlar;
+  if (x instanceof Yerli && x.c === KANAL) return kanalDövrü(x);
   throw xəta("TipXətası", "`" + tip(x) + "` üzərində dövr qurulmur", "ALQ-T009");
 }
 
@@ -2657,9 +2753,11 @@ function uzunluq(x) {
   if (x instanceof Kortej) return BigInt(x.e.length);
   if (x instanceof Diapazon) return x.uzunluq();
   if (x instanceof Bayt) return BigInt(x.u.length);
+  if (x instanceof Yerli && x.c === KANAL) return BigInt(x.d.n.length);
   throw xəta("TipXətası", "`" + tip(x) + "` tipinin uzunluğu yoxdur", "ALQ-T006");
 }
 g["uzunluq"] = D("uzunluq", 1, 1, uzunluq);
+g["Kanal"] = D("Kanal", 0, 1, () => new Yerli("Kanal", KANAL, { n: [], bağlı: false }), true);
 g["boşdur"] = D("boşdur", 1, 1, x => x === null || uzunluq(x) === 0n);
 g["cəm"] = D("cəm", 1, 2, (k, b) => cəmlə(siyahıya(k), b));
 g["minimum"] = D("minimum", 1, null, (...a) => {
@@ -3545,8 +3643,10 @@ function işlət(proqram, seçimlər) {
       const arq = əsas.$pSay ? [P.arqumentlər.slice()] : [];
       let n = əsas(...arq);
       if (n instanceof Gələcək) n = n.al();
+      aktyorlarıBoşalt();
       if (typeof n === "bigint") return Number(n);
     }
+    aktyorlarıBoşalt();
     return 0;
   } catch (e0) {
     if (e0 instanceof Yayılan) return 0;
@@ -3633,6 +3733,8 @@ function sıfırla() {
   for (const k of Object.keys(_faylKeş)) delete _faylKeş[k];
   _toxum = null;
   V.d = 0;
+  AKTYORLAR.length = 0;
+  XƏTALI_MESAJLAR.length = 0;
 }
 
 return {

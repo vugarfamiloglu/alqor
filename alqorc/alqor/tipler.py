@@ -453,6 +453,10 @@ def naməlumdur(t: Tip) -> bool:
     return isinstance(t, (İstənilən, Naməlum, Generik))
 
 
+# `Kanal` (spes. § 9.13) — elementlərin tipi izlənmir
+KANAL = Sadə("Kanal")
+
+
 def iterasiya_elementi(t: Tip) -> Tip:
     """`hər x üçün t içində` — `x`-in tipi."""
     if isinstance(t, Siyahı):
@@ -482,7 +486,7 @@ def iterasiya_oluna_bilir(t: Tip) -> bool:
         return True
     return (isinstance(t, (Siyahı, Dəst, Lüğət, Kortej, Generator,
                            SinifTipi, SadalamaTipi))
-            or t in (MƏTN, DİAPAZON, BAYT, ELEMENT))
+            or t in (MƏTN, DİAPAZON, BAYT, ELEMENT, KANAL))
 
 
 def indekslənə_bilir(t: Tip) -> bool:

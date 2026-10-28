@@ -198,10 +198,17 @@ class Gələcək:
         with self._kilid:
             if self._sap is None and not self._bitdi:
                 self._sap = threading.Thread(
-                    target=self._işlət, daemon=True,
+                    target=self._fonda_işlət, daemon=True,
                     name=f"alqor-{self.ad}")
+                _İŞLƏYƏN_SAPLAR.add(self._sap)
                 self._sap.start()
         return self
+
+    def _fonda_işlət(self) -> None:
+        try:
+            self._işlət()
+        finally:
+            _İŞLƏYƏN_SAPLAR.discard(threading.current_thread())
 
     @property
     def bitdimi(self) -> bool:
@@ -219,6 +226,140 @@ class Gələcək:
     def __repr__(self) -> str:
         vəziyyət = "bitib" if self.bitdimi else "gözləyir"
         return f"<gələcək {self.ad} ({vəziyyət})>"
+
+
+# Fonda işləyən `Gələcək` sapları — kanal dalanını aşkarlamaq üçün
+_İŞLƏYƏN_SAPLAR: set[threading.Thread] = set()
+
+
+def _başqa_sap_işləyir() -> bool:
+    cari = threading.current_thread()
+    return any(s is not cari and s.is_alive() for s in list(_İŞLƏYƏN_SAPLAR))
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Kanal (spes. § 9.13)
+# ═══════════════════════════════════════════════════════════════════════
+
+class Kanal:
+    """
+    Saplar və aktyorlar arasında mesaj növbəsi (FIFO).
+
+        dəyişən k = Kanal()            // və ya yeni Kanal[tam](tutum: 10)
+        k.göndər(5)
+        yaz(k.al())
+        k.bağla()
+        hər x üçün k içində ... son    // bağlanıb boşalana qədər
+
+    Boş kanaldan oxuyan sap göndərən gələnə qədər gözləyir. Göndərə biləcək
+    başqa sap yoxdursa — dalan (`ALQ-R018`).
+    """
+
+    ALQOR_TİP_ADI = "Kanal"
+
+    def __init__(self, tutum: int | None = None):
+        from collections import deque
+        self._növbə: Any = deque()
+        self._bağlı = False
+        self._şərt = threading.Condition()
+        self.tutum = tutum
+
+    def göndər(self, x: Any) -> None:
+        with self._şərt:
+            if self._bağlı:
+                raise _xəta("KanalXətası", "bağlanmış kanala göndərmək olmaz",
+                            "ALQ-R019")
+            # Tutum doludursa göndərən sap oxuyanı gözləyir (yalnız
+            # başqa sap oxuya bilərsə — əks halda növbə böyüyür)
+            while (self.tutum is not None and len(self._növbə) >= self.tutum
+                   and threading.current_thread() is not
+                   threading.main_thread()):
+                if not self._şərt.wait(0.05) and not _başqa_sap_işləyir() \
+                        and not threading.main_thread().is_alive():
+                    break
+            self._növbə.append(x)
+            self._şərt.notify_all()
+
+    def al(self) -> Any:
+        """Növbəti dəyər; kanal bağlanıb boşdursa `boş`."""
+        var, x = self._al()
+        return x if var else None
+
+    def _al(self) -> tuple[bool, Any]:
+        with self._şərt:
+            while not self._növbə:
+                if self._bağlı:
+                    return False, None
+                if not _başqa_sap_işləyir() and \
+                        threading.current_thread() is threading.main_thread():
+                    raise _xəta("DalanXətası",
+                                "kanal boşdur və ona göndərən yoxdur — dalan",
+                                "ALQ-R018")
+                self._şərt.wait(0.05)
+            x = self._növbə.popleft()
+            self._şərt.notify_all()
+            return True, x
+
+    def cəhdAl(self) -> Any:
+        with self._şərt:
+            if self._növbə:
+                x = self._növbə.popleft()
+                self._şərt.notify_all()
+                return x
+            return None
+
+    def bağla(self) -> None:
+        with self._şərt:
+            self._bağlı = True
+            self._şərt.notify_all()
+
+    def alqor_uzunluq(self) -> int:
+        return len(self._növbə)
+
+    @staticmethod
+    def alqor_iterasiya(k: "Kanal", yer=None):
+        while True:
+            var, x = k._al()
+            if not var:
+                return
+            yield x
+
+    def __repr__(self) -> str:
+        return (f"<kanal {len(self._növbə)} element"
+                f"{', bağlı' if self._bağlı else ''}>")
+
+    ALQOR_METODLARI = {
+        "göndər": lambda i, k, x: k.göndər(x),
+        "al": lambda i, k: k.al(),
+        "cəhdAl": lambda i, k: k.cəhdAl(),
+        "bağla": lambda i, k: k.bağla(),
+        "bağlıdır": lambda i, k: k._bağlı,
+        "boşdur": lambda i, k: not k._növbə,
+        "uzunluq": lambda i, k: len(k._növbə),
+    }
+
+
+def _xəta(tip: str, mesaj: str, kod: str):
+    from .deyerler import AlqorXəta
+    return AlqorXəta(tip, mesaj, None, kod)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+#  Aktyor poçtu (spes. § 9.12)
+# ═══════════════════════════════════════════════════════════════════════
+
+class Mesaj:
+    """Aktyora göndərilmiş metod çağırışı."""
+    __slots__ = ("metod", "arqumentlər", "adlı", "yer", "bitdi",
+                 "nəticə", "xəta", "gözlənildi")
+
+    def __init__(self, metod, arqumentlər, adlı, yer):
+        self.metod, self.arqumentlər, self.adlı, self.yer = \
+            metod, arqumentlər, adlı, yer
+        self.bitdi = False
+        self.nəticə: Any = None
+        self.xəta: BaseException | None = None
+        self.gözlənildi = False
 
 
 # ═══════════════════════════════════════════════════════════════════════

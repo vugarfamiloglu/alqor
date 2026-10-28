@@ -192,6 +192,15 @@ pub const XETA_AGACI: &[(&str, &str)] = &[
     ("MəhdudiyyətXətası", "VerilənlərXətası"),
     ("BoşDəyərXətası", "Xəta"),
     ("VaxtXətası", "Xəta"),
+    ("ParalellikXətası", "Xəta"),
+    ("KanalXətası", "ParalellikXətası"),
+    ("DalanXətası", "ParalellikXətası"),
+    ("VahidXətası", "TipXətası"),
+    ("MüqaviləXətası", "Xəta"),
+    ("ÖnŞərtXətası", "MüqaviləXətası"),
+    ("SonŞərtXətası", "MüqaviləXətası"),
+    ("GözləntiXətası", "Xəta"),
+    ("NəticəXətası", "Xəta"),
     ("KritikXəta", "Atılan"),
     ("YaddaşBitdiXətası", "KritikXəta"),
     ("StekDaşmaXətası", "KritikXəta"),
@@ -659,17 +668,21 @@ pub struct Nümunə {
     pub sinif: Rc<Sinif>,
     pub sahələr: RefCell<Sahələr>,
     pub keş: RefCell<FxMap<Ad, D>>,
+    /// `aktyor` nümunəsinin poçtu (§ 9.12)
+    pub aktyor: Option<Rc<super::aktyor::AktyorPoçtu>>,
 }
 
 impl Nümunə {
     pub fn yeni(sinif: Rc<Sinif>) -> Nümunə {
-        Nümunə { sinif, sahələr: Default::default(), keş: Default::default() }
+        let aktyor = if sinif.quruluş == "aktyor" { Some(Default::default()) } else { None };
+        Nümunə { sinif, sahələr: Default::default(), keş: Default::default(), aktyor }
     }
     pub fn klonla(&self) -> Rc<Nümunə> {
         Rc::new(Nümunə {
             sinif: self.sinif.clone(),
             sahələr: RefCell::new(self.sahələr.borrow().clone()),
             keş: Default::default(),
+            aktyor: self.aktyor.clone(),
         })
     }
     pub fn sahə(&self, a: &str) -> Option<D> {

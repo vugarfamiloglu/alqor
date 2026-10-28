@@ -198,6 +198,7 @@ def _daxili_adlar() -> dict[str, T.Tip]:
         "heş": F(e, qaytarır=i),
         "LəğvNişanı": F(o, qaytarır=T.Sadə("ləğvNişanı"), standart=1),
         "Gələcək": F(e, qaytarır=T.Gələcək()),
+        "Kanal": F(i, qaytarır=T.KANAL, standart=1),
     }
 
     # Xəta sinifləri — hamısı eyni imza
@@ -1189,6 +1190,8 @@ class TipYoxlayıcı:
             return T.Generator(arq[0] if arq else T.NAMƏLUM)
         if ad == "gələcək":
             return T.Gələcək(arq[0] if arq else T.NAMƏLUM)
+        if ad == "Kanal":
+            return T.KANAL
         if ad == "funksiyaTipi":
             return T.FunksiyaTipi()
 
@@ -2425,6 +2428,13 @@ class TipYoxlayıcı:
         obyekt = T.açılmış(obyekt)
         self._son_obyekt_tipi = obyekt
         tip = self._üzv_tipi(obyekt, e.ad, e.yer)
+        # Aktyorun metodu xaricdən mesajdır: nəticə `Gələcək`-dir (§ 9.12)
+        if isinstance(obyekt, T.SinifTipi) and obyekt.quruluş == "aktyor" \
+                and not isinstance(e.obyekt, A.Özü) \
+                and isinstance(tip, T.FunksiyaTipi) \
+                and not isinstance(tip.qaytarma, T.Gələcək):
+            tip = T.FunksiyaTipi(tip.parametrlər, T.Gələcək(tip.qaytarma),
+                                 tip.asinxron, tip.generator)
         if self.qeyd and isinstance(obyekt, T.ModulTipi) \
                 and e.ad in obyekt.elanlar:
             self.üzv_istinadları.append((e, obyekt.elanlar[e.ad]))
@@ -2553,6 +2563,13 @@ class TipYoxlayıcı:
                     "base64Kodla": F(qaytarır=T.MƏTN)}
         if t == T.Sadə("ləğvNişanı"):
             return _ləğv_metodları()
+        if t == T.KANAL:
+            n = T.NAMƏLUM
+            return {"göndər": F(n, qaytarır=T.HEÇ), "al": F(qaytarır=n),
+                    "cəhdAl": F(qaytarır=n), "bağla": F(qaytarır=T.HEÇ),
+                    "bağlıdır": F(qaytarır=T.MƏNTİQ),
+                    "boşdur": F(qaytarır=T.MƏNTİQ),
+                    "uzunluq": F(qaytarır=T.TAM)}
         if t == SERVER:
             return _server_metodları()
         if t == SORĞU:

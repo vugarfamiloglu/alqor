@@ -1,5 +1,6 @@
 //! Ağac gəzən icraçı (icraci.py, deyerler.py, kitabxana.py).
 
+pub mod aktyor;
 pub mod cagiris;
 pub mod deyerler;
 pub mod eded;

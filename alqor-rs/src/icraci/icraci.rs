@@ -50,6 +50,9 @@ pub struct İcraçı {
     pub ölçü_başlanğıc: f64,
     /// `elanları_qaldır` işləyərkən bəzəyicilər tətbiq olunmur
     pub qaldırılır: Cell<bool>,
+    /// Poçtunda mesaj olan aktyorlar — proqramın sonunda boşaldılır
+    pub aktyorlar: RefCell<Vec<Rc<Nümunə>>>,
+    pub xətalı_mesajlar: RefCell<Vec<Rc<super::aktyor::Mesaj>>>,
 }
 
 /// İterator
@@ -59,6 +62,7 @@ pub enum İter {
     Diapazon(i64, i64, i64),
     Gen(Rc<Generator>),
     Nümunə(D, i64, i64),
+    Kanal(Rc<super::aktyor::Kanal>),
 }
 
 impl İter {
@@ -87,6 +91,7 @@ impl İter {
                 }
             }
             İter::Gen(g) => g.növbəti(i),
+            İter::Kanal(k) => k.al(),
             İter::Nümunə(d, n, k) => {
                 if *k < *n {
                     *k += 1;
@@ -312,6 +317,8 @@ impl İcraçı {
             təsadüfi: RefCell::new(super::modullar::MT::təsadüfi()),
             ölçü_başlanğıc: super::platforma::monoton_san(),
             qaldırılır: Cell::new(false),
+            aktyorlar: Default::default(),
+            xətalı_mesajlar: Default::default(),
         }));
         super::kitabxana::qlobal_qur(i);
         i
@@ -451,6 +458,7 @@ impl İcraçı {
                         if let D::Gələcək(g) = &n {
                             n = g.al(self)?;
                         }
+                        self.aktyorları_boşalt()?;
                         if let D::T(k) = n {
                             return Ok(k as i32);
                         }
@@ -461,6 +469,7 @@ impl İcraçı {
                     }
                 }
             }
+            self.aktyorları_boşalt()?;
             Ok(0)
         })();
         self.boşalt();

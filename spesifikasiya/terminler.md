@@ -22,8 +22,8 @@ sözü seçilir.
 | decorator | bəzəyici | `@bəzəyici` — § 5.11 |
 | macro | makro | § 5.12 |
 | query | sorğu | `sorğu hər ... son` — § 4.13 |
-| actor | aktyor | § 9.7 |
-| channel | kanal | § 9.8 |
+| actor | aktyor | § 9.12 |
+| channel | kanal | § 9.13 |
 | unit of measure | ölçü vahidi | `5 km` — § 3.8 |
 | result type | Nəticə | `Uğur`, `Uğursuz` — § 7.5 |
 | error propagation | xəta yayılması | `ifadə?` |

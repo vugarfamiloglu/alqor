@@ -53,6 +53,7 @@ impl İcraçı {
             "obyekt" => "obyekt",
             "komponent" => "komponent",
             "mağaza" => "mağaza",
+            "aktyor" => "aktyor",
             _ => "sinif",
         };
         let mut s = Sinif::yeni(&c.ad, baza, quruluş);
@@ -361,7 +362,15 @@ impl İcraçı {
         let d = D::Nümunə(n.clone());
         match s.qurucu_tap(qurucu_adı.unwrap_or("")) {
             Some(q) => {
-                self.funksiya_çağır(&q.bağla(d.clone()), args, adlı, yer)?;
+                // Aktyorun qurucusu onun daxilində işləyir: `özü.metod()` birbaşadır
+                if let Some(p) = &n.aktyor {
+                    p.emal.set(p.emal.get() + 1);
+                }
+                let r = self.funksiya_çağır(&q.bağla(d.clone()), args, adlı, yer);
+                if let Some(p) = &n.aktyor {
+                    p.emal.set(p.emal.get() - 1);
+                }
+                r?;
             }
             None => {
                 if !args.is_empty() || !adlı.is_empty() {
@@ -512,6 +521,18 @@ impl İcraçı {
     }
 
     fn nümunə_üzvü(&self, o: &D, n: &Rc<Nümunə>, a: &str, yer: Option<Yer>) -> Nəticə {
+        if let Some(p) = &n.aktyor {
+            if p.emal.get() == 0 {
+                if let Some(f) = n.sinif.metod_tap(a) {
+                    let n2 = n.clone();
+                    return Ok(daxili(&f.ad.clone(), 0, None, move |i, args, adlı| {
+                        Ok(i.aktyora_göndər(&n2, f.clone(), args, adlı, None))
+                    }));
+                }
+                // Xassəni oxumazdan əvvəl gözləyən mesajlar emal olunur
+                self.poçtu_boşalt(n, None)?;
+            }
+        }
         if let Some(d) = n.sahələr.borrow().get(a) {
             return Ok(d.clone());
         }
@@ -541,6 +562,9 @@ impl İcraçı {
     pub fn üzv_qoy(&self, o: &D, a: &str, d: D, yer: Option<Yer>) -> Nəticə<()> {
         match o {
             D::Nümunə(n) => {
+                if n.aktyor.as_ref().is_some_and(|p| p.emal.get() == 0) {
+                    self.poçtu_boşalt(n, None)?;
+                }
                 if let Some(y) = n.sinif.yazıcı_tap(a) {
                     self.funksiya_çağır(&y.bağla(o.clone()), vec![d], vec![], yer)?;
                     return Ok(());

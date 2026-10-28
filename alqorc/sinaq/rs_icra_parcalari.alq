@@ -1288,3 +1288,84 @@ cəhd et
 tut (h: Xəta)
     yaz(h.mesaj)
 son
+=====
+// Aktyorlar: növbə, gözlə, xassə oxunuşu, aktyorlar arası mesaj, xəta
+aktyor Jurnal
+    xassə sətirlər = []
+    metod əlavə(m)
+        özü.sətirlər.əlavə(m)
+        qaytar uzunluq(özü.sətirlər)
+    son
+son
+aktyor Bank
+    xassə balans = 0
+    xassə jurnal = boş
+    qurucu(j)
+        özü.jurnal = j
+        özü.yatır(10)
+    son
+    metod yatır(n)
+        özü.balans += n
+        özü.jurnal.əlavə("yatırıldı {n}")
+        qaytar özü.balans
+    son
+    metod çək(n)
+        əgər n > özü.balans onda
+            at Xəta("balans çatmır")
+        son
+        özü.balans -= n
+        qaytar özü.balans
+    son
+son
+dəyişən j = Jurnal()
+dəyişən b = Bank(j)
+dəyişən g1 = b.yatır(5)
+dəyişən g2 = b.çək(100)
+dəyişən g3 = b.çək(3)
+yaz("göndərildi")
+yaz(gözlə g3, b.balans)
+cəhd et
+    gözlə g2
+tut (x: Xəta)
+    yaz("xəta:", x.mesaj)
+son
+yaz(gözlə g1, j.sətirlər)
+b.balans = 1000
+yaz(gözlə b.yatır(1))
+=====
+// Kanal: FIFO, bağlama, dövr, dalan
+dəyişən k = Kanal()
+hər i üçün 1..3 içində
+    k.göndər(i * 10)
+son
+yaz(k.al(), uzunluq(k), k.boşdur(), k.cəhdAl())
+k.bağla()
+hər x üçün k içində
+    yaz("x =", x)
+son
+yaz(k.al(), k.bağlıdır(), k.cəhdAl())
+cəhd et
+    k.göndər(1)
+tut (x: KanalXətası)
+    yaz(x.mesaj)
+son
+dəyişən k2 = yeni Kanal[mətn](tutum: 1)
+k2.göndər("a")
+k2.göndər("b")
+yaz([x üçün x içində [k2.al(), k2.al()]])
+cəhd et
+    k2.al()
+tut (x: DalanXətası)
+    yaz(x.mesaj)
+son
+=====
+// Aktyor: gözlənilməyən xəta proqramın sonunda atılır
+aktyor A
+    metod m()
+        yaz("emal olundu")
+        at Xəta("gözlənilmədi")
+    son
+son
+dəyişən a = A()
+a.m()
+yaz("son sətir")

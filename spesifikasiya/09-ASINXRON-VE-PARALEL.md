@@ -154,7 +154,7 @@ hovuz.bağla()
 yaz(sap.nüvəSayı())
 ```
 
-### Sapların ünsiyyəti — kanallar
+### Sapların ünsiyyəti — kanallar (ətraflı: § 9.13)
 ```alqor
 dəyişən kanal = yeni Kanal[tam](tutum: 10)
 
@@ -296,6 +296,88 @@ son
 
 > **Diqqət:** `gözlə` edilməyən `Gələcək` xəta atsa, `ALQ-R020` xəbərdarlığı verilir:
 > "Gözlənilməyən gələcəkdə tutulmamış xəta".
+
+---
+
+## 9.12 Aktyorlar
+
+Aktyor öz vəziyyətini qoruyan obyektdir: ona xaricdən edilən hər metod
+çağırışı **mesajdır**. Mesaj aktyorun poçtuna düşür, çağırana dərhal
+`Gələcək` qayıdır; mesajlar **gəliş sırası ilə, bir-bir** emal olunur.
+Ona görə aktyorun vəziyyəti heç vaxt eyni anda iki yerdən dəyişdirilmir —
+kilidə ehtiyac yoxdur.
+
+```alqor
+aktyor Bank
+    xassə balans = 0
+
+    metod yatır(məbləğ: tam) -> tam
+        özü.balans += məbləğ
+        qaytar özü.balans
+    son
+
+    metod çək(məbləğ: tam) -> tam
+        əgər məbləğ > özü.balans onda
+            at Xəta("balans çatmır")
+        son
+        özü.balans -= məbləğ
+        qaytar özü.balans
+    son
+son
+
+dəyişən hesab = Bank()
+hesab.yatır(100)                    // mesaj — cavab gözlənilmir
+dəyişən g = hesab.çək(30)           // Gələcək[tam]
+yaz(gözlə g)                        // 70
+```
+
+### Qaydalar
+
+- `aktyor Ad … son` sinif kimi yazılır: `xassə`, `metod`, `qurucu`,
+  `miras`, `tətbiq`. `aktyor` kontekstli sözdür.
+- Xaricdən `obyekt.metod(…)` → mesaj, nəticə `Gələcək[T]`. Aktyorun öz
+  daxilində (`özü.metod()`, qurucu və mesaj emal olunarkən) çağırış
+  birbaşadır.
+- Mesajlar **tənbəl** emal olunur: nəticə gözlənəndə (`gözlə`), aktyorun
+  xassəsi xaricdən oxunanda və ya yazılanda, və proqramın sonunda. Hər
+  halda əvvəlki mesajlar əvvəl emal olunur (FIFO).
+- Mesajda atılan xəta onun `Gələcək`-i gözlənəndə atılır. Heç kimin
+  gözləmədiyi mesajdakı xəta proqramın sonunda tutulmamış xəta olur.
+- Aktyorun metodu başqa aktyora mesaj göndərə bilər; mesajlar hər
+  aktyorun öz poçtunda sıralanır.
+- Bu model bütün icraçılarda (`--motor py|rs`, `--js`) eyni nəticə verir.
+
+---
+
+## 9.13 Kanallar
+
+`Kanal` — saplar və aktyorlar arasında FIFO mesaj növbəsi.
+
+```alqor
+dəyişən k = Kanal()                     // və ya yeni Kanal[tam](tutum: 10)
+k.göndər(1)
+k.göndər(2)
+k.bağla()
+
+hər x üçün k içində                     // bağlanıb boşalana qədər
+    yaz(x)
+son
+```
+
+| Metod | Mənası |
+|---|---|
+| `göndər(x)` | Növbənin sonuna əlavə edir; bağlanmış kanalda `KanalXətası` (`ALQ-R019`) |
+| `al()` | Növbəti dəyər; kanal bağlanıb boşdursa `boş`. Boşdursa və bağlanmayıbsa göndərən sapı gözləyir |
+| `cəhdAl()` | Gözləmədən: növbəti dəyər və ya `boş` |
+| `bağla()` | Yeni göndərmələri bağlayır; qalan dəyərlər oxuna bilər |
+| `bağlıdır()`, `boşdur()`, `uzunluq()` | Vəziyyət |
+
+- Boş və bağlanmamış kanaldan oxuyanda göndərə biləcək başqa sap yoxdursa
+  — **dalan**: `DalanXətası` (`ALQ-R018`).
+- `tutum` dolu olanda göndərən **sap** oxuyanı gözləyir (Python
+  icraçısında). Tək axınlı icraçılarda (Rust, JS) `sap.başlat` dərhal
+  işlədiyi üçün növbə genişlənir — nəticə eynidir.
+- Xəta tipləri: `ParalellikXətası` → `KanalXətası`, `DalanXətası`.
 
 ---
 

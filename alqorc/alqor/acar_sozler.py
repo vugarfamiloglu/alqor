@@ -125,6 +125,7 @@ KONTEKSTLI: frozenset[str] = frozenset([
     "sınaq", "ölç", "sil", "panika", "eynidir",    # standart kitabxana
     "başlanğıc", "bitiş",                          # modul blokları
     "makro",                                       # makro elanı (§ 5.12)
+    "aktyor",                                      # aktyor elanı (§ 9.12)
 ])
 
 
@@ -381,7 +382,6 @@ DAVAM_ACAR_SOZLERI: frozenset[str] = frozenset([
 #  `Kanal[tam]` kimi mövcud API-lərdə var.
 
 EHTIYAT: frozenset[str] = frozenset([
-    "aktyor",      # aktyor modeli (gələcək paralellik modeli)
     "ömür",        # ömür parametrləri (lifetime)
     "təsir",       # effekt sistemi
 ])

@@ -82,6 +82,15 @@ XETA_AGACI: dict[str, str | None] = {
     "BoşDəyərXətası": "Xəta",
     "PythonXətası": "Xəta",              # § 8.14 — Python kitabxanaları
     "VaxtXətası": "Xəta",
+    "ParalellikXətası": "Xəta",
+    "KanalXətası": "ParalellikXətası",
+    "DalanXətası": "ParalellikXətası",
+    "VahidXətası": "TipXətası",
+    "MüqaviləXətası": "Xəta",
+    "ÖnŞərtXətası": "MüqaviləXətası",
+    "SonŞərtXətası": "MüqaviləXətası",
+    "GözləntiXətası": "Xəta",
+    "NəticəXətası": "Xəta",
     "KritikXəta": "Atılan",
     "YaddaşBitdiXətası": "KritikXəta",
     "StekDaşmaXətası": "KritikXəta",
@@ -458,14 +467,36 @@ class Nümunə:
         return id(self)
 
     def klonla(self) -> "Nümunə":
+        if isinstance(self, AktyorNümunəsi):
+            return self
         yeni = Nümunə(self.sinif)
         yeni.sahələr = dict(self.sahələr)
         return yeni
 
 
+class AktyorNümunəsi(Nümunə):
+    """`aktyor` nümunəsi (spes. § 9.12): xaricdən çağırılan metodlar poçta
+    mesaj kimi düşür və növbə ilə emal olunur."""
+
+    __slots__ = ("poçt", "emalçı", "kilid")
+
+    def __init__(self, sinif: Sinif):
+        super().__init__(sinif)
+        import collections
+        import threading
+        self.poçt: Any = collections.deque()
+        self.emalçı: int | None = None       # mesajı emal edən sapın id-si
+        self.kilid = threading.RLock()
+
+    def __repr__(self) -> str:
+        return f"<{self.sinif.ad} aktyoru>"
+
+
 # ═══════════════════════════════════════════════════════════════════════
 #  Sadalama
 # ═══════════════════════════════════════════════════════════════════════
+
+
 
 @dataclass
 class Sadalama:

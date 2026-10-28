@@ -12,14 +12,15 @@ import threading
 from typing import Any
 
 from . import aac as A
-from .deyerler import (AlqorDiapazon, AlqorGenerator, AlqorXəta, BağlıMetod,
+from .deyerler import (AktyorNümunəsi, AlqorDiapazon, AlqorGenerator,
+                       AlqorXəta, BağlıMetod,
                        BəzənmişMetod, Element, SərbəstMetod,
                        Çağırılan, Daxili, DavamSiqnalı, DayanmaSiqnalı,
                        DayanSiqnalı, Funksiya, Modul, Mühit, Nümunə,
                        QaytarSiqnalı, Sadalama, SadalamaDəyəri, Sinif,
                        VerSiqnalı, mətnə, tip_adı, xəta_uyğundur)
 from .elifba import böyüyə, kiçiyə
-from .korutin import Gələcək, Korutin, LəğvNişanı
+from .korutin import Gələcək, Korutin, LəğvNişanı, Mesaj
 from .token import Yer
 
 # Hər Alqor çağırışı ~10 Python kadrı tutur, ona görə Python limitini
@@ -60,6 +61,9 @@ class İcraçı:
         self.izləyici = None
         # `_elanları_qaldır` işləyərkən bəzəyicilər tətbiq olunmur
         self._qaldırılır = False
+        # Poçtunda mesaj olan aktyorlar — proqramın sonunda boşaldılır
+        self._aktyorlar: list[AktyorNümunəsi] = []
+        self._xətalı_mesajlar: list[Mesaj] = []
         if sys.getrecursionlimit() < _PYTHON_LİMİTİ:
             sys.setrecursionlimit(_PYTHON_LİMİTİ)
 
@@ -92,7 +96,9 @@ class İcraçı:
                     if isinstance(nəticə, Gələcək):
                         nəticə = nəticə.al()
                     if isinstance(nəticə, int) and not isinstance(nəticə, bool):
+                        self.aktyorları_boşalt()
                         return nəticə
+            self.aktyorları_boşalt()
             return 0
         except DayanmaSiqnalı as s:
             return s.kod
@@ -1473,6 +1479,13 @@ class İcraçı:
         return x
 
     def _nümunə_üzvü(self, n: Nümunə, ad: str, yer: Yer | None) -> Any:
+        if isinstance(n, AktyorNümunəsi) and \
+                n.emalçı != threading.get_ident():
+            metod = n.sinif.metod_tap(ad)
+            if metod is not None:
+                return _AktyorMetodu(n, metod)
+            # Xassəni oxumazdan əvvəl gözləyən mesajlar emal olunur
+            self.poçtu_boşalt(n)
         if ad in n.sahələr:
             return n.sahələr[ad]
 
@@ -1505,6 +1518,9 @@ class İcraçı:
 
     def _üzv_qoy(self, obyekt: Any, ad: str, dəyər: Any,
                  yer: Yer | None) -> None:
+        if isinstance(obyekt, AktyorNümunəsi) and \
+                obyekt.emalçı != threading.get_ident():
+            self.poçtu_boşalt(obyekt)
         if isinstance(obyekt, Nümunə):
             yazıcı = obyekt.sinif.yazıcı_tap(ad)
             if yazıcı is not None:
@@ -1885,7 +1901,7 @@ class İcraçı:
                 f"`{s.ad}` mücərrəd sinifdir — ondan obyekt yaradıla bilməz",
                 yer, "ALQ-T052")
 
-        n = Nümunə(s)
+        n = AktyorNümunəsi(s) if s.quruluş == "aktyor" else Nümunə(s)
 
         # Xassələrin standart dəyərləri
         for x in s.bütün_xassələr():
@@ -1901,7 +1917,14 @@ class İcraçı:
             forma.nümunəyə_qoş(n)
 
         qurucu = self._qurucu_tap(s, qurucu_adı or "")
-        if qurucu is not None:
+        if qurucu is not None and isinstance(n, AktyorNümunəsi):
+            # Qurucu aktyorun daxilində işləyir: `özü.metod()` birbaşadır
+            n.emalçı = threading.get_ident()
+            try:
+                self.funksiya_çağır(qurucu.bağla(n), arqumentlər, adlı, yer)
+            finally:
+                n.emalçı = None
+        elif qurucu is not None:
             self.funksiya_çağır(qurucu.bağla(n), arqumentlər, adlı, yer)
         elif arqumentlər or adlı:
             # Struktur üçün adlı sahə ilkinləşdirməsi
@@ -2207,6 +2230,56 @@ class İcraçı:
             return AlqorDiapazon(ord(b), ord(s), a, e.xaric)
         return AlqorDiapazon(b, s, a, e.xaric)
 
+    # ── Aktyorlar (spes. § 9.12) ──────────────────────────────────────
+
+    def aktyora_göndər(self, n: AktyorNümunəsi, metod: Funksiya,
+                       arqumentlər: list, adlı: dict,
+                       yer: Yer | None) -> Gələcək:
+        """Mesajı poçta qoyur; nəticə — tənbəl `Gələcək`."""
+        mesaj = Mesaj(metod, arqumentlər, adlı, yer)
+        with n.kilid:
+            if not n.poçt and n not in self._aktyorlar:
+                self._aktyorlar.append(n)
+            n.poçt.append(mesaj)
+
+        def nəticə():
+            mesaj.gözlənildi = True
+            self.poçtu_boşalt(n, mesaj)
+            if mesaj.xəta is not None:
+                raise mesaj.xəta
+            return mesaj.nəticə
+        return Gələcək(nəticə, f"{n.sinif.ad}.{metod.ad}")
+
+    def poçtu_boşalt(self, n: AktyorNümunəsi,
+                     qədər: Mesaj | None = None) -> None:
+        """Mesajları gəliş sırası ilə emal edir (`qədər` daxil)."""
+        with n.kilid:
+            while n.poçt and not (qədər is not None and qədər.bitdi):
+                m = n.poçt.popleft()
+                əvvəl = n.emalçı
+                n.emalçı = threading.get_ident()
+                try:
+                    d = self.funksiya_çağır(m.metod.bağla(n), m.arqumentlər,
+                                            m.adlı, m.yer)
+                    if isinstance(d, Gələcək):
+                        d = self.gözlə(d, m.yer)
+                    m.nəticə = d
+                except AlqorXəta as x:
+                    m.xəta = x
+                    self._xətalı_mesajlar.append(m)
+                finally:
+                    n.emalçı = əvvəl
+                    m.bitdi = True
+
+    def aktyorları_boşalt(self) -> None:
+        """Proqramın sonu: qalan mesajlar emal olunur; heç kimin
+        gözləmədiyi mesajdakı xəta tutulmamış xəta kimi atılır."""
+        while self._aktyorlar:
+            self.poçtu_boşalt(self._aktyorlar.pop(0))
+        for m in self._xətalı_mesajlar:
+            if not m.gözlənildi:
+                raise m.xəta
+
     # ── Sorğu (spes. § 4.13) ──────────────────────────────────────────
 
     def _e_sorğu(self, e: A.Sorğu, m: Mühit) -> list:
@@ -2500,6 +2573,20 @@ class İcraçı:
 # ═══════════════════════════════════════════════════════════════════════
 #  Köməkçi daxili tiplər
 # ═══════════════════════════════════════════════════════════════════════
+
+class _AktyorMetodu(Çağırılan):
+    """`aktyor.metod` — çağırılanda mesaj göndərir və `Gələcək` qaytarır."""
+
+    def __init__(self, n: AktyorNümunəsi, metod: Funksiya):
+        self.n, self.metod, self.ad = n, metod, metod.ad
+
+    def çağır(self, icraçı, arqumentlər, adlı, yer=None):
+        return icraçı.aktyora_göndər(self.n, self.metod, list(arqumentlər),
+                                     dict(adlı), yer)
+
+    def __repr__(self) -> str:
+        return f"<mesaj {self.n.sinif.ad}.{self.ad}>"
+
 
 class _SapYerli(threading.local):
     """

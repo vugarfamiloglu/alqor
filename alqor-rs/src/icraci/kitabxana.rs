@@ -284,6 +284,7 @@ pub fn qlobal_qur(i: &İcraçı) {
         Ok(D::T((h.finish() >> 1) as i64))
     }));
     d("LəğvNişanı", 0, Some(1), Box::new(|_, _, _| Ok(D::LəğvNişanı(Rc::new(std::cell::Cell::new(false))))));
+    d("Kanal", 0, Some(1), Box::new(|_, _, _| Ok(super::aktyor::kanal_yarat())));
     d("Gələcək", 1, Some(1), Box::new(|_, a, _| {
         let f = a[0].clone();
         Ok(D::Gələcək(Gələcək::yeni("<asinxron>", move |i| i.çağır(&f, vec![], vec![], None))))
@@ -305,6 +306,9 @@ pub fn uzunluq(i: &İcraçı, x: &D) -> Nəticə {
             return i.funksiya_çağır(&f.bağla(x.clone()), vec![], vec![], None);
         }
     }
+    if let Some(k) = super::aktyor::kanal(x) {
+        return Ok(D::T(k.növbə.borrow().len() as i64));
+    }
     Ok(D::T(match x {
         D::S(s) => s.chars().count(),
         D::Siyahı(l) => l.borrow().len(),
@@ -321,6 +325,7 @@ pub fn uzunluq(i: &İcraçı, x: &D) -> Nəticə {
 
 pub fn klonla(x: &D) -> D {
     match x {
+        D::Nümunə(n) if n.aktyor.is_some() => x.clone(),
         D::Nümunə(n) => D::Nümunə(n.klonla()),
         D::Siyahı(l) => D::siyahı(l.borrow().iter().map(klonla).collect()),
         D::Lüğət(l) => D::lüğət(l.borrow().iter().map(|(k, v)| (Açar(klonla(&k.0)), klonla(v))).collect()),
