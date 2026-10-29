@@ -1695,6 +1695,9 @@ class Kompilyator:
 
     # ── Sorğu (spes. § 4.13) ──────────────────────────────────────────
 
+    def _e_VahidliƏdəd(self, e: A.VahidliƏdəd) -> str:
+        return f"$.vahidli({self._ifadə(e.ədəd)}, {_js_mətn(e.vahid)})"
+
     def _e_Sorğu(self, e: A.Sorğu) -> str:
         """Hər sətir JS massividir: `[cari element, ad₁, ad₂, …]`. Hər bənd
         sətirlər üzərində dövrdür; bəndin ifadələri sətrin adları elan

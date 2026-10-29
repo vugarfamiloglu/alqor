@@ -144,6 +144,8 @@ pub enum İfadə {
     JSXParça(Yer, Vec<JSXUşaq>),
     /// `sorğu hər x üçün s içində … son` (§ 4.13)
     Sorğu(Yer, Vec<SorğuBəndi>),
+    /// `5 km`, `90 km/saat` (§ 3.8)
+    VahidliƏdəd(Yer, E, String),
 }
 
 /// Sorğu bəndi: "hər" | "harada" | "dəyişən" | "sırala" | "qrupla" |
@@ -167,7 +169,7 @@ impl İfadə {
             | Boru(y, ..) | Diapazon(y, ..) | Çağırış(y, ..) | Üzv(y, ..) | İndeks(y, ..) | Dilim(y, ..)
             | MəcburiAçma(y, ..) | Yayma(y, ..) | Yeni(y, ..) | Gözlə(y, ..) | Siyahı(y, ..) | Lüğət(y, ..)
             | Dəst(y, ..) | Kortej(y, ..) | ŞərtIfadəsi(y, ..) | Blok(y, ..) | JSXElement(y, ..)
-            | JSXParça(y, ..) | Sorğu(y, ..) => *y,
+            | JSXParça(y, ..) | Sorğu(y, ..) | VahidliƏdəd(y, ..) => *y,
             Qurma { yer, .. } | Lambda { yer, .. } => *yer,
         }
     }

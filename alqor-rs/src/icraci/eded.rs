@@ -180,6 +180,9 @@ pub fn sıra_müq(a: &D, b: &D) -> Ordering {
 
 impl İcraçı {
     pub fn bərabərdir(&self, a: &D, b: &D) -> Nəticə<bool> {
+        if İcraçı::kəmiyyət_var(a, b) {
+            return Ok(İcraçı::kəmiyyət_bərabər(a, b));
+        }
         if let D::Nümunə(n) = a {
             if let Some(f) = n.sinif.metod_tap("bərabərdir") {
                 let r = self.funksiya_çağır(&f.bağla(a.clone()), vec![b.clone()], vec![], None)?;
@@ -197,6 +200,10 @@ impl İcraçı {
             "==" => return Ok(D::M(self.bərabərdir(a, b)?)),
             "!=" => return Ok(D::M(!self.bərabərdir(a, b)?)),
             _ => {}
+        }
+        // Ölçü vahidləri (§ 3.8)
+        if İcraçı::kəmiyyət_var(a, b) {
+            return self.kəmiyyət_hesabla(op, a, b, yer);
         }
         if let D::Nümunə(n) = a {
             if let Some(m) = operator_metodu(op) {
@@ -433,6 +440,9 @@ impl İcraçı {
     }
 
     pub fn müqayisə(&self, op: &str, a: &D, b: &D, yer: Option<Yer>) -> Nəticə {
+        if İcraçı::kəmiyyət_var(a, b) {
+            return self.kəmiyyət_hesabla(op, a, b, yer);
+        }
         if let D::Nümunə(n) = a {
             if let Some(f) = n.sinif.metod_tap("müqayisə") {
                 let r = self.funksiya_çağır(&f.bağla(a.clone()), vec![b.clone()], vec![], yer)?;

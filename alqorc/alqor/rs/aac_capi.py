@@ -582,6 +582,10 @@ class _Yazıcı:
             self.s(l, f"{'Dəst' if t is A.DəstLiteralı else 'Kortej'} {Y}")
             with self.iç():
                 self.ifadələr("elementlər", e.elementlər)
+        elif t is A.VahidliƏdəd:
+            self.s(l, f"VahidliƏdəd {Y} vahid={_q(e.vahid)}")
+            with self.iç():
+                self.ifadə("ədəd", e.ədəd)
         elif t is A.Sorğu:
             self.s(l, f"Sorğu {Y}")
             with self.iç():

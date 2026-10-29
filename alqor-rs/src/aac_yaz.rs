@@ -708,6 +708,10 @@ impl Yazıcı {
                 self.s(l, &format!("Kortej {}", y(yer)));
                 self.iç(|w| w.ifadələr("elementlər", el));
             }
+            I::VahidliƏdəd(yer, e, v) => {
+                self.s(l, &format!("VahidliƏdəd {} vahid={}", y(yer), q(v)));
+                self.iç(|w| w.ifadə("ədəd", e));
+            }
             I::Sorğu(yer, bəndlər) => {
                 self.s(l, &format!("Sorğu {}", y(yer)));
                 self.iç(|w| {

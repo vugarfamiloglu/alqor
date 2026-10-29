@@ -379,3 +379,53 @@ son
 | `ALQ-P014` | Çox sözlü açar söz yarımçıqdır |
 | `ALQ-P015` | `++`/`--` ifadə daxilində istifadə edilə bilməz |
 | `ALQ-P016` | Mötərizə tələb olunur (qarışıq prioritet) |
+
+---
+
+## 3.8 Ölçü vahidləri
+
+Ədəddən sonra eyni sətirdə vahid adı yazılsa, dəyər **kəmiyyət** olur:
+ədəd və onun vahidi. Vahidləri uyğun gəlməyən kəmiyyətlər toplanmır —
+`km`-ə `kq` əlavə etmək kimi səhvlər dərhal aşkarlanır.
+
+```alqor
+dəyişən məsafə = 5 km
+dəyişən vaxt = 30 dəq
+
+yaz(məsafə + 300 m)                  // 5.3 km   (nəticə sol tərəfin vahidində)
+yaz(məsafə / vaxt)                   // 0.16666666666666666 km/dəq
+yaz((90 km/saat).çevir("m/san"))     // 25.0 m/san
+yaz(1500 m kimi km)                  // 1.5 km
+yaz(2 m * 3 m)                       // 6 m²
+yaz((10 km) / (500 m))               // 20.0   (ölçüsüz nəticə — adi ədəd)
+yaz(5 km > 4000 m)                   // doğru
+yaz(5 km + 3 san)                    // ✖ VahidXətası: `km` və `san` toplanmır
+```
+
+### Vahidlər
+
+| Ölçü | Vahidlər |
+|---|---|
+| Uzunluq | `mm` `sm` `dm` `m` `km` `düym` `fut` `mil` |
+| Sahə, həcm | `ha`, `ml` `l` |
+| Kütlə | `mq` `q` `kq` `ton` |
+| Vaxt | `ms` `san` `dəq` `saat` `gün` `həftə` |
+| Verilənlər | `B` `KB` `MB` `GB` `TB` (1 KB = 1024 B) |
+
+Mürəkkəb vahid **boşluqsuz** yazılır: `90 km/saat`, `9.8 m/san^2`,
+`3 kq*m`. Çıxışda qüvvətlər üst indekslə göstərilir: `m/san²`.
+
+### Qaydalar
+
+- `+`, `-`, `%` və müqayisə yalnız eyni ölçülü kəmiyyətlər arasında;
+  nəticə sol tərəfin vahidindədir.
+- `*`, `/` vahidləri birləşdirir; skalyara vurmaq/bölmək vahidi saxlayır;
+  `kəmiyyət ** tam` vahidi qüvvətə yüksəldir.
+- Vahidləri tam ixtisar olunan nəticə adi ədəddir.
+- `x kimi km` — sadə vahidə çevirmə (ədəd də kəmiyyətə çevrilir:
+  `2 kimi saat`); `x.çevir("km/saat")` — istənilən vahidə.
+- `x.dəyər()` — ədəd, `x.vahid()` — vahid mətni; `tip(x)` → `kəmiyyət`.
+- `==` müxtəlif vahidlərdə də işləyir (`5 km == 5000 m` → `doğru`); ölçüsü
+  fərqli kəmiyyətlər bərabər deyil.
+- Vahid adları yalnız ədəddən sonra vahiddir: `dəyişən m = 3` adi koddur.
+- Xəta: `VahidXətası` (`TipXətası`-nın alt tipi), kod `ALQ-T084`.

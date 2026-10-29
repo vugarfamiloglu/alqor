@@ -1636,6 +1636,10 @@ impl İcraçı {
                 Ok(D::kortej(n))
             }
             İfadə::Sorğu(_, bəndlər) => self.e_sorğu(bəndlər, m),
+            İfadə::VahidliƏdəd(yer, e, v) => {
+                let d = self.ifadə(e, m)?;
+                self.e_vahidli_ədəd(d, v, *yer)
+            }
             İfadə::Qurma { yer, növ, ifadə, dəyər_ifadəsi, bağlama, mənbə, şərt } => {
                 let mənbə = self.ifadə(mənbə, m)?;
                 let mut siyahı = vec![];
@@ -1731,6 +1735,10 @@ impl İcraçı {
                     if let Some(f) = n.sinif.metod_tap("əks") {
                         return self.funksiya_çağır(&f.bağla(d.clone()), vec![], vec![], None);
                     }
+                }
+                if let Some(k) = super::vahid::kəmiyyət(&d) {
+                    let n = self.tək_dəyər(yer, "-", k.dəyər.clone())?;
+                    return Ok(super::vahid::yarat(n, k.vahid.clone()));
                 }
                 match &d {
                     D::T(i) => Ok(match i.checked_neg() {

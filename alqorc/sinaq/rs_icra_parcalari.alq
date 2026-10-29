@@ -1369,3 +1369,37 @@ son
 dəyişən a = A()
 a.m()
 yaz("son sətir")
+=====
+// Ölçü vahidləri
+dəyişən məsafə = 5 km
+dəyişən vaxt = 30 dəq
+yaz(məsafə, vaxt, məsafə + 300 m, 300 m + məsafə, məsafə - 1 km)
+yaz(məsafə / vaxt, (90 km/saat).çevir("m/san"), (72 km/saat).çevir("km/dəq"))
+yaz(2 m * 3 m, (10 km) / (500 m), 1 / (2 san), 3 * 2 kq, (4 m) ** 2, 10 kq / 2)
+yaz(5 km > 4000 m, 5 km == 5000 m, 1 km == 1 kq, -(5 m), 3 san <=> 2 san, 1 dəq < 59 san)
+yaz(1500 m kimi km, 2 kimi saat, (2 saat).çevir("dəq").dəyər(), (2 saat).vahid())
+yaz(9.8 m/san^2, 1024 KB kimi MB, 3 l + 500 ml, tip(5 km), [1 m, 2 m], 7 sm % 2 sm)
+yaz("{5 km}", mətnƏt(2 ha), 2.5 kq * 2, (1 m/san^2).vahid(), 5 km kimi mətn)
+hər x üçün [1 km, 500 m, 2 mil] içində
+    yaz(x kimi m)
+son
+cəhd et
+    yaz(5 km + 3 san)
+tut (x: VahidXətası)
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    yaz(5 km + 3)
+tut (x: TipXətası)
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    yaz(5 km kimi kq)
+tut (x: Xəta)
+    yaz(x.mesaj)
+son
+cəhd et
+    yaz((1 m).çevir("parsek"))
+tut (x: Xəta)
+    yaz(x.mesaj)
+son

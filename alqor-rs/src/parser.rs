@@ -482,6 +482,45 @@ impl<'a> Parser<'a> {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    //  Ölçü vahidləri (§ 3.8)
+    // ═══════════════════════════════════════════════════════════════
+
+    /// `5 km`, `90 km/saat`, `9.8 m/san^2` — ədəddən sonra eyni sətirdə
+    /// vahid adı. Mürəkkəb vahidin hissələri boşluqsuz yazılır.
+    fn vahid_quyruğu(&mut self, ədəd: E) -> E {
+        use crate::icraci::vahid::vahiddir;
+        let t = self.bax(0).clone();
+        if t.növ != Növ::Ad || !vahiddir(&t.s) {
+            return ədəd;
+        }
+        let mut mətn = self.al().s;
+        let mut son = t.yer.son();
+        loop {
+            let a = self.bax(0).clone();
+            let b = self.bax(1).clone();
+            if a.opdur(&["/", "*", "·"]) && a.yer.başlanğıc == son && b.növ == Növ::Ad && b.yer.başlanğıc == a.yer.son() && vahiddir(&b.s) {
+                self.al();
+                self.al();
+                mətn.push_str(if a.s == "/" { "/" } else { "·" });
+                mətn.push_str(&b.s);
+                son = b.yer.son();
+                continue;
+            }
+            if a.opdur(&["^"]) && a.yer.başlanğıc == son && b.növ == Növ::Tam && b.yer.başlanğıc == a.yer.son() {
+                self.al();
+                self.al();
+                mətn.push('^');
+                mətn.push_str(&b.tam.clone().unwrap_or_default().to_string());
+                son = b.yer.son();
+                continue;
+            }
+            break;
+        }
+        let yer = ədəd.yer();
+        Rc::new(İfadə::VahidliƏdəd(yer, ədəd, mətn))
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     //  Sorğu (§ 4.13)
     // ═══════════════════════════════════════════════════════════════
 
@@ -2637,11 +2676,11 @@ impl<'a> Parser<'a> {
         match tok.növ {
             Növ::Tam => {
                 self.al();
-                return Ok(lit(yer, LiteralD::Tam(tok.tam.clone().unwrap_or_default())));
+                return Ok(self.vahid_quyruğu(lit(yer, LiteralD::Tam(tok.tam.clone().unwrap_or_default()))));
             }
             Növ::Onluq => {
                 self.al();
-                return Ok(lit(yer, LiteralD::Onluq(tok.onluq)));
+                return Ok(self.vahid_quyruğu(lit(yer, LiteralD::Onluq(tok.onluq))));
             }
             Növ::Simvol => {
                 self.al();

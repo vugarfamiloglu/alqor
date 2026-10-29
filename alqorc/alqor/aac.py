@@ -296,6 +296,13 @@ class KortejLiteralı(İfadə):
 
 
 @dataclass
+class VahidliƏdəd(İfadə):
+    """`5 km`, `90 km/saat` (spes. § 3.8)"""
+    ədəd: İfadə
+    vahid: str
+
+
+@dataclass
 class SorğuBəndi(Qovşaq):
     """
     Sorğu bəndi (spes. § 4.13).

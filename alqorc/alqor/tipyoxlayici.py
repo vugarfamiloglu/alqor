@@ -2212,6 +2212,14 @@ class TipYoxlayıcı:
         if T.naməlumdur(sol) or T.naməlumdur(sağ):
             return T.NAMƏLUM
 
+        # Ölçü vahidləri: vahidlərin uyğunluğu icra zamanı yoxlanılır
+        if T.KƏMİYYƏT in (sol, sağ):
+            if op in ("<", ">", "<=", ">="):
+                return T.MƏNTİQ
+            if op == "<=>":
+                return T.TAM
+            return T.KƏMİYYƏT if op in ("+", "-", "%") else T.NAMƏLUM
+
         # Sinif operator yükləməsi
         if isinstance(sol, T.SinifTipi):
             metod = _OPERATOR_METODLARI.get(op)
@@ -2325,7 +2333,7 @@ class TipYoxlayıcı:
         if T.naməlumdur(tip):
             return T.NAMƏLUM
         if e.op in ("-", "+"):
-            if isinstance(tip, T.SinifTipi):
+            if isinstance(tip, T.SinifTipi) or tip == T.KƏMİYYƏT:
                 return tip
             from . import modullar
             if modullar.operator_nəticəsi("əks", tip, None) not in (
@@ -2563,6 +2571,10 @@ class TipYoxlayıcı:
                     "base64Kodla": F(qaytarır=T.MƏTN)}
         if t == T.Sadə("ləğvNişanı"):
             return _ləğv_metodları()
+        if t == T.KƏMİYYƏT:
+            return {"dəyər": F(qaytarır=T.NAMƏLUM),
+                    "vahid": F(qaytarır=T.MƏTN),
+                    "çevir": F(T.MƏTN, qaytarır=T.KƏMİYYƏT)}
         if t == T.KANAL:
             n = T.NAMƏLUM
             return {"göndər": F(n, qaytarır=T.HEÇ), "al": F(qaytarır=n),
@@ -2893,7 +2905,20 @@ class TipYoxlayıcı:
                 for x in tip.elementlər))
         return tip
 
+    def _e_vahidli_ədəd(self, e: A.VahidliƏdəd, ə: Əhatə) -> T.Tip:
+        from .vahidler import VahidXətası, təhlil_et
+        try:
+            təhlil_et(e.vahid)
+        except VahidXətası as x:
+            self.x.xəta(x.kod, "Naməlum vahid", e.yer, x.mesaj)
+        return T.KƏMİYYƏT
+
     def _e_çevirmə(self, e: A.Çevirmə, ə: Əhatə) -> T.Tip:
+        from .vahidler import vahiddir
+        if isinstance(e.tip, A.TipAdı) and vahiddir(e.tip.tam_ad) \
+                and ə.tap(e.tip.tam_ad) is None:
+            self._ifadə(e.ifadə, ə)
+            return T.KƏMİYYƏT
         mənbə = self._ifadə(e.ifadə, ə)
         hədəf = self._tip(e.tip, ə)
         if (not T.naməlumdur(mənbə) and not T.naməlumdur(hədəf)
@@ -3283,6 +3308,7 @@ _İFADƏLƏR: dict[type, Any] = {
     A.KortejLiteralı: TipYoxlayıcı._e_kortej,
     A.Qurma: TipYoxlayıcı._e_qurma,
     A.Sorğu: TipYoxlayıcı._e_sorğu,
+    A.VahidliƏdəd: TipYoxlayıcı._e_vahidli_ədəd,
     A.ŞərtIfadəsi: TipYoxlayıcı._e_şərt_ifadəsi,
     A.BlokIfadəsi: TipYoxlayıcı._e_blok_ifadəsi,
     A.Lambda: TipYoxlayıcı._e_lambda,

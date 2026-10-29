@@ -455,6 +455,8 @@ def naməlumdur(t: Tip) -> bool:
 
 # `Kanal` (spes. § 9.13) — elementlərin tipi izlənmir
 KANAL = Sadə("Kanal")
+# Ölçü vahidli ədəd (spes. § 3.8) — vahidi icra zamanı yoxlanılır
+KƏMİYYƏT = Sadə("kəmiyyət")
 
 
 def iterasiya_elementi(t: Tip) -> Tip:

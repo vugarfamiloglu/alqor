@@ -1158,7 +1158,132 @@ function opYoxdur(op, a, b) {
     "` tiplərinə tətbiq edilmir", "ALQ-T008");
 }
 
+// ── Ölçü vahidləri (§ 3.8) — alqor/vahidler.py-nin təkrarı ─────────────
+
+const VAHİDLƏR = {
+  mm: [0.001, [1, 0, 0, 0]], sm: [0.01, [1, 0, 0, 0]], dm: [0.1, [1, 0, 0, 0]],
+  m: [1.0, [1, 0, 0, 0]], km: [1000.0, [1, 0, 0, 0]], "düym": [0.0254, [1, 0, 0, 0]],
+  fut: [0.3048, [1, 0, 0, 0]], mil: [1609.344, [1, 0, 0, 0]],
+  ha: [10000.0, [2, 0, 0, 0]], ml: [0.000001, [3, 0, 0, 0]], l: [0.001, [3, 0, 0, 0]],
+  mq: [0.000001, [0, 1, 0, 0]], q: [0.001, [0, 1, 0, 0]], kq: [1.0, [0, 1, 0, 0]],
+  ton: [1000.0, [0, 1, 0, 0]],
+  ms: [0.001, [0, 0, 1, 0]], san: [1.0, [0, 0, 1, 0]], "dəq": [60.0, [0, 0, 1, 0]],
+  saat: [3600.0, [0, 0, 1, 0]], "gün": [86400.0, [0, 0, 1, 0]], "həftə": [604800.0, [0, 0, 1, 0]],
+  B: [1.0, [0, 0, 0, 1]], KB: [1024.0, [0, 0, 0, 1]], MB: [1048576.0, [0, 0, 0, 1]],
+  GB: [1073741824.0, [0, 0, 0, 1]], TB: [1099511627776.0, [0, 0, 0, 1]],
+};
+const ÜST = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "-": "⁻" };
+const ÜSTDƏN = Object.fromEntries(Object.entries(ÜST).map(([a, b]) => [b, a]));
+const vahiddir = a => Object.prototype.hasOwnProperty.call(VAHİDLƏR, a);
+
+function vahidBirləşdir(...siyahılar) {
+  const sıra = [];
+  for (const s of siyahılar) for (const [a, n] of s) {
+    const x = sıra.find(y => y[0] === a);
+    if (x) x[1] += n; else sıra.push([a, n]);
+  }
+  return sıra.filter(x => x[1] !== 0);
+}
+const vahidQüvvət = (v, n) => vahidBirləşdir(v.map(([a, k]) => [a, k * n]));
+function vahidƏmsal(v) { let e = 1.0; for (const [a, n] of v) e *= Math.pow(VAHİDLƏR[a][0], n); return e; }
+function vahidÖlçü(v) {
+  const ö = [0, 0, 0, 0];
+  for (const [a, n] of v) VAHİDLƏR[a][1].forEach((x, i) => { ö[i] += x * n; });
+  return ö.join(",");
+}
+function vahidMətn(v) {
+  const yaz = (a, n) => n === 1 ? a : a + [...String(n)].map(c => ÜST[c]).join("");
+  const s = v.filter(x => x[1] > 0).map(([a, n]) => yaz(a, n));
+  const m = v.filter(x => x[1] < 0).map(([a, n]) => yaz(a, -n));
+  let r = s.join("·") || (m.length ? "1" : "");
+  if (m.length) r += "/" + m.join("·");
+  return r;
+}
+function vahidTəhlil(mətn) {
+  const s = mətn.replace(/ /g, "");
+  if (!s) throw xəta("VahidXətası", "vahid boşdur", "ALQ-T084");
+  const h = [];
+  s.split("/").forEach((qisim, i) => {
+    if (i > 1) throw xəta("VahidXətası", "`" + mətn + "` — yalnız bir `/` ola bilər", "ALQ-T084");
+    if (qisim === "1" && i === 0) return;
+    for (const p of qisim.replace(/\*/g, "·").split("·")) {
+      let ad = [...p], üst = "";
+      while (ad.length && ÜSTDƏN[ad[ad.length - 1]] !== undefined) üst = ÜSTDƏN[ad.pop()] + üst;
+      ad = ad.join("");
+      const k = ad.indexOf("^");
+      if (k >= 0) { üst = ad.slice(k + 1); ad = ad.slice(0, k); }
+      if (!vahiddir(ad)) throw xəta("VahidXətası", "`" + ad + "` naməlum vahiddir", "ALQ-T084");
+      if (üst && !/^-?\d+$/.test(üst)) throw xəta("VahidXətası", "`" + p + "` — qüvvət tam ədəd olmalıdır", "ALQ-T084");
+      const n = üst ? parseInt(üst, 10) : 1;
+      h.push([ad, i === 1 ? -n : n]);
+    }
+  });
+  return vahidBirləşdir(h);
+}
+
+const KƏMİYYƏT = {
+  $mətn: k => mətnə(k.d.v) + " " + vahidMətn(k.d.vahid),
+  dəyər: k => k.d.v,
+  vahid: k => vahidMətn(k.d.vahid),
+  çevir: (k, h) => kəmiyyətiÇevir(k, h),
+};
+const kəmiyyətdir = x => x instanceof Yerli && x.c === KƏMİYYƏT;
+function kəmiyyət(v, vahid) {
+  return vahid.length ? new Yerli("kəmiyyət", KƏMİYYƏT, { v, vahid }) : v;
+}
+/** `5 km` literalı */
+function vahidli(v, mətn) { return kəmiyyət(v, vahidTəhlil(mətn)); }
+const nisbət = (mənbə, hədəf) => vahidMətn(mənbə) === vahidMətn(hədəf) ? null : vahidƏmsal(mənbə) / vahidƏmsal(hədəf);
+const VAHİD_ƏMƏLLƏRİ = { "+": "toplanmır", "-": "çıxılmır", "%": "bölünmür", "<": "müqayisə olunmur",
+  ">": "müqayisə olunmur", "<=": "müqayisə olunmur", ">=": "müqayisə olunmur", "<=>": "müqayisə olunmur" };
+const ƏMƏLLƏR = { "+": add, "-": sub, "*": mul, "/": div, "%": mod, "**": pow };
+
+function kəmiyyətSadələşdir(n, v) {
+  if (!v.length) return n;
+  if (vahidÖlçü(v) === "0,0,0,0") return mul(n, vahidƏmsal(v));
+  return kəmiyyət(n, v);
+}
+
+function kəmiyyətHesabla(op, a, b) {
+  const ka = kəmiyyətdir(a), kb = kəmiyyətdir(b);
+  const va = ka ? a.d.vahid : [], vb = kb ? b.d.vahid : [];
+  const ad_ = v => vahidMətn(v) || "ədəd";
+  if (VAHİD_ƏMƏLLƏRİ[op]) {
+    if (!(ka && kb) || vahidÖlçü(va) !== vahidÖlçü(vb))
+      throw xəta("VahidXətası", "`" + ad_(va) + "` və `" + ad_(vb) + "` " + VAHİD_ƏMƏLLƏRİ[op] + " — ölçülər uyğun deyil", "ALQ-T084");
+    const r = nisbət(vb, va);
+    const bd = r === null ? b.d.v : mul(b.d.v, r);
+    if (op === "<=>") return cmp3(a.d.v, bd);
+    if (op[0] === "<" || op[0] === ">") return cmp(op, a.d.v, bd);
+    return kəmiyyət(ƏMƏLLƏR[op](a.d.v, bd), va);
+  }
+  const x = ka ? a.d.v : a, y = kb ? b.d.v : b;
+  if (op === "*") return kəmiyyətSadələşdir(mul(x, y), vahidBirləşdir(va, vb));
+  if (op === "/") return kəmiyyətSadələşdir(div(x, y), vahidBirləşdir(va, vahidQüvvət(vb, -1)));
+  if (op === "**" && ka && !kb && typeof b === "bigint")
+    return kəmiyyətSadələşdir(pow(x, b), vahidQüvvət(va, Number(b)));
+  throw xəta("VahidXətası", "`" + op + "` operatoru `" + tip(a) + "` və `" + tip(b) + "` üçün tətbiq edilmir", "ALQ-T084");
+}
+
+function kəmiyyətBərabər(a, b) {
+  if (!kəmiyyətdir(a) || !kəmiyyətdir(b) || vahidÖlçü(a.d.vahid) !== vahidÖlçü(b.d.vahid)) return false;
+  return N(a.d.v) * vahidƏmsal(a.d.vahid) === N(b.d.v) * vahidƏmsal(b.d.vahid);
+}
+
+function kəmiyyətiÇevir(d, h) {
+  const v = vahidTəhlil(h);
+  if (!kəmiyyətdir(d)) {
+    if (!ədəddir(d)) throw xəta("VahidXətası", "`" + tip(d) + "` vahidə çevrilmir", "ALQ-T084");
+    return kəmiyyət(d, v);
+  }
+  if (vahidÖlçü(d.d.vahid) !== vahidÖlçü(v))
+    throw xəta("VahidXətası", "`" + vahidMətn(d.d.vahid) + "` `" + vahidMətn(v) + "` vahidinə çevrilmir — ölçülər uyğun deyil", "ALQ-T084");
+  const r = nisbət(d.d.vahid, v);
+  return kəmiyyət(r === null ? d.d.v : mul(d.d.v, r), v);
+}
+
 function yüklənmiş(op, a, b) {
+  if (kəmiyyətdir(a) || kəmiyyətdir(b)) return [kəmiyyətHesabla(op, a, b)];
   if (a instanceof Nümunə) {
     const m = a.s.metod(OP_METOD[op]);
     if (m !== undefined) return [m.call(a, b)];
@@ -1295,6 +1420,7 @@ function dəstOp(op, a, b) {
 
 function neg(x) {
   if (typeof x === "bigint" || typeof x === "number") return -x;
+  if (kəmiyyətdir(x)) return kəmiyyət(neg(x.d.v), x.d.vahid);
   if (x instanceof Nümunə) {
     const m = x.s.metod("əks");
     if (m !== undefined) return m.call(x);
@@ -1317,6 +1443,7 @@ function ş(x) {
 // ── Bərabərlik və müqayisə ──────────────────────────────────────────────
 
 function eq(a, b) {
+  if (kəmiyyətdir(a) || kəmiyyətdir(b)) return kəmiyyətBərabər(a, b);
   if (a === b) return typeof a !== "number" || a === a;
   const ta = typeof a, tb = typeof b;
   if (ta === "bigint" || ta === "number") {
@@ -1410,6 +1537,7 @@ function dəstMüq(op, a, b) {
 }
 
 function cmp(op, a, b) {
+  if (kəmiyyətdir(a) || kəmiyyətdir(b)) return kəmiyyətHesabla(op, a, b);
   if (typeof a === "bigint" && typeof b === "bigint") {
     switch (op) {
       case "<": return a < b; case ">": return a > b;
@@ -1432,6 +1560,7 @@ function gt(a, b) { return cmp(">", a, b); }
 function le(a, b) { return cmp("<=", a, b); }
 function ge(a, b) { return cmp(">=", a, b); }
 function cmp3(a, b) {
+  if (kəmiyyətdir(a) || kəmiyyətdir(b)) return kəmiyyətHesabla("<=>", a, b);
   const n = müqayisə(a, b);
   if (n === null) throw müqXəta(a, b);
   return BigInt(n);
@@ -1863,6 +1992,7 @@ function tipUyğun(x, t) {
 }
 
 function çevir(x, h) {
+  if (vahiddir(h) && (kəmiyyətdir(x) || ədəddir(x))) return kəmiyyətiÇevir(x, h);
   switch (h) {
     case "tam":
       if (typeof x === "boolean") return x ? 1n : 0n;
@@ -3746,7 +3876,7 @@ return {
   // xətalar
   xəta, xətaya, xətaUyğun, xətaObyekti, at, stek, V, STEK_HƏDDİ,
   // funksiyalar
-  ad, D, bağla, ç, çm, yarat, yeni, adlıYay, sorğuSırala, sorğuQrupla, sorğuFərqli, sorğuKəs, qadVarsa, bəzə, bəzəyici, sərbəstMetod, bəzənmişMetod, kp, genişlət, standartDəyər, sinif, sadalama,
+  ad, D, bağla, ç, çm, yarat, yeni, adlıYay, vahidli, sorğuSırala, sorğuQrupla, sorğuFərqli, sorğuKəs, qadVarsa, bəzə, bəzəyici, sərbəstMetod, bəzənmişMetod, kp, genişlət, standartDəyər, sinif, sadalama,
   metodAd, üstMetod, bağlı, qurucuTap,
   // operatorlar
   add, sub, mul, div, idiv, mod, pow, bit, neg, bnot, ş, eq, ne, lt, gt, le, ge, cmp3,

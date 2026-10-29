@@ -1157,6 +1157,9 @@ impl İcraçı {
     }
 
     pub fn çevir(&self, d: &D, h: &str, yer: Option<Yer>) -> Nəticə {
+        if super::vahid::vahiddir(h) && (super::vahid::kəmiyyət(d).is_some() || d.ədəddir()) {
+            return self.kəmiyyəti_çevir(d, h, yer);
+        }
         match h {
             "tam" => match d {
                 D::M(b) => return Ok(D::T(*b as i64)),

@@ -21,6 +21,7 @@ from .deyerler import (AktyorNümunəsi, AlqorDiapazon, AlqorGenerator,
                        VerSiqnalı, mətnə, tip_adı, xəta_uyğundur)
 from .elifba import böyüyə, kiçiyə
 from .korutin import Gələcək, Korutin, LəğvNişanı, Mesaj
+from .vahidler import Kəmiyyət
 from .token import Yer
 
 # Hər Alqor çağırışı ~10 Python kadrı tutur, ona görə Python limitini
@@ -1113,6 +1114,10 @@ class İcraçı:
                     return self.funksiya_çağır(metod.bağla(sol), [sağ], {},
                                                yer)
 
+        # Ölçü vahidləri (§ 3.8)
+        if isinstance(sol, Kəmiyyət) or isinstance(sağ, Kəmiyyət):
+            return self._kəmiyyət_hesabla(op, sol, sağ, yer)
+
         # Kitabxana obyektlərinin operatorları (məs. `pul`):
         # `alqor_operator(op, digər, sağdadır)` → nəticə / NotImplemented
         n = _kitabxana_operatoru(op, sol, sağ)
@@ -2004,6 +2009,10 @@ class İcraçı:
             raise
 
     def _çevir(self, dəyər: Any, hədəf: str, yer: Yer | None) -> Any:
+        from .vahidler import vahiddir
+        if vahiddir(hədəf) and (isinstance(dəyər, Kəmiyyət)
+                                or self._ədəddir(dəyər)):
+            return self.kəmiyyəti_çevir(dəyər, hədəf, yer)
         f = getattr(type(dəyər), "alqor_çevir", None)
         if f is not None:
             n = f(dəyər, hədəf, yer)
@@ -2229,6 +2238,86 @@ class İcraçı:
         if isinstance(b, str):
             return AlqorDiapazon(ord(b), ord(s), a, e.xaric)
         return AlqorDiapazon(b, s, a, e.xaric)
+
+    # ── Ölçü vahidləri (spes. § 3.8) ──────────────────────────────────
+
+    _VAHİD_ƏMƏLLƏRİ = {"+": "toplanmır", "-": "çıxılmır", "%": "bölünmür",
+                       "<": "müqayisə olunmur", ">": "müqayisə olunmur",
+                       "<=": "müqayisə olunmur", ">=": "müqayisə olunmur",
+                       "<=>": "müqayisə olunmur"}
+
+    def _e_vahidli_ədəd(self, e: A.VahidliƏdəd, m: Mühit) -> Any:
+        from . import vahidler as V
+        try:
+            v = V.təhlil_et(e.vahid)
+        except V.VahidXətası as x:
+            raise AlqorXəta("VahidXətası", x.mesaj, e.yer, x.kod) from None
+        return V.yarat(self._ifadə(e.ədəd, m), v)
+
+    def _kəmiyyət_hesabla(self, op: str, a: Any, b: Any,
+                          yer: Yer | None) -> Any:
+        from . import vahidler as V
+        ka, kb = isinstance(a, Kəmiyyət), isinstance(b, Kəmiyyət)
+        va = a.vahid if ka else V.Vahid(())
+        vb = b.vahid if kb else V.Vahid(())
+
+        def xəta(mesaj: str) -> AlqorXəta:
+            return AlqorXəta("VahidXətası", mesaj, yer, "ALQ-T084")
+
+        if op in self._VAHİD_ƏMƏLLƏRİ:
+            if not (ka and kb) or va.ölçü != vb.ölçü:
+                raise xəta(f"`{str(va) or 'ədəd'}` və `{str(vb) or 'ədəd'}` "
+                           f"{self._VAHİD_ƏMƏLLƏRİ[op]} — ölçülər uyğun deyil")
+            r = V.nisbət(vb, va)
+            bd = b.dəyər if r is None else \
+                self._ikili_hesabla("*", b.dəyər, r, yer)
+            n = self._ikili_hesabla(op, a.dəyər, bd, yer)
+            return n if op[0] in "<>" else Kəmiyyət(n, va)
+        if op == "*":
+            n = self._ikili_hesabla("*", a.dəyər if ka else a,
+                                    b.dəyər if kb else b, yer)
+            return self._kəmiyyət_sadələşdir(
+                n, V.Vahid.birləşdir(va.hissələr, vb.hissələr))
+        if op == "/":
+            n = self._ikili_hesabla("/", a.dəyər if ka else a,
+                                    b.dəyər if kb else b, yer)
+            return self._kəmiyyət_sadələşdir(
+                n, V.Vahid.birləşdir(va.hissələr, vb.qüvvət(-1).hissələr))
+        if op == "**" and ka and not kb and isinstance(b, int) \
+                and not isinstance(b, bool):
+            return self._kəmiyyət_sadələşdir(
+                self._ikili_hesabla("**", a.dəyər, b, yer), va.qüvvət(b))
+        raise xəta(f"`{op}` operatoru `{tip_adı(a)}` və `{tip_adı(b)}` "
+                   "üçün tətbiq edilmir")
+
+    def _kəmiyyət_sadələşdir(self, n: Any, v) -> Any:
+        """Ölçüsüz nəticə adi ədəd olur (`km/m` → ×1000)."""
+        if v.boşdur():
+            return n
+        if not any(v.ölçü):
+            return self._ikili_hesabla("*", n, v.əmsal, None)
+        return Kəmiyyət(n, v)
+
+    def kəmiyyəti_çevir(self, d: Any, hədəf: str, yer: Yer | None) -> Any:
+        """`x kimi m`, `x.çevir("km/saat")`; ədəd → kəmiyyət."""
+        from . import vahidler as V
+        try:
+            v = V.təhlil_et(hədəf)
+        except V.VahidXətası as x:
+            raise AlqorXəta("VahidXətası", x.mesaj, yer, x.kod) from None
+        if not isinstance(d, Kəmiyyət):
+            if not self._ədəddir(d):
+                raise AlqorXəta("VahidXətası",
+                                f"`{tip_adı(d)}` vahidə çevrilmir", yer,
+                                "ALQ-T084")
+            return Kəmiyyət(d, v)
+        if d.vahid.ölçü != v.ölçü:
+            raise AlqorXəta("VahidXətası",
+                            f"`{d.vahid}` `{v}` vahidinə çevrilmir — "
+                            "ölçülər uyğun deyil", yer, "ALQ-T084")
+        r = V.nisbət(d.vahid, v)
+        return Kəmiyyət(d.dəyər if r is None else
+                        self._ikili_hesabla("*", d.dəyər, r, yer), v)
 
     # ── Aktyorlar (spes. § 9.12) ──────────────────────────────────────
 
@@ -2761,6 +2850,7 @@ _İFADƏLƏR: dict[type, Any] = {
     A.Diapazon: İcraçı._e_diapazon,
     A.Qurma: İcraçı._e_qurma,
     A.Sorğu: İcraçı._e_sorğu,
+    A.VahidliƏdəd: İcraçı._e_vahidli_ədəd,
     A.ŞərtIfadəsi: İcraçı._e_şərt_ifadəsi,
     A.BlokIfadəsi: İcraçı._e_blok_ifadəsi,
     A.Lambda: İcraçı._e_lambda,

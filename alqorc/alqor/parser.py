@@ -413,6 +413,40 @@ class Parser:
                        python)
 
     # ═══════════════════════════════════════════════════════════════════
+    #  Ölçü vahidləri (§ 3.8)
+    # ═══════════════════════════════════════════════════════════════════
+
+    def _vahid_quyruğu(self, ədəd: A.Literal) -> A.İfadə:
+        """`5 km`, `90 km/saat`, `9.8 m/san^2` — ədəddən sonra eyni
+        sətirdə vahid adı. Mürəkkəb vahidin hissələri boşluqsuz yazılır."""
+        from .vahidler import vahiddir
+        t = self._bax()
+        if t.növ is not Növ.AD or not vahiddir(t.dəyər):
+            return ədəd
+        mətn = self._al().dəyər
+        son = t.yer.son
+        while True:
+            a, b = self._bax(), self._bax(1)
+            if a.növ is Növ.OP and a.dəyər in ("/", "*", "·") \
+                    and a.yer.başlanğıc == son and b.növ is Növ.AD \
+                    and b.yer.başlanğıc == a.yer.son and vahiddir(b.dəyər):
+                self._al()
+                self._al()
+                mətn += ("/" if a.dəyər == "/" else "·") + b.dəyər
+                son = b.yer.son
+                continue
+            if a.növ is Növ.OP and a.dəyər == "^" \
+                    and a.yer.başlanğıc == son and b.növ is Növ.TAM \
+                    and b.yer.başlanğıc == a.yer.son:
+                self._al()
+                self._al()
+                mətn += "^" + str(b.dəyər)
+                son = b.yer.son
+                continue
+            break
+        return A.VahidliƏdəd(ədəd.yer, ədəd, mətn)
+
+    # ═══════════════════════════════════════════════════════════════════
     #  Sorğu (§ 4.13)
     # ═══════════════════════════════════════════════════════════════════
 
@@ -2325,10 +2359,10 @@ class Parser:
         # ── Literallar ──────────────────────────────────────────
         if tok.növ is Növ.TAM:
             self._al()
-            return A.Literal(yer, tok.dəyər, "tam")
+            return self._vahid_quyruğu(A.Literal(yer, tok.dəyər, "tam"))
         if tok.növ is Növ.ONLUQ:
             self._al()
-            return A.Literal(yer, tok.dəyər, "onluq")
+            return self._vahid_quyruğu(A.Literal(yer, tok.dəyər, "onluq"))
         if tok.növ is Növ.SIMVOL:
             self._al()
             return A.Literal(yer, tok.dəyər, "simvol")

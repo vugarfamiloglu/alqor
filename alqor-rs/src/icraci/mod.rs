@@ -2,6 +2,7 @@
 
 pub mod aktyor;
 pub mod cagiris;
+pub mod vahid;
 pub mod deyerler;
 pub mod eded;
 pub mod elave;
