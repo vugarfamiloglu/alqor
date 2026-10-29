@@ -195,14 +195,13 @@ at ÖdənişXətası("Balans kifayət etmir", 150.0, "****1234")
 
 ## 7.5 `Nəticə` tipi (xətasız yanaşma)
 
-İstisna atmaq əvəzinə nəticəni dəyər kimi qaytarmaq:
+İstisna atmaq əvəzinə nəticəni dəyər kimi qaytarmaq. `Nəticə`, `Uğur` və
+`Uğursuz` hər proqramda hazırdır (prelüd — `gətir` lazım deyil):
 
 ```alqor
-gətir nəticə
-
-funksiya böl(a: tam, b: tam) -> Nəticə[onluq, mətn]
+funksiya böl(a: tam, b: tam) -> Nəticə
     əgər b == 0 onda
-        qaytar Xəta("Sıfıra bölmə")
+        qaytar Uğursuz("sıfıra bölmə")
     son
     qaytar Uğur(a / b)
 son
@@ -210,25 +209,58 @@ son
 // İstifadə 1 — seç
 seç böl(10, 2)
     hal Uğur(d) → yaz("Nəticə: {d}")
-    hal Xəta(m) → yaz("Xəta: {m}")
+    hal Uğursuz(m) → yaz("Xəta: {m}")
 son
 
-// İstifadə 2 — metodlar
+// İstifadə 2 — metodlar və sahələr
 dəyişən n = böl(10, 0)
-yaz(n.uğurludur())              // yanlış
-yaz(n.dəyərVəYa(0.0))           // 0.0
-yaz(n.çevir((x) => x * 2))      // Xəta saxlanılır
+yaz(n.uğurludur())                     // yanlış
+yaz(n.dəyərVəYa(0.0))                  // 0.0
+yaz(böl(4, 2).çevir((x) => x * 2))     // Uğur(dəyər=4.0)
+yaz(n.xəta)                            // sıfıra bölmə
+```
 
-// İstifadə 3 — `?` yayma operatoru
-funksiya hesabla() -> Nəticə[onluq, mətn]
-    dəyişən a = böl(10, 2)?      // Xəta olsa dərhal qaytarır
-    dəyişən b = böl(a, 5)?
+### Metodlar
+
+| Metod | Mənası |
+|---|---|
+| `uğurludur()`, `uğursuzdur()` | Hansı variant olduğunu yoxlayır |
+| `dəyərVəYa(əvəzi)` | `Uğur`-un dəyəri, əks halda `əvəzi` |
+| `çevir(f)` | `Uğur(d)` → `Uğur(f(d))`; `Uğursuz` olduğu kimi qalır |
+| `zəncirlə(f)` | `Uğur(d)` → `f(d)` (`f` özü `Nəticə` qaytarır) |
+| `aç()` | `Uğur`-un dəyəri; `Uğursuz` olsa `NəticəXətası` atır |
+
+Sahələr: `n.dəyər` (`Uğur`), `n.xəta` (`Uğursuz`).
+
+### `?` — yayma operatoru
+
+`ifadə?` nəticəni açır və ya funksiyadan dərhal çıxır:
+
+| `ifadə`-nin dəyəri | `ifadə?` |
+|---|---|
+| `Uğur(d)` | `d` |
+| `Uğursuz(x)` | funksiya `Uğursuz(x)` qaytarır |
+| `boş` | funksiya `boş` qaytarır |
+| digər dəyər | dəyərin özü |
+
+```alqor
+funksiya hesabla(x, y, z) -> Nəticə
+    dəyişən a = böl(x, y)?       // Uğursuz olsa dərhal qaytarılır
+    dəyişən b = böl(a, z)?
     qaytar Uğur(a + b)
 son
 
-// İstisnaya çevirmək
-dəyişən d = böl(10, 0).aç()     // Xəta olsa `at` edir
+funksiya adınUzunluğu(siyahı, ad)
+    dəyişən tapılan = tap(siyahı, ad)?     // boşdursa — boş qaytarır
+    qaytar uzunluq(tapılan)
+son
+
+dəyişən f = (n) => böl(10, n)?            // ox funksiyasında da işləyir
 ```
+
+- İstifadəçinin öz cəbri sadalamasında `Uğursuz` və ya `Xəta` adlı
+  variant da yayılır, `Uğur` adlı variantın birinci sahəsi açılır.
+- `Nəticə` adı prelüddən gəlir; proqram eyni adlı öz tipini elan edə bilər.
 
 ---
 

@@ -67,6 +67,7 @@ class İcraçı:
         self._xətalı_mesajlar: list[Mesaj] = []
         if sys.getrecursionlimit() < _PYTHON_LİMİTİ:
             sys.setrecursionlimit(_PYTHON_LİMİTİ)
+        self._prelüdü_yüklə()
 
     # ═══════════════════════════════════════════════════════════════════
     #  Giriş nöqtəsi
@@ -105,6 +106,15 @@ class İcraçı:
             return s.kod
         except QaytarSiqnalı:
             return 0
+
+    def _prelüdü_yüklə(self) -> None:
+        """`Nəticə`, `Uğur`, `Uğursuz` (spes. § 7.5) — Alqor-da yazılıb."""
+        from . import prelud
+        ağac = prelud.ağac()
+        self._elanları_qaldır(ağac.gövdə, self.qlobal)
+        for c in ağac.gövdə:
+            if not self._elandır(c):
+                self._cümlə(c, self.qlobal)
 
     @staticmethod
     def _əsas_arqument_alır(əsas: Any) -> bool:
@@ -1788,7 +1798,10 @@ class İcraçı:
                         except AlqorXəta:
                             pass
             else:
-                nəticə = self._ifadə(f.gövdə, m)
+                try:
+                    nəticə = self._ifadə(f.gövdə, m)
+                except QaytarSiqnalı as s:          # `(x) => f(x)?`
+                    nəticə = s.dəyər
 
             if f.yaddaş is not None and not adlı:
                 f.yaddaş[açar] = nəticə
@@ -2154,7 +2167,16 @@ class İcraçı:
         return dəyər
 
     def _e_yayma(self, e: A.Yayma, m: Mühit) -> Any:
+        """`ifadə?` (spes. § 7.5): `Uğur(d)` → `d`; `Uğursuz(...)` və
+        `boş` funksiyadan dərhal qaytarılır."""
         dəyər = self._ifadə(e.ifadə, m)
+        if dəyər is None:
+            raise QaytarSiqnalı(None)
+        if isinstance(dəyər, SadalamaDəyəri):
+            if dəyər.ad in ("Uğursuz", "Xəta"):
+                raise QaytarSiqnalı(dəyər)
+            if dəyər.ad == "Uğur" and dəyər.sahələr:
+                return next(iter(dəyər.sahələr.values()))
         if isinstance(dəyər, Nümunə) and dəyər.sinif.ad == "Xəta":
             raise QaytarSiqnalı(dəyər)
         return dəyər

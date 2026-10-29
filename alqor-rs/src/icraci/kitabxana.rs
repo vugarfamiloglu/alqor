@@ -52,6 +52,30 @@ fn yaz_birləşdir(i: &İcraçı, a: &[D]) -> Nəticə<String> {
     Ok(h.join(" "))
 }
 
+/// Prelüd (§ 7.5) — mətn `alqorc/alqor/prelud.py`-dədir (tək mənbə)
+const PRELÜD_PY: &str = include_str!("../../../alqorc/alqor/prelud.py");
+
+pub fn prelüd_mətni() -> &'static str {
+    let b = PRELÜD_PY.find("r'''").expect("prelüd mətni") + 4;
+    let s = PRELÜD_PY[b..].find("'''").expect("prelüd sonu");
+    &PRELÜD_PY[b..b + s]
+}
+
+/// `Nəticə`, `Uğur`, `Uğursuz` — Alqor-da yazılıb, qlobal mühitə yüklənir
+pub fn prelüdü_yüklə(i: &İcraçı) {
+    let s = crate::xeta::Mənbə::yeni("<prelüd>", prelüd_mətni(), None);
+    let mut x = crate::xeta::XətaToplayıcı::yeni();
+    let ağac = crate::parser::ayır(s, &mut x);
+    let ağac: &'static crate::aac::Proqram = Box::leak(Box::new(ağac));
+    let m = i.qlobal.clone();
+    let _ = i.elanları_qaldır(&ağac.gövdə, &m);
+    for c in &ağac.gövdə {
+        if !elandır(c) {
+            let _ = i.cümlə(c, &m);
+        }
+    }
+}
+
 pub fn qlobal_qur(i: &İcraçı) {
     let m = i.qlobal.clone();
     let d = |a: &str, min: usize, maks: Option<usize>, f: Box<dyn Fn(&İcraçı, Vec<D>, Adlı) -> Nəticə>| {

@@ -40,6 +40,18 @@ pub fn bəzəyici_ola_bilər(c: &Cümlə) -> bool {
     }
 }
 
+/// `ifadə?` (§ 7.5): `Uğur(d)` → `d`; `Uğursuz(...)` və `boş` funksiyadan
+/// dərhal qaytarılır
+pub fn yayma(d: D) -> Nəticə {
+    match &d {
+        D::Boş => Err(Siqnal::Qaytar(D::Boş)),
+        D::SD(v) if &*v.ad == "Uğursuz" || &*v.ad == "Xəta" => Err(Siqnal::Qaytar(d)),
+        D::SD(v) if &*v.ad == "Uğur" && !v.sahələr.is_empty() => Ok(v.sahələr.get_index(0).unwrap().1.clone()),
+        D::Nümunə(n) if &*n.sinif.ad == "Xəta" => Err(Siqnal::Qaytar(d)),
+        _ => Ok(d),
+    }
+}
+
 /// `f(**lüğət)` — lüğətin cütləri adlı arqument olur
 pub fn adlı_yay(d: &D, adlı: &mut Adlı, yer: Yer) -> Nəticə<()> {
     let xəta = || {
@@ -689,7 +701,11 @@ impl İcraçı {
             return Ok(D::Gen(self.korutin_qur(f, m)));
         }
         match &f.gövdə {
-            FGövdə::İfadə(e) => self.ifadə(e, &m),
+            // `(x) => f(x)?` — yayma siqnalı lambdadan qaytarılır
+            FGövdə::İfadə(e) => match self.ifadə(e, &m) {
+                Err(Siqnal::Qaytar(d)) => Ok(d),
+                r => r,
+            },
             FGövdə::Blok(g) => {
                 self.gecikdirilmiş.borrow_mut().push(vec![]);
                 let r = match self.blok(g, &m) {

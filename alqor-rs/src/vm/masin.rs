@@ -1312,6 +1312,7 @@ fn icra(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, başla: usize) -> Nətic
             Err(s) => {
                 return match (kod.növ, s) {
                     (KodNövü::Blok, Siqnal::Qaytar(d)) | (KodNövü::Blok, Siqnal::Ver(d)) => Ok(d),
+                    (KodNövü::İfadə, Siqnal::Qaytar(d)) => Ok(d),
                     (_, s) => Err(s),
                 }
             }
@@ -1596,12 +1597,8 @@ fn soyuq(i: &İcraçı, kod: &Kod, ç: &mut Çərçivə, ə: &Əmr, pc: usize) -
                 }
             }
             Əmr::Yayma => {
-                if let Some(D::Nümunə(n)) = ç.yığın.last() {
-                    if &*n.sinif.ad == "Xəta" {
-                        let d = ç.pop();
-                        return Err(Siqnal::Qaytar(d));
-                    }
-                }
+                let d = ç.pop();
+                ç.yığın.push(crate::icraci::cagiris::yayma(d)?);
             }
             Əmr::TipDəyəri(k) => {
                 let h = (i.tip_dəyəri(&kod.tiplər[*k as usize], ç.m()))?;

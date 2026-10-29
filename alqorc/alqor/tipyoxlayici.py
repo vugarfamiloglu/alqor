@@ -981,6 +981,35 @@ class TipYoxlayıcı:
         self._qaldırılmış_idxallar: set[int] = set()
         for ad, tip in _daxili_adlar().items():
             self.qlobal.elan(Bağlama(ad, tip, True, None, True, "daxili"))
+        self._prelüdü_yoxla()
+
+    def _prelüdü_yoxla(self) -> None:
+        """Prelüd (`Nəticə`, `Uğur`, `Uğursuz`) daxili adlar kimi elan
+        olunur; proqramın qlobal əhatəsi onun alt əhatəsidir (istifadəçi
+        eyni adları yenidən elan edə bilər)."""
+        from . import prelud
+        from .xeta import XətaToplayıcı
+        ağac = prelud.ağac()
+        əsl_x, self.x = self.x, XətaToplayıcı()
+        qeydlər = (self.bağlamalar, self.ifadə_tipləri, self.üzv_istinadları)
+        self.bağlamalar, self.ifadə_tipləri, self.üzv_istinadları = [], [], []
+        try:
+            self._elanları_qaldır(ağac.gövdə, self.qlobal)
+            for c in ağac.gövdə:
+                self._cümlə(c, self.qlobal)
+        finally:
+            self.x = əsl_x
+            (self.bağlamalar, self.ifadə_tipləri,
+             self.üzv_istinadları) = qeydlər
+        for b in self.qlobal.adlar.values():
+            b.istifadə_olunub = True
+            b.elan_növü = "daxili"
+        self.qlobal = Əhatə(self.qlobal, növ="qlobal")
+
+    @property
+    def daxili_adlar(self) -> dict[str, Bağlama]:
+        """Daxili adlar və prelüd (proqramın qlobal əhatəsinin üstü)."""
+        return self.qlobal.üst.adlar if self.qlobal.üst else {}
 
     @property
     def sərtdir(self) -> bool:
@@ -1195,6 +1224,9 @@ class TipYoxlayıcı:
         if ad == "funksiyaTipi":
             return T.FunksiyaTipi()
 
+        # Generik parametr eyni adlı sinfi (məs. prelüdün `Nəticə`-si) örtür
+        if ad in self._generik_adlar:
+            return T.Generik(ad)
         if ad in self.siniflər:
             return self.siniflər[ad]
         if ad in self.sadalamalar:

@@ -245,12 +245,27 @@ class Kompilyator:
         self.interfeys = any(
             isinstance(c, A.İdxal) and c.mətn_yolu is None and c.yol and
             c.yol[0] == "pəncərə" for c in ağac.gövdə)
-        gövdə = self._yuxarı_səviyyə(ağac.gövdə)
+        gövdə = [self._prelüd()] + self._yuxarı_səviyyə(ağac.gövdə)
         əsas = self.əh.adlar.get("əsas")
         son = f"return typeof {əsas.js} === \"function\" ? {əsas.js} : null;" \
             if əsas is not None else "return null;"
         return ("function () {\n" + self._tempər_elanı(fk) +
                 "\n".join(gövdə) + "\n" + son + "\n}")
+
+    def _prelüd(self) -> str:
+        """Prelüd (`alqor/prelud.py`) — öz əhatəsində, adları qlobaldır."""
+        from .. import prelud
+        köhnə_fk, köhnə_əh = self.fk, self.əh
+        fk = FunksiyaK("prelüd")
+        self.fk, self.əh = fk, Əhatə(None, fk)
+        try:
+            sətirlər = self._yuxarı_səviyyə(prelud.ağac().gövdə)
+            qeyd = [f"$.g[{_js_mətn(a)}] = {m.js};"
+                    for a, m in self.əh.adlar.items()]
+            return ("(() => {\n" + self._tempər_elanı(fk) +
+                    "\n".join(sətirlər + qeyd) + "\n})();")
+        finally:
+            self.fk, self.əh = köhnə_fk, köhnə_əh
 
     def _yuxarı_səviyyə(self, gövdə: list[A.Cümlə]) -> list[str]:
         """Proqram/modul gövdəsi: elanlar əvvəl qaldırılır."""

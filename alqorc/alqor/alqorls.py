@@ -285,7 +285,8 @@ def _adın_tipi(a: Analiz, ad: str, ofset: int) -> T.Tip | None:
         if b.ad == ad:
             return b.tip
     if a.yoxlayıcı is not None:
-        b = a.yoxlayıcı.qlobal.adlar.get(ad)
+        b = a.yoxlayıcı.qlobal.adlar.get(ad) or \
+            a.yoxlayıcı.daxili_adlar.get(ad)
         if b is not None:
             return b.tip
     if ad in TY._modullar():
@@ -760,7 +761,7 @@ def ümumi_tamamlama(a: Analiz | None, ofset: int, sətir: str
     for ad in sorted(AS.TIP_ADLARI):
         nəticə[ad] = {"label": ad, "kind": K_SINIF, "detail": "tip"}
     if a is not None and a.yoxlayıcı is not None:
-        for ad, b in a.yoxlayıcı.qlobal.adlar.items():
+        for ad, b in a.yoxlayıcı.daxili_adlar.items():
             if b.elan_növü == "daxili" and not ad.startswith("_"):
                 nəticə.setdefault(ad, {
                     "label": ad, "kind": _növ_kodu(b.tip, K_FUNKSIYA),

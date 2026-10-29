@@ -321,6 +321,7 @@ impl İcraçı {
             xətalı_mesajlar: Default::default(),
         }));
         super::kitabxana::qlobal_qur(i);
+        super::kitabxana::prelüdü_yüklə(i);
         i
     }
 
@@ -1556,12 +1557,7 @@ impl İcraçı {
             }
             İfadə::Yayma(_, e) => {
                 let d = self.ifadə(e, m)?;
-                if let D::Nümunə(n) = &d {
-                    if &*n.sinif.ad == "Xəta" {
-                        return Err(Siqnal::Qaytar(d));
-                    }
-                }
-                Ok(d)
+                yayma(d)
             }
             İfadə::Yeni(yer, t, qurucu, arqumentlər) => {
                 let h = self.tip_dəyəri(t, m)?;

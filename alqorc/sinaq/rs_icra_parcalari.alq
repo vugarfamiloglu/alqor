@@ -1403,3 +1403,43 @@ cəhd et
 tut (x: Xəta)
     yaz(x.mesaj)
 son
+=====
+// Nəticə tipi və ? operatoru
+funksiya böl(a, b)
+    əgər b == 0 onda qaytar Uğursuz("sıfıra bölmə") son
+    qaytar Uğur(a / b)
+son
+funksiya hesabla(x, y, z)
+    dəyişən a = böl(x, y)?
+    dəyişən b = böl(a, z)?
+    qaytar Uğur(a + b)
+son
+yaz(hesabla(8, 2, 2), hesabla(1, 0, 2), hesabla(1, 2, 0))
+funksiya tap(l, ad)
+    hər x üçün l içində
+        əgər x == ad onda qaytar x son
+    son
+    qaytar boş
+son
+funksiya uzunAd(l, ad)
+    dəyişən t = tap(l, ad)?
+    qaytar uzunluq(t)
+son
+yaz(uzunAd(["Aysel", "Ali"], "Aysel"), uzunAd(["Ali"], "Vüqar"))
+dəyişən f = (n) => böl(10, n)?
+yaz(f(5), f(0))
+yaz(sorğu hər n üçün [1, 0, 2] içində seç böl(6, n).dəyərVəYa(-1) son)
+yaz(Uğur(1) == Uğur(1), Uğur(1) == Uğursuz(1), tip(Uğur(1)))
+yaz(böl(1, 2), böl(1, 0))
+yaz(böl(1, 2).uğurludur(), böl(1, 0).dəyərVəYa(-1), böl(4, 2).çevir((x) => x * 10))
+seç böl(6, 3)
+    hal Uğur(d) → yaz("nəticə", d)
+    hal Uğursuz(m) → yaz("xəta", m)
+son
+yaz(böl(1,0).xəta, böl(9,3).dəyər)
+cəhd et
+    böl(1, 0).aç()
+tut (x: NəticəXətası)
+    yaz(x.mesaj)
+son
+yaz(Uğur(3).zəncirlə((x) => Uğur(x + 1)), Uğursuz("a").zəncirlə((x) => Uğur(x)), Uğur(1).uğursuzdur())

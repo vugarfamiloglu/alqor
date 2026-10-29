@@ -2055,7 +2055,13 @@ function açMəcburi(x) {
 
 /** `nəticə?` — Xəta nümunəsini yuxarı ötürür. */
 class Yayılan { constructor(d) { this.d = d; } }
+/** `ifadə?` (§ 7.5): `Uğur(d)` → `d`; `Uğursuz(...)` və `boş` qaytarılır. */
 function yay(x) {
+  if (x === null || x === undefined) throw new Yayılan(null);
+  if (x instanceof SDəyər) {
+    if (x.ad === "Uğursuz" || x.ad === "Xəta") throw new Yayılan(x);
+    if (x.ad === "Uğur" && x.sahələr.size) return x.sahələr.values().next().value;
+  }
   if (x instanceof Nümunə && x.s.ad === "Xəta") throw new Yayılan(x);
   return x;
 }
