@@ -762,6 +762,38 @@ class İddia(Cümlə):
 
 
 @dataclass
+class Tələb(Cümlə):
+    """`tələb şərt[, mesaj]` — ön şərt (§ 5.13)."""
+    şərt: İfadə
+    mesaj: İfadə | None
+    mətn: str                  # şərtin mənbə mətni
+
+
+@dataclass
+class Zəmanət(Cümlə):
+    """`zəmanət şərt[, mesaj]` — son şərt; `nəticə` qaytarılan dəyərdir."""
+    şərt: İfadə
+    mesaj: İfadə | None
+    mətn: str
+
+
+@dataclass
+class Sınaq(Cümlə):
+    """`sınaq "ad" … son` — yalnız `alqor sına` icra edir (§ 13.5)."""
+    ad: str
+    gövdə: list[Cümlə]
+
+
+@dataclass
+class Gözlənti(Cümlə):
+    """`gözlənilir şərt`, `gözlənilir xəta [Tip]: ifadə` (§ 13.5)."""
+    ifadə: İfadə
+    mətn: str                  # ifadənin mənbə mətni — xəta mesajı üçün
+    xəta: bool = False
+    xəta_tipi: str | None = None
+
+
+@dataclass
 class Təmin(Cümlə):
     şərt: İfadə
     gövdə: list[Cümlə]

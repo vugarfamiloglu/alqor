@@ -615,6 +615,61 @@ son
 
 ---
 
+## 5.13 Müqavilələr — `tələb` və `zəmanət`
+
+Funksiya və ya metod gövdəsinin **ilk cümlələri** onun müqaviləsini
+yaza bilər:
+
+```alqor
+funksiya böl(a, b)
+    tələb b != 0, "bölən sıfır ola bilməz"   // ön şərt
+    zəmanət nəticə * b == a                  // son şərt
+    qaytar a / b
+son
+
+sinif Hesab
+    xassə balans = 100
+
+    metod çıxar(məbləğ)
+        tələb məbləğ <= özü.balans, "balans çatmır"
+        zəmanət özü.balans >= 0
+        özü.balans -= məbləğ
+        qaytar özü.balans
+    son
+son
+```
+
+| Cümlə | Nə vaxt yoxlanır | Pozulanda |
+|---|---|---|
+| `tələb şərt[, mesaj]` | gövdə işləməzdən əvvəl (parametrlər bağlandıqdan sonra) | `ÖnŞərtXətası` (`ALQ-R024`) |
+| `zəmanət şərt[, mesaj]` | funksiya qayıdanda (`qaytar` və ya gövdənin sonu, `gecikdir` bloklarından sonra) | `SonŞərtXətası` (`ALQ-R025`) |
+
+- `zəmanət` şərtində `nəticə` adı qaytarılan dəyərdir; parametrlər və
+  `özü` də görünür.
+- Mesaj verilməyəndə standart mesaj şərtin mənbə mətnini göstərir:
+
+  ```
+  ✖ ÖnŞərtXətası: ön şərt pozuldu: a >= 0
+  ✖ SonŞərtXətası: son şərt pozuldu: nəticə == 2
+      nəticə: [3]
+  ```
+
+- Mesaj ifadədir — interpolyasiya işləyir:
+  `zəmanət nəticə > n, "nəticə {nəticə} böyük olmalıdır"`.
+- Hər iki xəta `MüqaviləXətası`-nın alt tipidir (§ 7.3):
+  `tut (x: MüqaviləXətası)` ikisini də tutur.
+- Asinxron funksiyada şərtlər gövdə işə düşəndə (`gözlə`) yoxlanır.
+- `zəmanət` generator funksiyada ola bilməz — generatorun tək nəticəsi
+  yoxdur (`ALQ-P041`).
+- `tələb`/`zəmanət` gövdənin ortasında, proqram səviyyəsində və ya
+  lambda içində yazılsa — `ALQ-P041`.
+- `tələb` və `zəmanət` kontekstli sözlərdir: yalnız cümlənin əvvəlində,
+  ardınca ifadə gələndə müqavilədir. `tələb = http.oxu()`,
+  `tələb.başlıq` kimi yazılışlarda adi addır.
+
+Müqavilə yoxlaması həmişə açıqdır: o, funksiyanın interfeysinin bir
+hissəsidir və hər üç icraçıda (Python, Rust, JS) eyni işləyir.
+
 ## 5.14 Funksiya yükləmə (overloading)
 
 Alqor **ad yükləməsini dəstəkləmir**. Əvəzinə:

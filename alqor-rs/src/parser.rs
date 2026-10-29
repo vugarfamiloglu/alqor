@@ -156,6 +156,24 @@ pub struct Parser<'a> {
     pub mid: u32,
     /// Makrolar (§ 5.12) — interpolyasiya alt-parserləri ilə paylaşılır
     pub makro: M::MakroVəziyyəti,
+    /// Son şəkilçili diapazon (§ 4.14) — `hər … üçün` onda `içində` istəmir
+    şəkilçili: Option<E>,
+    /// Müqavilələr (§ 5.13): növbəti cümlə funksiya gövdəsinin əvvəlindədirmi
+    müqavilə_icazəsi: bool,
+    /// Cari funksiya generatordurmu — `zəmanət` orada olmaz
+    müqavilə_generator: bool,
+}
+
+/// Şəkilçili diapazon (§ 4.14): `1-dən 10-a qədər` ≡ `1..10`
+const ÇIXIŞLIQ_ŞƏKİLÇİLƏRİ: &[&str] = &["dan", "dən", "ndan", "ndən", "den", "nden"];
+const YÖNLÜK_ŞƏKİLÇİLƏRİ: &[&str] = &["a", "ə", "ya", "yə", "na", "nə", "e", "ye", "ne"];
+/// Şəkilçili cümlə (§ 4.14): `"Vüqar" adlar-a əlavə et` ≡ `adlar.əlavə("Vüqar")` —
+/// təsirlik, yönlük, yerlik, çıxışlıq hallar
+const DİGƏR_HAL_ŞƏKİLÇİLƏRİ: &[&str] =
+    &["ı", "i", "u", "ü", "nı", "ni", "nu", "nü", "yı", "yi", "yu", "yü", "da", "də", "nda", "ndə", "de", "nde"];
+
+fn hal_şəkilçisidir(s: &str) -> bool {
+    DİGƏR_HAL_ŞƏKİLÇİLƏRİ.contains(&s) || YÖNLÜK_ŞƏKİLÇİLƏRİ.contains(&s) || ÇIXIŞLIQ_ŞƏKİLÇİLƏRİ.contains(&s)
 }
 
 impl<'a> Parser<'a> {
@@ -163,7 +181,7 @@ impl<'a> Parser<'a> {
         let t: Vec<Token> =
             tokenlər.into_iter().filter(|t| !matches!(t.növ, Növ::Direktiv | Növ::Sənəd)).collect();
         let mid = mənbə_id(&s);
-        Parser { t, s, x, i: 0, mid, makro: M::MakroVəziyyəti::default() }
+        Parser { t, s, x, i: 0, mid, makro: M::MakroVəziyyəti::default(), şəkilçili: None, müqavilə_icazəsi: false, müqavilə_generator: false }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -989,6 +1007,10 @@ impl<'a> Parser<'a> {
         if self.makro_elanıdır() {
             return self.makro_elanı();
         }
+        let müqavilə_icazəsi = std::mem::replace(&mut self.müqavilə_icazəsi, false);
+        if self.növ(0) == Növ::Ad && matches!(self.bax(0).s.as_str(), "tələb" | "zəmanət") && self.gözlənti_başlayır() {
+            return self.müqavilə(müqavilə_icazəsi);
+        }
         // `aktyor Ad` (§ 9.12) — `aktyor` kontekstli sözdür
         if self.növ(0) == Növ::Ad
             && self.bax(0).s == "aktyor"
@@ -1023,6 +1045,12 @@ impl<'a> Parser<'a> {
 
         if self.elan_başlanğıcıdır() {
             return self.elan();
+        }
+        if tok.növ == Növ::Ad && tok.s == "sınaq" && self.bax(1).növ == Növ::Mətn {
+            return self.sınaq();
+        }
+        if tok.növ == Növ::Ad && tok.s == "gözlənilir" && self.gözlənti_başlayır() {
+            return self.gözlənti();
         }
         if tok.növ != Növ::Acar {
             return self.ifadə_cümləsi();
@@ -1115,8 +1143,212 @@ impl<'a> Parser<'a> {
         Ok(A::Annotasiya { ad, arqumentlər })
     }
 
+    // ── Müqavilələr (§ 5.13) ───────────────────────────────────────
+
+    /// Funksiya gövdəsini oxuyur; əvvəlindəki `tələb`/`zəmanət` cümlələrinə icazə verir.
+    fn funksiya_gövdəsi(&mut self, generator: bool) -> Vec<Cümlə> {
+        let köhnə = (self.müqavilə_icazəsi, self.müqavilə_generator);
+        self.müqavilə_icazəsi = true;
+        self.müqavilə_generator = generator;
+        let g = self.blok(&[]);
+        (self.müqavilə_icazəsi, self.müqavilə_generator) = köhnə;
+        g
+    }
+
+    /// `tələb şərt[, mesaj]` — ön şərt; `zəmanət şərt[, mesaj]` — son şərt.
+    fn müqavilə(&mut self, icazə: bool) -> N<Cümlə> {
+        let söz = self.bax(0).s.clone();
+        if !icazə {
+            self.xəta(
+                "ALQ-P041",
+                &format!("`{}` yalnız funksiyanın əvvəlində yazıla bilər", söz),
+                "müqavilə funksiya və ya metod gövdəsinin ilk cümlələridir",
+                &["`tələb` və `zəmanət` cümlələrini gövdənin başına köçürün"],
+            );
+            return Err(PX);
+        }
+        if söz == "zəmanət" && self.müqavilə_generator {
+            self.xəta(
+                "ALQ-P041",
+                "`zəmanət` generator funksiyada ola bilməz",
+                "generatorun tək bir nəticəsi yoxdur",
+                &[],
+            );
+            return Err(PX);
+        }
+        let yer = self.al().yer;
+        let b = self.bax(0).yer.başlanğıc as usize;
+        let şərt = self.ifadə(0)?;
+        let son = &self.t[self.i - 1].yer;
+        let s = (son.başlanğıc + son.uzunluq) as usize;
+        let mətn = if s > b && s <= self.s.mətn.len() { self.s.mətn[b..s].iter().collect() } else { String::new() };
+        let mesaj = if self.qəbul_op(&[","]).is_some() { Some(self.ifadə(0)?) } else { None };
+        self.cümlə_sonu()?;
+        self.müqavilə_icazəsi = true;
+        Ok(if söz == "tələb" { Cümlə::Tələb(yer, şərt, mesaj, mətn) } else { Cümlə::Zəmanət(yer, şərt, mesaj, mətn) })
+    }
+
+    // ── Sınaq (§ 13.5) ─────────────────────────────────────────────
+
+    /// `sınaq "ad" … son` — `sınaq` kontekstli sözdür.
+    fn sınaq(&mut self) -> N<Cümlə> {
+        let yer = self.al().yer;
+        let ad = self.bax(0).clone();
+        let mətn = if ad.sadə_mətndir() {
+            ad.s.clone()
+        } else {
+            let mut s = String::new();
+            for p in ad.parçalar.iter().flatten() {
+                match p {
+                    Parça::Mətn(m) => s.push_str(m),
+                    Parça::Kod(..) => {
+                        self.xəta("ALQ-P040", "Sınağın adı sabit mətn olmalıdır", "adda `{…}` interpolyasiyası ola bilməz", &[]);
+                        return Err(PX);
+                    }
+                }
+            }
+            s
+        };
+        self.al();
+        let g = self.blok(&[]);
+        self.son_tələb(None)?;
+        Ok(Cümlə::Sınaq(yer, mətn, gövdə(g)))
+    }
+
+    /// `gözlənilir` ardınca ifadə gəlirsə cümlədir; `gözlənilir = 1`, `gözlənilir.x` adi addır.
+    fn gözlənti_başlayır(&self) -> bool {
+        let n = self.bax(1);
+        if matches!(n.növ, Növ::SətirSonu | Növ::FaylSonu) {
+            return false;
+        }
+        !(n.opdur(&[".", "?.", "[", ",", ":", ";", "++", "--"])
+            || n.opdur(MƏNİMSƏTMƏ_OPLARI)
+            || n.acardır(&["içində"])
+            || n.acardır(BLOK_SONLARI))
+    }
+
+    /// `gözlənilir şərt` və `gözlənilir xəta [Tip]: ifadə`.
+    fn gözlənti(&mut self) -> N<Cümlə> {
+        let yer = self.al().yer;
+        let (mut xəta, mut xəta_tipi) = (false, None);
+        let t = self.bax(0);
+        if t.növ == Növ::Ad && t.s == "xəta" && (self.op_i(1, &[":"]) || (self.bax(1).növ == Növ::Ad && self.op_i(2, &[":"]))) {
+            self.al();
+            xəta = true;
+            if !self.op(&[":"]) {
+                xəta_tipi = Some(self.al().s);
+            }
+            self.tələb_op(":", "gözlənti")?;
+        }
+        let b = self.bax(0).yer.başlanğıc as usize;
+        let ifadə = self.ifadə(0)?;
+        let son = &self.t[self.i - 1].yer;
+        let s = (son.başlanğıc + son.uzunluq) as usize;
+        let mətn = if s > b && s <= self.s.mətn.len() { self.s.mətn[b..s].iter().collect() } else { String::new() };
+        self.cümlə_sonu()?;
+        Ok(Cümlə::Gözlənti { yer, ifadə, mətn, xəta, xəta_tipi })
+    }
+
+    /// Cümlə `OBYEKT-şəkilçi FEL [et]` ilə bitirsə — (obyektin ilk tokeni, felin indeksi).
+    fn şəkilçili_cümlə_quyruğu(&self) -> Option<(usize, usize)> {
+        let (mut dərinlik, mut j) = (0i32, self.i);
+        loop {
+            let t = &self.t[j];
+            if t.növ == Növ::FaylSonu {
+                break;
+            }
+            if t.opdur(&["(", "[", "{"]) {
+                dərinlik += 1;
+            } else if t.opdur(&[")", "]", "}"]) {
+                dərinlik -= 1;
+            } else if dərinlik <= 0 && (t.növ == Növ::SətirSonu || t.opdur(&[";"]) || t.acardır(BLOK_SONLARI)) {
+                break;
+            }
+            j += 1;
+        }
+        if dərinlik != 0 || j == 0 {
+            return None;
+        }
+        let mut k = j - 1;
+        if k > self.i && self.t[k].acardır(&["et"]) {
+            k -= 1;
+        }
+        let fel = k;
+        if k < self.i + 3 || self.t[fel].növ != Növ::Ad {
+            return None;
+        }
+        let (ş, tire, ad) = (&self.t[k - 1], &self.t[k - 2], &self.t[k - 3]);
+        let son = |t: &Token| t.yer.başlanğıc + t.yer.uzunluq;
+        if !(matches!(ş.növ, Növ::Ad | Növ::Acar)
+            && hal_şəkilçisidir(&ş.s)
+            && tire.opdur(&["-"])
+            && ad.növ == Növ::Ad
+            && son(ad) == tire.yer.başlanğıc
+            && son(tire) == ş.yer.başlanğıc)
+        {
+            return None;
+        }
+        let mut b = k - 3;
+        while b >= self.i + 2 && self.t[b - 1].opdur(&["."]) && self.t[b - 2].növ == Növ::Ad {
+            b -= 2;
+        }
+        Some((b, fel))
+    }
+
+    /// `[arqumentlər] OBYEKT-şəkilçi FEL [et]` → `OBYEKT.FEL(…)`.
+    fn şəkilçili_cümlə(&mut self, b: usize, fel: usize) -> N<Cümlə> {
+        let yer = self.bax(0).yer;
+        let mut arqumentlər = Vec::new();
+        if self.i < b {
+            // Arqumentlər obyektə qədər oxunur — obyekt müvəqqəti sətir sonu
+            // ilə əvəz olunur ki ifadə ona keçməsin
+            let obyekt_tokeni = self.t[b].clone();
+            self.t[b] = Token::yeni(Növ::SətirSonu, "\n", obyekt_tokeni.yer);
+            let mut oxu = |p: &mut Self| -> N<()> {
+                arqumentlər.push(Arqument { dəyər: p.ifadə(0)?, ad: None, yayma: false, adlı_yayma: false });
+                while p.qəbul_op(&[","]).is_some() {
+                    arqumentlər.push(Arqument { dəyər: p.ifadə(0)?, ad: None, yayma: false, adlı_yayma: false });
+                }
+                Ok(())
+            };
+            let r = oxu(self);
+            self.t[b] = obyekt_tokeni;
+            r?;
+            if self.i != b {
+                self.xəta(
+                    "ALQ-P039",
+                    "Şəkilçili cümlə təhlil olunmadı",
+                    "obyektdən əvvəl yalnız vergüllə ayrılmış arqumentlər ola bilər",
+                    &["məs.: `\"Vüqar\" adlar-a əlavə et`"],
+                );
+                return Err(PX);
+            }
+        }
+        let mut obyekt: E = Rc::new(İfadə::Ad(self.t[b].yer, self.t[b].s.as_str().into()));
+        let mut k = b + 2;
+        while k + 2 < fel {
+            obyekt = Rc::new(İfadə::Üzv(self.t[k - 1].yer, obyekt, self.t[k].s.as_str().into(), false));
+            k += 2;
+        }
+        let f = self.t[fel].clone();
+        let çağırış = Rc::new(İfadə::Çağırış(
+            f.yer,
+            Rc::new(İfadə::Üzv(f.yer, obyekt, f.s.as_str().into(), false)),
+            arqumentlər,
+        ));
+        while self.i <= fel {
+            self.al();
+        }
+        self.qəbul_acar(&["et"]);
+        self.cümlə_sonu()?;
+        Ok(Cümlə::İfadə(yer, çağırış))
+    }
+
     fn ifadə_cümləsi(&mut self) -> N<Cümlə> {
         let yer = self.bax(0).yer;
+        if let Some((b, fel)) = self.şəkilçili_cümlə_quyruğu() {
+            return self.şəkilçili_cümlə(b, fel);
+        }
         let ifadə = self.ifadə(0)?;
 
         if self.acar(&["içində"]) && self.acar_i(1, &["hər"]) {
@@ -1476,7 +1708,11 @@ impl<'a> Parser<'a> {
         if self.qəbul_acar(&["addım"]).is_some() {
             addım = Some(self.ifadə(0)?);
         }
-        self.tələb_acar("içində")?;
+        // `hər i üçün 1-dən 10-a qədər` — `içində` yazılmaya bilər
+        let şəkilçili = self.şəkilçili.as_ref().is_some_and(|d| Rc::ptr_eq(d, &mənbə));
+        if !şəkilçili || self.acar(&["içində"]) {
+            self.tələb_acar("içində")?;
+        }
         let asinxron = self.qəbul_acar(&["gözlə"]).is_some();
         let mut şərt = None;
         if self.qəbul_acar(&["əgər"]).is_some() {
@@ -1936,7 +2172,7 @@ impl<'a> Parser<'a> {
         if self.qəbul_op(&["->"]).is_some() {
             self.tip()?;
         }
-        let g = self.blok(&[]);
+        let g = self.funksiya_gövdəsi(m.generator);
         self.son_tələb(Some("funksiya"))?;
         Ok(Cümlə::Funksiya(Rc::new(A::Funksiya {
             yer,
@@ -1979,7 +2215,7 @@ impl<'a> Parser<'a> {
             self.cümlə_sonu()?;
             return Ok(Self::metod(yer, ad, parametrlər, None, m, true));
         }
-        let g = self.blok(&[]);
+        let g = self.funksiya_gövdəsi(m.generator);
         self.son_tələb(Some("metod"))?;
         Ok(Self::metod(yer, ad, parametrlər, Some(gövdə(g)), m, false))
     }
@@ -2468,6 +2704,16 @@ impl<'a> Parser<'a> {
     pub fn ifadə(&mut self, min_p: i32) -> N<E> {
         let mut sol = self.tək_operand()?;
         loop {
+            if self.şəkilçi(ÇIXIŞLIQ_ŞƏKİLÇİLƏRİ) {
+                if prioritet("..").unwrap().0 < min_p {
+                    break;
+                }
+                sol = self.şəkilçili_diapazon(sol)?;
+                continue;
+            }
+            if self.şəkilçi(YÖNLÜK_ŞƏKİLÇİLƏRİ) && self.bax(2).acardır(&["qədər"]) {
+                break;
+            }
             let tok = self.bax(0);
             let Some(mut op) = binar_op(tok) else { break };
             let (p, sağdan) = prioritet(&op).unwrap();
@@ -2504,6 +2750,42 @@ impl<'a> Parser<'a> {
             sol = Rc::new(yeni);
         }
         Ok(sol)
+    }
+
+    /// `-` sol tərəfə və şəkilçiyə bitişikdir: `1-dən`, `n-ə`.
+    fn şəkilçi(&self, şəkilçilər: &[&str]) -> bool {
+        let tire = self.bax(0);
+        if !tire.opdur(&["-"]) || self.i == 0 {
+            return false;
+        }
+        let ş = self.bax(1);
+        let əvvəlki = &self.t[self.i - 1];
+        matches!(ş.növ, Növ::Ad | Növ::Acar)
+            && şəkilçilər.contains(&ş.s.as_str())
+            && əvvəlki.yer.başlanğıc + əvvəlki.yer.uzunluq == tire.yer.başlanğıc
+            && tire.yer.başlanğıc + tire.yer.uzunluq == ş.yer.başlanğıc
+    }
+
+    /// `A-dən B-ə qədər` — hər iki uc daxil, addım ±1 (§ 4.14).
+    fn şəkilçili_diapazon(&mut self, başlanğıc: E) -> N<E> {
+        let yer = self.al().yer;
+        self.al();
+        let son = self.ifadə(prioritet("..").unwrap().0 + 1)?;
+        if !self.şəkilçi(YÖNLÜK_ŞƏKİLÇİLƏRİ) {
+            self.xəta(
+                "ALQ-P038",
+                "Diapazonun sonu gözlənilirdi",
+                "`A-dən B-ə qədər` formasında `B-ə` yazılmalıdır",
+                &["məs.: `1-dən 10-a qədər`"],
+            );
+            return Err(PX);
+        }
+        self.al();
+        self.al();
+        self.tələb_acar("qədər")?;
+        let d = Rc::new(İfadə::Diapazon(yer, başlanğıc, son, None, false));
+        self.şəkilçili = Some(d.clone());
+        Ok(d)
     }
 
     fn tək_operand(&mut self) -> N<E> {

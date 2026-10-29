@@ -407,6 +407,20 @@ class _Yazıcı:
             with self.iç():
                 self.ifadə("şərt", c.şərt)
                 self.oifadə("mesaj", c.mesaj)
+        elif t in (A.Tələb, A.Zəmanət):
+            self.s(l, f"{t.__name__} {Y} mətn={_q(c.mətn)}")
+            with self.iç():
+                self.ifadə("şərt", c.şərt)
+                self.oifadə("mesaj", c.mesaj)
+        elif t is A.Sınaq:
+            self.s(l, f"Sınaq {Y} ad={_q(c.ad)}")
+            with self.iç():
+                self.gövdə("gövdə", c.gövdə)
+        elif t is A.Gözlənti:
+            self.s(l, f"Gözlənti {Y} mətn={_q(c.mətn)} xəta={_b(c.xəta)}"
+                      f" tip={_oq(c.xəta_tipi)}")
+            with self.iç():
+                self.ifadə("ifadə", c.ifadə)
         elif t is A.Təmin:
             self.s(l, f"Təmin {Y}")
             with self.iç():

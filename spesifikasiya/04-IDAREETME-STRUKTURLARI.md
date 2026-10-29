@@ -609,3 +609,85 @@ son
 ```alqor
 dəyişən ilk_üç = sorğu hər x üçün siyahı içində sırala x ilk 3 son
 ```
+
+## 4.14 Şəkilçi formaları
+
+Azərbaycan dilində söz əlaqəsini hal şəkilçiləri qurur. Alqor iki yerdə
+şəkilçini sintaksis kimi qəbul edir. Hər iki forma parserdə adi
+konstruksiyaya çevrilir — icraçılar onları ayrıca tanımır.
+
+### Şəkilçili diapazon — `A-dən B-ə qədər`
+
+```alqor
+hər i üçün 1-dən 10-a qədər
+    yaz(i)
+son
+
+dəyişən geri = siyahı(5-dən 1-ə qədər)      // [5, 4, 3, 2, 1]
+dəyişən n = 4
+yaz(siyahı(n-dən n*2-yə qədər))             // [4, 5, 6, 7, 8]
+```
+
+- `A-dən B-ə qədər` ≡ `A..B`: **hər iki uc daxildir**.
+- Addım avtomatikdir: `B < A` olanda `-1`, əks halda `+1`.
+- `hər … üçün` dövründə `içində` yazılmaya bilər (yazmaq da olar).
+- `A` və `B` istənilən ifadədir; diapazon `..` ilə eyni prioritetdədir —
+  `n+1-dən n*2-yə qədər` ≡ `(n+1)..(n*2)`.
+
+Şəkilçilər:
+
+| hal | şəkilçilər |
+|---|---|
+| çıxışlıq (başlanğıc) | `-dan`, `-dən`, `-ndan`, `-ndən` |
+| yönlük (son) | `-a`, `-ə`, `-ya`, `-yə`, `-na`, `-nə` |
+
+ASCII formaları da qəbul olunur: `-den`, `-nden`, `-e`, `-ye`, `-ne`,
+`qeder`.
+
+**Qayda — bitişik yazılış.** Defis həm soldakı ifadəyə, həm şəkilçiyə
+**bitişik** olmalıdır: `1-dən`. Boşluqla yazılan `n - a` həmişə çıxmadır.
+Bitişik `n-a` da çıxmadır, bir şərtlə ki ardınca `qədər` gəlməsin — yəni
+yönlük şəkilçisi yalnız `qədər`-dən əvvəl diapazonun sonu kimi oxunur.
+Çıxışlıq şəkilçisi (`n-dən`) isə həmişə diapazonun başlanğıcıdır.
+
+Diapazonun sonu yazılmayıbsa — `ALQ-P038`:
+
+```
+✖ ALQ-P038  Diapazonun sonu gözlənilirdi
+  1│ yaz(siyahı(1-dən 3))
+   │                   ^ `A-dən B-ə qədər` formasında `B-ə` yazılmalıdır
+```
+
+### Şəkilçili cümlə — `ARQUMENTLƏR OBYEKT-şəkilçi FEL [et]`
+
+Metod çağırışını Azərbaycan cümləsinin söz sırası ilə yazmaq olar:
+əvvəl tamamlıq, sonra obyekt (hal şəkilçisi ilə), sonda fel.
+
+```alqor
+dəyişən adlar = ["Ali"]
+"Vüqar" adlar-a əlavə et        // adlar.əlavə("Vüqar")
+adlar-ı sırala                  // adlar.sırala()
+0 adlar-dan sil                 // adlar.sil(0)
+"b", 2 lüğət-ə qoy              // lüğət.qoy("b", 2)
+3 qutu.siyahı-na əlavə et       // qutu.siyahı.əlavə(3)
+```
+
+- Obyekt ad və ya nöqtəli addır (`a.b.c`); felin adı metodun adıdır.
+- Sondakı `et` köməkçi sözdür və atılır: `əlavə et` ≡ `əlavə`.
+- Obyektdən əvvəl vergüllə ayrılmış arqumentlər gəlir (olmaya da bilər).
+- Qəbul olunan hal şəkilçiləri:
+
+| hal | şəkilçilər |
+|---|---|
+| təsirlik | `-ı`, `-i`, `-u`, `-ü`, `-nı`, `-ni`, `-nu`, `-nü`, `-yı`, `-yi`, `-yu`, `-yü` |
+| yönlük | `-a`, `-ə`, `-ya`, `-yə`, `-na`, `-nə` |
+| yerlik | `-da`, `-də`, `-nda`, `-ndə` |
+| çıxışlıq | `-dan`, `-dən`, `-ndan`, `-ndən` |
+
+Forma yalnız **ifadə cümləsi** səviyyəsində tanınır: cümlə (sətir, `;` və
+ya blok sonuna qədər) `ad-şəkilçi fel [et]` ilə bitməlidir və defis
+bitişik yazılmalıdır. Belə sətir əvvəllər sintaksis xətası idi, ona görə
+mövcud kodun mənası dəyişmir. Şəkilçili cümlə qiymət qaytarmır —
+nəticə lazımdırsa adi `adlar.əlavə(x)` yazılır.
+
+Obyektdən əvvəlki hissə arqument siyahısı deyilsə — `ALQ-P039`.

@@ -475,6 +475,22 @@ impl Yazıcı {
                     w.oifadə("mesaj", m);
                 });
             }
+            C::Tələb(yer, ş, m, mətn) | C::Zəmanət(yer, ş, m, mətn) => {
+                let ad = if matches!(c, C::Tələb(..)) { "Tələb" } else { "Zəmanət" };
+                self.s(l, &format!("{} {} mətn={}", ad, y(yer), q(mətn)));
+                self.iç(|w| {
+                    w.ifadə("şərt", ş);
+                    w.oifadə("mesaj", m);
+                });
+            }
+            C::Sınaq(yer, ad, g) => {
+                self.s(l, &format!("Sınaq {} ad={}", y(yer), q(ad)));
+                self.iç(|w| w.gövdə("gövdə", g));
+            }
+            C::Gözlənti { yer, ifadə, mətn, xəta, xəta_tipi } => {
+                self.s(l, &format!("Gözlənti {} mətn={} xəta={} tip={}", y(yer), q(mətn), xəta, oq(xəta_tipi)));
+                self.iç(|w| w.ifadə("ifadə", ifadə));
+            }
             C::Təmin(yer, ş, g) => {
                 self.s(l, &format!("Təmin {}", y(yer)));
                 self.iç(|w| {

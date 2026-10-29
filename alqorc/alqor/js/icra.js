@@ -89,6 +89,31 @@ function xətaya(e) {
   return xəta("DaxiliXəta", String(e && e.message || e));
 }
 
+// ── Gözlənti (§ 13.5) ─────────────────────────────────────────────────
+function gözləntiXətası(mesaj) { return xəta("GözləntiXətası", mesaj, "ALQ-R023"); }
+
+/** `gözlənilir a == b` — tərəflər ayrıca göstərilir */
+function gözləntiMüqayisə(nəticə, mətn, a, b) {
+  if (nəticə !== true)
+    throw gözləntiXətası("gözlənti ödənmədi: " + mətn + "\n  sol: " + dm(a) + "\n  sağ: " + dm(b));
+}
+
+/** `gözlənilir xəta [Tip]: ifadə` */
+function gözləntiXəta(f, tip, mətn) {
+  try {
+    f();
+  } catch (e) {
+    if (e instanceof Dayanma || e instanceof Yayılan) throw e;
+    const x = xətaya(e);
+    if (x instanceof Dayanma) throw x;
+    const t = tip === null ? "Xəta" : tip;
+    if (xətaUyğun(x.tip, t)) return;
+    throw gözləntiXətası("`" + t + "` gözlənilirdi, `" + x.tip + "` atıldı: " + x.mesaj + "\n  ifadə: " + mətn);
+  }
+  throw gözləntiXətası((tip === null ? "xəta gözlənilirdi, atılmadı"
+    : "`" + tip + "` gözlənilirdi, xəta atılmadı") + "\n  ifadə: " + mətn);
+}
+
 function adAç(ad) { return ad.endsWith("$") ? ad.slice(0, -1) : ad; }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -3881,6 +3906,7 @@ return {
   Element, Modul, Sinif, Nümunə, Üst, TipAlias, Sadalama, SDəyər, YOX, Yayılan,
   // xətalar
   xəta, xətaya, xətaUyğun, xətaObyekti, at, stek, V, STEK_HƏDDİ,
+  gözləntiXətası, gözləntiMüqayisə, gözləntiXəta, dm,
   // funksiyalar
   ad, D, bağla, ç, çm, yarat, yeni, adlıYay, vahidli, sorğuSırala, sorğuQrupla, sorğuFərqli, sorğuKəs, qadVarsa, bəzə, bəzəyici, sərbəstMetod, bəzənmişMetod, kp, genişlət, standartDəyər, sinif, sadalama,
   metodAd, üstMetod, bağlı, qurucuTap,

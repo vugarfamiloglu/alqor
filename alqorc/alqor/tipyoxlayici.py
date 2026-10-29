@@ -2018,6 +2018,32 @@ class TipYoxlayıcı:
             self._ifadə(c.mesaj, ə)
         return False
 
+    def _c_tələb(self, c: A.Tələb, ə: Əhatə) -> bool:
+        self._şərt_yoxla(c.şərt, ə)
+        if c.mesaj is not None:
+            self._ifadə(c.mesaj, ə)
+        return False
+
+    def _c_zəmanət(self, c: A.Zəmanət, ə: Əhatə) -> bool:
+        alt = ə.alt()
+        alt.elan(Bağlama("nəticə", T.İSTƏNİLƏN, True, c.yer, True,
+                         "dəyişən"))
+        self._şərt_yoxla(c.şərt, alt)
+        if c.mesaj is not None:
+            self._ifadə(c.mesaj, alt)
+        return False
+
+    def _c_sınaq(self, c: A.Sınaq, ə: Əhatə) -> bool:
+        self._blok(c.gövdə, ə.alt())
+        return False
+
+    def _c_gözlənti(self, c: A.Gözlənti, ə: Əhatə) -> bool:
+        if c.xəta:
+            self._ifadə(c.ifadə, ə)
+        else:
+            self._şərt_yoxla(c.ifadə, ə)
+        return False
+
     def _c_təmin(self, c: A.Təmin, ə: Əhatə) -> bool:
         self._şərt_yoxla(c.şərt, ə)
         self._blok(c.gövdə, ə.alt())
@@ -3298,6 +3324,10 @@ _CÜMLƏLƏR: dict[type, Any] = {
     A.At: TipYoxlayıcı._c_at,
     A.Cəhd: TipYoxlayıcı._c_cəhd,
     A.İddia: TipYoxlayıcı._c_iddia,
+    A.Sınaq: TipYoxlayıcı._c_sınaq,
+    A.Tələb: TipYoxlayıcı._c_tələb,
+    A.Zəmanət: TipYoxlayıcı._c_zəmanət,
+    A.Gözlənti: TipYoxlayıcı._c_gözlənti,
     A.Təmin: TipYoxlayıcı._c_təmin,
     A.Gecikdir: TipYoxlayıcı._c_gecikdir,
     A.İstifadə: TipYoxlayıcı._c_istifadə,

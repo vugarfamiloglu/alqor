@@ -720,6 +720,10 @@ impl İcraçı {
                         Err(x) => return Err(x),
                     }
                 }
+                // Müqavilə (§ 5.13): son şərtlər qaytarılan dəyərlə yoxlanır
+                if let (Ok(d), Some(Cümlə::Tələb(..) | Cümlə::Zəmanət(..))) = (&r, g.first()) {
+                    self.zəmanətləri_yoxla(g, d, &m)?;
+                }
                 r
             }
         }

@@ -116,6 +116,7 @@ Atılan
 ├── Xəta                          (bərpa oluna bilən)
 │   ├── ArqumentXətası
 │   │   ├── TipXətası
+│   │   │   └── VahidXətası       (ölçü vahidləri, § 3.8)
 │   │   ├── DəyərXətası
 │   │   └── DiapazonXətası
 │   ├── ÇevrilməXətası
@@ -148,7 +149,15 @@ Atılan
 │   ├── BoşDəyərXətası
 │   ├── PythonXətası              (Python kitabxanaları, § 8.14)
 │   ├── VaxtXətası
-│   └── İcazəsizXəta
+│   ├── İcazəsizXəta
+│   ├── ParalellikXətası          (§ 9.12, § 9.13)
+│   │   ├── KanalXətası
+│   │   └── DalanXətası
+│   ├── MüqaviləXətası            (§ 5.13)
+│   │   ├── ÖnŞərtXətası
+│   │   └── SonŞərtXətası
+│   ├── GözləntiXətası            (`gözlənilir`, § 13.5)
+│   └── NəticəXətası              (`Nəticə.aç()`, § 7.5)
 │
 └── KritikXəta                    (bərpa oluna bilməz, tutulmamalıdır)
     ├── YaddaşBitdiXətası

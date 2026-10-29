@@ -182,6 +182,8 @@ fn blok_adları(g: &[Cümlə], n: &mut Vec<String>) -> K {
                 }
             }
             Cümlə::Global(..) => return Err(Dəstəkləmir),
+            // Müqavilələr (§ 5.13) — funksiya ağac icraçısında qalır
+            Cümlə::Tələb(..) | Cümlə::Zəmanət(..) => return Err(Dəstəkləmir),
             _ => {}
         }
     }
@@ -787,6 +789,9 @@ impl<'r> Kompilyator<'r> {
                 }
             },
             Cümlə::Cəhd { gövdə, tutmalar, nəhayət, .. } => self.cəhd(gövdə, tutmalar, nəhayət.as_ref())?,
+            // Sınaq bloku adi icrada atlanır; `gözlənilir` ağac icraçısına ötürülür
+            Cümlə::Sınaq(..) => {}
+            Cümlə::Gözlənti { .. } => self.ötür(c),
             Cümlə::İddia(yer, ş, mesaj) => {
                 self.ifadə(ş)?;
                 self.əmr(Əmr::MəntiqYoxla, ş.yer());

@@ -68,6 +68,17 @@ class RustMüqayisəsi(unittest.TestCase):
             "yaz(sorğu hər x üçün [1] içində qrupla x (a, b) son)\n",
             "yaz(sorğu hər x üçün [1] içində tap x son)\n",
             "yaz(sorğu hər x üçün [1]\n",
+            # Şəkilçi formaları (§ 4.14)
+            "yaz(siyahı(1-dən 3))\n",
+            "dəyişən l = []\nl-a əlavə et 5\n",
+            # Sınaq sintaksisi (§ 13.5)
+            'sınaq "a{1}"\nson\n',
+            "gözlənilir xəta Tip 1\n",
+            "gözlənilir\n",
+            # Müqavilələr (§ 5.13)
+            "funksiya f(x)\n    yaz(x)\n    tələb x > 0\nson\n",
+            "tələb 1 > 0\n",
+            "generator funksiya g()\n    zəmanət nəticə\n    ver 1\nson\n",
         ]
         fayllar = []
         for i, k in enumerate(nümunələr):

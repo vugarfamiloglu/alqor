@@ -848,6 +848,26 @@ class Kompilyator:
         return (f"if (!{self._şərt(c.şərt)}) throw $.xəta(\"İddiaXətası\", "
                 f"{mesaj}, \"ALQ-R007\");")
 
+    def _c_Sınaq(self, c: A.Sınaq) -> list[str]:
+        # Adi icrada sınaq bloku atlanır — onu `alqor sına` işlədir
+        return []
+
+    def _c_Gözlənti(self, c: A.Gözlənti) -> str:
+        m = _js_mətn(c.mətn)
+        if c.xəta:
+            tip = _js_mətn(c.xəta_tipi) if c.xəta_tipi else "null"
+            return (f"$.gözləntiXəta(() => {self._ifadə(c.ifadə)}, {tip}, "
+                    f"{m});")
+        e = c.ifadə
+        if isinstance(e, A.İkili) and e.op in ("==", "!=", "<", ">", "<=",
+                                               ">="):
+            a, b = self._temp(), self._temp()
+            return (f"{a} = {self._ifadə(e.sol)}; {b} = {self._ifadə(e.sağ)}; "
+                    f"$.gözləntiMüqayisə({self._ikili_js(e.op, a, b)}, {m}, "
+                    f"{a}, {b});")
+        return (f"if (!{self._şərt(e)}) throw $.gözləntiXətası("
+                f"\"gözlənti ödənmədi: \" + {m});")
+
     def _c_Təmin(self, c: A.Təmin) -> str:
         return f"if (!{self._şərt(c.şərt)}) {self._blok(c.gövdə)}"
 
@@ -961,6 +981,9 @@ class Kompilyator:
                 gövdə_js = ("try {\n" + gövdə_js + "\n} catch ($y) { "
                             "if ($y instanceof $.Yayılan) return $y.d; "
                             "throw $y; }")
+            zəmanətlər = self._zəmanətlər(gövdə) if not generator else []
+            if zəmanətlər:
+                gövdə_js = self._zəmanətli(gövdə_js, zəmanətlər)
             temp = self._tempər_elanı(fk)
             if generator:
                 daxili = (f"return new $.Gen((function* () {{\n{temp}"
@@ -986,6 +1009,50 @@ class Kompilyator:
         finally:
             self.fk, self.əh = köhnə_fk, köhnə_əh
             self._qaldırılır = köhnə_q
+
+    @staticmethod
+    def _zəmanətlər(gövdə) -> list[A.Zəmanət]:
+        """Gövdənin əvvəlindəki `zəmanət` cümlələri (§ 5.13)."""
+        n: list[A.Zəmanət] = []
+        for c in gövdə if isinstance(gövdə, list) else []:
+            if isinstance(c, A.Zəmanət):
+                n.append(c)
+            elif not isinstance(c, A.Tələb):
+                break
+        return n
+
+    def _zəmanətli(self, gövdə_js: str, zəmanətlər: list) -> str:
+        """Gövdə ayrıca funksiyada işləyir; qaytardığı dəyər `nəticə`
+        adı ilə son şərtlərdə yoxlanır."""
+        köhnə = self.əh
+        self.əh = Əhatə(köhnə, self.fk)
+        try:
+            m = self._qeyd("nəticə")
+            m.elan_edilib = True
+            n = [f"const $nt = (() => {{\n{gövdə_js}\n}})();",
+                 f"{{ let {m.js} = $nt;"]
+            for z in zəmanətlər:
+                mesaj = (f"$.mətnə({self._ifadə(z.mesaj)})"
+                         if z.mesaj is not None else
+                         f"{_js_mətn('son şərt pozuldu: ' + z.mətn + chr(10) + '  nəticə: ')}"
+                         f" + $.dm($nt)")
+                n.append(f"if (!{self._şərt(z.şərt)}) throw $.xəta("
+                         f"\"SonŞərtXətası\", {mesaj}, \"ALQ-R025\");")
+            n.append("}")
+            n.append("return $nt;")
+            return "\n".join(n)
+        finally:
+            self.əh = köhnə
+
+    def _c_Tələb(self, c: A.Tələb) -> str:
+        mesaj = (f"$.mətnə({self._ifadə(c.mesaj)})" if c.mesaj is not None
+                 else _js_mətn("ön şərt pozuldu: " + c.mətn))
+        return (f"if (!{self._şərt(c.şərt)}) throw $.xəta(\"ÖnŞərtXətası\", "
+                f"{mesaj}, \"ALQ-R024\");")
+
+    def _c_Zəmanət(self, c: A.Zəmanət) -> list[str]:
+        # Son şərt funksiya qayıdanda yoxlanır (`_zəmanətli`)
+        return []
 
     @staticmethod
     def _yaymadır(gövdə) -> bool:

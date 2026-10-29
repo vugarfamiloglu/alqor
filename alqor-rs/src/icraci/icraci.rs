@@ -744,6 +744,24 @@ impl İcraçı {
                 };
                 Err(xəta_yer("İddiaXətası", mesaj, Some(*yer), "ALQ-R007"))
             }
+            Cümlə::Tələb(yer, ş, mesaj, mətn) => {
+                if self.məntiq(ş, m)? {
+                    return Ok(());
+                }
+                let mesaj = match mesaj {
+                    Some(e) => {
+                        let d = self.ifadə(e, m)?;
+                        mətnə(self, &d)?
+                    }
+                    None => format!("ön şərt pozuldu: {}", mətn),
+                };
+                Err(xəta_yer("ÖnŞərtXətası", mesaj, Some(*yer), "ALQ-R024"))
+            }
+            // Son şərt funksiya qayıdanda yoxlanır (`zəmanətləri_yoxla`)
+            Cümlə::Zəmanət(..) => Ok(()),
+            // Adi icrada sınaq bloku atlanır — onu `alqor sına` işlədir
+            Cümlə::Sınaq(..) => Ok(()),
+            Cümlə::Gözlənti { yer, ifadə, mətn, xəta, xəta_tipi } => self.c_gözlənti(*yer, ifadə, mətn, *xəta, xəta_tipi.as_deref(), m),
             Cümlə::Təmin(_, ş, gövdə) => {
                 if !self.məntiq(ş, m)? {
                     self.blok(gövdə, &əhatə(gövdə, m))?;
@@ -1321,6 +1339,80 @@ impl İcraçı {
 
     // ── Xətalar ───────────────────────────────────────────────────────
 
+    /// Funksiya qayıdanda gövdənin əvvəlindəki `zəmanət` şərtləri (§ 5.13).
+    pub fn zəmanətləri_yoxla(&self, g: &[Cümlə], nəticə: &D, m: &Mühit) -> Nəticə<()> {
+        let mut alt = None;
+        for c in g {
+            match c {
+                Cümlə::Tələb(..) => {}
+                Cümlə::Zəmanət(yer, ş, mesaj, mətn) => {
+                    let a = alt.get_or_insert_with(|| {
+                        let a = m.alt();
+                        a.elan(ad("nəticə"), nəticə.clone(), false);
+                        a
+                    });
+                    if self.məntiq(ş, a)? {
+                        continue;
+                    }
+                    let mesaj = match mesaj {
+                        Some(e) => {
+                            let d = self.ifadə(e, a)?;
+                            mətnə(self, &d)?
+                        }
+                        None => format!("son şərt pozuldu: {}\n  nəticə: {}", mətn, daxili_mətn(self, nəticə)?),
+                    };
+                    return Err(xəta_yer("SonŞərtXətası", mesaj, Some(*yer), "ALQ-R025"));
+                }
+                _ => break,
+            }
+        }
+        Ok(())
+    }
+
+    /// `gözlənilir` (§ 13.5)
+    fn c_gözlənti(&self, yer: Yer, e: &aac::E, mətn: &str, xəta: bool, xəta_tipi: Option<&str>, m: &Mühit) -> Nəticə<()> {
+        let x = |mesaj: String| Err(xəta_yer("GözləntiXətası", mesaj, Some(yer), "ALQ-R023"));
+        if xəta {
+            let tip = xəta_tipi.unwrap_or("Xəta");
+            return match self.ifadə(e, m) {
+                Err(Siqnal::Xəta(a)) => {
+                    if xəta_uyğundur(&a.tip, tip) {
+                        Ok(())
+                    } else {
+                        x(format!("`{}` gözlənilirdi, `{}` atıldı: {}\n  ifadə: {}", tip, a.tip, a.mesaj, mətn))
+                    }
+                }
+                Err(s) => Err(s),
+                Ok(_) => {
+                    let gözlənilən = match xəta_tipi {
+                        Some(t) => format!("`{}` gözlənilirdi, xəta atılmadı", t),
+                        None => "xəta gözlənilirdi, atılmadı".into(),
+                    };
+                    x(format!("{}\n  ifadə: {}", gözlənilən, mətn))
+                }
+            };
+        }
+        if let İfadə::İkili(y, sol, op, sağ) = &**e {
+            if matches!(op.as_str(), "==" | "!=" | "<" | ">" | "<=" | ">=") {
+                let a = self.ifadə(&sol, m)?;
+                let b = self.ifadə(&sağ, m)?;
+                if let D::M(true) = self.ikili_hesabla(op, &a, &b, Some(*y))? {
+                    return Ok(());
+                }
+                return x(format!(
+                    "gözlənti ödənmədi: {}\n  sol: {}\n  sağ: {}",
+                    mətn,
+                    daxili_mətn(self, &a)?,
+                    daxili_mətn(self, &b)?
+                ));
+            }
+        }
+        if !self.məntiq(e, m)? {
+            return x(format!("gözlənti ödənmədi: {}", mətn));
+        }
+        Ok(())
+    }
+
     fn c_cəhd(&self, gövdə: &aac::Gövdə, tutmalar: &[aac::Tutma], nəhayət: Option<&aac::Gövdə>, m: &Mühit) -> Nəticə<()> {
         let mut r = self.blok(gövdə, &əhatə(gövdə, m));
         if let Err(Siqnal::Xəta(x)) = r {
@@ -1408,8 +1500,8 @@ impl İcraçı {
                     }
                     _ => {}
                 }
-                let a = self.ifadə(sol, m)?;
-                let b = self.ifadə(sağ, m)?;
+                let a = self.ifadə(&sol, m)?;
+                let b = self.ifadə(&sağ, m)?;
                 // Sürətli yol: kiçik tamlar
                 if let (D::T(x), D::T(y)) = (&a, &b) {
                     let (x, y) = (*x, *y);

@@ -348,6 +348,66 @@ alqortest --təkrar 100           # flaky test axtarışı
   Örtük:  87.3% (1243/1424 sətir)
 ```
 
+### Sınaq blokları — `sınaq "ad" … son`
+
+Sınağı funksiya və annotasiya olmadan, birbaşa blok kimi yazmaq olar:
+
+```alqor
+funksiya topla(a, b)
+    qaytar a + b
+son
+
+sınaq "toplama işləyir"
+    gözlənilir topla(2, 2) == 4
+    gözlənilir topla(-1, 1) == 0
+son
+
+sınaq "sıfıra bölmə"
+    gözlənilir xəta BölməXətası: 1 / 0
+son
+```
+
+- `sınaq "ad"` bloku **adi icrada atlanır** (Python, Rust və JS
+  icraçılarında eyni) — onu yalnız `alqor sına` işlədir. Ona görə
+  sınaqları proqram faylının özündə saxlamaq olar.
+- Ad sabit mətn olmalıdır (`{…}` interpolyasiyası olmaz — `ALQ-P040`).
+- Blok fayl səviyyəsində və ya `modul` içində ola bilər; modulun içindəki
+  sınaq modulun üzvlərini adla görür və hesabatda `modul › ad` kimi
+  göstərilir.
+- Hər blok qlobal mühitin ayrıca alt mühitində işləyir.
+- `sınaq` kontekstli sözdür: ardınca mətn gəlmirsə adi addır
+  (`@sınaq` annotasiyası və `sınaq` adlı dəyişən işləməyə davam edir).
+
+### `gözlənilir` — gözlənti
+
+`gözlənilir` istənilən yerdə (sınaqda, funksiyada, proqramda) işləyən
+təsdiqdir. Ödənməyəndə `GözləntiXətası` (`ALQ-R023`) atılır;
+`alqor sına` bunu xəta yox, **uğursuz** sınaq sayır.
+
+| Forma | Mənası |
+|---|---|
+| `gözlənilir şərt` | `şərt` `doğru` olmalıdır |
+| `gözlənilir a == b` (`!=`, `<`, `>`, `<=`, `>=`) | müqayisə; uğursuz olsa hər iki tərəf göstərilir |
+| `gözlənilir xəta: ifadə` | `ifadə` istənilən xəta atmalıdır |
+| `gözlənilir xəta Tip: ifadə` | `ifadə` `Tip` (və ya onun alt tipi) xətası atmalıdır |
+
+Mesajlar:
+
+```
+gözlənti ödənmədi: s == [1, 2, 3]
+  sol: [1, 2]
+  sağ: [1, 2, 3]
+
+`TipXətası` gözlənilirdi, `BölməXətası` atıldı: sıfıra bölmək olmaz
+  ifadə: 1 / 0
+
+xəta gözlənilirdi, atılmadı
+  ifadə: 1 + 1
+```
+
+`gözlənilir` kontekstli sözdür: `gözlənilir = 5`, `gözlənilir.x` kimi
+yazılışlarda adi addır.
+
 ---
 
 ### Etalon implementasiyada vəziyyət
@@ -361,6 +421,7 @@ qovluğu; qovluqda `sınaq/`, `sinaq/`, `test/` altındakı və adı
 | `@sınaq`, `@sınaq("ad")`, `@sınaqVerilənlər([...])` | ✅ |
 | `@sınaqQrupu("ad") modul …` + `@əvvəl` / `@sonra` | ✅ |
 | `@atla("səbəb")` | ✅ |
+| `sınaq "ad" … son` blokları və `gözlənilir` | ✅ |
 | `--filtr söz`, `--sənəd`, `--ətraflı` (uğursuz sınağın `yaz` çıxışı) | ✅ |
 | Uğursuz təsdiqin yeri (`fayl:sətir:sütun`) | ✅ |
 | Çıxış kodu: 0 — hamısı uğurlu, 1 — uğursuz/xəta var, 4 — sınaq yoxdur | ✅ |

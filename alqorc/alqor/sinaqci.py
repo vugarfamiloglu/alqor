@@ -3,6 +3,11 @@ Alqor — `test` modulu və sınaq işlədicisi (`alqor sına`).
 
 Spesifikasiya § 10.16, § 13.5.
 
+    sınaq "toplama işləyir"
+        gözlənilir topla(2, 2) == 4
+        gözlənilir xəta BölməXətası: 1 / 0
+    son
+
     gətir test
 
     @sınaq("toplama düzgündür")
@@ -180,6 +185,12 @@ class _Sınaq:
     əvvəl: list = field(default_factory=list)
     sonra: list = field(default_factory=list)
     atla: str | None = None
+    # `sınaq "ad" … son` bloku: (gövdə, mühit)
+    blok: tuple[list, Any] | None = None
+
+
+# Sınağı "uğursuz" (xəta yox) edən xəta tipləri
+_TƏSDİQ_XƏTALARI = ("İddiaXətası", "GözləntiXətası")
 
 
 def _annotasiya(elan: Any, ad: str) -> A.Annotasiya | None:
@@ -227,7 +238,15 @@ def _sınaqları_topla(icraçı, ağac: A.Proqram) -> list[_Sınaq]:
                 sınaqlar.append(_Sınaq(prefiks + ad, f, [], əvvəl, sonra,
                                        səbəb))
 
+    def bloklar(gövdə: list, mühit: Any, prefiks: str, əvvəl: list,
+                sonra: list) -> None:
+        for c in gövdə:
+            if isinstance(c, A.Sınaq):
+                sınaqlar.append(_Sınaq(prefiks + c.ad, None, [], əvvəl,
+                                       sonra, blok=(c.gövdə, mühit)))
+
     funksiyalar(ağac.gövdə, icraçı.qlobal.al, "", [], [])
+    bloklar(ağac.gövdə, icraçı.qlobal, "", [], [])
 
     for c in ağac.gövdə:
         if not isinstance(c, A.ModulElanı):
@@ -247,6 +266,12 @@ def _sınaqları_topla(icraçı, ağac: A.Proqram) -> list[_Sınaq]:
                     sonra.append(modul.üzvlər[e.ad])
         funksiyalar(c.gövdə, lambda a, mod=modul: mod.üzvlər[a],
                     f"{qrup} › ", əvvəl, sonra)
+        if any(isinstance(e, A.Sınaq) for e in c.gövdə):
+            # Modulun sınaq bloku onun üzvlərini adla görür
+            mühit = icraçı.qlobal.alt()
+            for a, d in modul.üzvlər.items():
+                mühit.elan(a, d)
+            bloklar(c.gövdə, mühit, f"{qrup} › ", əvvəl, sonra)
     return sınaqlar
 
 
@@ -275,14 +300,18 @@ def _bir_sınaq(icraçı, s: _Sınaq) -> Nəticə:
         for f in s.əvvəl:
             icraçı._çağır(f, [], {}, None)
         try:
-            icraçı._çağır(s.funksiya, list(s.arqumentlər), {}, None)
+            if s.blok is not None:
+                gövdə, mühit = s.blok
+                icraçı._blok(gövdə, mühit.alt())
+            else:
+                icraçı._çağır(s.funksiya, list(s.arqumentlər), {}, None)
         finally:
             for f in s.sonra:
                 icraçı._çağır(f, [], {}, None)
         return Nəticə(s.ad, UĞURLU, time.perf_counter() - baş,
                       çıxış=çıxış)
     except AlqorXəta as x:
-        vəziyyət = UĞURSUZ if x.tip == "İddiaXətası" else XƏTA
+        vəziyyət = UĞURSUZ if x.tip in _TƏSDİQ_XƏTALARI else XƏTA
         mesaj = x.mesaj if vəziyyət == UĞURSUZ else f"{x.tip}: {x.mesaj}"
         return Nəticə(s.ad, vəziyyət, time.perf_counter() - baş, mesaj,
                       str(x.yer) if x.yer else "", çıxış)
@@ -387,7 +416,7 @@ def sənədi_sına(yol: Path) -> FaylNəticəsi:
             nəticə.nəticələr.append(Nəticə(
                 ad, UĞURLU, time.perf_counter() - baş, çıxış=çıxış))
         except AlqorXəta as e:
-            v = UĞURSUZ if e.tip == "İddiaXətası" else XƏTA
+            v = UĞURSUZ if e.tip in _TƏSDİQ_XƏTALARI else XƏTA
             nəticə.nəticələr.append(Nəticə(
                 ad, v, time.perf_counter() - baş, f"{e.tip}: {e.mesaj}",
                 çıxış=çıxış))

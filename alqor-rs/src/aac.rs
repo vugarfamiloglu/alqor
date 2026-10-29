@@ -311,6 +311,14 @@ pub enum Cümlə {
     At(Yer, Option<E>),
     Cəhd { yer: Yer, gövdə: Gövdə, tutmalar: Vec<Tutma>, nəhayət: Option<Gövdə> },
     İddia(Yer, E, Option<E>),
+    /// `tələb şərt[, mesaj]` — ön şərt (§ 5.13); sonuncu sahə şərtin mənbə mətnidir
+    Tələb(Yer, E, Option<E>, String),
+    /// `zəmanət şərt[, mesaj]` — son şərt, `nəticə` qaytarılan dəyərdir (§ 5.13)
+    Zəmanət(Yer, E, Option<E>, String),
+    /// `sınaq "ad" … son` — yalnız `alqor sına` icra edir (§ 13.5)
+    Sınaq(Yer, String, Gövdə),
+    /// `gözlənilir şərt`, `gözlənilir xəta [Tip]: ifadə` (§ 13.5)
+    Gözlənti { yer: Yer, ifadə: E, mətn: String, xəta: bool, xəta_tipi: Option<String> },
     Təmin(Yer, E, Gövdə),
     Gecikdir(Yer, E),
     İstifadə(Yer, Vec<(String, E)>, Gövdə),
@@ -330,7 +338,7 @@ impl Cümlə {
         use Cümlə::*;
         match self {
             İfadə(y, _) | Dağıdıcı(y, _) | Dayan(y, _) | DavamEt(y, _) | Qaytar(y, _) | Ver(y, _) | At(y, _)
-            | İddia(y, ..) | Təmin(y, ..) | Gecikdir(y, _) | İstifadə(y, ..) | Keç(y) | DayanNöqtəsi(y)
+            | İddia(y, ..) | Sınaq(y, ..) | Gözlənti { yer: y, .. } | Tələb(y, ..) | Zəmanət(y, ..) | Təmin(y, ..) | Gecikdir(y, _) | İstifadə(y, ..) | Keç(y) | DayanNöqtəsi(y)
             | Global(y, _) | İxracSiyahısı(y) | Başlanğıc(y, _) | Bitiş(y, _) | Artırma(y, ..) => *y,
             Funksiya(f) | Metod(f) => f.yer,
             Xassə(x) => x.yer,

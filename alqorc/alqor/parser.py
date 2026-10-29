@@ -17,6 +17,7 @@ from . import aac as A
 from .token import Növ, Token, Yer
 from .xeta import XətaToplayıcı
 from . import makro as M
+from .token import KodParçası
 
 # ═══════════════════════════════════════════════════════════════════════
 #  Operator prioritetləri (Spesifikasiya § 3.4)
@@ -47,6 +48,18 @@ PRIORITET: dict[str, tuple[int, bool]] = {
 }
 
 TƏK_OPERATORLAR = ("-", "+", "!", "~")
+
+#  Şəkilçili diapazon (§ 4.14): `1-dən 10-a qədər` ≡ `1..10`
+ÇIXIŞLIQ_ŞƏKİLÇİLƏRİ = ("dan", "dən", "ndan", "ndən", "den", "nden")
+YÖNLÜK_ŞƏKİLÇİLƏRİ = ("a", "ə", "ya", "yə", "na", "nə", "e", "ye", "ne")
+#  Şəkilçili cümlə (§ 4.14): `"Vüqar" adlar-a əlavə et` ≡
+#  `adlar.əlavə("Vüqar")` — təsirlik, yönlük, yerlik, çıxışlıq hallar
+HAL_ŞƏKİLÇİLƏRİ = frozenset((
+    "ı", "i", "u", "ü", "nı", "ni", "nu", "nü", "yı", "yi", "yu", "yü",
+    *YÖNLÜK_ŞƏKİLÇİLƏRİ,
+    "da", "də", "nda", "ndə", "de", "nde",
+    *ÇIXIŞLIQ_ŞƏKİLÇİLƏRİ,
+))
 TƏK_ACARLAR = ("deyil",)
 
 MƏNİMSƏTMƏ_OPLARI = (
@@ -119,6 +132,10 @@ class Parser:
         # olunduğu (mənbə ofseti → dərinlik). Adi ayırmada söndürülüb.
         self.dərinlik = 0
         self.dərinlik_qeydi: dict[int, int] | None = None
+        # Müqavilələr (§ 5.13): növbəti cümlə funksiya gövdəsinin
+        # əvvəlindədirmi; cari funksiya generatordurmu
+        self._müqavilə_icazəsi = False
+        self._müqavilə_generator = False
         # Makrolar (§ 5.12) — interpolyasiya alt-parserləri ilə paylaşılır
         self.makro = M.MakroVəziyyəti()
 
@@ -797,6 +814,12 @@ class Parser:
             self._makro_aç(m, ifadədə=False)
         if self._makro_elanıdır():
             return self._makro_elanı()
+        müqavilə_icazəsi = self._müqavilə_icazəsi
+        self._müqavilə_icazəsi = False
+        if (t_ := self._bax()).növ is Növ.AD \
+                and t_.dəyər in ("tələb", "zəmanət") \
+                and self._gözlənti_başlayır():
+            return self._müqavilə(müqavilə_icazəsi)
         # `aktyor Ad` (§ 9.12) — `aktyor` kontekstli sözdür
         if (tok_ := self._bax()).növ is Növ.AD and tok_.dəyər == "aktyor" \
                 and self._bax(1).növ is Növ.AD \
@@ -830,6 +853,13 @@ class Parser:
         # ── Modifikatorlu elanlar ───────────────────────────────
         if self._elan_başlanğıcıdır():
             return self._elan()
+
+        if tok.növ is Növ.AD and tok.dəyər == "sınaq" \
+                and self._bax(1).növ is Növ.METN:
+            return self._sınaq()
+        if tok.növ is Növ.AD and tok.dəyər == "gözlənilir" \
+                and self._gözlənti_başlayır():
+            return self._gözlənti()
 
         if tok.növ is not Növ.ACAR:
             return self._ifadə_cümləsi()
@@ -919,6 +949,92 @@ class Parser:
 
         return self._ifadə_cümləsi()
 
+    # ── Müqavilələr (§ 5.13) ──────────────────────────────────────────
+
+    def _funksiya_gövdəsi(self, generator: bool) -> list[A.Cümlə]:
+        """Funksiya gövdəsi; əvvəlindəki `tələb`/`zəmanət` cümlələrinə
+        icazə verilir."""
+        köhnə = self._müqavilə_icazəsi, self._müqavilə_generator
+        self._müqavilə_icazəsi, self._müqavilə_generator = True, generator
+        try:
+            return self._blok()
+        finally:
+            self._müqavilə_icazəsi, self._müqavilə_generator = köhnə
+
+    def _müqavilə(self, icazə: bool) -> A.Cümlə:
+        """`tələb şərt[, mesaj]` — ön şərt; `zəmanət şərt[, mesaj]` — son
+        şərt."""
+        söz = self._bax().dəyər
+        if not icazə:
+            self._xəta("ALQ-P041",
+                       f"`{söz}` yalnız funksiyanın əvvəlində yazıla bilər",
+                       "müqavilə funksiya və ya metod gövdəsinin ilk "
+                       "cümlələridir",
+                       "`tələb` və `zəmanət` cümlələrini gövdənin başına "
+                       "köçürün")
+            raise ParserXətası()
+        if söz == "zəmanət" and self._müqavilə_generator:
+            self._xəta("ALQ-P041",
+                       "`zəmanət` generator funksiyada ola bilməz",
+                       "generatorun tək bir nəticəsi yoxdur")
+            raise ParserXətası()
+        yer = self._al().yer
+        b = self._bax().yer.başlanğıc
+        şərt = self._ifadə()
+        s = self.t[self.i - 1].yer.son
+        mətn = self.s.mətn[b:s] if s > b else ""
+        mesaj = self._ifadə() if self._qəbul_op(",") else None
+        self._cümlə_sonu()
+        self._müqavilə_icazəsi = True
+        növ = A.Tələb if söz == "tələb" else A.Zəmanət
+        return növ(yer, şərt, mesaj, mətn)
+
+    # ── Sınaq (§ 13.5) ────────────────────────────────────────────────
+
+    def _sınaq(self) -> A.Sınaq:
+        """`sınaq "ad" … son` — `sınaq` kontekstli sözdür."""
+        yer = self._al().yer
+        ad = self._bax()
+        if ad.parçalar and any(isinstance(p, KodParçası)
+                               for p in ad.parçalar):
+            self._xəta("ALQ-P040", "Sınağın adı sabit mətn olmalıdır",
+                       "adda `{…}` interpolyasiyası ola bilməz")
+            raise ParserXətası()
+        self._al()
+        gövdə = self._blok()
+        self._son_tələb()
+        return A.Sınaq(yer, str(ad.dəyər), gövdə)
+
+    def _gözlənti_başlayır(self) -> bool:
+        """`gözlənilir` ardınca ifadə gəlirsə cümlədir; `gözlənilir = 1`,
+        `gözlənilir.x` adi addır."""
+        n = self._bax(1)
+        if n.növ in (Növ.SETIR_SONU, Növ.FAYL_SONU):
+            return False
+        return not (n.opdur(".", "?.", "[", ",", ":", ";", "++", "--",
+                            *MƏNİMSƏTMƏ_OPLARI)
+                    or n.acardır("içində", *BLOK_SONLARI))
+
+    def _gözlənti(self) -> A.Gözlənti:
+        """`gözlənilir şərt` və `gözlənilir xəta [Tip]: ifadə`."""
+        yer = self._al().yer
+        xəta, tip = False, None
+        t = self._bax()
+        if t.növ is Növ.AD and t.dəyər == "xəta" and (
+                self._op(":", irəli=1)
+                or (self._bax(1).növ is Növ.AD and self._op(":", irəli=2))):
+            self._al()
+            xəta = True
+            if not self._op(":"):
+                tip = str(self._al().dəyər)
+            self._tələb_op(":", "gözlənti")
+        b = self._bax().yer.başlanğıc
+        ifadə = self._ifadə()
+        s = self.t[self.i - 1].yer.son
+        mətn = self.s.mətn[b:s] if s > b else ""
+        self._cümlə_sonu()
+        return A.Gözlənti(yer, ifadə, mətn, xəta, tip)
+
     def _cümlə_bitibmi(self) -> bool:
         return (self._bax().növ in (Növ.SETIR_SONU, Növ.FAYL_SONU)
                 or self._op(";")
@@ -933,8 +1049,81 @@ class Parser:
             arqumentlər = self._arqumentlər()
         return A.Annotasiya(yer, str(ad), arqumentlər)
 
+    def _şəkilçili_cümlə_quyruğu(self) -> tuple[int, int] | None:
+        """Cümlə `OBYEKT-şəkilçi FEL [et]` ilə bitirsə — (obyektin ilk
+        tokeni, felin indeksi)."""
+        dərinlik, j = 0, self.i
+        while True:
+            t = self.t[j]
+            if t.növ is Növ.FAYL_SONU:
+                break
+            if t.opdur("(", "[", "{"):
+                dərinlik += 1
+            elif t.opdur(")", "]", "}"):
+                dərinlik -= 1
+            elif dərinlik <= 0 and (t.növ is Növ.SETIR_SONU or t.opdur(";")
+                                    or t.acardır(*BLOK_SONLARI)):
+                break
+            j += 1
+        if dərinlik != 0:
+            return None
+        k = j - 1
+        if k > self.i and self.t[k].acardır("et"):
+            k -= 1
+        fel = k
+        if k - 3 < self.i or self.t[fel].növ is not Növ.AD:
+            return None
+        şəkilçi, tire, ad = self.t[k - 1], self.t[k - 2], self.t[k - 3]
+        if not (şəkilçi.növ in (Növ.AD, Növ.ACAR)
+                and şəkilçi.dəyər in HAL_ŞƏKİLÇİLƏRİ and tire.opdur("-")
+                and ad.növ is Növ.AD
+                and ad.yer.son == tire.yer.başlanğıc
+                and tire.yer.son == şəkilçi.yer.başlanğıc):
+            return None
+        b = k - 3
+        while (b - 2 >= self.i and self.t[b - 1].opdur(".")
+               and self.t[b - 2].növ is Növ.AD):
+            b -= 2
+        return b, fel
+
+    def _şəkilçili_cümlə(self, b: int, fel: int) -> A.Cümlə:
+        """`[arqumentlər] OBYEKT-şəkilçi FEL [et]` → `OBYEKT.FEL(…)`."""
+        yer = self._bax().yer
+        arqumentlər: list[A.Arqument] = []
+        if self.i < b:
+            # Arqumentlər obyektə qədər oxunur — obyekt müvəqqəti sətir
+            # sonu ilə əvəz olunur ki ifadə ona keçməsin
+            obyekt_tokeni = self.t[b]
+            self.t[b] = Token(Növ.SETIR_SONU, "\n", obyekt_tokeni.yer, "")
+            try:
+                arqumentlər.append(A.Arqument(self._ifadə()))
+                while self._qəbul_op(","):
+                    arqumentlər.append(A.Arqument(self._ifadə()))
+            finally:
+                self.t[b] = obyekt_tokeni
+            if self.i != b:
+                self._xəta("ALQ-P039", "Şəkilçili cümlə təhlil olunmadı",
+                           "obyektdən əvvəl yalnız vergüllə ayrılmış "
+                           "arqumentlər ola bilər",
+                           "məs.: `\"Vüqar\" adlar-a əlavə et`")
+                raise ParserXətası()
+        obyekt: A.İfadə = A.Ad(self.t[b].yer, str(self.t[b].dəyər))
+        for k in range(b + 2, fel - 2, 2):
+            obyekt = A.Üzv(self.t[k - 1].yer, obyekt, str(self.t[k].dəyər))
+        f = self.t[fel]
+        çağırış = A.Çağırış(f.yer, A.Üzv(f.yer, obyekt, str(f.dəyər)),
+                            arqumentlər)
+        while self.i <= fel:
+            self._al()
+        self._qəbul_acar("et")
+        self._cümlə_sonu()
+        return A.İfadəCümləsi(yer, çağırış)
+
     def _ifadə_cümləsi(self) -> A.Cümlə:
         yer = self._bax().yer
+        quyruq = self._şəkilçili_cümlə_quyruğu()
+        if quyruq is not None:
+            return self._şəkilçili_cümlə(*quyruq)
         ifadə = self._ifadə()
 
         # Alternativ dövr forması: `siyahı içində hər x üçün … son`
@@ -1269,7 +1458,10 @@ class Parser:
         if self._qəbul_acar("addım"):
             addım = self._ifadə()
 
-        self._tələb_acar("içində")
+        # `hər i üçün 1-dən 10-a qədər` — `içində` yazılmaya bilər
+        if mənbə is not getattr(self, "_şəkilçili", None) \
+                or self._acar("içində"):
+            self._tələb_acar("içində")
         asinxron = bool(self._qəbul_acar("gözlə"))
 
         şərt = None
@@ -1688,7 +1880,7 @@ class Parser:
         generiklər = self._generiklər()
         parametrlər = self._parametrlər()
         qaytarma = self._tip() if self._qəbul_op("->") else None
-        gövdə = self._blok()
+        gövdə = self._funksiya_gövdəsi(m["generator"])
         self._son_tələb("funksiya")
         return A.FunksiyaElanı(
             yer, ad, parametrlər, gövdə, qaytarma,
@@ -1710,7 +1902,7 @@ class Parser:
                                 m["generator"], generiklər, [],
                                 self._sənəd(yer))
 
-        gövdə = self._blok()
+        gövdə = self._funksiya_gövdəsi(m["generator"])
         self._son_tələb("metod")
         return A.MetodElanı(yer, ad, parametrlər, gövdə, qaytarma,
                             m["görünüş"], m["statik"], False, m["son"],
@@ -2152,6 +2344,14 @@ class Parser:
 
         while True:
             tok = self._bax()
+            if self._şəkilçi(ÇIXIŞLIQ_ŞƏKİLÇİLƏRİ):
+                if PRIORITET[".."][0] < min_p:
+                    break
+                sol = self._şəkilçili_diapazon(sol)
+                continue
+            if self._şəkilçi(YÖNLÜK_ŞƏKİLÇİLƏRİ) \
+                    and self._bax(2).acardır("qədər"):
+                break
             op = self._binar_op(tok)
             if op is None:
                 break
@@ -2189,6 +2389,35 @@ class Parser:
                 sol = A.İkili(yer, sol, op, self._ifadə(növbəti_min))
 
         return sol
+
+    def _şəkilçi(self, şəkilçilər: tuple[str, ...]) -> bool:
+        """`-` sol tərəfə və şəkilçiyə bitişikdir: `1-dən`, `n-ə`."""
+        tire = self._bax()
+        if not tire.opdur("-") or self.i == 0:
+            return False
+        şəkilçi = self._bax(1)
+        əvvəlki = self.t[self.i - 1]
+        return (şəkilçi.növ in (Növ.AD, Növ.ACAR)
+                and şəkilçi.dəyər in şəkilçilər
+                and əvvəlki.yer.son == tire.yer.başlanğıc
+                and tire.yer.son == şəkilçi.yer.başlanğıc)
+
+    def _şəkilçili_diapazon(self, başlanğıc: A.İfadə) -> A.İfadə:
+        """`A-dən B-ə qədər` — hər iki uc daxil, addım ±1 (§ 4.14)."""
+        yer = self._al().yer                         # `-`
+        self._al()                                   # `dən`
+        son = self._ifadə(PRIORITET[".."][0] + 1)
+        if not self._şəkilçi(YÖNLÜK_ŞƏKİLÇİLƏRİ):
+            self._xəta("ALQ-P038", "Diapazonun sonu gözlənilirdi",
+                       "`A-dən B-ə qədər` formasında `B-ə` yazılmalıdır",
+                       "məs.: `1-dən 10-a qədər`")
+            raise ParserXətası()
+        self._al()
+        self._al()
+        self._tələb_acar("qədər")
+        d = A.Diapazon(yer, başlanğıc, son, None, False)
+        self._şəkilçili = d
+        return d
 
     def _binar_op(self, tok: Token) -> str | None:
         if tok.növ is Növ.OP and tok.dəyər in PRIORITET:

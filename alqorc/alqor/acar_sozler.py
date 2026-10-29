@@ -126,6 +126,8 @@ KONTEKSTLI: frozenset[str] = frozenset([
     "başlanğıc", "bitiş",                          # modul blokları
     "makro",                                       # makro elanı (§ 5.12)
     "aktyor",                                      # aktyor elanı (§ 9.12)
+    "gözlənilir",                                  # gözlənti (§ 13.5)
+    "tələb", "zəmanət",                            # müqavilələr (§ 5.13)
 ])
 
 

@@ -224,6 +224,42 @@ funksiya köməkçi()
 son
 '''
 
+    BLOKLAR = '''
+funksiya topla(a, b)
+    qaytar a + b
+son
+
+sınaq "toplama işləyir"
+    gözlənilir topla(2, 2) == 4
+    gözlənilir topla(-1, 1) == 0
+son
+
+sınaq "səhv gözlənti"
+    dəyişən s = [1, 2]
+    gözlənilir s == [1, 2, 3]
+son
+
+sınaq "bölmə xətası"
+    gözlənilir xəta BölməXətası: 1 / 0
+son
+
+sınaq "gözlənilməz xəta"
+    dəyişən x = boş
+    yaz(x.y)
+son
+
+modul riyaziyyat
+    funksiya kvadrat(x)
+        qaytar x * x
+    son
+    sınaq "kvadrat"
+        gözlənilir kvadrat(3) == 9
+    son
+son
+
+yaz("adi icrada sınaqlar işləmir")
+'''
+
     def test_nəticələr(self):
         n = S.faylı_sına(self.yaz("riyazi_sınaq.alq", self.KOD))
         self.assertEqual(n.xəta, "")
@@ -240,6 +276,20 @@ son
         self.assertEqual(v["Qrup › əvvəl işləyib"].vəziyyət, S.UĞURLU)
         self.assertNotIn("köməkçi", v)
         self.assertEqual(len(n.nəticələr), 8)
+
+    def test_sınaq_blokları(self):
+        """`sınaq "ad" … son` və `gözlənilir` (§ 13.5)"""
+        n = S.faylı_sına(self.yaz("blok_sınaq.alq", self.BLOKLAR))
+        self.assertEqual(n.xəta, "")
+        v = {r.ad: r for r in n.nəticələr}
+        self.assertEqual(v["toplama işləyir"].vəziyyət, S.UĞURLU)
+        self.assertEqual(v["səhv gözlənti"].vəziyyət, S.UĞURSUZ)
+        self.assertIn("sol: [1, 2]", v["səhv gözlənti"].mesaj)
+        self.assertIn("sağ: [1, 2, 3]", v["səhv gözlənti"].mesaj)
+        self.assertEqual(v["bölmə xətası"].vəziyyət, S.UĞURLU)
+        self.assertEqual(v["gözlənilməz xəta"].vəziyyət, S.XƏTA)
+        self.assertEqual(v["riyaziyyat › kvadrat"].vəziyyət, S.UĞURLU)
+        self.assertEqual(len(n.nəticələr), 5)
 
     def test_filtr(self):
         n = S.faylı_sına(self.yaz("a_sınaq.alq", self.KOD), "KVADRAT")

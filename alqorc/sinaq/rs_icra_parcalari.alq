@@ -1443,3 +1443,142 @@ tut (x: NəticəXətası)
     yaz(x.mesaj)
 son
 yaz(Uğur(3).zəncirlə((x) => Uğur(x + 1)), Uğursuz("a").zəncirlə((x) => Uğur(x)), Uğur(1).uğursuzdur())
+=====
+dəyişən adlar = ["Ali"]
+"Vüqar" adlar-a əlavə et
+"Nigar" adlar-a əlavə
+dəyişən l = {"a": 1}
+"b", 2 l-a qoy
+yaz(l)
+adlar-ı sırala
+yaz(adlar)
+sinif Qutu
+    xassə siyahı = []
+son
+dəyişən q = yeni Qutu()
+3 q.siyahı-na əlavə et
+yaz(q.siyahı)
+0 adlar-dan sil
+yaz(adlar)
+əgər doğru onda 7 adlar-a əlavə et son
+yaz(adlar, siyahı(1-dən 6-ya qədər), siyahı(9-dan 7-nə qədər))
+dəyişən n = 4
+yaz(siyahı(n-dən 1-ə qədər), siyahı(n*2-dən n+6-ya qədər), n-1)
+hər i üçün 1-den 2-ye qeder
+    yaz("i", i)
+son
+=====
+funksiya topla(a, b)
+    qaytar a + b
+son
+sınaq "toplama"
+    gözlənilir topla(2, 2) == 4
+    yaz("bu çap olunmur")
+son
+gözlənilir topla(1, 1) == 2
+gözlənilir xəta: 1 / 0
+gözlənilir xəta BölməXətası: 1 / 0
+gözlənilir 3 < 5
+dəyişən s = ["a"]
+cəhd et
+    gözlənilir s == ["b"]
+tut (x: GözləntiXətası)
+    yaz(x.mesaj)
+son
+cəhd et
+    gözlənilir xəta TipXətası: 1 / 0
+tut (x: GözləntiXətası)
+    yaz(x.mesaj)
+son
+cəhd et
+    gözlənilir xəta: 1 + 1
+tut (x)
+    yaz(x.tip, x.kod, x.mesaj)
+son
+cəhd et
+    gözlənilir s.boşdur()
+tut (x)
+    yaz(x.mesaj)
+son
+dəyişən gözlənilir = 5
+gözlənilir = gözlənilir + 1
+yaz(gözlənilir)
+funksiya yoxla(n)
+    gözlənilir n > 0
+    gözlənilir xəta BölməXətası: n / 0
+    qaytar n
+son
+yaz(yoxla(3))
+cəhd et
+    yoxla(-1)
+tut (x: GözləntiXətası)
+    yaz(x.mesaj)
+son
+sınaq "funksiyanın içində"
+    yaz("çap olunmamalıdır")
+son
+=====
+funksiya böl(a, b)
+    tələb b != 0, "bölən sıfır ola bilməz"
+    tələb a >= 0
+    zəmanət nəticə * b == a
+    qaytar a / b
+son
+yaz(böl(6, 3))
+cəhd et
+    böl(1, 0)
+tut (x: ÖnŞərtXətası)
+    yaz(x.tip, x.kod, x.mesaj)
+son
+cəhd et
+    böl(-4, 2)
+tut (x: MüqaviləXətası)
+    yaz(x.tip, x.mesaj)
+son
+funksiya səhv(n: tam) -> tam
+    zəmanət nəticə > n, "nəticə {nəticə} böyük olmalıdır"
+    zəmanət nəticə != 0
+    əgər n > 5 onda qaytar 0 son
+    n - 1
+son
+sinif Hesab
+    xassə balans = 100
+    metod çıxar(m)
+        tələb m <= özü.balans, "balans çatmır"
+        zəmanət özü.balans >= 0
+        özü.balans -= m
+        qaytar özü.balans
+    son
+son
+dəyişən h = yeni Hesab()
+yaz(h.çıxar(30))
+cəhd et
+    h.çıxar(500)
+tut (x)
+    yaz(x.tip, x.mesaj)
+son
+cəhd et
+    yaz(səhv(3))
+tut (x: SonŞərtXətası)
+    yaz(x.kod, x.mesaj)
+son
+cəhd et
+    səhv(9)
+tut (x)
+    yaz(x.mesaj)
+son
+funksiya iki()
+    zəmanət nəticə == 2
+    qaytar [3]
+son
+cəhd et
+    iki()
+tut (x)
+    yaz(x.mesaj)
+son
+asinxron funksiya gec(n)
+    tələb n > 0
+    zəmanət nəticə == n * 2
+    qaytar n * 2
+son
+yaz(gözlə gec(4))

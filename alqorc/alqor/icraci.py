@@ -18,7 +18,8 @@ from .deyerler import (AktyorNümunəsi, AlqorDiapazon, AlqorGenerator,
                        Çağırılan, Daxili, DavamSiqnalı, DayanmaSiqnalı,
                        DayanSiqnalı, Funksiya, Modul, Mühit, Nümunə,
                        QaytarSiqnalı, Sadalama, SadalamaDəyəri, Sinif,
-                       VerSiqnalı, mətnə, tip_adı, xəta_uyğundur)
+                       VerSiqnalı, _daxili_mətn, mətnə, tip_adı,
+                       xəta_uyğundur)
 from .elifba import böyüyə, kiçiyə
 from .korutin import Gələcək, Korutin, LəğvNişanı, Mesaj
 from .vahidler import Kəmiyyət
@@ -672,6 +673,70 @@ class İcraçı:
         mesaj = (mətnə(self._ifadə(c.mesaj, m), self)
                  if c.mesaj is not None else "iddia pozuldu")
         raise AlqorXəta("İddiaXətası", mesaj, c.yer, "ALQ-R007")
+
+    def _c_tələb(self, c: A.Tələb, m: Mühit) -> None:
+        if self._məntiq(c.şərt, m):
+            return
+        mesaj = (mətnə(self._ifadə(c.mesaj, m), self)
+                 if c.mesaj is not None else f"ön şərt pozuldu: {c.mətn}")
+        raise AlqorXəta("ÖnŞərtXətası", mesaj, c.yer, "ALQ-R024")
+
+    def _c_zəmanət(self, c: A.Zəmanət, m: Mühit) -> None:
+        """Son şərt funksiya qayıdanda yoxlanır (`_zəmanətləri_yoxla`)."""
+
+    def _zəmanətləri_yoxla(self, gövdə: list, nəticə: Any,
+                           m: Mühit) -> None:
+        alt = None
+        for c in gövdə:
+            if isinstance(c, A.Tələb):
+                continue
+            if not isinstance(c, A.Zəmanət):
+                break
+            if alt is None:
+                alt = m.alt()
+                alt.elan("nəticə", nəticə)
+            if self._məntiq(c.şərt, alt):
+                continue
+            mesaj = (mətnə(self._ifadə(c.mesaj, alt), self)
+                     if c.mesaj is not None
+                     else f"son şərt pozuldu: {c.mətn}\n"
+                          f"  nəticə: {_daxili_mətn(nəticə, self)}")
+            raise AlqorXəta("SonŞərtXətası", mesaj, c.yer, "ALQ-R025")
+
+    def _c_sınaq(self, c: A.Sınaq, m: Mühit) -> None:
+        """Adi icrada sınaq bloku atlanır — onu `alqor sına` işlədir."""
+
+    def _c_gözlənti(self, c: A.Gözlənti, m: Mühit) -> None:
+        if c.xəta:
+            tip = c.xəta_tipi or "Xəta"
+            try:
+                self._ifadə(c.ifadə, m)
+            except AlqorXəta as x:
+                if xəta_uyğundur(x.tip, tip):
+                    return
+                raise AlqorXəta(
+                    "GözləntiXətası",
+                    f"`{tip}` gözlənilirdi, `{x.tip}` atıldı: {x.mesaj}\n"
+                    f"  ifadə: {c.mətn}", c.yer, "ALQ-R023") from None
+            gözlənilən = (f"`{c.xəta_tipi}` gözlənilirdi, xəta atılmadı"
+                          if c.xəta_tipi else "xəta gözlənilirdi, atılmadı")
+            raise AlqorXəta("GözləntiXətası", f"{gözlənilən}\n"
+                            f"  ifadə: {c.mətn}", c.yer, "ALQ-R023")
+        e = c.ifadə
+        if isinstance(e, A.İkili) and e.op in _MÜQAYİSƏLƏR:
+            sol = self._ifadə(e.sol, m)
+            sağ = self._ifadə(e.sağ, m)
+            if self._ikili_hesabla(e.op, sol, sağ, e.yer) is True:
+                return
+            raise AlqorXəta(
+                "GözləntiXətası",
+                f"gözlənti ödənmədi: {c.mətn}\n"
+                f"  sol: {_daxili_mətn(sol, self)}\n"
+                f"  sağ: {_daxili_mətn(sağ, self)}", c.yer, "ALQ-R023")
+        if not self._məntiq(e, m):
+            raise AlqorXəta("GözləntiXətası",
+                            f"gözlənti ödənmədi: {c.mətn}", c.yer,
+                            "ALQ-R023")
 
     def _c_təmin(self, c: A.Təmin, m: Mühit) -> None:
         if not self._məntiq(c.şərt, m):
@@ -1797,6 +1862,9 @@ class İcraçı:
                             self._ifadə(ifadə, mm)
                         except AlqorXəta:
                             pass
+                # Müqavilə (§ 5.13): son şərtlər qaytarılan dəyərlə
+                if f.gövdə and isinstance(f.gövdə[0], (A.Tələb, A.Zəmanət)):
+                    self._zəmanətləri_yoxla(f.gövdə, nəticə, m)
             else:
                 try:
                     nəticə = self._ifadə(f.gövdə, m)
@@ -2792,6 +2860,9 @@ def _kitabxana_operatoru(op: str, sol: Any, sağ: Any) -> Any:
         return f(sağ, op, sol, True)
     return NotImplemented
 
+# `gözlənilir a == b` — iki tərəf ayrıca göstərilir (§ 13.5)
+_MÜQAYİSƏLƏR = frozenset(("==", "!=", "<", ">", "<=", ">="))
+
 
 _OPERATOR_METODLARI = {
     "+": "topla", "-": "çıx", "*": "vur", "/": "böl",
@@ -2822,6 +2893,10 @@ _CÜMLƏLƏR: dict[type, Any] = {
     A.At: İcraçı._c_at,
     A.Cəhd: İcraçı._c_cəhd,
     A.İddia: İcraçı._c_iddia,
+    A.Sınaq: İcraçı._c_sınaq,
+    A.Tələb: İcraçı._c_tələb,
+    A.Zəmanət: İcraçı._c_zəmanət,
+    A.Gözlənti: İcraçı._c_gözlənti,
     A.Təmin: İcraçı._c_təmin,
     A.Gecikdir: İcraçı._c_gecikdir,
     A.İstifadə: İcraçı._c_istifadə,
