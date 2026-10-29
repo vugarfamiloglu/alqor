@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <b>Versiya 2.4</b> ·
+  <b>Versiya 2.5</b> ·
   <a href="https://github.com/vugarfamiloglu/alqor/releases/latest">Endir</a> ·
   <a href="https://vuqar.pro/alqor">Sayt</a> ·
   <a href="https://vuqar.pro/hub">Paketlər</a>
@@ -64,6 +64,7 @@ Bu bir oyuncaq dil deyil. Alqor müasir dillərin gücünü daşıyır:
 | | |
 |---|---|
 | 🧠 **Müasir dil** | Siniflər, miras, interfeyslər, cəbri sadalamalar, naxış uyğunlaşdırma, qapanmalar, generatorlar, `asinxron`/`gözlə`, tədrici tiplər |
+| ✨ **Dilə xas sintaksis** | `1-dən 10-a qədər`, `"Vüqar" adlar-a əlavə et`, `5 km + 300 m`, `sorğu hər x üçün … harada … seç … son`, aktyorlar və kanallar, makrolar, bəzəyicilər, `Nəticə` + `?`, `tələb`/`zəmanət` müqavilələri, `sınaq "ad" … son` |
 | 🇦🇿 **Azərbaycan dili, ciddi şəkildə** | `ı/İ` qaydası ilə böyük-kiçik hərf (`"ışıq".böyüyə()` → `IŞIQ`), əlifba sırası ilə sıralama (`ə` `e`-dən sonra gəlir, `z`-dən sonra yox), `5.yazıyla()` → `beş` |
 | 💬 **Anlaşılan xətalar** | Hər xəta Azərbaycanca, kodu ilə, səhvin yeri göstərilir və düzəliş təklif olunur |
 | ⌨️ **Hər klaviaturada** | `eger` yazsanız `əgər` kimi qəbul olunur — Azərbaycan klaviaturası olmayan kompüterdə də işləyir |
@@ -179,7 +180,7 @@ forma `ALQOR_VEB=1` ilə brauzerdə işləyir.
 |---|---|
 | **~66 000** sətir | Python etalon implementasiyası (lekser, parser, tip yoxlayıcı, icraçı, kitabxana, alətlər) |
 | **~30 000** sətir | Rust icraçısı (bayt kodu virtual maşını, standart kitabxana, WebAssembly) |
-| **1 350+** avtomatik sınaq | Windows və Linux-da hər dəyişiklikdə işləyir |
+| **1 360+** avtomatik sınaq | Windows və Linux-da hər dəyişiklikdə işləyir |
 | **118** vidjet | düymədən qrafikə, təqvimdən cədvələ |
 | **40+** standart modul | JSON, HTTP, verilənlər bazası (SQLite/PostgreSQL/MySQL + ORM), şifrələmə, PDF, şəkil, e-poçt, cron, pul hesabı, lokalizasiya... |
 | **14** bölməlik spesifikasiya | rəsmi EBNF qrammatika ilə |
@@ -245,7 +246,7 @@ Rust icraçısını mənbədən qurmaq üçün: `cd alqor-rs && cargo build --re
 | Kompilyasiya və yerləşdirmə | `alqor qur --exe` (tək fayl), `alqor yerləşdir` (statik hostinq, Docker) | ✅ |
 | Vizual forma dizayneri | Delphi üslubu: `.forma` + `.alq`, verilənlər bazası komponentləri | ✅ |
 | Python kitabxanaları | `gətir python:…`, `alqor python qur` | ✅ |
-| Rust icraçısı | Bytecode virtual maşın, veb/http/verilənlər; `--motor rs\|avto` | 🟡 əsas hissə hazırdır |
+| Rust icraçısı | Bayt kodu virtual maşını, veb/http/verilənlər; `--motor rs\|avto` | 🟡 əsas hissə hazırdır |
 | Ekosistem | Sayt [vuqar.pro/alqor](https://vuqar.pro/alqor), paket deposu [vuqar.pro/hub](https://vuqar.pro/hub) | 🟡 |
 
 Ətraflı: [NOVBETI.md](NOVBETI.md)

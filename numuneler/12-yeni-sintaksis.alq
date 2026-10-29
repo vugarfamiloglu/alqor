@@ -1,0 +1,95 @@
+// Alqor 2.5 — dilə xas yeni sintaksis
+// İşlətmək: alqor işlət numuneler/12-yeni-sintaksis.alq
+// Sınamaq:  alqor sına numuneler/12-yeni-sintaksis.alq
+
+// ── Bəzəyici (§ 5.11) ──────────────────────────────────────────────────
+funksiya qeydEt(f)
+    qaytar (...a) => blok
+        yaz("→ {f.ad} çağırıldı, arqumentlər: {a}")
+        ver f(...a)
+    son
+son
+
+// ── Makro (§ 5.12) ─────────────────────────────────────────────────────
+makro kvadrat(x) = x * x
+
+// ── Müqavilə (§ 5.13) ──────────────────────────────────────────────────
+@qeydEt
+funksiya böl(a, b)
+    tələb b != 0, "bölən sıfır ola bilməz"
+    zəmanət nəticə * b == a
+    qaytar a / b
+son
+
+// ── Nəticə və ? (§ 7.5) ────────────────────────────────────────────────
+funksiya ədədə(m: mətn) -> Nəticə
+    cəhd et
+        qaytar Uğur(m kimi tam)
+    tut (x)
+        qaytar Uğursuz("`{m}` ədəd deyil")
+    son
+son
+
+funksiya cəm(a: mətn, b: mətn) -> Nəticə
+    qaytar Uğur(ədədə(a)? + ədədə(b)?)
+son
+
+// ── Aktyor (§ 9.12) ────────────────────────────────────────────────────
+aktyor Sayğac
+    xassə dəyər = 0
+    metod artır(n)
+        özü.dəyər += n
+        qaytar özü.dəyər
+    son
+son
+
+// ── Proqram ────────────────────────────────────────────────────────────
+yaz(böl(10, 4))
+yaz(kvadrat!(7))
+
+// Şəkilçi formaları (§ 4.14)
+dəyişən adlar = ["Ali"]
+"Vüqar" adlar-a əlavə et
+"Nigar" adlar-a əlavə et
+adlar-ı sırala
+yaz(adlar)
+hər i üçün 3-dən 1-ə qədər
+    yaz("geri sayım:", i)
+son
+
+// Ölçü vahidləri (§ 3.8)
+dəyişən məsafə = 5 km + 300 m
+yaz(məsafə, (90 km/saat).çevir("m/san"))
+
+// Sorğu (§ 4.13)
+dəyişən şəhərlər = [("Bakı", 2300), ("Gəncə", 330), ("Sumqayıt", 350)]
+yaz(sorğu hər (ad, əhali) üçün şəhərlər içində
+    harada əhali > 300
+    sırala əhali azalan
+    seç ad
+son)
+
+yaz(cəm("2", "3"), cəm("2", "x"))
+
+dəyişən s = yeni Sayğac()
+s.artır(5)
+yaz(gözlə s.artır(10))
+
+// Kanal (§ 9.13)
+dəyişən k = yeni Kanal()
+k.göndər("salam")
+k.bağla()
+hər x üçün k içində
+    yaz("kanaldan:", x)
+son
+
+// ── Sınaqlar (§ 13.5) — yalnız `alqor sına` işlədir ────────────────────
+sınaq "bölmə"
+    gözlənilir böl(9, 3) == 3
+    gözlənilir xəta ÖnŞərtXətası: böl(1, 0)
+son
+
+sınaq "nəticə"
+    gözlənilir cəm("4", "5") == Uğur(9)
+    gözlənilir cəm("a", "5").uğursuzdur()
+son

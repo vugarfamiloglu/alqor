@@ -196,6 +196,22 @@
       "patterns": [
         {
           "name": "keyword.control.alqor",
+          "match": "^[\\t ]*(?:tələb|zəmanət|gözlənilir)(?=[\\t ]+[^\\s=.\\[(,:])"
+        },
+        {
+          "name": "keyword.control.alqor",
+          "match": "^[\\t ]*sınaq(?=[\\t ]+\")"
+        },
+        {
+          "name": "storage.type.alqor",
+          "match": "^[\\t ]*(?:makro|aktyor)(?=[\\t ]+[\\p{L}_])"
+        },
+        {
+          "name": "keyword.control.alqor",
+          "match": "(?<![\\p{L}\\p{N}_])sorğu(?=[\\t ]+(?:hər|her)(?![\\p{L}\\p{N}_]))"
+        },
+        {
+          "name": "keyword.control.alqor",
           "match": "(?<![\\p{L}\\p{N}_])(?:gecikdir|hallarda|istifade|istifadə|tekrarla|təkrarla|yoxdursa|nehayet|nəhayət|hemise|həmişə|icinde|içində|qaytar|addim|addım|berpa|bərpa|davam|dayan|diger|digər|gozle|gözlə|halda|iddia|qeder|qədər|temin|təmin|varsa|yoxsa|blok|cehd|cəhd|defe|dəfə|eger|onda|ucun|üçün|əgər|eks|hal|her|hər|kec|keç|sec|seç|son|tut|ver|əks|at|et|ki|ne|nə)(?![\\p{L}\\p{N}_])"
         },
         {

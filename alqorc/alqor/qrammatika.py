@@ -135,6 +135,18 @@ def textmate() -> dict:
                               r"|0[bB][01_]+|\d[\d_]*(?:\.\d[\d_]*)?"
                               r"(?:[eE][+-]?\d+)?)"},
             "açar": {"patterns": [
+                # Kontekstli sözlər — yalnız konstruksiyanın mövqeyində
+                # (§ 5.12, § 5.13, § 9.12, § 13.5, § 4.13)
+                {"name": "keyword.control.alqor",
+                 "match": r"^[\t ]*(?:tələb|zəmanət|gözlənilir)"
+                          r"(?=[\t ]+[^\s=.\[(,:])"},
+                {"name": "keyword.control.alqor",
+                 "match": r'^[\t ]*sınaq(?=[\t ]+")'},
+                {"name": "storage.type.alqor",
+                 "match": r"^[\t ]*(?:makro|aktyor)(?=[\t ]+[\p{L}_])"},
+                {"name": "keyword.control.alqor",
+                 "match": r"(?<![\p{L}\p{N}_])sorğu"
+                          r"(?=[\t ]+(?:hər|her)(?![\p{L}\p{N}_]))"},
                 {"name": "keyword.control.alqor", "match": _söz(idarə)},
                 {"name": "keyword.control.import.alqor",
                  "match": _söz(modul)},
@@ -172,7 +184,7 @@ _BLOK_AÇAN = ["funksiya", "metod", "sinif", "struktur", "interfeys",
               "sadalama", "modul", "komponent", "qurucu", "obyekt",
               "mağaza", "əgər", "yoxsa", "hər", "nə qədər ki", "həmişə",
               "təkrarla", "cəhd et", "tut", "nəhayət", "seç", "başlanğıc",
-              "bitiş", "hal", "digər hallarda"]
+              "bitiş", "hal", "digər hallarda", "aktyor", "sınaq"]
 _MODİFİKATORLAR = ["açıq", "gizli", "qorunan", "statik", "son",
                    "asinxron", "generator", "ixrac et", "əvəz", "tənbəl"]
 _BLOK_BAĞLAYAN = ["son", "yoxsa", "tut", "nəhayət"]

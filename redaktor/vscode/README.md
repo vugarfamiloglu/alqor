@@ -26,8 +26,8 @@ Alqor dili üçün tam redaktor dəstəyi:
    ```bash
    cd redaktor/vscode
    npm install
-   npx @vscode/vsce package          # alqor-2.4.0.vsix
-   code --install-extension alqor-2.4.0.vsix
+   npx @vscode/vsce package          # alqor-2.5.1.vsix
+   code --install-extension alqor-2.5.1.vsix
    ```
 3. `.alq` faylını açın.
 

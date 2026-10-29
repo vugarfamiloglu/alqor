@@ -2943,7 +2943,11 @@ class TipYoxlayıcı:
         return T.açılmış(tip)
 
     def _e_yayma(self, e: A.Yayma, ə: Əhatə) -> T.Tip:
-        return T.açılmış(self._ifadə(e.ifadə, ə))
+        tip = self._ifadə(e.ifadə, ə)
+        # `nəticə?` (§ 7.5) — `Uğur`-un dəyəri; sahə tipi `istənilən`dir
+        if getattr(tip, "ad", None) == "Nəticə":
+            return T.İSTƏNİLƏN
+        return T.açılmış(tip)
 
     def _e_gözlə(self, e: A.Gözlə, ə: Əhatə) -> T.Tip:
         tip = self._ifadə(e.ifadə, ə)

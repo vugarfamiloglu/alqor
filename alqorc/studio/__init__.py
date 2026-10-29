@@ -22,7 +22,7 @@ Modullar:
 
 from pathlib import Path
 
-VERSIYA = "2.4.0"
+VERSIYA = "2.5.1"
 QOVLUQ = Path(__file__).resolve().parent
 STATİK = QOVLUQ / "statik"
 ALQORC = QOVLUQ.parent / "alqorc.py"

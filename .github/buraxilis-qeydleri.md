@@ -1,10 +1,55 @@
-## Alqor 2.4.0
+## Alqor 2.5.1
 
 Azərbaycan dilində proqramlaşdırma dili: dil, **Alqor Studio** IDE, paket meneceri,
 kod yoxlayıcısı, formatlayıcı, sazlayıcı və oflayn sənədlər. Hər quraşdırıcıda Python və sürətli
 Rust icraçısı daxildir, əlavə heç nə lazım deyil.
 
-### 2.4-ün yenilikləri
+### 2.5-in yenilikləri — dilə xas sintaksis
+
+Bütün yeni konstruksiyalar Python, Rust (ağac icraçısı və virtual maşın) və JavaScript
+hədəflərində eyni nəticəni verir; hər biri spesifikasiyada təsvir olunub və sınaqlarla yoxlanır.
+Nümunə: `numuneler/12-yeni-sintaksis.alq`.
+
+**1. Bəzəyicilər (§ 5.11)** — istənilən funksiya annotasiya kimi: `@qeydEt funksiya f() … son`;
+parametrli bəzəyicilər, metod bəzəyiciləri, `f.ad`, `**lüğət` ilə adlı arqumentlərin yayılması
+
+**2. Makrolar (§ 5.12)** — `makro kvadrat(x) = x * x`, `kvadrat!(5)`; blok parametrli cümlə
+makroları, gigiyenik adlar, `gətir "./makrolar.alq"`
+
+**3. Sorğu (§ 4.13)** — kolleksiyalar üçün sorğu dili:
+`sorğu hər x üçün siyahı içində harada x > 0 sırala x azalan seç x * 2 son`;
+`qrupla … olaraq (açar, qrup)`, `seç fərqli`, `ilk`, `atla`, bir neçə mənbə
+
+**4. Aktyorlar və kanallar (§ 9.12–9.13)** — `aktyor Hesab … son`: metodlar növbə ilə işləyən
+mesajlardır və `Gələcək` qaytarır; `Kanal`: `göndər`, `al`, `bağla`, `hər x üçün k içində`;
+dalan aşkarlanır (`DalanXətası`)
+
+**5. Ölçü vahidləri (§ 3.8)** — `5 km + 300 m` → `5.3 km`, `(90 km/saat).çevir("m/san")` → `25.0 m/san`,
+`9.8 m/san^2`; uyğunsuz ölçülər toplanmır (`VahidXətası`)
+
+**6. `Nəticə` tipi və `?` (§ 7.5)** — `Uğur(dəyər)` / `Uğursuz(xəta)`, `dəyərVəYa`, `çevir`,
+`zəncirlə`, `aç`; `ədədə(m)?` uğursuz nəticəni dərhal yuxarı qaytarır
+
+**7. Şəkilçi formaları (§ 4.14)** — Azərbaycan dilinin hal şəkilçiləri sintaksisdə:
+- `hər i üçün 1-dən 10-a qədər` — hər iki uc daxil, azalan diapazon da avtomatik
+- `"Vüqar" adlar-a əlavə et` ≡ `adlar.əlavə("Vüqar")`, `adlar-ı sırala`, `0 adlar-dan sil`
+
+**8. Sınaq sintaksisi (§ 13.5)** — `sınaq "toplama işləyir" … son` blokları proqram faylının
+içində yazılır, adi icrada atlanır, `alqor sına` işlədir;
+`gözlənilir topla(2, 2) == 4` uğursuz olanda hər iki tərəfi göstərir;
+`gözlənilir xəta BölməXətası: 1 / 0`
+
+**9. Müqavilələr (§ 5.13)** — funksiyanın ön və son şərtləri:
+`tələb b != 0, "bölən sıfır ola bilməz"`, `zəmanət nəticə * b == a`
+(`ÖnŞərtXətası`, `SonŞərtXətası`)
+
+**Terminologiya** — alətlərin adları Azərbaycan dilinə uyğunlaşdırıldı: sazlayıcı
+(`alqor sazla`, Studio-da «Sazlama» menyusu), kod yoxlayıcısı, bayt kodu; köhnə `alqor debaq`
+əmri işləməyə davam edir. Terminlər lüğəti: `spesifikasiya/terminler.md`
+
+**Redaktor** — VS Code genişlənməsi yeni kontekstli sözləri rəngləyir
+
+## 2.4.0-ın yenilikləri
 
 **Python kitabxanaları birbaşa Alqor-da**
 - `gətir python:statistics kimi st`, `gətir python:collections.{Counter}` — istənilən Python

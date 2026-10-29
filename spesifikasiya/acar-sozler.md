@@ -217,11 +217,27 @@ qarşılıqlarını bir yerdə verir. Köçürmə bələdçisi kimi də istifad�
 
 ---
 
+## Kontekstli sözlər
+
+Bu sözlər qorunmur: yalnız müəyyən mövqedə konstruksiya başladır, başqa
+yerdə adi ad kimi işlənə bilər (`dəyişən tələb = …` düzgündür).
+
+| Söz | Konstruksiya | Bölmə |
+|---|---|---|
+| `makro` | `makro ad(x) … son` — makro elanı | § 5.12 |
+| `sorğu` | `sorğu hər x üçün … içində … son` | § 4.13 |
+| `aktyor` | `aktyor Ad … son` — aktyor elanı | § 9.12 |
+| `qədər` + şəkilçi | `1-dən 10-a qədər` — şəkilçili diapazon | § 4.14 |
+| `tələb`, `zəmanət` | funksiya müqaviləsi | § 5.13 |
+| `sınaq "ad"` | sınaq bloku | § 13.5 |
+| `gözlənilir` | gözlənti (təsdiq) | § 13.5 |
+
+---
+
 ## Qorunmuş, lakin hələ istifadə olunmayan sözlər
 
 Gələcək versiyalar üçün ehtiyatda saxlanılır — identifikator kimi işlətməyin:
 
 ```
-aktyor    kanal      sahib      ömür       makro      şablon
-sabitdir  təsir      bölgə      nəzarət    icazə      qeyd
+ömür      təsir
 ```
